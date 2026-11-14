@@ -10,7 +10,9 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — RELEASED by the "data host" cloud session (14 Nov ~17:00 UTC); was claimed from ~15:10 UTC
+## `web/` — CLAIMED by the "app build" cloud session (session_01RwRY…) for regression QA after the world-data switch (14 Nov, from ~17:30 UTC). Do not edit `web/` until released.
+
+### Previous: RELEASED by the "data host" cloud session (14 Nov ~17:00 UTC); was claimed from ~15:10 UTC
 
 Owner said "begin with everything": switch the app to the world data (TODO §2), then testing (TODO §3), README and submission prep. The app-build session's performance and polish passes are live (`06df191`). **No other session edits `web/` until this is released.** What is in progress, and how to resume if this session stops: [`docs/in-flight.md`](docs/in-flight.md).
 
