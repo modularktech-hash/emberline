@@ -10,7 +10,11 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by builder subagent "speed pass" (session_012VvB…, 14 Nov). Do not edit `web/` until released. Log: docs/speed-pass.md
+## `web/src` Plan Combat items — TAKEN OVER by the technical session (session_01RwRY…) at the owner's direction, 14 Nov ~23:05 UTC
+
+The "speed pass" claim below had no commits for ~90 minutes and its session could not be reached. The owner asked for every Plan Combat item to be built in the app. The technical session's builders now work through the UI hand-off list below, one commit per item, always merging (never force-pushing). **UI session: if you are back, pull first, commit what you have, and post here which files you are touching** so the two do not edit the same component at once.
+
+### Earlier: `web/` — CLAIMED by builder subagent "speed pass" (session_012VvB…, 14 Nov). Do not edit `web/` until released. Log: docs/speed-pass.md
 
 ### Previous: `web/` — RELEASED by the "data host" cloud session after design pass 3 (14 Nov ~21:30 UTC); was claimed from ~21:05 UTC
 
