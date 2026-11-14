@@ -1,5 +1,6 @@
 "use client";
 
+import { DotClock, DotText, dotCompact, useNow } from "@/components/DotMatrix";
 import { motion, useMotionValue, useScroll, useTransform, type MotionValue } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -65,22 +66,66 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <p className="pointer-events-none -mt-6 text-center text-xs tracking-wide text-[var(--text-muted)]">Drag to spin · hover a fire for details</p>
       </motion.div>
 
-      <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-y-8 md:grid-cols-4">
-        {[
-          { v: detections, l: "detections in the harmonized record" },
-          { v: 25, l: "years, 2001 to 2025" },
-          { v: 5, l: "satellites tracked live" },
-          { v: bestR2, l: "best held-out R²", dec: 2 },
-        ].map((x, i) => (
-          <Reveal key={i} delay={i * 0.06}>
-            <div className={`px-5 text-center ${i ? "md:border-l md:border-[var(--hairline)]" : ""}`}>
-              <p className="display tabular text-4xl">{d ? <CountUp to={x.v} decimals={x.dec ?? 0} /> : "—"}</p>
-              <p className="mt-1.5 text-xs text-[var(--text-muted)]">{x.l}</p>
-            </div>
-          </Reveal>
-        ))}
-      </div>
+      <Widgets d={d} live24={live24} detections={detections} bestR2={bestR2} />
     </section>
+  );
+}
+
+/* ----------------------------------------------- dot-matrix widget grid */
+function Widgets({ d, live24, detections, bestR2 }: { d: ReturnType<typeof useHomeData>["data"]; live24: number; detections: number; bestR2: number }) {
+  const today = useNow();
+  const tile = "rounded-[30px] p-5 sm:p-6";
+  const label = "font-mono text-[11px] uppercase tracking-[0.18em]";
+  return (
+    <div className="mx-auto mt-16 grid max-w-5xl grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+      <Reveal className="col-span-2">
+        <div className={`${tile} bg-[#141414] text-[#f3efe6] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)]`}>
+          <div className="flex items-center justify-between"><p className={`${label} text-white/50`}>Live · last 24 h</p><span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)]" /></div>
+          <div className="mt-6 flex items-end justify-between gap-4">
+            {d ? <DotText text={dotCompact(live24)} dot={11} gap={3.4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <span className="h-[96px]" />}
+            <p className="max-w-[9rem] text-right text-xs leading-relaxed text-white/55">fires seen from orbit by NOAA-20, NOAA-21 and MODIS</p>
+          </div>
+        </div>
+      </Reveal>
+      <Reveal delay={0.05}>
+        <div className="glass flex aspect-square flex-col items-center justify-center !rounded-full text-[var(--ink)]">
+          <DotClock size={140} />
+          <p className={`${label} mt-1 text-[var(--text-muted)]`}>UTC</p>
+        </div>
+      </Reveal>
+      <Reveal delay={0.1}>
+        <div className={`glass ${tile} flex aspect-square flex-col justify-between`}>
+          <div className="flex justify-between"><p className={`${label} text-[var(--text-muted)]`}>{today ? today.toLocaleString("en", { month: "short" }) : ""}</p><p className={`${label} text-[var(--ember)]`}>{today ? today.toLocaleString("en", { weekday: "short" }) : ""}</p></div>
+          {today && <DotText text={String(today.getDate())} dot={10} gap={3} className="text-[var(--ink)]" />}
+        </div>
+      </Reveal>
+      <Reveal delay={0.05}>
+        <div className={`glass ${tile} flex aspect-square flex-col justify-between`}>
+          <p className={`${label} text-[var(--text-muted)]`}>Record</p>
+          {d && <DotText text={dotCompact(detections)} dot={7} gap={2.2} className="text-[var(--ink)]" />}
+          <p className="text-xs text-[var(--text-muted)]">harmonized detections</p>
+        </div>
+      </Reveal>
+      <Reveal delay={0.1}>
+        <div className={`${tile} flex aspect-square flex-col justify-between bg-[var(--ember)] text-white shadow-[0_30px_60px_-30px_rgba(217,67,26,0.8)]`}>
+          <p className={`${label} text-white/70`}>Best R²</p>
+          {d && <DotText text={bestR2.toFixed(2)} dot={8} gap={2.4} lit="#fff" dim="rgba(255,255,255,0.14)" />}
+          <p className="text-xs text-white/75">on years the model never saw</p>
+        </div>
+      </Reveal>
+      <Reveal delay={0.15} className="col-span-2">
+        <Link href="/satellites" className={`${tile} flex h-full flex-col justify-between gap-6 bg-[#141414] text-[#f3efe6] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-1`}>
+          <div className="flex items-center justify-between"><p className={`${label} text-white/50`}>Fleet</p><span className="text-sm text-white/50">→</span></div>
+          <div className="flex items-end justify-between gap-4">
+            <DotText text="5" dot={11} gap={3.4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" />
+            <div className="text-right">
+              <p className="text-[15px]">satellites tracked live</p>
+              <p className="mt-1 text-xs text-white/50">Terra · Aqua · Suomi-NPP · NOAA-20 · NOAA-21</p>
+            </div>
+          </div>
+        </Link>
+      </Reveal>
+    </div>
   );
 }
 
