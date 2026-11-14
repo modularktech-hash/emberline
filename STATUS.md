@@ -10,6 +10,14 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
+## ⚠️ Claimed by the cloud "data host" session (14 Nov, evening) — owner's instruction
+
+- **All of `web/`** — full multi-tab rebuild (home scroll story, 3D globe, satellites,
+  calculators, data tables, seasons, trends, compare). **No other session edits `web/`.**
+- **The world dataset** — 8,213 country-year files (37.8 GB) downloading here
+  since 11:07 UTC, then build + fit. The local Codex download can stop; if it
+  finishes first, push the outputs and say so here.
+
 ## Who is doing what right now
 
 | Task | Who | State | Output |
