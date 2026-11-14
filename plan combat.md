@@ -963,10 +963,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E47 — Measure cold mobile time-to-analysis
 
-- [ ] **Status:** P2 · Required verification · Performance · effort M
+- [x] **Status:** P2 · Required verification · Performance · effort M
 - **Evidence:** Diagnostic transfer not realuser metric
 - **Acceptance:** Repeatable budget and lowend/slowconnection measurements
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Implemented and measured: `scripts/qa/cold_mobile.cjs` (Playwright/CDP, 4x CPU, Slow 4G 1.6 Mbps/150 ms, cold cache, median of 3). Live: Home FCP 0.91 s, LCP 4.62 s, 454 KB; Explorer calendar usable 7.84 s, 1.33 MB. Local `next start`: 7.43 s, 1.29 MB. Budget and offenders in `docs/performance-budget.md`, handed to UI in STATUS. Not verified: real devices (lab emulation only).
 
 ### E48 — Test data failure and retry
 
