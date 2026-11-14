@@ -32,3 +32,7 @@ data/
 # Local recovery artifacts -- a patch of unpushed commits, produced when the
 # session cannot reach GitHub. Transient by nature and circular to commit.
 *.patch
+
+# The /data page route (a "data/" dir, otherwise caught by the rule above)
+!web/src/app/data/
+!web/src/app/data/**
