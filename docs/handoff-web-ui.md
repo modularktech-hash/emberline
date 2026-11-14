@@ -50,5 +50,16 @@ A clickable copy of the real app (a static export) is at https://claude.ai/artif
 ## Open / next
 
 - The world data is **done and published by the "app build" session** (`*_global` files, `4f47247`). The app does not read `*_global` yet (TODO §2). This session's duplicate world download has been stopped.
-- A UI polish pass (cursor, magnetic buttons, nav hide-on-scroll, Lenis, dot-matrix touches, 404) was stopped mid-way at the owner's request. What landed is in git log after `9d768ae`.
+- **Polish pass landed** (`f10f720`, `1f8a176`):
+  - Design tokens and `web/src/lib/motion.ts`.
+  - Dot+ring cursor; magnetic CTAs; card tilt.
+  - Lenis smooth scroll (new dependency `lenis`); progress bar.
+  - Nav hides on scroll down.
+  - Ticker; dot-matrix numerals on Explorer, Compare and Trends.
+  - Dot 404; OG image; icon.
+- **Open bugs** for whoever takes `web/` next:
+  1. **Sideways scroll at 375px** on /trends, /method, /lab and /data. A `pre` or table block inside an `overflow-x-auto` container is the likely cause; setting `pre{overflow:hidden}` makes it go away.
+  2. **Fallback numbers in `Home.tsx` DriftChapter** (`?? 13.2`, `?? 14.4`): these break the rule that every number comes from our own fit. Remove them and show a loading state instead.
+  3. **Lighthouse after the polish pass:** performance 50 (the WebGL globe on a software renderer), accessibility 91. Both accessibility fails were fixed afterwards; Lighthouse was not re-run.
+  4. **Not done:** floating-label inputs, and the second polish round.
 - Refresh `live.json` near demo time (`scripts/build_live.py`). Then: the README, submission text and 30 s video (`docs/submission.md`).
