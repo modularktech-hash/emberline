@@ -12,7 +12,7 @@ it, commit and push. Times are IST.
 | Global data download + build | Cloud session (Claude, "data host") | **RUNNING** (unattended) | `data/global/*.csv.gz` (~190 countries) → `scripts/run_global.py` → `data/global_public/`. Cloud session only — never committed |
 | Global fit | Cloud session | **queued** after the build | `web/public/data/params_global.json`, `calendar_*_global.parquet` — published only after checking |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
-| App build — B1+B2 | Cloud session (Claude, "app build") | **IN PROGRESS** | branch `shishir/admiring-pascal-8ymvmc`; deployed URL when live |
+| App build — B1+B2 | **Taken over by the cloud "data host" session** (user's request). Desktop session: stopped after the data layer (merged into main) | **IN PROGRESS on `main`** | deployed URL when live |
 
 **A2 v1 is done — do not re-run it elsewhere.** Headline numbers are in `docs/results.md`. Next science step (cloud session): run on the global data when it lands.
 Person A: you are free. Good uses of your time: help B1, write the README and
@@ -43,6 +43,8 @@ land in `docs/results.md`.
    country as `fit_source: pooled`).
 
 ## Log (newest first)
+
+- 14 Nov ~12:20 — App build taken over by the cloud session on `main`; Desktop session's hyparquet data layer merged in. Do not edit `web/` from another session.
 
 - 14 Nov ~12:20 — Global run: wave 1 (75 high-fire countries) downloading,
   wave 2 (116 more) queued, build chained after. Runner and pooled fallback
