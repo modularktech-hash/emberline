@@ -300,7 +300,7 @@ export function Explorer() {
                 <span className="block">Requested: {area.bbox.map((v) => v.toFixed(2)).join(", ")} (W, S, E, N){bboxCrossesAntimeridian(area.bbox) && " — crosses the 180° meridian"}</span>
                 <span className="block">Effective coverage: {data.raw.keys.length} of {area.parents.length} touched cells have data{ex ? <>, spanning {ex.map((v) => v.toFixed(1)).join(", ")}</> : ""} — dashed blue on the map.</span>
               </span>); })()}
-            Areas resolve to the ~300 km grid cells (H3 resolution 2) they touch, anywhere in the processed FIRMS record, so a small box reports its surrounding cell. A cell is summed whole: it can straddle a border.
+            Areas resolve to the ~300 km grid cells (H3 resolution 2) they touch, anywhere in the processed FIRMS record, so a small box reports its surrounding cell. Every touched cell is included, up to the whole globe: the cells are enumerated exactly, not sampled, and none is dropped. A cell is summed whole: it can straddle a border.
           </p>
         </div>
       </section>

@@ -534,7 +534,9 @@ export async function getCalendar(query: CalendarQuery): Promise<CalendarResult>
   const inRaw = requested.filter((k) => rawKeys.has(k));
   const known = mode === "raw" ? inRaw : requested.filter((k) => harmKeys?.has(k));
   const uncorrectedKeys = mode === "raw" ? [] : inRaw.filter((k) => !harmKeys?.has(k));
-  const unknownKeys = requested.filter((k) => !known.includes(k) && !uncorrectedKeys.includes(k));
+  // Sets, not Array.includes: a continental box asks for thousands of cells.
+  const knownSet = new Set(known), uncorrectedSet = new Set(uncorrectedKeys);
+  const unknownKeys = requested.filter((k) => !knownSet.has(k) && !uncorrectedSet.has(k));
 
   const rows: CalendarRow[] = [];
   const missing: Array<{ year: number; month: number }> = [];
