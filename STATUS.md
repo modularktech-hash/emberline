@@ -50,6 +50,7 @@ here before editing and pull first.
   - **E13 landed (5da868e) — needed now:** `season.json` has a `partial` list and null values for incomplete fire years. `TrendsPage.tsx:45` silently drops years with null `harm_onset`, which also affects the year table (≈130–140) and the onset chart (≈101–112). Show them as "incomplete" instead. Add `partial?: ("raw"|"harm")[]` to the types in `lib/data.ts`.
   - E38/E39 landed (2d06121): `web/public/data/manifest.json`. DataPage could link it and note that the calendar parquets hold both country and grid rows (summing both double-counts). Method copy to place: `docs/data-contract-additions.md` §4 (evaluation population) and §5.
   - Any change under `web/public/data` must re-run `scripts/build_manifest.py` or `scripts/check_data_contract.py` fails.
+  - **E07 (1909e82, a2e01e7):** add a separate "recent activity" card from the "UI card spec" in `docs/current-month.md`, reading `web/public/data/current_month.json` (Canada, Portugal, Chile, Australia). Badge it "Provisional · not harmonized". Hide the ratio when it is null, warn when polygon capture is below 0.95, and never put these numbers on the harmonized calendar scale. It compares NOAA-20 with its own 2018–2025 history for the same 6 complete days; it is not month-to-date.
 - **Technical session, in order:** E13, E38/E39 done → E07 feasibility (running) → E16 mixed-version check → E07 current-month feasibility → E31/E32 → E40 fixture.
 - **Owner:** E18 form/deadline, E19 disclosure, E41 team links.
 
