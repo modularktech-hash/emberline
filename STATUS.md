@@ -10,7 +10,9 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — RELEASED by the "app build" cloud session after regression QA (14 Nov ~18:20 UTC)
+## `web/` — CLAIMED by builder subagent (session_01RwRY…) for plan-combat E01 (coordinate validation) + E02 (complete H3 cell coverage), 14 Nov
+
+### Previous: RELEASED by the "app build" cloud session after regression QA (14 Nov ~18:20 UTC)
 
 ### Previous: RELEASED by the "data host" cloud session (14 Nov ~17:00 UTC); was claimed from ~15:10 UTC
 
