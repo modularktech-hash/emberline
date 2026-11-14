@@ -5,7 +5,8 @@ import { useCallback, useMemo, useState } from "react";
 import { getLive, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { Chip, CountUp, PageHead, Reveal, Segmented } from "@/components/ui";
-import { SAT_COLORS, type Cell, type SatState } from "@/components/FireGlobe";
+import type { Cell, SatState } from "@/components/FireGlobe";
+import { SAT_COLORS } from "@/lib/sats";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
 

@@ -4,14 +4,14 @@ import { DotClock, DotText, dotCompact, useToday } from "@/components/DotMatrix"
 import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
-import { motionValue } from "motion/react";
+import { useMemo, useRef, useState } from "react";
 import { CountUp, Reveal } from "@/components/ui";
-import { clock, getCountryTable, getDrift, getLive, getSeason, getTle, type CountryRow, type DriftFile } from "@/lib/data";
+import { getCountryTable, getDrift, getLive, getSeason, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { ALL } from "@/lib/nav";
 import { Eyebrow, Stat } from "@/components/Figure";
+import { DriftClocks } from "@/components/DriftClocks";
 import { NA, fmtAge, fmtClock, fmtInt, fmtR2, fmtUtc, parseUtc, span } from "@/lib/format";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
@@ -217,7 +217,6 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
   );
 }
 
-const FALLBACK_MV = motionValue(0);
 
 /* --------------------------------------------------------- sticky story */
 function StoryStep({ i, n, p, children }: { i: number; n: number; p: MotionValue<number>; children: React.ReactNode }) {
@@ -334,65 +333,19 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
   );
 }
 
-/**
- * One overpass clock. The hand and the time label are written directly to the
- * DOM from the scroll-linked value (no React re-render per frame), and the
- * hand rotates with an SVG transform attribute about the dial centre.
- */
-function Dial({ color, label, mv }: { color: string; label: string; mv: MotionValue<number> | null }) {
-  const hand = useRef<SVGLineElement>(null);
-  const text = useRef<HTMLParagraphElement>(null);
-  const paint = (h: number) => {
-    hand.current?.setAttribute("transform", `rotate(${((h / 24) * 360 - 180).toFixed(2)} 60 60)`);
-    if (text.current) text.current.textContent = clock(h);
-  };
-  useMotionValueEvent(mv ?? FALLBACK_MV, "change", (h) => { if (mv) paint(h); });
-  useEffect(() => { if (mv) paint(mv.get()); });
-  return (
-    <div className="card flex flex-col items-center p-5">
-      <svg viewBox="0 0 120 120" className="w-32">
-        <circle cx="60" cy="60" r="52" fill="var(--surface-1)" stroke="var(--hairline)" />
-        {Array.from({ length: 24 }, (_, i) => <line key={i} x1="60" y1="10" x2="60" y2={i % 6 ? 14 : 18} stroke="var(--ink)" strokeOpacity="0.4" transform={`rotate(${i * 15} 60 60)`} />)}
-        <line x1="60" y1="60" x2="60" y2="12" stroke="var(--seq-2)" strokeWidth="9" strokeOpacity="0.5" transform="rotate(15 60 60)" />
-        {mv && <line ref={hand} x1="60" y1="60" x2="60" y2="16" stroke={color} strokeWidth="3.5" strokeLinecap="round" />}
-        <circle cx="60" cy="60" r="4" fill="var(--ink)" />
-        <text x="60" y="98" textAnchor="middle" fontSize="8" fill="var(--text-muted)">gold = 13:00 fire peak</text>
-      </svg>
-      <p className="mt-2 text-sm font-medium" style={{ color }}>{label}</p>
-      <p ref={text} className="tabular display text-2xl">{mv ? "" : "—"}</p>
-    </div>
-  );
-}
-
 function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const rows = drift?.countries?.Portugal ?? [];
-  const lst = (plat: string, y: number) => rows.find((r) => r.platform === plat && r.year === y)?.lst;
-  // Measured values only (drift.json): until it loads, or if a value is missing, the dials show "—".
-  const a0 = lst("Aqua", 2015), a1 = lst("Aqua", 2025), t0 = lst("Terra", 2015), t1 = lst("Terra", 2025), s = lst("Suomi-NPP", 2025);
-  const ready = [a0, a1, t0, t1, s].every((v) => v != null);
-  const aq = useTransform(p, [0.3, 0.7], [a0 ?? 0, a1 ?? 0]);
-  const te = useTransform(p, [0.3, 0.7], [t0 ?? 0, t1 ?? 0]);
-  const sn = useTransform(p, () => s ?? 0);
-  const yr = useTransform(p, [0.3, 0.7], [2015, 2025]);
-  const yrText = useTransform(yr, (v) => String(Math.round(v)));
+  const [country, setCountry] = useState("Australia");
   return (
-    <section ref={ref} className="mt-16 py-16">
-      <Reveal><p className="eyebrow">06 · Still shifting</p></Reveal>
+    <section className="mt-16 py-16">
+      <Reveal><Eyebrow>06 · Still shifting</Eyebrow></Reveal>
       <Reveal delay={0.05}><h2 className="display mt-3 max-w-3xl t-d2">And the old satellites are <span className="italic text-[var(--ember)]">drifting.</span></h2></Reveal>
       <Reveal delay={0.1}>
         <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">
-          Since 2022 Terra and Aqua have left their fixed orbits. Fires peak around 13:00, so as each one passes earlier or later it sees less fire, though nothing burns less. Measured over Portugal from the detections themselves:
+          A satellite in a sun-synchronous orbit passes over a place at the same local time every day. Terra and Aqua no longer do. Each clock below is measured from the fire detections themselves, year by year.
         </p>
       </Reveal>
-      <div className="mt-8 grid items-center gap-4 sm:grid-cols-[auto_1fr_1fr_1fr]">
-        <motion.p className="display tabular text-6xl text-[var(--ember)] sm:text-7xl">{yrText}</motion.p>
-        <Dial color="#7a4fa0" label="Terra · MODIS" mv={ready ? te : null} />
-        <Dial color="#3f7f96" label="Aqua · MODIS" mv={ready ? aq : null} />
-        <Dial color="#d9431a" label="Suomi-NPP · VIIRS" mv={ready ? sn : null} />
-      </div>
-      <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">Emberline builds its post-2012 record from Suomi-NPP, which has held its 13:30 orbit, so the harmonized record is not exposed to the drift. <Link className="link-ul" href="/satellites">See every satellite →</Link></p></Reveal>
+      <Reveal delay={0.12}><div className="mt-8"><DriftClocks drift={drift} country={country} onCountry={setCountry} /></div></Reveal>
+      <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]"><Link className="link-ul" href="/satellites">Every satellite, and the drift year by year →</Link></p></Reveal>
     </section>
   );
 }

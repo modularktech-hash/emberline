@@ -290,3 +290,6 @@ html[data-perf=low] .dot-wipe { animation: none; }
 .dot-loader i { width: 8px; height: 8px; border-radius: 50%; background: rgba(18,23,21,0.12); animation: dot-lit 1.1s var(--ease-in-out) infinite; }
 @keyframes dot-lit { 0%, 100% { background: rgba(18,23,21,0.12); transform: scale(0.85); } 40% { background: var(--ember); transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .dot-loader i:nth-child(odd) { background: var(--ember); } }
+
+/* Overpass clock hands: one CSS transform transition per year step (DriftClocks). */
+.drift-hand { transform-box: view-box; transform-origin: 60px 60px; transition: transform 520ms var(--ease-out); }

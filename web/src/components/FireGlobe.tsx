@@ -10,9 +10,8 @@ import { setPerfLow, usePerfLow } from "@/lib/perf";
 export type Cell = [number, number, number, number, number, string];
 export interface SatState { name: string; instrument: string; lat: number; lng: number; alt: number; color: string }
 
-export const SAT_COLORS: Record<string, string> = {
-  Terra: "#7a4fa0", Aqua: "#3f7f96", "Suomi-NPP": "#d9431a", "NOAA-20": "#b8860b", "NOAA-21": "#2f8f5b",
-};
+import { SAT_COLORS } from "@/lib/sats";
+export { SAT_COLORS };
 const RAMP = ["#f9c46b", "#f49b3f", "#e66a26", "#c93f1c", "#96221a", "#561114"];
 const fireColor = (frp: number, max: number) => RAMP[Math.min(5, Math.floor(Math.sqrt(frp / max) * 6))];
 const EARTH_KM = 6371;

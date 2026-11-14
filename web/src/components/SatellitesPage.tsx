@@ -5,7 +5,9 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Chip, PageHead, Reveal } from "@/components/ui";
-import { SAT_COLORS } from "@/components/FireGlobe";
+import { SAT_COLORS } from "@/lib/sats";
+import { DriftClocks } from "@/components/DriftClocks";
+import { Eyebrow } from "@/components/Figure";
 import { clock, getDrift, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 
@@ -77,7 +79,7 @@ export function SatellitesPage() {
                 <div className="flex justify-between"><dt>Launched</dt><dd className="tabular">{s.launched}</dd></div>
                 <div className="flex justify-between"><dt>Fire pixel</dt><dd>{s.pixel}</dd></div>
                 <div className="flex justify-between"><dt>Altitude</dt><dd>{s.alt}</dd></div>
-                <div className="flex justify-between"><dt>Node</dt><dd>{s.node}</dd></div>
+                <div className="flex justify-between"><dt>Nominal overpass</dt><dd>{s.node}</dd></div>
               </dl>
               <p className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[11px] ${s.status === "Stable" ? "bg-[#d6e2cf]" : "bg-[var(--ember-soft)] text-[var(--ember)]"}`}>{s.status}</p>
               <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">{s.role}</p>
@@ -101,6 +103,14 @@ export function SatellitesPage() {
               <p className="mt-4 text-xs text-[var(--text-muted)]">Propagated with SGP4 from TLEs fetched {data?.tle.fetched}. Time runs ×180.</p>
             </div>
           </div>
+        </section>
+      </Reveal>
+
+      <Reveal>
+        <section className="card mt-10 p-5 sm:p-7">
+          <Eyebrow>Overpass clocks · measured from the detections</Eyebrow>
+          <h2 className="display mt-2 t-d3">Two of the three clocks have <span className="italic text-[var(--ember)]">started to move.</span></h2>
+          <div className="mt-5"><DriftClocks drift={data?.drift} country={country} onCountry={setCountry} /></div>
         </section>
       </Reveal>
 
