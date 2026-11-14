@@ -914,10 +914,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E40 — Add reproducible small fixture and setup
 
-- [ ] **Status:** P2 · Observed gap · Docs · effort M
+- [x] **Status:** P2 · Observed gap · Docs · effort M
 - **Evidence:** README lacks complete new-reviewer pathway
 - **Acceptance:** Fresh environment reproduces one known output
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: README had no small runnable path or expected output. Implemented: `tests/fixtures/portugal_feb_dec/` (every FIRMS archive row for Portugal, Feb+Dec 2019–2021; 997 rows, 104 KB, NASA open data, cut by `scripts/make_fixture.py`), `scripts/repro_fixture.sh` (venv + pinned deps) → `scripts/repro_fixture.py`: firms-ingest pytest, build detections/cell-day/calendar with build_tables.py functions, compare to `tests/fixtures/portugal_feb_dec_expected.json`, cross-check counts against published `calendar_raw_global.parquet`; README "Reproduce in 5 minutes". Verified: fresh `git clone` into scratchpad → 84 passed, 672 filtered detections, expected file matched, 12/12 counts equal the published calendar, `REPRO OK` (Python 3.13). Not verified: the fit and web build are not in the fixture path; other Python versions.
 
 ### E41 — Add challenge project and team links
 
