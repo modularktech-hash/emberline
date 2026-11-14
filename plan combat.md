@@ -749,7 +749,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P1 · Source concern · Release · effort M
 - **Evidence:** Independent fallback loaders and metadata sources
 - **Acceptance:** Manifest validates version/schema and fallback consistency
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced (by code reading): `queries.ts` `getParams()` and `openTable()` fall back per file independently, so world calendars can pair with the four-country fit; `Explorer.tsx:289` labels from raw only; `season/countries/drift.json` are world-only without fallback. Implemented (data side): `build_manifest.py` writes manifest v2 with named datasets (members + sha256 + one fit version + consistency, harmonized country set == params fitted set) and a mixing rule; `check_data_contract.py` fails on any member version/hash mismatch. Verified: check prints OK; a tampered dataset fit version makes it fail (rc 1). Not verified: the UI half (single-dataset resolution, refuse mismatch, visible banner, blocked-file test) — handed to the UI session, `docs/data-contract-additions.md` §7. Fallback files kept.
 
 ### E17 — Rewrite stale demo and README claims
 

@@ -173,6 +173,53 @@ def json_entry(path: Path) -> dict:
     return e
 
 
+DATASET_INFO = {
+    "world": dict(role="primary", description="the published world fit; what the app reads first",
+                  params="params_global.json"),
+    "fallback_four_country": dict(role="fallback",
+                                  description="older four-country files (Australia, Canada, Chile, Portugal), "
+                                              "a complete set of their own; read only as a whole set",
+                                  params="params.json"),
+    "live": dict(role="separate", description="recent raw feeds; never harmonized, never mixed with the "
+                                              "historical record", params=None),
+}
+
+MIXING_RULE = ("A view may combine files only from ONE dataset (plus 'live', which is never harmonized). "
+               "Never combine params, calendars or summaries from 'world' with any file from "
+               "'fallback_four_country'. If any world file needed by a view fails, either load the whole "
+               "fallback set (params.json + calendar_raw.parquet + calendar_harmonized.parquet) and say so "
+               "on screen, or show the view as unavailable. World-only summaries (countries.json, season.json, "
+               "drift.json, coverage_status.json, validation_points.json) have no fallback equivalent.")
+
+
+def build_datasets(files: list[dict]) -> dict:
+    """Group files into named, versioned datasets. A dataset is consistent when every member that
+    depends on a fit carries the same fit version, and its harmonized calendar holds exactly the
+    countries its params file fitted."""
+    out = {}
+    for name, info in DATASET_INFO.items():
+        members = [f for f in files if f["dataset"] == name]
+        versions = sorted({f["fit_version"] for f in members if f["fit_version"]})
+        problems = []
+        if len(versions) > 1:
+            problems.append(f"fit versions differ: {versions}")
+        if info["params"]:
+            fitted = set(json.loads((WEB / info["params"]).read_text())["countries"])
+            harm = next(f["name"] for f in members if f["name"].startswith("calendar_harmonized"))
+            keys = set(pl.read_parquet(WEB / harm, columns=["scope", "key"])
+                       .filter(pl.col("scope") == "country")["key"].unique().to_list())
+            if keys != fitted:
+                problems.append(f"{harm} countries != {info['params']} fitted countries")
+        out[name] = {
+            "role": info["role"], "description": info["description"],
+            "fit_version": versions[0] if len(versions) == 1 else None,
+            "params_file": info["params"],
+            "files": {f["name"]: f["sha256"] for f in members},
+            "consistent": not problems, "problems": problems,
+        }
+    return out
+
+
 def main() -> int:
     present = sorted(p.name for p in WEB.iterdir() if p.is_file() and p.name != OUT.name and not p.name.startswith("."))
     unknown = sorted(set(present) - set(FILES))
@@ -198,23 +245,22 @@ def main() -> int:
         else:
             e["fit_version"] = None
         files.append(e)
-    world = sorted({f["fit_version"] for f in files if f["dataset"] == "world" and f["fit_version"]})
-    fallback = sorted({f["fit_version"] for f in files if f["dataset"] == "fallback_four_country" and f["fit_version"]})
+    datasets = build_datasets(files)
+    world = [datasets["world"]["fit_version"]] if datasets["world"]["fit_version"] else []
+    fallback = [datasets["fallback_four_country"]["fit_version"]] if datasets["fallback_four_country"]["fit_version"] else []
     manifest = {
-        "manifest_version": 1,
-        "fit_version": world[0] if len(world) == 1 else None,
-        "fallback_fit_version": fallback[0] if len(fallback) == 1 else None,
-        "datasets": {
-            "world": "the published world fit; what the app reads first",
-            "fallback_four_country": "older four-country files, read only if a world file fails to load",
-            "live": "recent raw feeds; never harmonized, never mixed with the historical record",
-        },
+        "manifest_version": 2,
+        "fit_version": datasets["world"]["fit_version"],
+        "fallback_fit_version": datasets["fallback_four_country"]["fit_version"],
+        "datasets": datasets,
+        "mixing_rule": MIXING_RULE,
         "generated_by": "scripts/build_manifest.py",
         "files": files,
     }
     OUT.write_text(json.dumps(manifest, indent=1) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}: {len(files)} files, world fit {world}, fallback fit {fallback}")
-    return 0 if len(world) == 1 and len(fallback) <= 1 else 1
+    ok = all(d["consistent"] for d in datasets.values())
+    return 0 if ok and len(world) == 1 else 1
 
 
 if __name__ == "__main__":
