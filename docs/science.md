@@ -209,6 +209,41 @@ like-for-like comparison with own fits; a cleaner transfer test (applying the
 pooled curve to held-out own-fit countries outside the 61) needs a new
 computation on the detection tables and has not been run.
 
+### Output uncertainty of harmonized totals (E27)
+
+`scripts/output_uncertainty.py` -> `web/public/data/harmonized_uncertainty.json`.
+The published fit kept only marginal 95% intervals for b0 and b1 (no draws, no
+covariance). The bootstrap draws show b0 and b1 are strongly negatively
+correlated (corr about -0.8 to -0.95), so those marginals cannot be resampled
+independently. The script therefore reruns a coefficient bootstrap on the
+published training data (2012-2018, same match labels, same `load`/`label_viirs`)
+without changing any published value:
+
+- Resampling unit: H3 res-5 training cell (cluster bootstrap with Poisson(1)
+  cell weights), B = 200 draws, fixed seed.
+- Per draw: refit the logistic, then re-derive kappa with the published rule
+  (training Aqua count / training sum of P). Kappa is a function of the curve,
+  so letting it follow each draw is part of propagating the coefficients.
+  Countries with pooled kappa keep it fixed.
+- Monthly harmonized total = kappa* x sum P*(FRP) over Suomi-NPP detections;
+  interval = 2.5-97.5 percentile over draws. Before 2012 the series is observed
+  Aqua counts, with no interval.
+- Self-checks: unweighted refit vs published b0/b1 max |diff| 4.7e-14; point
+  totals vs published calendar max relative diff 4.0e-14.
+
+**Covered:** sampling uncertainty of b0 and b1 only. **Not covered:** kappa's
+own sampling uncertainty (no interval exists), model form, matching rule (E29
+shows FRP50 moves 2-7x while totals barely move), drift-era bias 2022-2025,
+FIRMS detection errors, and Aqua count noise. Pooled-curve countries (41):
+`null`, "not estimated".
+
+Result (130 own fits, country-years 2012+ with point >= 100): median relative
+width (upper-lower)/point 0.25%, 90th percentile 2.2%, maximum 14.7%. The
+interval is narrow because kappa recalibrates the total to training Aqua:
+coefficient uncertainty mostly moves *which* detections count, not *how many*.
+This is not the total uncertainty of the harmonized series. Do not present it
+as such.
+
 ## 3. Things that will go wrong
 
 - **Fitting on individual detections instead of aggregated cells.** Detection-level

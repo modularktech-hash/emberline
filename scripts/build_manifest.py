@@ -88,6 +88,10 @@ FILES = {
         dataset="live", fit=None, source=FIRMS_NRT,
         purpose="Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, "
                 "not the Suomi-NPP record, not comparable with the historical calendars"),
+    "harmonized_uncertainty.json": dict(
+        dataset="world", fit="self", source="derived from the FIRMS archive and params_global.json (scripts/output_uncertainty.py)",
+        purpose="E27: 95% bootstrap interval of harmonized country totals from logistic-coefficient uncertainty only "
+                "(see its `covers` field); pooled-curve countries not estimated"),
     "current_month.json": dict(
         dataset="live", fit=None, source="FIRMS NRT and standard archive, NOAA-20 VIIRS (scripts, E07 prototype)",
         purpose="Prototype same-platform NOAA-20 recent window vs NOAA-20 history; not harmonized, "
