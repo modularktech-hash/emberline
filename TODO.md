@@ -10,6 +10,8 @@ what, `docs/submission.md` has the full submission rules.
 - [x] Area selection: map box, typed bounds, date range (`51b6a9f`)
 - [x] CSV export of the calendar shown (`7b4904f`)
 - [x] `/method` page, every number from `params.json` (`40a9646`)
+- [x] Premium home: scroll-driven story, multi-tab site (`e8743d4`)
+  - [x] Liquid glass polish (Apple-inspired) on nav, menus, buttons, chips, segmented controls (`0a38dc4`)
 - [x] Map checked against the real basemap, both themes, phone width (`cdf27f5`)
 
 ## 1. Global data (running in the "app build" cloud session)
