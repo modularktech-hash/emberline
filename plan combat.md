@@ -28,14 +28,14 @@ sed -n '1,100p' 'plan combat.md'
 
 ### Progress ledger — update at every stopping point
 
-- Current task: none selected; documentation handoff created.
-- Implementation status: no application changes made by this handoff.
-- Last completed action: full review and prioritized checklist persisted in this file.
-- Current branch / HEAD: record when implementation begins.
-- Files changed in current task: none.
-- Checks run / results: none for implementation yet.
-- Remaining uncertainty / blocker: findings describe the review snapshot; verify current state.
-- Next action: inspect current repository instructions and status, then reproduce E01 (coordinate validation) or confirm it has already been fixed.
+- Current task: trust-critical batch E01-E05 plus E10. Data side finished; web side in progress in a builder subagent (web/ claimed in STATUS.md).
+- Implementation status: E10 done. E03/E04/E05 data published, UI wiring pending. E01/E02 not yet confirmed done.
+- Last completed action: d7bb38f on main (merged to shishir/admiring-pascal-8ymvmc as cfd6542) - coverage_status.json, validation_points.json, coef_ci_estimated flag, scalar baseline in docs/results.md.
+- Current branch / HEAD: shishir/admiring-pascal-8ymvmc @ cfd6542 (= origin/main).
+- Files changed in current task: scripts/build_coverage_validation.py, scripts/check_data_contract.py, web/public/data/{params_global,coverage_status,validation_points}.json, docs/{results,session-notes,data-contract-additions}.md. Uncommitted: web/src/lib/queries.ts (web builder's, do not discard).
+- Checks run / results: `next build` passes; `scripts/check_data_contract.py` OK; recomputed held-out R2 matches published to 1.8e-15 for all 171.
+- Remaining uncertainty / blocker: model does not beat the scalar ratio baseline on R2 in 87 of 171 countries - copy must say so (E06, E11). Nothing on the website is to be deleted (owner instruction).
+- Next action: take the web builder's hand-back; verify E01 (reject lat outside +/-90, blank fields) and E02 (complete cell enumeration) in the browser; then wire coverage_status.json and coef_ci_estimated into Lab/Method/Data (E03-E05 UI), then E06.
 
 ### Recommended work sequence
 
@@ -650,21 +650,21 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P0 · Confirmed · Science · effort S
 - **Evidence:** 41/41 pooled coefficient intervals identical; pooled-lab.txt
 - **Acceptance:** Unavailable uncertainty null and labeled; valid intervals computed separately
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Data part done and verified (d7bb38f): `params_global.json` carries `coef_ci_estimated` (false for the 41 pooled fits, true for 130 own fits). UI part (Lab/Method must not draw a zero-width interval) not yet verified.
 
 ### E04 — Separate fit exceptions from scientific insufficiency
 
 - [ ] **Status:** P1 · Confirmed · Data · effort M
 - **Evidence:** 66 TypeError entries in params failed dictionary
 - **Acceptance:** Reason-coded outcome and data counts for each unavailable fit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Data part done and verified (d7bb38f): `web/public/data/coverage_status.json` classifies all 237 countries; the 66 TypeErrors traced to three lines in `fit_harmonization.py` (31 threshold-loop, 9 null-control, 26 bootstrap) and are all data insufficiency, 0 numerical failures. UI wiring pending.
 
 ### E05 — Correct raw-only availability count
 
 - [ ] **Status:** P1 · Confirmed · Coverage · effort S
 - **Evidence:** 61/66 unavailable fits have raw calendars
 - **Acceptance:** Coverage summary distinguishes raw-only from no calendar
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Data part done and verified (d7bb38f): 232 countries have raw calendar rows; of the 66 unfitted, 61 have raw calendars and 5 have none (American Samoa, Antarctica, Maldives, Marshall Islands, South Georgia). UI count pending.
 
 ### E06 — Show selected-region quality interpretation
 
@@ -699,7 +699,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P1 · Observed gap · Science · effort M
 - **Evidence:** Current baselines rawVIIRS and FRPthreshold
 - **Acceptance:** Untouched evaluation reports model versus calibrated simpler baseline
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Done and verified (d7bb38f): training-only Aqua/Suomi-NPP ratio baseline, 2012-2018 applied to 2019-2021. Model R2 higher in 84 of 171 countries, not higher in 87; lower MAE in 141 of 171. Written up in `docs/results.md`; `validation_points.json` published. Showing it in the app is pending.
 
 ### E11 — Investigate threshold wins
 
