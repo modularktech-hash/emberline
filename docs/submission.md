@@ -22,7 +22,7 @@ Not "a video and a repo" exactly. It's a **project page** on spaceappschallenge.
 | # | Field | What we put |
 |---|---|---|
 | 1 | Project name | **Emberline** — tagline "25 years of fire. One unbroken line." |
-| 2 | High-level summary | 3–4 sentences: problem, what we built, why it matters |
+| 2 | High-level summary | 3–4 sentences: problem, what we built, why it matters (draft below) |
 | 3 | **Link to project demo** | **A 30-second video** (or ≤ 7 slides). Public. |
 | 4 | **Link to final project** | Public, no login: our **deployed Vercel app**, and the public repo |
 | 5 | Detailed description | What it does, how, benefits, tools/languages used |
@@ -31,15 +31,28 @@ Not "a video and a repo" exactly. It's a **project page** on spaceappschallenge.
 | 8 | **Use of AI** | Which AI tools and exactly how (see below) |
 | 9 | Verification | Accept terms, confirm originality |
 
-**Public repo:** `shishirbhat/emberline`, **created at 09:00 on Saturday,
-not before.** Nothing project-related may be public before 09:00 —
-disqualification. All event work goes there; Vercel deploys from it.
+**Public repo:** `modularktech-hash/emberline`. All event work goes there;
+Vercel deploys from it.
 
-> **Night-before action:** two public repos (`emberline`,
-> `burning-activity-calendar`) were created on 13 Nov by mistake, each with a
-> README describing the project. **Delete both before 09:00**: repo →
-> Settings → scroll to bottom → Delete this repository. Then recreate
-> `emberline` at 09:00 per `gameplan-2person.md`.
+> **Event-boundary history: preserve it, disclose it.** Deleting, recreating or
+> changing the visibility of a repository does not establish when work was done,
+> and must not be used as a compliance strategy. Keep the git history accurate,
+> do not rewrite it, and describe pre-event preparation and event-time work
+> honestly in the README and the submission form under the applicable rules
+> (owner to confirm the wording: plan-combat E19).
+
+Draft summary (field 2), matching what is implemented:
+
+> Emberline turns NASA FIRMS MODIS and VIIRS records into an interactive
+> historical burning-activity calendar. It estimates an Aqua-MODIS-equivalent
+> record with per-country models (130 own fits, 41 on a pooled curve) and shows
+> held-out performance, so users can see where the correction is reliable and
+> where it is experimental: against a single training-era scale factor the
+> model has higher held-out R² in 84 of 171 countries and lower mean absolute
+> error in 141 of 171. Analysts can compare seasons, inspect unusual months and
+> download traceable results. The comparable record covers 2003–2025; the recent
+> globe is a separate, uncorrected NOAA-20/21 view. Orbital drift since 2022 is
+> measured and shown, not corrected. Claims are regional, not global.
 
 ## The demo is 30 SECONDS. Not three minutes.
 
@@ -62,8 +75,8 @@ way to throw away a win. Hard rules:
 | 0:00–0:02 | Team | Team name | "Team Modulark." |
 | 0:02–0:05 | Challenge | Raw count chart, 2012 jump | "Fire records jump in 2012. Fires didn't — the satellite changed." |
 | 0:05–0:10 | Title + tagline | App home page | "Emberline: 25 years of fire. One unbroken line." |
-| 0:10–0:20 | How it works + data | Click the toggle; jump vanishes; drift chart | "We model what MODIS would have seen, correct the satellites' orbital drift since 2022, using NASA FIRMS data." |
-| 0:20–0:30 | Impact | Pick an area, calendar, CSV download | "Pick any area, see its fire seasons, compare today against history, download the data." |
+| 0:10–0:20 | How it works + data | Click the toggle; jump shrinks; held-out scores | "Using NASA FIRMS data we model what Aqua MODIS would have seen, and show where that works and where it doesn't." |
+| 0:20–0:30 | Impact | Pick an area, calendar, CSV download | "Pick an area, see its fire seasons from 2003 to 2025, compare years, download the data." |
 
 Record it the moment the demo works on Sunday — not at 16:30.
 
@@ -92,7 +105,7 @@ There are 10 global awards. The one that fits us best is one we hadn't named:
 | Award | Rewards | Fit |
 |---|---|---|
 | **Best Use of Science** | "Most valid, effective use of the scientific method" | **Strongest.** Held-out validation, null controls, measured orbital drift, honest limits. This is exactly what we have that others don't. |
-| Best Use of Data | Making space data more accessible or using it in a unique way | Strong. Keyless, static, downloadable 25-year harmonized record. |
+| Best Use of Data | Making space data more accessible or using it in a unique way | Strong. Keyless, static, downloadable harmonized record, 2003–2025. |
 | Galactic Impact | Most potential to improve life on Earth | Good. Fire managers and responders. |
 | Best Use of Technology | Most innovative use of technology | Weaker. Static Parquet range reads is neat, not innovative enough alone. |
 
@@ -118,7 +131,8 @@ repo is MIT. Every third-party source must be credited (field 7).
 - [ ] Deployed app URL opens logged-out on a phone.
 - [ ] Public repo has all code, README with real numbers, MIT license.
 - [ ] Every number in the README / app / video comes from our own fit.
-- [ ] Pre-event work imported in a labelled commit and credited in README.
+- [ ] Pre-event work and event-time work described accurately in README and form; history not rewritten (E19).
+- [ ] No claim of orbit-drift correction, of comparing today with history, or of global value.
 - [ ] All 9 fields filled, in English.
 - [ ] Use of AI field filled honestly.
 - [ ] Every data source, library and paper credited.

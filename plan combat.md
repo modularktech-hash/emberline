@@ -704,7 +704,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E10 — Evaluate training-only scalar calibration baseline
 
-- [ ] **Status:** P1 · Observed gap · Science · effort M
+- [x] **Status:** P1 · Observed gap · Science · effort M
 - **Evidence:** Current baselines rawVIIRS and FRPthreshold
 - **Acceptance:** Untouched evaluation reports model versus calibrated simpler baseline
 - **Implementation / verification notes:** Done and verified (d7bb38f): training-only Aqua/Suomi-NPP ratio baseline, 2012-2018 applied to 2019-2021. Model R2 higher in 84 of 171 countries, not higher in 87; lower MAE in 141 of 171. Written up in `docs/results.md`; `validation_points.json` published. Showing it in the app is pending.
@@ -753,10 +753,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E17 — Rewrite stale demo and README claims
 
-- [ ] **Status:** P1 · Observed gap · Submission · effort S
+- [x] **Status:** P1 · Observed gap · Submission · effort S
 - **Evidence:** docs/submission.md claims drift correction/today comparison
 - **Acceptance:** Every submitted statement matches frozen implementation
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: `docs/submission.md` 30-s script claimed orbit-drift correction and "compare today against history" and advised deleting/recreating repos; README said "fits, per country" without the 41 pooled exceptions, called all 66 unfitted "too sparse", and omitted the 21 threshold wins and the scalar-baseline result; `docs/gameplan.md` demo said "the step vanishes" / "we corrected what changed in orbit". Implemented: rewrote README, submission.md (script, draft summary, checklist, repo advice replaced with "preserve accurate history, disclose honestly"), gameplan.md demo steps; every figure recomputed from `params_global.json` / `coverage_status.json` / `docs/results.md` (130/41/66, 23/17/18/8, 35 negative, 21 threshold, 84/171 R², 141/171 MAE). Verified: numbers recomputed by script; grep finds no remaining drift-correction or today-vs-history claim in README/submission/gameplan. Not verified: Use-of-AI wording and pre-event history statement (owner, E19); docs/research-findings.md still discusses drift correction as a research idea (not submission-facing).
 
 ### E18 — Confirm current form and local event deadlines
 
