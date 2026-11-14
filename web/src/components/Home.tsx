@@ -1,7 +1,13 @@
 "use client";
 
 import { DotClock, DotStat, DotText, dotCompact, useToday } from "@/components/DotMatrix";
-import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
+
+/** E25: with prefers-reduced-motion, scroll-linked effects read a fixed progress (their final state) instead of scroll. */
+function useScrollOrFinal(p: MotionValue<number>, final: number): MotionValue<number> {
+  const fixed = useMotionValue(final);
+  return useReducedMotion() ? fixed : p;
+}
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
@@ -61,7 +67,8 @@ function useHomeData() {
 /* ------------------------------------------------------------------ hero */
 function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const { scrollYProgress: heroP } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const scrollYProgress = useScrollOrFinal(heroP, 0);
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const live24 = d ? Object.values(d.live.windows["24h"].totals).reduce((a, b) => a + b, 0) : 0;
@@ -265,12 +272,14 @@ function StoryStep({ i, n, p, children }: { i: number; n: number; p: MotionValue
   const a0 = Math.max(0, a - 0.08), a1 = Math.max(0.01, a);
   const opacity = useTransform(p, [a0, a1, b - 0.06, b], [i === 0 ? 1 : 0.3, 1, 1, i === n - 1 ? 1 : 0.3]);
   const x = useTransform(p, [a0, a1], [i === 0 ? 0 : -10, 0]);
-  return <motion.div style={{ opacity, x }} className="flex min-h-[60vh] flex-col justify-center py-6">{children}</motion.div>;
+  const reduced = useReducedMotion();
+  return <motion.div style={reduced ? { opacity: 1, x: 0 } : { opacity, x }} className="flex min-h-[60vh] flex-col justify-center py-6">{children}</motion.div>;
 }
 
 function OrbitChapter() {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const { scrollYProgress: orbitP } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const p = useScrollOrFinal(orbitP, 1);
   const rot = useTransform(p, [0, 1], [0, 540]);
   // SVG rotation written straight to the transform attribute, about the dial's centre in viewBox units.
   const orbitG = useRef<SVGGElement>(null);
@@ -333,7 +342,8 @@ function pathOf(vals: number[], max: number, w = 640, h = 300) {
 
 function JumpChapter({ row }: { row: CountryRow | undefined }) {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const { scrollYProgress: jumpP } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const p = useScrollOrFinal(jumpP, 1);
   const years = useMemo(() => row?.annual.filter((a) => a.year >= 2003 && a.year <= 2025) ?? [], [row]);
   const raw = years.map((a) => a.raw), harm = years.map((a) => a.harm);
   const max = Math.max(1, ...raw) * 1.05;

@@ -809,10 +809,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E25 — Verify JS reduced-motion behavior
 
-- [ ] **Status:** P2 · Required verification · Motion · effort S
+- [x] **Status:** P2 · Required verification · Motion · effort S
 - **Evidence:** CSS and globe reduction exist; JS charts animate
 - **Acceptance:** All nonessential movement paused/reduced; data still visible
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** MotionPrefs.tsx in layout covers CSS/JS motion (cafcd28). Home: the three scroll-linked effects (hero fade, sticky story steps/orbit chapter, raw→harmonized morph) now read a fixed final progress under `useReducedMotion()`. Verified: Playwright with reducedMotion "reduce", hero opacity stays 1 after scrolling, 0 page errors. Not verified: manual screen-reader/OS setting check.
 
 ### E26 — Show observed versus predicted and residuals
 
