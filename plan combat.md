@@ -865,24 +865,24 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E33 — Add absolute anomaly and zero-median handling
 
-- [ ] **Status:** P2 · Observed gap · Seasons · effort M
+- [x] **Status:** P2 · Observed gap · Seasons · effort M
 - **Evidence:** Ratio interpretation fragile nearzero
 - **Acceptance:** Difference, ratio where defined, baseline n and years
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: table showed only the ratio, "—" when median 0, no baseline years. Seasons.tsx now adds a Difference column (count − median) and the year-total difference in the takeaway; median exactly 0 → "no historical activity in this month — ratio undefined"; under the chart, baseline n, range and every year listed, selected year excluded (leave-one-year-out, unchanged). Verified Playwright 390/1440: 0 console errors, 0 overflow; Canada 2023 "n = 22 years … 2023 excluded", May +12,757 ×13.22; Barbados 2023 Jan/Jun show the undefined state. Median is fractional, so a median rounding to "0" can still carry a ratio (Barbados Feb).
 
 ### E34 — Carry both model-quality states
 
-- [ ] **Status:** P2 · Observed gap · Compare · effort S
+- [x] **Status:** P2 · Observed gap · Compare · effort S
 - **Evidence:** Countries can have very different validation
 - **Acceptance:** Own/pooled/weak status alongside each series
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: the chart showed both lines with no certainty info (only the cards below had a tag). ComparePage.tsx adds, directly under the chart, one legend item per series with origin + quality label from lib/quality.ts fitQuality (read-only); raw mode says "uncorrected"; no fit says so; a note appears when origin or level differ. Verified Playwright 390/1440, 0 errors, 0 overflow: Canada vs Barbados → "own fit; No suspicious-result flags" / "borrowed curve (pooled fit); Experimental correction…" plus the unequal-certainty note.
 
 ### E35 — Explain indexing and common period
 
-- [ ] **Status:** P2 · Observed gap · Compare · effort S
+- [x] **Status:** P2 · Observed gap · Compare · effort S
 - **Evidence:** Own-country mean index
 - **Acceptance:** Reference years and missing/zero-mean behavior explicit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: index divided by a 2003–2025 mean counting missing years as 0 and `mean || 1` hid a zero mean. ComparePage.tsx: missing years are gaps (null, not 0) and excluded from the mean; zero/absent mean → line not drawn and stated; new Period control ("Each side's years" / "Common period", URL `period=common` via useUrlState) restricts both lines and means to years both have data; per-side list of reference years, n, mean and gap years; copy says each index uses its own country's mean. Verified Playwright 390/1440, 0 errors, 0 overflow: Canada/Barbados common → "2003–2025 (n = 23), mean 23,043 / mean 8"; Canada vs Aland_Islands (no fit) common → "reference years none … common period is empty".
 
 ### E36 — Label summed FRP correctly
 
