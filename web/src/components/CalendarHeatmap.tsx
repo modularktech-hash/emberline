@@ -141,18 +141,19 @@ export function CalendarHeatmap({ matrix, mode, scale, annualMax, theme, areaLab
         lines: [
           `${year} · annual total`,
           t.value === null ? "No data" : formatValue(t.value, mode, true),
-          t.value !== null && t.months < 12 ? `${t.months} of 12 months have data` : null,
+          t.value !== null && t.months < 12 ? `${t.months} of 12 months have data in the range` : null,
           mode === "raw" ? "Raw, not corrected" : "Harmonized",
         ],
       };
     }
     const v = values[hover.row][hover.col];
+    const outside = !matrix.inRange[hover.row][hover.col];
     return {
       x: gridX + hover.col * cellW,
       y: rowY(hover.row),
       lines: [
         `${MONTHS[hover.col]} ${year}`,
-        v === null ? "No data" : formatValue(v, mode, true),
+        outside ? "Outside the selected date range" : v === null ? "No data" : formatValue(v, mode, true),
         BASIS_LABEL[basis[hover.row][hover.col]],
       ],
     };
@@ -245,6 +246,35 @@ export function CalendarHeatmap({ matrix, mode, scale, annualMax, theme, areaLab
                 {values[r].map((v, c) => {
                   const x = gridX + c * cellW;
                   const y = rowY(r);
+                  if (!matrix.inRange[r][c]) {
+                    // Outside the selected date range: an empty outline, so it
+                    // reads as "not shown", never as zero or as missing data.
+                    return (
+                      <rect
+                        key={c}
+                        data-cell={`${r}-${c}`}
+                        data-out-of-range="true"
+                        role="gridcell"
+                        tabIndex={active.row === r && active.col === c ? 0 : -1}
+                        aria-label={`${MONTHS[c]} ${year}: outside the selected date range.`}
+                        x={x + 0.5}
+                        y={y + 0.5}
+                        width={cellW - 3}
+                        height={cellH - 3}
+                        rx={2}
+                        fill="none"
+                        stroke="var(--gridline)"
+                        strokeDasharray="2 2"
+                        onMouseEnter={() => setHover({ row: r, col: c })}
+                        onFocus={() => {
+                          setActive({ row: r, col: c });
+                          setHover({ row: r, col: c });
+                        }}
+                        onBlur={() => setHover(null)}
+                        style={{ outline: "none" }}
+                      />
+                    );
+                  }
                   const fill = v === null ? MISSING_FILL[theme] : scale.color(v, theme);
                   const isActive = active.row === r && active.col === c;
                   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import type { Bbox } from "@/lib/aoi";
 import type { CalendarScope, Series } from "@/lib/types";
 
 /**
@@ -18,12 +19,19 @@ export interface Area {
   keys: string[];
   /** Human-readable name shown in titles. */
   label: string;
+  /** The drawn / typed box an h3_parent area was resolved from, if any. */
+  bbox?: Bbox;
 }
 
-/** Inclusive year bounds; null = every year in the data. */
+/**
+ * Inclusive date bounds at month granularity; null = the start / end of the
+ * data. Months are 1-12; null month = January (from) / December (to).
+ */
 export interface YearRange {
   from: number | null;
   to: number | null;
+  fromMonth?: number | null;
+  toMonth?: number | null;
 }
 
 export const DEFAULT_COUNTRY = "Portugal";

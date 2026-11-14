@@ -38,7 +38,16 @@ export interface AnnualTotal {
 
 export interface CalendarMatrix {
   years: number[];
-  /** values[mode][yearIndex][monthIndex]; null = no data (not zero). */
+  /** First / last month (1-12) shown in the first / last year of the range. */
+  fromMonth: number;
+  toMonth: number;
+  /**
+   * inRange[yearIndex][monthIndex]: false for months outside the selected date
+   * range. Their value is null, and they are drawn as out of range, not as
+   * missing and never as zero.
+   */
+  inRange: boolean[][];
+  /** values[mode][yearIndex][monthIndex]; null = no data (not zero) or out of range. */
   values: Record<Series, (number | null)[][]>;
   basis: Record<Series, CalendarBasis[][]>;
   totals: Record<Series, AnnualTotal[]>;
@@ -58,9 +67,14 @@ export function buildMatrix(
   harmonized: CalendarResult,
   from: number,
   to: number,
+  fromMonth = 1,
+  toMonth = 12,
 ): CalendarMatrix {
   const years: number[] = [];
   for (let y = from; y <= to; y += 1) years.push(y);
+  const isIn = (year: number, month: number) =>
+    !(year === from && month < fromMonth) && !(year === to && month > toMonth);
+  const inRange = years.map((y) => Array.from({ length: 12 }, (_, i) => isIn(y, i + 1)));
 
   const values = { raw: [], harmonized: [] } as unknown as CalendarMatrix["values"];
   const basis = { raw: [], harmonized: [] } as unknown as CalendarMatrix["basis"];
@@ -92,7 +106,7 @@ export function buildMatrix(
       let months = 0;
       for (let month = 1; month <= 12; month += 1) {
         const r = byYm.get(year * 12 + month - 1);
-        const v = r?.value ?? null;
+        const v = isIn(year, month) ? (r?.value ?? null) : null;
         rowValues.push(v);
         rowBasis.push(r?.basis ?? (mode === "raw" ? "MODIS" : "observed_aqua"));
         if (v !== null) {
@@ -113,6 +127,9 @@ export function buildMatrix(
   const hasData = Number.isFinite(max);
   return {
     years,
+    fromMonth,
+    toMonth,
+    inRange,
     values,
     basis,
     totals,

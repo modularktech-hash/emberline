@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { areaKey, countryArea, useArea } from "@/components/AreaProvider";
+import { areaKey, useArea } from "@/components/AreaProvider";
+import { AreaSelector } from "@/components/AreaSelector";
 import { CalendarHeatmap } from "@/components/CalendarHeatmap";
 import { CalendarLegend } from "@/components/CalendarLegend";
 import { EmptyState } from "@/components/EmptyState";
@@ -18,7 +19,7 @@ import { useParquet } from "@/lib/useParquet";
  */
 
 export function CalendarView() {
-  const { area, setArea, mode, setMode, yearRange, setYearRange } = useArea();
+  const { area, mode, setMode, yearRange, setYearRange } = useArea();
   const theme = useResolvedTheme();
   const [attempt, setAttempt] = useState(0);
 
@@ -35,12 +36,22 @@ export function CalendarView() {
   const allYears = calendars.data?.[0].years ?? null;
   const from = Math.max(yearRange.from ?? allYears?.[0] ?? 0, allYears?.[0] ?? 0);
   const to = Math.min(yearRange.to ?? allYears?.[1] ?? 0, allYears?.[1] ?? 0);
+  const fromMonth = yearRange.fromMonth ?? 1;
+  const toMonth = yearRange.toMonth ?? 12;
 
   const matrix = useMemo(() => {
     if (!calendars.data) return null;
     const [raw, harm] = calendars.data;
-    return buildMatrix(raw, harm, Math.min(from, to), Math.max(from, to));
-  }, [calendars.data, from, to]);
+    // A one-year range cannot end before it starts.
+    const fm = from === to ? Math.min(fromMonth, toMonth) : fromMonth;
+    const tm = from === to ? Math.max(fromMonth, toMonth) : toMonth;
+    return buildMatrix(raw, harm, Math.min(from, to), Math.max(from, to), fm, tm);
+  }, [calendars.data, from, to, fromMonth, toMonth]);
+
+  const knownKeys = calendars.data?.[0].keys.length ?? 0;
+  const unknownKeys = calendars.data?.[0].unknownKeys.length ?? 0;
+  const notProcessed = area.scope === "h3_parent" && calendars.data !== null && knownKeys === 0;
+  const coverageList = (countries.data ?? []).map((c) => c.replace(/_/g, " ")).join(", ");
 
   const splice = useMemo(() => {
     const rows = calendars.data?.[0].rows ?? [];
@@ -99,55 +110,79 @@ export function CalendarView() {
         </p>
       </header>
 
+      <AreaSelector />
+
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-        <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
-          Area
-          <select
-            className={selectClass}
-            value={area.scope === "country" ? area.keys[0] : ""}
-            onChange={(e) => setArea(countryArea(e.target.value))}
-            disabled={!countries.data}
-          >
-            {area.scope !== "country" ? <option value="">{area.label}</option> : null}
-            {(countries.data ?? (area.scope === "country" ? [area.keys[0]] : [])).map((c) => (
-              <option key={c} value={c}>
-                {c.replace(/_/g, " ")}
-              </option>
-            ))}
-          </select>
-        </label>
-        <fieldset className="flex items-end gap-2 text-xs text-[var(--text-secondary)]">
-          <legend className="sr-only">Year range</legend>
-          <label className="flex flex-col gap-1">
-            From
-            <select
-              className={selectClass}
-              value={from}
-              disabled={!allYears}
-              onChange={(e) => setYearRange({ ...yearRange, from: Number(e.target.value) })}
-            >
-              {yearOptions.filter((y) => y <= to).map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            To
-            <select
-              className={selectClass}
-              value={to}
-              disabled={!allYears}
-              onChange={(e) => setYearRange({ ...yearRange, to: Number(e.target.value) })}
-            >
-              {yearOptions.filter((y) => y >= from).map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </label>
+        <fieldset className="flex flex-wrap items-end gap-x-4 gap-y-2 text-xs text-[var(--text-secondary)]">
+          <legend className="sr-only">Date range</legend>
+          <div className="flex items-end gap-1.5">
+            <label className="flex flex-col gap-1">
+              From
+              <select
+                className={selectClass}
+                value={from}
+                disabled={!allYears}
+                onChange={(e) => setYearRange({ ...yearRange, from: Number(e.target.value) })}
+              >
+                {yearOptions.filter((y) => y <= to).map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="sr-only">From month</span>
+              <select
+                className={selectClass}
+                value={fromMonth}
+                disabled={!allYears}
+                onChange={(e) => setYearRange({ ...yearRange, fromMonth: Number(e.target.value) })}
+              >
+                {MONTHS_SHORT.map((m, i) =>
+                  from === to && i + 1 > toMonth ? null : (
+                    <option key={m} value={i + 1}>
+                      {m}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+          </div>
+          <div className="flex items-end gap-1.5">
+            <label className="flex flex-col gap-1">
+              To
+              <select
+                className={selectClass}
+                value={to}
+                disabled={!allYears}
+                onChange={(e) => setYearRange({ ...yearRange, to: Number(e.target.value) })}
+              >
+                {yearOptions.filter((y) => y >= from).map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="sr-only">To month</span>
+              <select
+                className={selectClass}
+                value={toMonth}
+                disabled={!allYears}
+                onChange={(e) => setYearRange({ ...yearRange, toMonth: Number(e.target.value) })}
+              >
+                {MONTHS_SHORT.map((m, i) =>
+                  from === to && i + 1 < fromMonth ? null : (
+                    <option key={m} value={i + 1}>
+                      {m}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+          </div>
         </fieldset>
         <div className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
           <span id="series-label">Series</span>
@@ -172,6 +207,15 @@ export function CalendarView() {
           </EmptyState>
         ) : calendars.loading || !matrix || !scale ? (
           <Skeleton />
+        ) : notProcessed ? (
+          <div data-testid="not-processed">
+            <EmptyState title={`Not processed yet — coverage: ${coverageList || "loading…"}`} tone="setup">
+              <p>
+                None of the {unknownKeys} H3 res-2 cell{unknownKeys === 1 ? "" : "s"} this box touches
+                has been processed, so there is no calendar for it. That means no data, not no fires.
+              </p>
+            </EmptyState>
+          </div>
         ) : !matrix.hasData ? (
           <EmptyState title={`No calendar data for ${area.label}`}>
             <p>
@@ -181,7 +225,15 @@ export function CalendarView() {
             </p>
           </EmptyState>
         ) : (
-          <div className="space-y-4" data-testid="calendar">
+          <div className="space-y-4" data-testid="calendar" data-scope={area.scope}>
+            {area.scope === "h3_parent" && unknownKeys > 0 ? (
+              <p
+                className="rounded-md border border-dashed border-[var(--baseline)] px-3 py-2 text-xs text-[var(--text-secondary)]"
+                data-testid="partial-note"
+              >
+                {`${unknownKeys} of the ${knownKeys + unknownKeys} cells this box touches ${unknownKeys === 1 ? "is" : "are"} not processed yet and ${unknownKeys === 1 ? "is" : "are"} not in this calendar; it sums the ${knownKeys} processed cell${knownKeys === 1 ? "" : "s"}.`}
+              </p>
+            ) : null}
             <CalendarHeatmap
               key={areaKey(area)}
               matrix={matrix}
@@ -198,7 +250,7 @@ export function CalendarView() {
                 <p>Hatched months have no harmonized value: the harmonized record starts {firstHarmonized}.</p>
               ) : null}
               {matrix.totals[mode].some((t) => t.value !== null && t.months < 12) ? (
-                <p>* Faded bar: annual total over the months with data only.</p>
+                <p>* Faded bar: annual total over the months with data in the selected range only.</p>
               ) : null}
             </div>
           </div>
@@ -228,7 +280,7 @@ export function CalendarView() {
                     <th scope="row" className="px-1.5 py-1 text-left font-medium">{year}</th>
                     {matrix.values[mode][r].map((v, c) => (
                       <td key={c} className="px-1.5 py-1">
-                        {v === null ? "–" : formatValue(v, mode, true)}
+                        {!matrix.inRange[r][c] ? "" : v === null ? "–" : formatValue(v, mode, true)}
                       </td>
                     ))}
                     <td className="px-1.5 py-1 text-[var(--text-primary)]">
@@ -240,7 +292,7 @@ export function CalendarView() {
                 ))}
               </tbody>
             </table>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">– = no data.</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">– = no data; blank = outside the selected date range.</p>
           </div>
         </details>
       ) : null}
