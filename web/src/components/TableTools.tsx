@@ -22,7 +22,7 @@ export function useTable<R, K extends string>(rows: R[], name: (r: R) => string,
     });
   }, [rows, q, sort, name, get]);
   const toggle = (k: K) => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : (k === initial.k ? initial.dir : -1) }));
-  return { q, setQ, sort, toggle, shown };
+  return { q, setQ, sort, setSort, toggle, shown };
 }
 
 /** A sortable column header. */

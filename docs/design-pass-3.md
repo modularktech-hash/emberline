@@ -60,16 +60,21 @@ readouts. Make it more disciplined and easier to use. Labels say
 - [x] D8 Trends: definitions at each metric label; define "sensor share" and
       flag when the ratio is unstable (<0 or >100%).
       - Done: Definition under each metric card; sensor share defined (1 − harmonized ÷ raw trend) and marked "unstable" outside 0–100%.
-- [ ] D9 Globe: "Satellite positions — simulated" with source timestamp; speed
+- [x] D9 Globe: "Satellite positions — simulated" with source timestamp; speed
       control beside Pause; hottest-cell row focuses the globe.
-- [ ] D10 Method: short evidence summary (train/test years, reference sensor,
+      - Done: Footer line "Satellite positions — simulated from TLEs fetched <time>"; Pause/Play beside the speed slider; hottest-cell rows turn the globe to the cell (new `focus` prop) and stay highlighted.
+- [x] D10 Method: short evidence summary (train/test years, reference sensor,
       own vs pooled counts, median held-out R²) before the table; weak fits
       easy to find.
-- [ ] D11 Lab: section navigator for the six tools; same structure per tool.
-- [ ] D12 Home: check the numbered story order (07 appears before 06);
+      - Done: "Evidence in brief" tiles (train/test years, reference sensor, own vs pooled counts, median held-out R²) before the table; "Show the weakest fits first" sorts by R² ascending; rows below 0 tagged "weak".
+- [x] D11 Lab: section navigator for the six tools; same structure per tool.
+      - Done: Section navigator (01–06) in the sticky region bar; every tool now has question, inputs, outputs and a formula line (Anomaly got one).
+- [x] D12 Home: check the numbered story order (07 appears before 06);
       "Skip to tools"; quieter, pausable ticker; three task paths (Explore a
       country · Compare two regions · Understand the correction).
-- [ ] D13 Footer compact on tool pages; no unresolved "…" (named loading state).
+      - Done: Story order fixed (06 drift now before 07 validation); "Skip the story: go to the tools"; three task paths after the at-a-glance panel; ticker slower, quieter, with a pause button.
+- [x] D13 Footer compact on tool pages; no unresolved "…" (named loading state).
+      - Done: Compact footer (site map + credits, no story block or chart) on the seven working pages; "…" placeholders replaced by "loading".
 
 ### P3 — "Then" (only if time remains)
 - [ ] D14 Calm the gradient behind dense content; fewer, quieter shadows on

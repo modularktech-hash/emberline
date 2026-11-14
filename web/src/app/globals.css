@@ -329,3 +329,7 @@ html[data-perf=low] .fade-in { animation-duration: 300ms; }
   button.pill-dark, a.pill-dark, button[aria-haspopup="listbox"], [role="option"] { min-height: 44px; }
   [role="option"] { display: flex; align-items: center; }
 }
+
+/* Home name ticker: slower and quieter than the default marquee, and pausable. */
+.marquee-quiet > div { animation-duration: 90s; opacity: 0.7; }
+.marquee-paused > div { animation-play-state: paused; }

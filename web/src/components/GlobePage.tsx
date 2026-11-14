@@ -21,6 +21,7 @@ export function GlobePage() {
   const [orbits, setOrbits] = useState(true);
   const [spin, setSpin] = useState(true);
   const [speed, setSpeed] = useState(60);
+  const [paused, setPaused] = useState(false);
   const [picked, setPicked] = useState<Cell | null>(null);
   const [satState, setSatState] = useState<SatState[]>([]);
   const onSats = useCallback((s: SatState[]) => setSatState(s), []);
@@ -52,17 +53,22 @@ export function GlobePage() {
               <Chip on={sats} onClick={() => setSats(!sats)}>Satellites</Chip>
               <Chip on={orbits} onClick={() => setOrbits(!orbits)}>Orbits</Chip>
               <Chip on={spin} onClick={() => setSpin(!spin)}>Auto-spin</Chip>
-              <label className="ml-auto flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                Time ×<span className="tabular w-8">{speed}</span>
-                <input type="range" min={1} max={600} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Time speed" className="w-24 min-w-0 accent-[var(--ember)] sm:w-32" />
+              <div className="ml-auto flex items-center gap-2" role="group" aria-label="Simulated satellite time">
+              <button type="button" onClick={() => setPaused(!paused)} aria-pressed={paused} className="glass-thin min-h-[32px] px-3 text-xs font-medium">{paused ? "▶ Play" : "❚❚ Pause"}</button>
+              <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                Speed ×<span className="tabular w-8">{speed}</span>
+                <input type="range" min={1} max={600} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Simulated time speed" className="w-24 min-w-0 accent-[var(--ember)] sm:w-32" />
               </label>
+              </div>
             </div>
             <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
               <FireGlobe live={data?.live ?? null} tle={data?.tle.satellites ?? null} window={win} showFires={fires} showSats={sats}
-                showOrbits={orbits} speed={speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} satLabels />
+                showOrbits={orbits} speed={paused ? 0 : speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} satLabels
+                focus={picked ? { lat: picked[0], lng: picked[1] } : null} />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
               <span>Spike height = radiated power · width = number of detections · 0.5° cells</span>
+              <span className="font-medium text-[var(--text-primary)]">Satellite positions — simulated from TLEs{data ? ` fetched ${fmtUtc(parseUtc(data.tle.fetched))}` : ""}{paused ? " · paused" : ` · ×${speed}`}</span>
               {data && <span className="tabular ml-auto text-[var(--text-muted)]">Fires fetched {data.live.fetched_utc} · orbits {data.tle.fetched}</span>}
             </div>
           </div>
@@ -93,11 +99,11 @@ export function GlobePage() {
           )}
           <Reveal delay={0.1}>
             <div className="card p-5">
-              <Eyebrow>Hottest cells</Eyebrow>
+              <Eyebrow>Hottest cells · click to show on the globe</Eyebrow>
               <ol className="mt-3 space-y-2 text-sm">
                 {top.map((c, i) => (
                   <li key={i}>
-                    <button type="button" onClick={() => setPicked(c)} className="tabular flex w-full justify-between rounded-lg px-1 text-left hover:bg-[var(--surface-2)]">
+                    <button type="button" onClick={() => setPicked(c)} aria-label={`Show cell ${i + 1} on the globe`} aria-pressed={picked === c} className={`tabular flex min-h-[32px] w-full items-center justify-between rounded-lg px-1 text-left hover:bg-[var(--surface-2)] ${picked === c ? "bg-[var(--ember-soft)]" : ""}`}>
                       <span className="text-[var(--text-secondary)]">{i + 1}. {fmtNum(c[0], 1)}°, {fmtNum(c[1], 1)}°</span>
                       <span>{fmtInt(c[3])} MW</span>
                     </button>

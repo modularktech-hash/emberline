@@ -99,9 +99,30 @@ export function Method() {
       {p && summary && (
         <>
           <Reveal><section className="card mt-8 min-w-0 p-5 sm:p-6">
-            <h2 className="display text-2xl">Tested on years the model never saw</h2>
+            <h2 className="display text-2xl">Evidence in brief</h2>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" data-testid="method-summary">
+              {[
+                ["Trained on", `${p.train_years[0]}–${p.train_years[1]}`],
+                ["Tested on (held out)", `${p.test_years[0]}–${p.test_years[1]}`],
+                ["Reference sensor", "Aqua MODIS (unchanged)"],
+                ["Countries fitted", `${summary.own} own · ${summary.pooled} pooled`],
+                ["Median held-out R² (own fits)", fmtR2(summary.medianR2)],
+              ].map(([k, v]) => (
+                <div key={k} className="rounded-2xl border border-[var(--hairline)] p-3">
+                  <dt className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">{k}</dt>
+                  <dd className="tabular mt-1 text-lg font-medium text-[var(--text-primary)]">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-3 text-sm text-[var(--text-secondary)]">
+              {summary.below0} of {names.length} fitted countries score below 0 on held-out R² (weak fits).{" "}
+              <button type="button" className="link-ul text-[var(--text-primary)]" onClick={() => { val.setSort({ k: "r2", dir: 1 }); document.getElementById("val-table")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+                Show the weakest fits first
+              </button>
+            </p>
+            <h2 id="val-table" className="display mt-8 scroll-mt-24 text-2xl">Tested on years the model never saw</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
-              Fitted on {p.train_years[0]}–{p.train_years[1]}, scored on {p.test_years[0]}–{p.test_years[1]} against what Aqua MODIS actually observed,
+              Fitted on {p.train_years[0]}–{p.train_years[1]}, scored on {p.test_years[0]}–{p.test_years[1]} against Aqua reference observations,
               per ~250 km² cell and month. R² of 1 is perfect; below 0 is worse than guessing the average.
               {" "}{names.length} countries fitted: {summary.own} with their own curve, {summary.pooled} on the pooled curve (too few training matches of their own; marked).
               {" "}Median held-out R² over the own-fit countries: <span className="tabular text-[var(--text-primary)]">{fmtR2(summary.medianR2)}</span>.
@@ -130,7 +151,7 @@ export function Method() {
                     return (
                       <tr key={n} data-country={n} className="border-t border-[var(--hairline)]">
                         <td className="py-2.5 pr-3">{prettyName(n)}<FitBadge c={c} /></td>
-                        <td className="px-3"><span className="text-[var(--ember)]">{fmtR2(t.model.r2)}</span> <span className="text-xs text-[var(--text-muted)]">({fmtR2(ci.r2[0])} to {fmtR2(ci.r2[1])})</span> <Bar value={t.model.r2} tone="good" /></td>
+                        <td className="px-3">{t.model.r2 < 0 && <span className="mr-1.5 rounded-full bg-[var(--surface-2)] px-1.5 font-mono text-[10px] uppercase text-[var(--text-secondary)]">weak</span>}<span className="text-[var(--ember)]">{fmtR2(t.model.r2)}</span> <span className="text-xs text-[var(--text-muted)]">({fmtR2(ci.r2[0])} to {fmtR2(ci.r2[1])})</span> <Bar value={t.model.r2} tone="good" /></td>
                         <td className="px-3 text-[var(--text-secondary)]">{fmtR2(t.raw_viirs.r2)}</td>
                         <td className="px-3 text-[var(--text-secondary)]">{fmtR2(t.threshold.r2)}</td>
                         <td className="px-3 text-[var(--text-secondary)]">{fmtPct(t.model.bias_pct)}</td>
