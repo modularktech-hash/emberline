@@ -11,6 +11,8 @@ import { clock, getCountryTable, getDrift, getLive, getSeason, getTle, type Coun
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { ALL } from "@/lib/nav";
+import { Eyebrow, Stat } from "@/components/Figure";
+import { NA, fmtAge, fmtClock, fmtInt, fmtR2, fmtUtc, parseUtc, span } from "@/lib/format";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
 import { EASE } from "@/lib/motion";
@@ -43,8 +45,6 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const live24 = d ? Object.values(d.live.windows["24h"].totals).reduce((a, b) => a + b, 0) : 0;
-  const detections = d ? d.table.countries.reduce((a, c) => a + c.detections_filtered, 0) : 0;
-  const bestR2 = d ? Math.max(...d.table.countries.map((c) => c.r2_model)) : 0;
 
   return (
     <section ref={ref} className="relative pb-10 pt-14 sm:pt-24">
@@ -52,7 +52,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
           className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
           <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
-          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{live24.toLocaleString()}</span> fires seen from orbit in the last 24 hours</span> : "NASA FIRMS · MODIS + VIIRS · 2001–2025"}
+          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> active-fire detections from orbit in the last 24 h</span> : "NASA FIRMS · MODIS + VIIRS · 2001–2025"}
         </motion.div>
         <h1 className="display t-hero mt-8">
           <span className="block"><Words text="25 years of fire." delay={0.1} /></span>
@@ -76,7 +76,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <p className="pointer-events-none mt-1 text-center text-xs tracking-wide text-[var(--text-muted)]">Drag to spin · hover a fire for details</p>
       </motion.div>
 
-      <Widgets d={d} live24={live24} detections={detections} bestR2={bestR2} />
+      <Widgets d={d} />
       {d && <Ticker names={[...d.table.countries.map((c) => c.country), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]} />}
     </section>
   );
@@ -97,61 +97,123 @@ function Ticker({ names }: { names: string[] }) {
   );
 }
 
-/* ----------------------------------------------- dot-matrix widget grid */
-function Widgets({ d, live24, detections, bestR2 }: { d: ReturnType<typeof useHomeData>["data"]; live24: number; detections: number; bestR2: number }) {
-  const today = useToday();
-  const tile = "rounded-[30px] p-5 sm:p-6";
-  const label = "font-mono text-[11px] uppercase tracking-[0.18em]";
+/* ------------------------------------------------- "at a glance" panel */
+/** What each live feed is, in words (keys as written by scripts/build_live.py). */
+const FEED: Record<string, { name: string; sensor: string; color: string }> = {
+  "NOAA-20": { name: "NOAA-20", sensor: "VIIRS 375 m", color: "#f3efe6" },
+  "NOAA-21": { name: "NOAA-21", sensor: "VIIRS 375 m", color: "#f49b3f" },
+  MODIS: { name: "Terra + Aqua", sensor: "MODIS 1 km", color: "#d9431a" },
+};
+const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
+  const now = useToday();
+  const tile = "h-full rounded-[30px] p-5 sm:p-6";
+  const dark = "bg-[#141414] text-[#f3efe6] shadow-[0_24px_44px_-26px_rgba(0,0,0,0.6)]";
+  const w = d?.live.windows["24h"];
+  const feeds = w ? Object.entries(w.totals) : [];
+  const live24 = feeds.length ? feeds.reduce((a, [, v]) => a + v, 0) : null;
+  const fetched = parseUtc(d?.live.fetched_utc);
+  const age = fmtAge(fetched, now);
+  const dates = w?.dates ?? [];
+  const countries = d?.table.countries ?? [];
+  const detections = countries.length ? countries.reduce((a, c) => a + c.detections_filtered, 0) : null;
+  const years = countries.flatMap((c) => c.annual.map((a) => a.year));
+  const best = countries.length ? countries.reduce((a, c) => (c.r2_model > a.r2_model ? c : a)) : null;
+  const sats = d?.tle.satellites ?? [];
+  const p = d?.params;
   return (
-    <div className="mx-auto mt-16 grid max-w-5xl grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-      <Reveal className="col-span-2">
-        <div className={`${tile} bg-[#141414] text-[#f3efe6] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)]`}>
-          <div className="flex items-center justify-between"><p className={`${label} text-white/50`}>Live · last 24 h</p><span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)]" /></div>
-          <div className="mt-6 flex items-end justify-between gap-4">
-            {d ? <DotText text={dotCompact(live24)} dot={11} gap={3.4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <span className="h-[96px]" />}
-            <p className="max-w-[9rem] text-right text-xs leading-relaxed text-white/55">fires seen from orbit by NOAA-20, NOAA-21 and MODIS</p>
+    <section aria-labelledby="glance" className="mx-auto mt-16 max-w-5xl">
+      <Reveal>
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+          <div>
+            <Eyebrow>At a glance · read from the data files</Eyebrow>
+            <h2 id="glance" className="display t-d3 mt-2">One day of fire, and the 25-year record it joins.</h2>
           </div>
+          <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
+            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year since 2001 converted to one unit, so a fire season in 2005 and one in 2025 can be compared fairly.
+          </p>
         </div>
       </Reveal>
-      <Reveal delay={0.05}>
-        <div className="glass flex aspect-square flex-col items-center justify-center !rounded-full text-[var(--ink)]">
-          <DotClock size={140} />
-          <p className={`${label} mt-1 text-[var(--text-muted)]`}>UTC</p>
-        </div>
-      </Reveal>
-      <Reveal delay={0.1}>
-        <div className={`glass ${tile} flex aspect-square flex-col justify-between`}>
-          <div className="flex justify-between"><p className={`${label} text-[var(--text-muted)]`}>{today ? today.toLocaleString("en", { month: "short" }) : ""}</p><p className={`${label} text-[var(--ember)]`}>{today ? today.toLocaleString("en", { weekday: "short" }) : ""}</p></div>
-          {today && <DotText text={String(today.getDate())} dot={10} gap={3} className="text-[var(--ink)]" />}
-        </div>
-      </Reveal>
-      <Reveal delay={0.05}>
-        <div className={`glass ${tile} flex aspect-square flex-col justify-between`}>
-          <p className={`${label} text-[var(--text-muted)]`}>Record</p>
-          {d && <DotText text={dotCompact(detections)} dot={7} gap={2.2} className="text-[var(--ink)]" />}
-          <p className="text-xs text-[var(--text-muted)]">harmonized detections</p>
-        </div>
-      </Reveal>
-      <Reveal delay={0.1}>
-        <div className={`${tile} flex aspect-square flex-col justify-between bg-[var(--ember)] text-white shadow-[0_30px_60px_-30px_rgba(217,67,26,0.8)]`}>
-          <p className={`${label} text-white/70`}>Best R²</p>
-          {d && <DotText text={bestR2.toFixed(2)} dot={8} gap={2.4} lit="#fff" dim="rgba(255,255,255,0.14)" />}
-          <p className="text-xs text-white/75">on years the model never saw</p>
-        </div>
-      </Reveal>
-      <Reveal delay={0.15} className="col-span-2">
-        <Link href="/satellites" className={`${tile} flex h-full flex-col justify-between gap-6 bg-[#141414] text-[#f3efe6] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-1`}>
-          <div className="flex items-center justify-between"><p className={`${label} text-white/50`}>Fleet</p><span className="text-sm text-white/50">→</span></div>
-          <div className="flex items-end justify-between gap-4">
-            <DotText text="5" dot={11} gap={3.4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" />
-            <div className="text-right">
-              <p className="text-[15px]">satellites tracked live</p>
-              <p className="mt-1 text-xs text-white/50">Terra · Aqua · Suomi-NPP · NOAA-20 · NOAA-21</p>
+
+      <div className="mt-6 grid gap-3 sm:gap-4 md:grid-cols-3">
+        <Reveal className="md:col-span-2">
+          <div className={`${tile} ${dark}`}>
+            <div className="flex items-start justify-between gap-4">
+              <Eyebrow className="!text-white/60">Live · last 24 hours · worldwide</Eyebrow>
+              <span className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-[var(--ember)]" aria-hidden />
+            </div>
+            <div className="mt-5">
+              {live24 != null ? <DotText text={fmtInt(live24)} dot={9} gap={3} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <p className="display text-4xl text-white/70">{d ? NA : "…"}</p>}
+            </div>
+            <p className="mt-3 text-[15px] leading-snug">
+              <span className="font-medium">active-fire detections</span> <span className="text-white/70">— each one a satellite pixel flagged as burning, seen from orbit in the 24 hours before the snapshot.</span>
+            </p>
+            {live24 != null && (
+              <div className="mt-5">
+                <div className="flex h-2 overflow-hidden rounded-full bg-white/10" aria-hidden>
+                  {feeds.map(([k, v]) => <span key={k} style={{ width: `${(v / live24) * 100}%`, background: FEED[k]?.color ?? "#999" }} />)}
+                </div>
+                <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-[13px] sm:grid-cols-3">
+                  {feeds.map(([k, v]) => (
+                    <div key={k} className="flex items-baseline justify-between gap-3 sm:block">
+                      <dt className="text-white/70"><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: FEED[k]?.color ?? "#999" }} />{FEED[k]?.name ?? k} <span className="text-white/45">· {FEED[k]?.sensor ?? ""}</span></dt>
+                      <dd className="tabular font-medium sm:mt-0.5">{fmtInt(v)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+            <div className="mt-5 border-t border-white/10 pt-4 text-[12px] leading-relaxed text-white/60">
+              <p>
+                <span className="text-white/85">As of {fmtUtc(fetched)}</span>{age && <> · updated {age}</>}
+                {dates.length > 0 && <> · acquisitions dated {dates.length > 1 ? `${dayLabel(dates[0])} – ${dayLabel(dates[dates.length - 1])}` : dayLabel(dates[0])} (UTC)</>}
+              </p>
+              <p className="stat-source mt-1.5 text-white/50">
+                Source: NASA FIRMS near-real-time global 24 h feeds — VIIRS on NOAA-20 and NOAA-21, MODIS C6.1 on Terra and Aqua. Raw and uncorrected; not the Suomi-NPP record Emberline harmonizes, whose live feed is empty. Includes volcanoes and gas flares.
+              </p>
             </div>
           </div>
-        </Link>
-      </Reveal>
-    </div>
+        </Reveal>
+
+        <Reveal delay={0.05}>
+          <div className={`glass ${tile} flex flex-col items-center text-center text-[var(--ink)]`}>
+            <Eyebrow className="self-start">Time now · UTC</Eyebrow>
+            <DotClock size={128} />
+            <p className="tabular display mt-1 text-2xl">{now ? fmtClock(now.getUTCHours() + now.getUTCMinutes() / 60) : "…"} <span className="text-sm font-medium text-[var(--text-muted)]">UTC</span></p>
+            <p className="text-sm text-[var(--text-secondary)]">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : ""}</p>
+            <p className="mt-3 text-[12px] leading-relaxed text-[var(--text-muted)]">Satellite fire records are stamped in UTC. Emberline converts each detection to local solar time (UTC + longitude ÷ 15) before any time-of-day analysis.</p>
+          </div>
+        </Reveal>
+
+        <Reveal>
+          <div className={`glass ${tile}`}>
+            <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d ? NA : "…"}
+              unit="detections"
+              note={<>Daytime vegetation-fire detections from {years.length ? span(Math.min(...years), Math.max(...years)) : "…"}, in {countries.length || "…"} regions ({countries.map((c) => c.country).join(", ")}), exact total {fmtInt(detections)}.</>}
+              source={<>Source: NASA FIRMS archive (MODIS C6.1, VIIRS Suomi-NPP) · countries.json</>} />
+          </div>
+        </Reveal>
+        <Reveal delay={0.05}>
+          <div className={`${tile} bg-[var(--ember)] text-white shadow-[0_24px_44px_-26px_rgba(217,67,26,0.8)]`}>
+            <Stat dot tone="ember" label="Accuracy · best region" value={best ? fmtR2(best.r2_model) : d ? NA : "…"} unit="R²"
+              note={best && p ? <>{best.country}: the corrected record against what Aqua MODIS really saw in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect; raw VIIRS scores {fmtR2(best.r2_raw)}.</> : null}
+              source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
+          </div>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <Link href="/satellites" className={`${tile} ${dark} group flex flex-col transition-transform hover:-translate-y-1`}>
+            <Stat dot tone="dark" label="The fleet" value={sats.length ? String(sats.length) : d ? NA : "…"} unit="satellites"
+              note={<>
+                In the harmonized record: {sats.filter((s) => s.name !== "NOAA-20" && s.name !== "NOAA-21").map((s) => `${s.name} (${s.instrument})`).join(", ")}.
+                {" "}Live layer only: {sats.filter((s) => s.name === "NOAA-20" || s.name === "NOAA-21").map((s) => s.name).join(", ")} (VIIRS).
+              </>}
+              source={d ? <>Orbits: public TLEs, {fmtUtc(parseUtc(d.tle.fetched))}</> : null} />
+            <span className="mt-auto pt-4 text-sm text-white/70 transition-transform group-hover:translate-x-1">See every satellite →</span>
+          </Link>
+        </Reveal>
+      </div>
+    </section>
   );
 }
 

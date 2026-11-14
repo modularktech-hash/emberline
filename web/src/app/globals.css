@@ -97,7 +97,13 @@ html[data-perf=low] .backdrop-cream::after { display: none; }
 .tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
 .font-mono, code, kbd, pre, samp { font-family: var(--font-code); }
 header h1, header p { text-shadow: 0 1px 2px rgba(255,248,240,0.6), 0 0 28px rgba(255, 246, 236, 0.95); }
-.eyebrow { font-family: var(--font-code); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
+/* Labels and figures: one system (components/Figure.tsx, lib/format.ts). */
+.eyebrow { font-family: var(--font-code); font-size: 11px; line-height: 1.5; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.eyebrow-n { color: var(--ember); font-weight: 600; }
+.eyebrow-sep { display: inline-block; margin: 0 0.55em; opacity: 0.55; }
+.stat-value { line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-unit { font-family: var(--font-ui); font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; }
+.stat-source { font-family: var(--font-code); font-size: 10.5px; line-height: 1.5; letter-spacing: 0.02em; }
 ::selection { background: rgba(217,67,26,0.88); color: #fff; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }

@@ -58,9 +58,9 @@ export const dotable = (t: string) => [...t.toUpperCase()].every((c) => c in G);
  * A key stat in dot-matrix numerals, falling back to the plain text when a
  * character has no glyph. Same dot rhythm as the home widgets (gap ≈ dot/3).
  */
-export function DotStat({ text, dot = 6, className = "" }: { text: string; dot?: number; className?: string }) {
+export function DotStat({ text, dot = 6, lit, dim, className = "" }: { text: string; dot?: number; lit?: string; dim?: string; className?: string }) {
   if (!dotable(text)) return <span className={className}>{text}</span>;
-  return <DotText text={text} dot={dot} gap={dot / 3} className={className} />;
+  return <DotText text={text} dot={dot} gap={dot / 3} lit={lit} dim={dim} className={className} />;
 }
 
 /** A dotted divider: a row of dim dots with an ember one leading. */
