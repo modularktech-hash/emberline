@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+
+# Data -- the FIRMS archives are large and are downloaded, never committed
+data/
+*.parquet
+*.csv
+!packages/firms-ingest/tests/**/*.csv
+# The app's published data must be committed so Vercel deploys it. Keep each
+# file under GitHub's 100 MB limit (sorted, aggregated tables are small).
+!web/public/data/
+!web/public/data/**
+
+# Secrets
+.env
+.env.local
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local recovery artifacts -- a patch of unpushed commits, produced when the
+# session cannot reach GitHub. Transient by nature and circular to commit.
+*.patch
