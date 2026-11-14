@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NAV } from "@/lib/nav";
 import { SPRING } from "@/lib/motion";
 
@@ -19,21 +19,32 @@ export function SiteNav() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   // Transparent at the top, solid once scrolled; hides on scroll down, returns on scroll up.
-  const { scrollY } = useScroll();
+  // One passive listener, read once per frame, and React state only changes when a flag flips.
   const [solid, setSolid] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
-  useMotionValueEvent(scrollY, "change", (y) => {
-    const prev = scrollY.getPrevious() ?? 0;
-    setSolid(y > 24);
-    setHidden(y > 160 && y > prev + 2 && !open && !mobile ? true : y < prev - 2 ? false : hidden);
-  });
+  const menuOpen = useRef(false);
+  useEffect(() => { menuOpen.current = !!open || mobile; }, [open, mobile]);
+  useEffect(() => {
+    let prev = window.scrollY, raf = 0;
+    const update = () => {
+      raf = 0;
+      const y = window.scrollY;
+      setSolid(y > 24);
+      if (y > 160 && y > prev + 2 && !menuOpen.current) setHidden(true);
+      else if (y < prev - 2 || y <= 160) setHidden(false);
+      prev = y;
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, []);
   const active = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
     <motion.header className="sticky top-3 z-50 px-3 sm:px-6" onMouseLeave={() => { setOpen(null); setHover(null); }}
       animate={{ y: hidden ? -96 : 0 }} transition={SPRING} onFocusCapture={() => setHidden(false)}>
-      <div className={`glass relative transition-[background-color,box-shadow] duration-300 ${solid ? "!bg-[rgba(251,248,241,0.82)]" : ""} mx-auto flex w-full max-w-6xl items-center justify-between gap-3 !rounded-full !overflow-visible py-2 pl-5 pr-2.5`}>
+      <div className={`glass glass-nav relative transition-[background-color,box-shadow] duration-300 ${solid ? "!bg-[rgba(251,248,241,0.82)]" : ""} mx-auto flex w-full max-w-6xl items-center justify-between gap-3 !rounded-full !overflow-visible py-2 pl-5 pr-2.5`}>
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Emberline home">
           <span aria-hidden className="relative flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--ink)]">
             <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)] shadow-[0_0_10px_2px_rgba(217,67,26,0.6)]" />
@@ -56,7 +67,7 @@ export function SiteNav() {
                 <AnimatePresence>
                   {open === g.label && (
                     <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                      transition={{ duration: 0.18 }} className="glass-thick absolute left-1/2 top-12 w-[22rem] -translate-x-1/2 p-2">
+                      transition={{ duration: 0.18 }} className="glass-thick glass-menu absolute left-1/2 top-12 w-[22rem] -translate-x-1/2 p-2">
                       {g.items.map((i) => (
                         <Link key={i.href} href={i.href} className={`block rounded-[14px] px-3.5 py-3 transition-colors hover:bg-white/60 ${active(i.href) ? "bg-[var(--ember-soft)]" : ""}`}>
                           <span className="text-sm font-medium">{i.label}</span>
@@ -73,7 +84,7 @@ export function SiteNav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/explorer" data-magnetic className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">Open the calendar</Link>
+          <Link href="/explorer" className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">Open the calendar</Link>
           <button type="button" className="glass-thin flex h-9 w-9 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
             <svg width="16" height="12" viewBox="0 0 16 12"><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.6" fill="none" /></svg>
           </button>
@@ -83,7 +94,7 @@ export function SiteNav() {
       <AnimatePresence>
         {mobile && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            data-lenis-prevent className="glass-thick mx-auto mt-2 max-h-[80vh] max-w-6xl !overflow-y-auto p-3 lg:hidden">
+            className="glass-thick glass-menu mx-auto mt-2 max-h-[80vh] max-w-6xl !overflow-y-auto p-3 lg:hidden">
             {NAV.map((g) => (
               <div key={g.label} className="mb-2">
                 <p className="eyebrow px-3 pb-1 pt-2">{g.label}</p>

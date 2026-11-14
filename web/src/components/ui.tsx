@@ -6,11 +6,11 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { EASE, SPRING, SPRING_BOUNCY } from "@/lib/motion";
 import { DotLoader, DotRule, DotStat } from "@/components/DotMatrix";
 
-/** Fades, lifts and un-blurs its children into view once, as they scroll in. */
+/** Fades and lifts its children into view once, as they scroll in (opacity + transform only, compositor-friendly). */
 export function Reveal({ children, delay = 0, y = 24, className }: { children: ReactNode; delay?: number; y?: number; className?: string }) {
   const reduce = useReducedMotion();
   return (
-    <motion.div className={className} initial={reduce ? false : { opacity: 0, y, filter: "blur(6px)" }} whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+    <motion.div className={className} initial={reduce ? false : { opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: EASE, delay }}>
       {children}
     </motion.div>
@@ -46,7 +46,7 @@ export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; ti
     <header className="pb-12 pt-20 sm:pb-16 sm:pt-28">
       <Reveal><p className="eyebrow">{eyebrow}</p></Reveal>
       <Reveal delay={0.06}>
-        <h1 className="display mt-4 max-w-4xl text-[2.8rem] leading-[1.02] sm:text-[4.4rem]">
+        <h1 className="display t-d1 mt-4 max-w-4xl">
           {title}{italic && <> <span className="italic text-[var(--ember)]">{italic}</span></>}
         </h1>
       </Reveal>

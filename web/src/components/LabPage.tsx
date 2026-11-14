@@ -128,7 +128,7 @@ export function LabPage() {
                 <rect x={lx(9)} width={lx(11) - lx(9)} y={10} height={H - 36} fill="var(--ink)" opacity="0.06" />
                 {[1, 10, 100, 1000].map((f) => <text key={f} x={lx(f)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--text-muted)">{f} MW</text>)}
                 {fit && <path d={Array.from({ length: 90 }, (_, i) => 10 ** (-0.3 + (i / 89) * 3.3)).map((f, i) => `${i ? "L" : "M"}${lx(f)},${ly(P(f, fit.logistic.b0, fit.logistic.b1))}`).join(" ")} fill="none" stroke="var(--ember)" strokeWidth="2.4" />}
-                {fit && <motion.circle animate={{ cx: lx(frp), cy: ly(P(frp, fit.logistic.b0, fit.logistic.b1)) }} r="6" fill="var(--ink)" stroke="#fff" strokeWidth="2" />}
+                {fit && <motion.circle initial={false} cx={lx(frp)} cy={ly(P(frp, fit.logistic.b0, fit.logistic.b1))} animate={{ cx: lx(frp), cy: ly(P(frp, fit.logistic.b0, fit.logistic.b1)) }} r="6" fill="var(--ink)" stroke="#fff" strokeWidth="2" />}
               </svg>
             </div>
             <div className="space-y-3">

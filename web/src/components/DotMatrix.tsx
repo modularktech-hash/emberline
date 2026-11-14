@@ -1,14 +1,28 @@
 "use client";
 
-import { motion } from "motion/react";
-import { useSyncExternalStore } from "react";
+import { useInView } from "motion/react";
+import { memo, useRef, useSyncExternalStore } from "react";
 
-/** Current time, ticking each second on the client; null during server render. */
-let cached = 0;
-const subscribe = (cb: () => void) => { const t = setInterval(cb, 1000); return () => clearInterval(t); };
-const snap = () => { const n = Math.floor(Date.now() / 1000) * 1000; if (n !== cached) cached = n; return cached; };
+/**
+ * Current time on the client, null during server render. `useNow` ticks each
+ * second and should only be used by small leaf components (the dot clock);
+ * `useToday` ticks once a minute, for date labels.
+ */
+const ticker = (ms: number) => {
+  let cached = 0;
+  return {
+    subscribe: (cb: () => void) => { const t = setInterval(cb, ms); return () => clearInterval(t); },
+    snap: () => { const n = Math.floor(Date.now() / ms) * ms; if (n !== cached) cached = n; return cached; },
+  };
+};
+const perSecond = ticker(1000), perMinute = ticker(60_000);
+const server = () => 0;
 export function useNow(): Date | null {
-  const t = useSyncExternalStore(subscribe, snap, () => 0);
+  const t = useSyncExternalStore(perSecond.subscribe, perSecond.snap, server);
+  return t ? new Date(t) : null;
+}
+export function useToday(): Date | null {
+  const t = useSyncExternalStore(perMinute.subscribe, perMinute.snap, server);
   return t ? new Date(t) : null;
 }
 
@@ -66,28 +80,31 @@ export function DotLoader({ label = "Loading" }: { label?: string }) {
   );
 }
 
-/** Text drawn as a dot-matrix display; dots light up in sequence on first view. */
-export function DotText({ text, dot = 7, gap = 2.4, lit = "currentColor", dim = "rgba(127,127,127,0.12)", className = "" }:
+/**
+ * Text drawn as a dot-matrix display. Plain circles (memoized, no per-dot
+ * animation); on first view the whole display wipes in left to right with one
+ * clip-path animation (.dot-wipe in globals.css).
+ */
+export const DotText = memo(function DotText({ text, dot = 7, gap = 2.4, lit = "currentColor", dim = "rgba(127,127,127,0.12)", className = "" }:
   { text: string; dot?: number; gap?: number; lit?: string; dim?: string; className?: string }) {
+  const ref = useRef<SVGSVGElement>(null);
+  const seen = useInView(ref, { once: true });
   const step = dot + gap;
   let x = 0;
-  const cells: { cx: number; cy: number; on: boolean; k: string }[] = [];
-  for (const [ci, ch] of [...text.toUpperCase()].entries()) {
+  const on: string[] = [], off: string[] = [];
+  for (const ch of text.toUpperCase()) {
     const g = G[ch] ?? G[" "];
-    g.forEach((row, r) => [...row].forEach((v, c) => cells.push({ cx: x + c * step + dot / 2, cy: r * step + dot / 2, on: v === "1", k: `${ci}-${r}-${c}` })));
+    g.forEach((row, r) => [...row].forEach((v, c) => (v === "1" ? on : off).push(`M${x + c * step + dot / 2 - dot / 2},${r * step + dot / 2}a${dot / 2},${dot / 2} 0 1,0 ${dot},0a${dot / 2},${dot / 2} 0 1,0 ${-dot},0`)));
     x += g[0].length * step + step;
   }
   const w = Math.max(0, x - step), h = 7 * step - gap;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className={`max-w-full ${className}`} role="img" aria-label={text}>
-      {cells.map((d, i) => (
-        <motion.circle key={d.k} cx={d.cx} cy={d.cy} r={dot / 2} fill={d.on ? lit : dim}
-          initial={d.on ? { opacity: 0, scale: 0.3 } : false} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-          transition={{ delay: (i % 60) * 0.006, duration: 0.25 }} style={{ transformOrigin: `${d.cx}px ${d.cy}px` }} />
-      ))}
+    <svg ref={ref} viewBox={`0 0 ${w} ${h}`} width={w} height={h} className={`max-w-full ${seen ? "dot-wipe" : "opacity-0"} ${className}`} role="img" aria-label={text}>
+      <path d={off.join("")} fill={dim} />
+      <path d={on.join("")} fill={lit} />
     </svg>
   );
-}
+});
 
 /** A dotted analogue clock in UTC, the time base every FIRMS record uses. */
 export function DotClock({ size = 150 }: { size?: number }) {

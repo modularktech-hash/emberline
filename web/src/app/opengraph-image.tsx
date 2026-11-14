@@ -4,7 +4,7 @@ export const alt = "Emberline — 25 years of fire, one unbroken line";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/** Social card in the house style: cream paper, ember glow, ink mark, serif headline. */
+/** Social card in the house style: cream paper, ember glow, ink mark, sans headline. */
 export default function Image() {
   return new ImageResponse(
     (
@@ -16,9 +16,9 @@ export default function Image() {
           </div>
           <div style={{ fontSize: 26, letterSpacing: 8, textTransform: "uppercase" }}>Emberline</div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", fontFamily: "Georgia, serif" }}>
+        <div style={{ display: "flex", flexDirection: "column", fontWeight: 700 }}>
           <div style={{ fontSize: 96, letterSpacing: -3, lineHeight: 1 }}>25 years of fire.</div>
-          <div style={{ fontSize: 96, letterSpacing: -3, lineHeight: 1.05, color: "#d9431a", fontStyle: "italic" }}>One unbroken line.</div>
+          <div style={{ fontSize: 96, letterSpacing: -3, lineHeight: 1.05, color: "#d9431a" }}>One unbroken line.</div>
         </div>
         <div style={{ fontSize: 22, letterSpacing: 4, textTransform: "uppercase", color: "#5e5a54" }}>NASA FIRMS · MODIS + VIIRS harmonized</div>
       </div>

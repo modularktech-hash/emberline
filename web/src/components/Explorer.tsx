@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnualLine } from "@/components/AnnualLine";
 import { PageHead } from "@/components/ui";
 import { CountryPicker } from "@/components/CountryPicker";
@@ -23,6 +23,18 @@ export function Explorer() {
   const [to, setTo] = useState(2025);
   const [box, setBox] = useState(["", "", "", ""]);
   const { data, error, loading } = useAreaData(area);
+  // The map (maplibre, ~1 MB of JS plus tiles) mounts only once the calendar has
+  // its data and the map slot is near the viewport, so it never competes with it.
+  const mapSlot = useRef<HTMLDivElement>(null);
+  const [mapNear, setMapNear] = useState(false);
+  useEffect(() => {
+    const el = mapSlot.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setMapNear(true); io.disconnect(); } }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const showMap = mapNear && (!!data || !!error);
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -186,7 +198,10 @@ export function Explorer() {
       </section>
 
       <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <AoiMap bbox={area.kind === "box" ? area.bbox : null} onSelect={selectBox} className="h-[340px]" />
+        <div ref={mapSlot}>
+          {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} onSelect={selectBox} className="h-[340px]" />
+            : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" aria-label="Map loading" />}
+        </div>
         <div className="card p-5">
           <p className="eyebrow">Choose your own area</p>
           <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">

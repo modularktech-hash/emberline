@@ -7,5 +7,3 @@ export const SPRING = { type: "spring", stiffness: 420, damping: 34, mass: 0.9 }
 export const SPRING_SOFT = { type: "spring", stiffness: 180, damping: 24 } as const; // cards, reveals
 export const SPRING_BOUNCY = { type: "spring", stiffness: 520, damping: 18 } as const; // playful taps
 
-export const finePointer = () =>
-  typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;

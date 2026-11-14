@@ -44,9 +44,9 @@ export function GlobePage() {
                 <input type="range" min={1} max={600} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Time speed" className="w-24 min-w-0 accent-[var(--ember)] sm:w-32" />
               </label>
             </div>
-            <div data-cursor="Drag" className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
+            <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
               <FireGlobe live={data?.live ?? null} tle={data?.tle.satellites ?? null} window={win} showFires={fires} showSats={sats}
-                showOrbits={orbits} speed={speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} />
+                showOrbits={orbits} speed={speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} satLabels />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
               <span>Spike height = radiated power · width = number of detections · 0.5° cells</span>

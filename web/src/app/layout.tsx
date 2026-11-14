@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
-import { Cursor } from "@/components/Cursor";
 import { Interactions } from "@/components/Interactions";
-import { SmoothScroll } from "@/components/SmoothScroll";
-import { GlassLight } from "@/components/GlassLight";
+import { PerfMode } from "@/components/PerfMode";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const display = Newsreader({ variable: "--font-display", subsets: ["latin"], style: ["normal", "italic"], axes: ["opsz"] });
+// UI and headings use the system stack (real San Francisco on Apple devices; see --font-ui
+// in globals.css). Inter (variable, self-hosted by next/font) is the named fallback so Windows,
+// Linux and Android get the closest metric match. Geist Mono backs ui-monospace / SF Mono.
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+const mono = Geist_Mono({ variable: "--font-mono-fallback", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "Emberline — 25 years of fire, one unbroken line", template: "%s" },
@@ -22,13 +22,11 @@ export const viewport = { themeColor: "#f7f3e8" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <Backdrop />
-        <GlassLight />
-        <SmoothScroll />
+        <PerfMode />
         <Interactions />
-        <Cursor />
         <SiteNav />
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
         <SiteFooter />

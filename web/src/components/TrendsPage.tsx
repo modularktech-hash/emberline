@@ -2,7 +2,6 @@
 
 import { DotStat } from "@/components/DotMatrix";
 
-import { motion } from "motion/react";
 import { useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
@@ -66,20 +65,18 @@ export function TrendsPage() {
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-4)] align-middle opacity-60" />raw</span>
                 </div>
               </div>
-              <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 w-full" role="img" aria-label={`Fire season timing in ${country}`}>
+              <svg viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full" role="img" aria-label={`Fire season timing in ${country}`}>
                 {months.map((m) => <g key={m.day}><line x1={dx(m.day)} x2={dx(m.day)} y1={T} y2={H - B} stroke="var(--gridline)" /><text x={dx(m.day) + 3} y={H - 10} fontSize="10" fill="var(--text-muted)">{m.label}</text></g>)}
-                {years.map((y, i) => {
+                {years.map((y) => {
                   const cy = yx(y.year);
                   return (
                     <g key={y.year}>
                       <text x={L - 8} y={cy + 3.5} textAnchor="end" fontSize="10" fill={y.year === 2012 ? "var(--ember)" : "var(--text-muted)"}>{y.year}</text>
                       {y.raw_onset != null && y.raw_end != null && (
-                        <motion.rect initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.02 }}
-                          style={{ originX: `${dx(y.raw_onset)}px` }} x={dx(y.raw_onset)} y={cy - 6} width={dx(y.raw_end) - dx(y.raw_onset)} height="5" rx="2.5" fill="var(--seq-4)" opacity="0.55" />
+                        <rect x={dx(y.raw_onset)} y={cy - 6} width={dx(y.raw_end) - dx(y.raw_onset)} height="5" rx="2.5" fill="var(--seq-4)" opacity="0.55" />
                       )}
                       {y.harm_onset != null && y.harm_end != null && (
-                        <motion.rect initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.02 + 0.1 }}
-                          style={{ originX: `${dx(y.harm_onset)}px` }} x={dx(y.harm_onset)} y={cy} width={dx(y.harm_end) - dx(y.harm_onset)} height="5" rx="2.5" fill="var(--ink)" opacity="0.8" />
+                        <rect x={dx(y.harm_onset)} y={cy} width={dx(y.harm_end) - dx(y.harm_onset)} height="5" rx="2.5" fill="var(--ink)" opacity="0.8" />
                       )}
                       {y.harm_peak != null && <circle cx={dx(y.harm_peak)} cy={cy + 2.5} r="3.5" fill="var(--ember)" stroke="#fff" strokeWidth="1" />}
                     </g>

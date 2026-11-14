@@ -63,11 +63,39 @@ interface OpenFile {
 
 const files = new Map<string, Promise<OpenFile>>();
 
-/** Open a parquet file once: one HEAD for its size, one range read for its footer. */
+/**
+ * Small files (the calendars, < 1 MB) are fetched whole in ONE request: on a
+ * high-latency link a HEAD + footer + per-column range reads cost a round trip
+ * each, which dominated the Explorer's load time. The page can start this
+ * request even earlier with a preload hint (see dataPreloads()).
+ */
+const WHOLE_FILES = new Set(["calendar_raw.parquet", "calendar_harmonized.parquet"]);
+
+/**
+ * A download already started by the page's inline prefetch script
+ * (components/DataPreload.tsx), if any. Each is consumed once.
+ */
+function takePrefetched<T>(url: string): Promise<T> | null {
+  if (typeof window === "undefined") return null;
+  const store = (window as unknown as { __emberlinePrefetch?: Record<string, Promise<T>> }).__emberlinePrefetch;
+  const hit = store?.[url];
+  if (hit) delete store[url];
+  return hit ?? null;
+}
+
+/** Open a parquet file once. Large files: one HEAD for its size, one range read for its footer. */
 function openParquet(name: string): Promise<OpenFile> {
   let entry = files.get(name);
   if (!entry) {
     entry = (async () => {
+      if (WHOLE_FILES.has(name)) {
+        const url = `${dataBaseUrl}/${name}`;
+        const file = await (takePrefetched<ArrayBuffer>(url) ?? fetch(url).then((r) => {
+          if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
+          return r.arrayBuffer();
+        }));
+        return { file, metadata: await parquetMetadataAsync(file) };
+      }
       const remote = await asyncBufferFromUrl({ url: `${dataBaseUrl}/${name}` });
       // Keeps fetched byte ranges, so repeat reads of the same row group are free.
       const file = cachedAsyncBuffer(remote);
@@ -88,6 +116,15 @@ function num(value: unknown): number {
 
 const ym = (year: number, month: number) => year * 12 + (month - 1);
 
+/**
+ * URLs of the files the calendar views need first; the page starts them from
+ * an inline script (components/DataPreload.tsx) so they download in parallel
+ * with the JS bundle.
+ */
+export function dataPreloads(): string[] {
+  return ["/data/calendar_raw.parquet", "/data/calendar_harmonized.parquet", "/data/params.json"];
+}
+
 /* ------------------------------------------------------------------ */
 /* params.json                                                         */
 /* ------------------------------------------------------------------ */
@@ -98,7 +135,10 @@ let paramsPromise: Promise<Params> | null = null;
 export function getParams(): Promise<Params> {
   if (!paramsPromise) {
     paramsPromise = (async () => {
-      const response = await fetch(`${dataBaseUrl}/params.json`);
+      const url = `${dataBaseUrl}/params.json`;
+      const early = takePrefetched<Params>(url);
+      if (early) return early;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`params.json: HTTP ${response.status}`);
       }
@@ -247,8 +287,8 @@ const RAW_UNIT =
 export async function getCalendar(query: CalendarQuery): Promise<CalendarResult> {
   const { scope, mode } = query;
   const requested = [...new Set(query.keys)];
-  const raw = await loadRaw();
-  const harm = mode === "harmonized" ? await loadHarmonized() : null;
+  // Both tables load in parallel (the harmonized one used to wait for the raw one).
+  const [raw, harm] = await Promise.all([loadRaw(), mode === "harmonized" ? loadHarmonized() : null]);
 
   const rawKeys = raw.index.get(scope) ?? new Map<string, Map<string, number>>();
   const harmKeys = harm?.index.get(scope);

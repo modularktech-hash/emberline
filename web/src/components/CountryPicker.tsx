@@ -33,7 +33,7 @@ export function CountryPicker({ value, options, onChange, inline = 8, label = "R
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="glass glass-thick absolute left-0 top-12 z-40 w-[18rem] rounded-[20px] p-2">
+            className="glass glass-thick glass-menu absolute left-0 top-12 z-40 w-[18rem] rounded-[20px] p-2">
             <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${options.length} regions…`}
               className="w-full field rounded-2xl px-3 py-2 text-sm" />
             <ul className="mt-2 max-h-72 overflow-y-auto">

@@ -30,7 +30,17 @@
   --seq-6: #96221a;
   --seq-7: #561114;
 
-  /* Type scale (1.25 minor third, 16px base) */
+  /* Type: one sans family for UI and headings, one mono for figures and labels. */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", var(--font-inter), "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-code: ui-monospace, "SF Mono", var(--font-mono-fallback), "JetBrains Mono", Menlo, Consolas, monospace;
+  /* Display scale (headings), fluid between phone and desktop. Tight tracking at large sizes. */
+  --display-hero: clamp(2.9rem, 1.6rem + 5.4vw, 5.4rem);
+  --display-1: clamp(2.5rem, 1.7rem + 3.2vw, 4.2rem);
+  --display-2: clamp(2.1rem, 1.5rem + 2.6vw, 3.6rem);
+  --display-3: clamp(1.6rem, 1.3rem + 1.1vw, 2.2rem);
+  --display-weight: 650;
+  --display-tracking: -0.038em;
+  /* Text scale (1.25 minor third, 16px base) */
   --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem; --text-lg: 1.125rem;
   --text-xl: 1.25rem; --text-2xl: 1.563rem; --text-3xl: 1.953rem; --text-4xl: 2.441rem;
   --text-5xl: 3.052rem; --text-6xl: 3.815rem; --text-7xl: 4.768rem;
@@ -53,48 +63,41 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
 }
 
 html { background: #f7f3e8; scrollbar-color: rgba(18,23,21,0.28) transparent; }
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-stopped { overflow: hidden; }
+/* Native scrolling everywhere; only in-page anchor jumps glide, and not under reduced motion. */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+/* Native cursor: a pointer on everything clickable (Tailwind's preflight resets buttons to default). */
+:is(button, [role=button], summary, select, label:has(input[type=checkbox]), input[type=range]):not(:disabled) { cursor: pointer; }
 body {
   background: transparent;
   color: var(--text-primary);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  letter-spacing: -0.006em;
+  font-family: var(--font-ui);
+  letter-spacing: -0.011em;
   line-height: 1.6;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
 h1, h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
-.backdrop-blobs {
-  background:
-    radial-gradient(48vw 40vw at 8% 6%, rgba(255, 96, 40, 0.75), transparent 70%),
-    radial-gradient(42vw 36vw at 92% 14%, rgba(255, 70, 140, 0.6), transparent 70%),
-    radial-gradient(50vw 40vw at 60% 70%, rgba(255, 176, 50, 0.55), transparent 70%),
-    radial-gradient(40vw 34vw at 14% 92%, rgba(130, 90, 255, 0.5), transparent 70%);
-  mix-blend-mode: overlay;
-}
 .backdrop-cream { background: radial-gradient(60vw 45vw at 10% 0%, rgba(255,140,90,0.28), transparent 70%), radial-gradient(50vw 40vw at 95% 10%, rgba(255,120,170,0.18), transparent 70%), radial-gradient(60vw 50vw at 60% 95%, rgba(255,196,100,0.22), transparent 70%), #f7f3e8; }
-/* Paper grain: an inline SVG turbulence tile, very faint, multiplied in. */
-.backdrop-cream::after {
-  content: ""; position: absolute; inset: 0; opacity: 0.32; mix-blend-mode: multiply; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.22 0 0 0 0 0.15 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.backdrop-scrim {
-  background: linear-gradient(180deg, rgba(255, 246, 236, 0.30) 0%, rgba(255, 244, 232, 0.12) 40%, rgba(40, 14, 8, 0.12) 100%);
-}
-.display { font-family: var(--font-display), Georgia, serif; font-weight: 400; letter-spacing: -0.03em; }
-.display .italic, .accent { font-family: var(--font-display), Georgia, serif; font-weight: 400; letter-spacing: -0.02em; }
+/* Paper grain: a tiny static PNG tile (no SVG filter, no blend mode, painted once). */
+.backdrop-cream::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: url("/grain.png") repeat; opacity: 0.8; }
+html[data-perf=low] .backdrop-cream::after { display: none; }
+/* Headlines: the UI sans, heavier and tightly tracked so they still read as deliberate display type. */
+.display { font-family: var(--font-ui); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); font-feature-settings: "ss01", "cv11"; }
+.display .italic, .accent { font-style: normal; font-weight: var(--display-weight); }
+.t-hero { font-size: var(--display-hero); line-height: 0.98; }
+.t-d1 { font-size: var(--display-1); line-height: 1.02; }
+.t-d2 { font-size: var(--display-2); line-height: 1.05; }
+.t-d3 { font-size: var(--display-3); line-height: 1.12; letter-spacing: -0.028em; }
+.tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
+.font-mono, code, kbd, pre, samp { font-family: var(--font-code); }
 header h1, header p { text-shadow: 0 1px 2px rgba(255,248,240,0.6), 0 0 28px rgba(255, 246, 236, 0.95); }
-.tabular { font-variant-numeric: tabular-nums; }
-.eyebrow { font-family: var(--font-geist-mono), monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
+.eyebrow { font-family: var(--font-code); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
 ::selection { background: rgba(217,67,26,0.88); color: #fff; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -114,108 +117,94 @@ main :is(p, li, td, figcaption) a:not([class*=glass]):not([class*=pill]):not(.no
 }
 main :is(p, li, td, figcaption) a:not([class*=glass]):not([class*=pill]):not(.no-ul):hover, .link-ul:hover { background-size: 100% 1.5px, 100% 1px; color: var(--ember); }
 
-/* Magnetic CTAs lean via the independent translate property, so hover/active transforms still compose. */
-[data-magnetic] { translate: var(--mgx, 0) var(--mgy, 0); transition: translate 380ms var(--ease-spring), transform 420ms var(--ease-spring), box-shadow 300ms ease !important; }
-.pill-dark[data-magnetic]:hover, .glass-dark[data-magnetic]:hover { box-shadow: inset 1.5px 1.5px 0 rgba(255,255,255,0.32), 0 16px 36px -14px rgba(20,8,4,0.7), var(--glow-ember); }
+.pill-dark:is(a, button):hover, .glass-dark:is(a, button):hover { box-shadow: inset 1.5px 1.5px 0 rgba(255,255,255,0.32), 0 16px 36px -14px rgba(20,8,4,0.7), var(--glow-ember); }
 
 /* Small playful wiggle for icons inside interactive things. */
 @keyframes wiggle { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-10deg) } 60% { transform: rotate(8deg) } }
 :is(a, button):hover > svg:not(.no-wiggle) { animation: wiggle 480ms var(--ease-out); }
 
-/* Custom cursor (only when html.has-cursor, set by <Cursor/> on fine pointers). */
-html.has-cursor, html.has-cursor * { cursor: none !important; }
-html.has-cursor :is(input, textarea, [contenteditable]) { cursor: text !important; }
-.cursor-dot, .cursor-ring { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; will-change: transform; }
-.cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--ember); }
-.cursor-ring { width: 0; height: 0; }
-.cursor-ring::before {
-  content: ""; position: absolute; left: -17px; top: -17px; width: 34px; height: 34px; border-radius: 50%;
-  border: 1.5px solid rgba(18,23,21,0.45); transition: transform 320ms var(--ease-spring), background-color 220ms ease, border-color 220ms ease, opacity 200ms ease;
-}
-.cursor-ring[data-state=hot]::before { transform: scale(1.7); background: #fff; border-color: transparent; mix-blend-mode: difference; }
-.cursor-ring[data-state=label]::before { transform: scale(2.2); background: var(--ink); border-color: transparent; }
-.cursor-ring[data-state=text]::before, .cursor-ring[data-state=gone]::before { opacity: 0; }
-.cursor-ring[data-press]::before { transform: scale(0.8); }
-.cursor-ring span { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); font: 500 10px/1 var(--font-geist-mono), monospace; letter-spacing: 0.14em; text-transform: uppercase; color: #fbf6ee; opacity: 0; transition: opacity 200ms ease; white-space: nowrap; }
-.cursor-ring[data-state=label] span { opacity: 1; }
-
-.scroll-progress { position: fixed; left: 0; right: 0; top: 0; height: 2px; z-index: 60; transform-origin: 0 50%; background: linear-gradient(90deg, #f49b3f, var(--ember)); pointer-events: none; }
 .confetti { position: fixed; z-index: 9999; width: 7px; height: 7px; border-radius: 2px; pointer-events: none; }
 
 /* Marquee of existing names; pauses on hover, static under reduced motion. */
 @keyframes marquee { to { transform: translateX(-50%); } }
 .marquee { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); overflow: hidden; }
 .marquee > div { display: flex; width: max-content; animation: marquee 40s linear infinite; }
-.marquee:hover > div { animation-play-state: paused; }
+.marquee:hover > div, html[data-perf=low] .marquee > div { animation-play-state: paused; }
 .maplibregl-ctrl-attrib { font-size: 10px; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } [data-magnetic] { translate: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 
 @layer components {
 /* ------------------------------------------------------------------ */
-/* Liquid glass, in tiers. Ingredients: a saturating backdrop blur; a  */
-/* translucent white fill; a bright specular rim top-left (inset       */
-/* shadows); an inner glow; a deep soft drop shadow; a refractive      */
-/* conic rim with faint rainbow tints (::after, masked to a border);   */
-/* and a pointer-following highlight (::before, --mx/--my from         */
-/* GlassLight). Interactive glass springs on hover and press.          */
+/* Liquid glass, in tiers — the look without the cost. Surfaces sit on */
+/* the cream page, whose glows are smooth gradients, so a backdrop     */
+/* blur added almost nothing visible yet forced a re-composite of      */
+/* everything behind every card on every scrolled frame (the main      */
+/* reason scrolling crawled on Linux). Now: a slightly denser, warm    */
+/* translucent fill; the specular rim (inset shadows); an inner glow;  */
+/* a soft drop shadow; a static top sheen (::before) and the           */
+/* refractive conic rim (::after). Everything is painted once and      */
+/* scrolls as ordinary content. The only backdrop-filter left is the  */
+/* small sticky nav pill (.glass-nav), guarded by @supports.           */
 /* ------------------------------------------------------------------ */
 .glass, .glass-thin, .glass-thick, .glass-dark, .pill-dark, .card, .window {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border: 0;
-  -webkit-backdrop-filter: blur(28px) saturate(230%);
-  backdrop-filter: blur(28px) saturate(230%);
-  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 300ms ease, background-color 220ms ease;
+  transition: transform 320ms var(--ease-out), box-shadow 300ms ease, background-color 220ms ease;
   --rim: conic-gradient(from 200deg at 50% 50%,
     rgba(255,255,255,0.95), rgba(255,255,255,0.15) 12%, rgba(255,170,120,0.55) 22%,
     rgba(255,255,255,0.1) 32%, rgba(140,200,255,0.45) 46%, rgba(255,255,255,0.12) 58%,
     rgba(255,130,200,0.45) 72%, rgba(255,255,255,0.2) 84%, rgba(255,255,255,0.95));
 }
 .glass, .card {
-  background: linear-gradient(160deg, rgba(255,255,255,0.46), rgba(255,255,255,0.2));
+  background: linear-gradient(160deg, rgba(255,253,249,0.72), rgba(255,250,244,0.5));
   border-radius: 28px;
   box-shadow:
     inset 1.5px 1.5px 0 rgba(255,255,255,0.9),
     inset -1px -1px 0 rgba(255,255,255,0.28),
-    inset 0 0 24px rgba(255,255,255,0.35),
-    0 24px 60px -24px rgba(60, 20, 10, 0.45),
+    inset 0 0 12px rgba(255,255,255,0.35),
+    0 18px 34px -18px rgba(60, 20, 10, 0.42),
     0 4px 14px -6px rgba(60, 20, 10, 0.18);
 }
 .glass-thin {
-  background: linear-gradient(160deg, rgba(255,255,255,0.26), rgba(255,255,255,0.08));
-  -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.06);
-  backdrop-filter: blur(20px) saturate(200%) brightness(1.06);
+  background: linear-gradient(160deg, rgba(255,253,249,0.6), rgba(255,250,244,0.38));
   border-radius: 999px;
   box-shadow:
     inset 2px 2px 1px rgba(255,255,255,0.85),
     inset -1px -1px 1px rgba(255,255,255,0.4),
-    inset 0 0 14px rgba(255,255,255,0.4),
-    0 10px 26px -12px rgba(60, 20, 10, 0.4);
+    inset 0 0 8px rgba(255,255,255,0.4),
+    0 8px 18px -10px rgba(60, 20, 10, 0.38);
 }
 .glass-thick, .window, .glass.glass-thick, .card:has(table) {
-  background: linear-gradient(160deg, rgba(255,255,255,0.80), rgba(255,250,244,0.68));
-  -webkit-backdrop-filter: blur(40px) saturate(220%);
-  backdrop-filter: blur(40px) saturate(220%);
+  background: linear-gradient(160deg, rgba(255,255,255,0.9), rgba(255,250,244,0.82));
   border-radius: 28px;
   box-shadow:
     inset 1.5px 1.5px 0 rgba(255,255,255,1),
     inset -1px -1px 0 rgba(255,255,255,0.5),
-    inset 0 0 30px rgba(255,255,255,0.5),
-    0 30px 80px -30px rgba(60, 20, 10, 0.5),
+    inset 0 0 14px rgba(255,255,255,0.5),
+    0 20px 40px -20px rgba(60, 20, 10, 0.45),
     0 4px 14px -6px rgba(60, 20, 10, 0.18);
 }
+/* Menus float over arbitrary content, so they are nearly opaque instead of blurred. */
+.glass-menu { background: linear-gradient(160deg, rgba(255,254,251,0.97), rgba(253,249,242,0.96)) !important; }
 .glass-dark, .pill-dark {
-  background: linear-gradient(160deg, rgba(34,30,28,0.86), rgba(14,14,13,0.94));
+  background: linear-gradient(160deg, rgba(34,30,28,0.94), rgba(14,14,13,0.97));
   color: #fbf6ee;
   border-radius: 999px;
   box-shadow:
     inset 1.5px 1.5px 0 rgba(255,255,255,0.32),
     inset -1px -1px 0 rgba(255,255,255,0.08),
-    inset 0 0 18px rgba(255,180,140,0.12),
-    0 16px 36px -14px rgba(20, 8, 4, 0.7);
+    inset 0 0 10px rgba(255,180,140,0.12),
+    0 12px 26px -12px rgba(20, 8, 4, 0.65);
 }
-/* Pointer light and top sheen. */
+/* The sticky nav pill: the one real frosted surface, small and modestly blurred. */
+.glass-nav { background: rgba(251,248,241,0.9); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-nav { background: linear-gradient(160deg, rgba(255,253,249,0.66), rgba(255,250,244,0.52)); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); }
+  html[data-perf=low] .glass-nav { background: rgba(251,248,241,0.94); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+/* Static top sheen. */
 .glass::before, .glass-thin::before, .glass-thick::before, .glass-dark::before, .pill-dark::before, .card::before, .window::before {
   content: "";
   position: absolute;
@@ -223,15 +212,14 @@ html.has-cursor :is(input, textarea, [contenteditable]) { cursor: text !importan
   z-index: -1;
   border-radius: inherit;
   background:
-    radial-gradient(220px 140px at var(--mx, 30%) var(--my, -20%), rgba(255,255,255,0.75), transparent 70%),
+    radial-gradient(220px 140px at 30% -20%, rgba(255,255,255,0.75), transparent 70%),
     linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 42%);
   opacity: 0.6;
-  transition: opacity 240ms ease;
   pointer-events: none;
 }
 .glass-dark::before, .pill-dark::before {
   background:
-    radial-gradient(160px 90px at var(--mx, 30%) var(--my, -30%), rgba(255,170,120,0.5), transparent 70%),
+    radial-gradient(160px 90px at 30% -30%, rgba(255,170,120,0.5), transparent 70%),
     linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 50%);
 }
 /* Refractive coloured rim. */
@@ -250,15 +238,18 @@ html.has-cursor :is(input, textarea, [contenteditable]) { cursor: text !importan
 }
 .glass-thin::after { padding: 1.5px; opacity: 1; }
 .glass-dark::after, .pill-dark::after { opacity: 0.5; }
-.glass:hover::before, .glass-thin:hover::before, .glass-dark:hover::before, .pill-dark:hover::before, .card:hover::before { opacity: 1; }
-:is(button, a):is(.glass, .glass-thin, .glass-dark, .pill-dark):hover { transform: translateY(-1.5px) scale(1.025); }
+/* Shadows: blur radii kept modest on purpose (a 60-80 px blur is costly to rasterize on a software compositor). */
+html[data-perf=low] :is(.glass, .glass-thin, .glass-thick, .card, .window) { box-shadow: inset 1px 1px 0 rgba(255,255,255,0.9), 0 6px 16px -8px rgba(60, 20, 10, 0.35); }
+html[data-perf=low] :is(.glass-dark, .pill-dark) { box-shadow: inset 1px 1px 0 rgba(255,255,255,0.25), 0 6px 16px -8px rgba(20, 8, 4, 0.6); }
+/* Low-power mode: a plain hairline instead of the masked conic rim. */
+html[data-perf=low] :is(.glass, .glass-thin, .glass-thick, .glass-dark, .pill-dark, .card, .window)::after { -webkit-mask: none; mask: none; padding: 0; background: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7); }
+html[data-perf=low] :is(.glass-dark, .pill-dark)::after { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+:is(button, a):is(.glass, .glass-thin, .glass-dark, .pill-dark):hover { transform: translateY(-1.5px); }
 :is(button, a):is(.glass, .glass-thin, .glass-dark, .pill-dark):active { transform: scale(0.97); transition-duration: 140ms; }
-.card { transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 500ms var(--ease-out), box-shadow 360ms ease; }
+/* Cards: a plain CSS hover lift (no pointer-follow tilt, no 3D layer per card). */
 @media (hover: hover) and (pointer: fine) {
-  .card:hover { transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-3px);
-    box-shadow: inset 1.5px 1.5px 0 rgba(255,255,255,0.9), inset -1px -1px 0 rgba(255,255,255,0.28), inset 0 0 24px rgba(255,255,255,0.35), 0 34px 70px -26px rgba(60,20,10,0.5), 0 8px 20px -8px rgba(60,20,10,0.2); }
+  a.card:hover, .card:not(:has(table, canvas, .maplibregl-map)):hover { transform: translateY(-3px); }
 }
-.card:has(table):hover, .card:has(canvas):hover, .card:has(.maplibregl-map):hover { transform: none; }
 .field { transition: box-shadow 260ms var(--ease-out), background-color 200ms ease; }
 .field:hover { background: rgba(255,255,255,0.7); }
 .field:focus-visible, .field:focus-within { background: rgba(255,255,255,0.82); box-shadow: inset 1px 1px 0 rgba(255,255,255,0.9), 0 0 0 1px rgba(217,67,26,0.5), 0 0 0 4px rgba(217,67,26,0.14), 0 8px 20px -10px rgba(60,20,10,0.35) !important; }
@@ -266,10 +257,8 @@ html.has-cursor :is(input, textarea, [contenteditable]) { cursor: text !importan
 /* Form controls pick up thin glass. */
 .field {
   border-radius: 999px;
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.66);
   box-shadow: inset 1px 1px 0 rgba(255,255,255,0.9), inset 0 0 0 1px rgba(18,23,21,0.06), 0 6px 16px -10px rgba(60,20,10,0.35);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  backdrop-filter: blur(16px) saturate(180%);
 }
 
 /* Tables on glass: no heavy rules, hairlines + zebra tint. */
@@ -277,17 +266,15 @@ html.has-cursor :is(input, textarea, [contenteditable]) { cursor: text !importan
 :is(.glass, .glass-thick, .card, .window) :is(tr, td, th, thead, tbody) { border-color: rgba(18,23,21,0.06) !important; }
 :is(.glass, .glass-thick, .card, .window) tbody tr:nth-child(even) { background: rgba(255,255,255,0.35); }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .glass-thin, .glass-thick, .card, .window { background: #fbf8f0; }
-  .glass-dark, .pill-dark { background: #1a1614; }
-}
 }
 
-/* Hero cursor spotlight: a soft warm glow under the pointer (fine pointers only). */
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .hero-spot::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(420px 320px at var(--sx, -999px) var(--sy, -999px), rgba(255,150,90,0.22), transparent 70%); }
-}
+@keyframes fade-in { from { opacity: 0; } }
+.fade-in { animation: fade-in 600ms var(--ease-out) both; }
+
+/* Dot-matrix displays wipe in once: one clip-path animation per display. */
+@keyframes dot-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.dot-wipe { animation: dot-wipe 700ms var(--ease-out) both; }
+html[data-perf=low] .dot-wipe { animation: none; }
 
 /* Dot-matrix signature pieces (same rhythm as DotText: dot + gap of a third). */
 .dot-rule { height: 6px; background: radial-gradient(circle, rgba(18,23,21,0.16) 2px, transparent 2.5px) 0 50% / 9px 6px repeat-x;

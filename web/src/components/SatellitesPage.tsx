@@ -67,7 +67,7 @@ export function SatellitesPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {FLEET.map((s, i) => (
           <Reveal key={s.name} delay={i * 0.06}>
-            <motion.div whileHover={{ y: -4 }} className="card h-full p-5">
+            <div className="card h-full p-5">
               <div className="flex items-center justify-between">
                 <span className="h-3 w-3 rounded-sm" style={{ background: SAT_COLORS[s.name] }} />
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">{s.sensor}</span>
@@ -81,7 +81,7 @@ export function SatellitesPage() {
               </dl>
               <p className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[11px] ${s.status === "Stable" ? "bg-[#d6e2cf]" : "bg-[var(--ember-soft)] text-[var(--ember)]"}`}>{s.status}</p>
               <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">{s.role}</p>
-            </motion.div>
+            </div>
           </Reveal>
         ))}
       </div>
@@ -90,7 +90,7 @@ export function SatellitesPage() {
         <section className="window mt-10">
           <div className="grid lg:grid-cols-[1fr_22rem]">
             <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.3),transparent_60%)]">
-              <FireGlobe live={null} tle={data?.tle.satellites ?? null} showFires={false} speed={180} height={520} />
+              <FireGlobe live={null} tle={data?.tle.satellites ?? null} showFires={false} speed={180} height={520} satLabels />
             </div>
             <div className="border-t border-[var(--hairline)] p-6 lg:border-l lg:border-t-0">
               <p className="eyebrow">Orbits, live</p>
@@ -109,7 +109,7 @@ export function SatellitesPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="eyebrow">Measured from the detections</p>
-              <h2 className="display mt-2 text-3xl sm:text-4xl">When each satellite actually passed, year by year</h2>
+              <h2 className="display mt-2 t-d3">When each satellite actually passed, year by year</h2>
             </div>
             <CountryPicker value={country} options={countries} onChange={setCountry} />
           </div>
@@ -140,7 +140,7 @@ export function SatellitesPage() {
       <Reveal>
         <section className="card mt-10 p-5 sm:p-7">
           <p className="eyebrow">Why the drift matters</p>
-          <h2 className="display mt-2 text-3xl sm:text-4xl">Fire has a daily rhythm. <span className="italic text-[var(--ember)]">Satellites sample one moment of it.</span></h2>
+          <h2 className="display mt-2 t-d3">Fire has a daily rhythm. <span className="italic text-[var(--ember)]">Satellites sample one moment of it.</span></h2>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="flex flex-wrap gap-1.5">{Object.keys(DIURNAL).map((c) => <Chip key={c} on={c === cover} onClick={() => setCover(c)}>{c}</Chip>)}</div>
             <label className="ml-auto flex items-center gap-2 text-sm">Year <span className="tabular w-10">{year}</span>
@@ -157,9 +157,9 @@ export function SatellitesPage() {
               const share = frp(t, p) / p.peak;
               return (
                 <motion.g key={pl} animate={{ x: 0 }}>
-                  <motion.line animate={{ x1: dx(t), x2: dx(t) }} y1={T} y2={H - B} stroke={SAT_COLORS[pl]} strokeWidth="2" strokeDasharray="4 3" transition={{ type: "spring", stiffness: 120, damping: 18 }} />
-                  <motion.circle animate={{ cx: dx(t), cy: dy(frp(t, p)) }} r="6" fill={SAT_COLORS[pl]} stroke="#fff" strokeWidth="2" transition={{ type: "spring", stiffness: 120, damping: 18 }} />
-                  <motion.text animate={{ x: dx(t) + 8 }} y={pl === "Terra" ? T + 14 : pl === "Aqua" ? T + 30 : T + 46} fontSize="11" fill={SAT_COLORS[pl]}>{pl} {clock(t)} · {Math.round(share * 100)}% of peak</motion.text>
+                  <motion.line initial={false} x1={dx(t)} x2={dx(t)} animate={{ x1: dx(t), x2: dx(t) }} y1={T} y2={H - B} stroke={SAT_COLORS[pl]} strokeWidth="2" strokeDasharray="4 3" transition={{ type: "spring", stiffness: 120, damping: 18 }} />
+                  <motion.circle initial={false} cx={dx(t)} cy={dy(frp(t, p))} animate={{ cx: dx(t), cy: dy(frp(t, p)) }} r="6" fill={SAT_COLORS[pl]} stroke="#fff" strokeWidth="2" transition={{ type: "spring", stiffness: 120, damping: 18 }} />
+                  <motion.text initial={false} x={dx(t) + 8} animate={{ x: dx(t) + 8 }} y={pl === "Terra" ? T + 14 : pl === "Aqua" ? T + 30 : T + 46} fontSize="11" fill={SAT_COLORS[pl]}>{pl} {clock(t)} · {Math.round(share * 100)}% of peak</motion.text>
                 </motion.g>
               );
             })}
