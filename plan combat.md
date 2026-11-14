@@ -686,7 +686,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P1 · Observed gap · Challenge · effort L
 - **Evidence:** Historical calendar ends2025; live platform mix differs
 - **Acceptance:** Validated bridge, same elapsed period, filtering and completeness disclosed
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Scoped, not ticked (no validated bridge). 14 Nov: same-platform prototype -- NOAA-20 NRT 8-13 Nov 2026 vs NOAA-20 archive (`viirs-jpss1`) same days 2018-2025, identical day/confidence/FRP filters, no type filter (NRT lacks it), not harmonized, not month-to-date (keyless NRT = 7 days). `scripts/build_current_month.py` -> `web/public/data/current_month.json`; decision, gaps and UI card spec in `docs/current-month.md`.
 
 ### E08 — Persist area mode dates and baseline in URL
 
