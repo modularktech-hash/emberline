@@ -3,6 +3,7 @@
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
+import { PageHead } from "@/components/ui";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
 const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
@@ -29,10 +30,9 @@ export function Method() {
     }).join(" ");
 
   return (
-    <div className="pt-16">
-      <p className="eyebrow">Method & proof</p>
-      <h1 className="display mt-3 max-w-3xl text-4xl sm:text-5xl">How we know the correction is real.</h1>
-
+    <div>
+      <PageHead eyebrow="Science · method & proof" title="How we know the correction" italic="is real."
+        lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest." />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
           ["1 · Match", "On the same day and place (within ~3.5 km), did the old sensor, Aqua MODIS, also see the fire that VIIRS saw? Both pass overhead in the early afternoon."],

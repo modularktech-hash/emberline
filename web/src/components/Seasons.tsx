@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
+import { FirePulse } from "@/components/FirePulse";
+import { CountryPicker } from "@/components/CountryPicker";
+import { PageHead, Reveal } from "@/components/ui";
 import { useAreaData, type Area } from "@/lib/useArea";
 
 const W = 720, H = 300, L = 46, R = 16, T = 18, B = 30;
@@ -29,25 +32,12 @@ export function Seasons() {
   const y = (val: number, max: number) => T + (1 - val / max) * (H - T - B);
 
   return (
-    <div className="pt-16">
-      <p className="eyebrow">Unusual conditions · critical periods</p>
-      <h1 className="display mt-3 text-4xl sm:text-5xl">Is this year normal?</h1>
-      <p className="mt-4 max-w-2xl leading-relaxed text-[var(--text-secondary)]">
-        Each month of a chosen year against that month&apos;s historical median, on the harmonized record.
-        Because every year is in the same unit, 2005 and 2025 can be compared directly.
-      </p>
-
+    <div>
+      <PageHead eyebrow="Insights · unusual conditions · critical periods" title="Is this year" italic="normal?"
+        lede="Each month of a chosen year against that month's historical median and spread, on the harmonized record — so 2005 and 2025 are compared in the same unit." />
       <div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-1.5">
-            {(data?.countries ?? []).map((c) => {
-              const on = area.kind === "country" && area.name === c;
-              return (
-                <button key={c} type="button" aria-pressed={on} onClick={() => setArea({ kind: "country", name: c })}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-[var(--ember)] bg-[var(--ember-soft)]" : "border-[var(--hairline)] text-[var(--text-secondary)]"}`}>{c}</button>
-              );
-            })}
-          </div>
+          <CountryPicker value={area.kind === "country" ? area.name : "Custom area"} options={data?.countries ?? []} onChange={(c) => setArea({ kind: "country", name: c })} />
           <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
             <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2.5 py-1.5 text-[var(--text-primary)]">
               {(v?.years ?? [year]).map((yy) => <option key={yy}>{yy}</option>)}
@@ -111,6 +101,18 @@ export function Seasons() {
           </>
         )}
       </div>
+    <Reveal>
+        <section className="card mt-10 grid items-center gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
+          <div>
+            <p className="eyebrow">Fire Pulse</p>
+            <h2 className="display mt-2 text-4xl">Twenty-three fire seasons in one glance.</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+              Each ring is a year, oldest at the centre; each slice is a month. A fire season shows as a band of colour sweeping around the clock — if it widens, shifts, or burns darker in recent rings, you can see it here before you read a number. Harmonized record, same Ember ramp as the calendar.
+            </p>
+          </div>
+          {data && <FirePulse cal={data.harmonized} />}
+        </section>
+      </Reveal>
     </div>
   );
 }
