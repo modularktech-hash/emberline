@@ -11,8 +11,7 @@ it, commit and push. Times are IST.
 | A1 — raw pipeline (Portugal, Chile) | Person A's session | **DONE** | `scripts/build_tables.py`, `web/public/data/{cell_day,calendar_raw}.parquet`, `docs/figures/raw_counts_*.png`, notes in `docs/session-notes.md` |
 | Global data download | Cloud session (Claude, "data host") | **RUNNING** | `data/global/*.csv.gz` on the cloud session only — never committed |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
-| B1 — app foundations | Person B | not started? — claim it here | deployed URL |
-| B2 — wire up + polish | Person B | **A2 inputs ready** — waiting on B1 | reads `params.json` + `calendar_harmonized.parquet` |
+| App build — B1+B2 | Cloud session (Claude, "app build") | **IN PROGRESS** | branch `shishir/admiring-pascal-8ymvmc`; deployed URL when live |
 
 **A2 v1 is done — do not re-run it elsewhere.** Headline numbers are in `docs/results.md`. Next science step (cloud session): run on the global data when it lands.
 Person A: you are free. Good uses of your time: help B1, write the README and
@@ -30,6 +29,7 @@ land in `docs/results.md`.
 
 ## Log (newest first)
 
+- 14 Nov — App build (B1+B2) claimed by a cloud session; work on branch `shishir/admiring-pascal-8ymvmc`.
 - 14 Nov ~12:15 — A2 v1 done: Portugal, Chile, Australia, Canada fitted on 2012–2018, tested 2019–2021. Held-out R² 0.27–0.81 vs raw VIIRS −6.8 to −31.9. See `docs/results.md`.
 
 - 14 Nov ~12:00 — Cloud session claimed A2. Global download wave 1 (75
