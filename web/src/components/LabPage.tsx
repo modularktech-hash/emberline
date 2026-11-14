@@ -11,6 +11,7 @@ import { getCountryTable } from "@/lib/data";
 import { getCalendar, getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fitTag, prettyName } from "@/lib/names";
+import { coefCiEstimated } from "@/lib/fitFlags";
 
 const P = (frp: number, b0: number, b1: number) => 1 / (1 + Math.exp(-(b0 + b1 * Math.log(Math.max(0.1, frp)))));
 const DIURNAL: Record<string, { s: number; h: number }> = {
@@ -138,8 +139,10 @@ export function LabPage() {
             </div>
             <div className="space-y-3">
               <Out big label={`P(Aqua also detects) · ${prettyName(region)}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
-              <Out label="FRP at 50% (95% CI)" value={fit ? `${fmtNum(fit.frp_at_p50_mw, 1)} MW` : "—"} />
-              <p className="text-xs text-[var(--text-muted)]">CI {fit?.frp_at_p50_ci95_mw.map((v) => fmtNum(v, 1)).join("–")} MW. Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019, citing Roberts &amp; Wooster 2008 and Schroeder et al. 2010) — a sanity check, not the same quantity.</p>
+              <Out label={fit && !coefCiEstimated(fit) ? "FRP at 50% (point value)" : "FRP at 50% (95% CI)"} value={fit ? `${fmtNum(fit.frp_at_p50_mw, 1)} MW` : "—"} />
+              <p className="text-xs text-[var(--text-muted)]">{fit && !coefCiEstimated(fit)
+                ? <>Interval not estimated — curve borrowed from the pooled fit: {prettyName(region)} had too few training matches for its own curve, and the borrowed coefficients were not resampled, so their uncertainty is unknown, not zero.</>
+                : <>CI {fit?.frp_at_p50_ci95_mw.map((v) => fmtNum(v, 1)).join("–")} MW.</>} Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019, citing Roberts &amp; Wooster 2008 and Schroeder et al. 2010) — a sanity check, not the same quantity.</p>
             </div>
           </div>
         </Tool>

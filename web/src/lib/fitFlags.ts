@@ -22,3 +22,24 @@ export function fitFlags(fit: CountryFit): string[] {
   if (ok(t.bias_pct) && Math.abs(t.bias_pct) > 50) out.push(`held-out bias ${fmtPct(t.bias_pct)}`);
   return out;
 }
+
+/**
+ * Whether the curve's coefficient and FRP-at-50% intervals were estimated.
+ * Pooled (borrowed) fits publish the point value twice; that is "not
+ * estimated", not a zero-width interval. Files without the field (the
+ * four-country fallback, all own fits) count as estimated unless pooled.
+ * Held-out score intervals (validation_test_ci95) are separate and unaffected.
+ */
+export function coefCiEstimated(fit: CountryFit): boolean {
+  return fit.coef_ci_estimated ?? fit.fit_source !== "pooled";
+}
+
+/** What to show instead of a coefficient interval for a borrowed curve. */
+export const CI_NOT_ESTIMATED = "interval not estimated — curve borrowed from the pooled fit";
+
+/** "8.9–9.3 MW" for an own fit; the not-estimated wording for a borrowed one. */
+export function frpP50Interval(fit: CountryFit): string {
+  if (!coefCiEstimated(fit)) return CI_NOT_ESTIMATED;
+  const [lo, hi] = fit.frp_at_p50_ci95_mw;
+  return `95% CI ${fmtNum(lo, 1)}–${fmtNum(hi, 1)} MW`;
+}

@@ -12,6 +12,7 @@ import { fitTag, prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 import type { CountryFit } from "@/lib/types";
+import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
 const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
@@ -196,7 +197,7 @@ export function Method() {
             </svg>
             <p className="tabular mt-3 text-xs text-[var(--text-secondary)]">
               <span className="mr-1.5 inline-block h-0.5 w-5 align-middle" style={{ background: HUES[0] }} />
-              {prettyName(sel)}: 50% at {fmtNum(C(sel).frp_at_p50_mw, 1)} MW ({fmtNum(C(sel).frp_at_p50_ci95_mw[0], 1)}–{fmtNum(C(sel).frp_at_p50_ci95_mw[1], 1)}), κ {fmtNum(C(sel).kappa, 3)}{C(sel).fit_source === "pooled" ? " · pooled curve" : ""}
+              {prettyName(sel)}: 50% at {fmtNum(C(sel).frp_at_p50_mw, 1)} MW ({coefCiEstimated(C(sel)) ? <>{fmtNum(C(sel).frp_at_p50_ci95_mw[0], 1)}–{fmtNum(C(sel).frp_at_p50_ci95_mw[1], 1)}</> : CI_NOT_ESTIMATED}), κ {fmtNum(C(sel).kappa, 3)}{C(sel).fit_source === "pooled" ? " · pooled curve" : ""}
               {p.pooled_model && <> · <span className="mx-1 inline-block w-5 border-t border-dashed border-[var(--ink)] align-middle" />pooled curve from {p.pooled_model.from_countries.length} own-fit countries</>}
               {" "}· grey: the {summary.own} own-fit curves
             </p>
@@ -211,7 +212,7 @@ export function Method() {
               <li><span className="text-[var(--text-primary)]">Why it is needed after the probability weighting.</span> P answers &ldquo;would MODIS have seen this VIIRS detection?&rdquo;, one detection at a time; it says nothing about how many VIIRS detections make up one MODIS detection. Without κ the total would carry that pixel-count ratio. With κ the training-years total equals Aqua&apos;s by construction; the held-out years test whether that still holds.</li>
               <li><span className="text-[var(--text-primary)]">How uncertain it is.</span> The fit stores no interval for κ on its own. The end-to-end check is the held-out bias above, with its bootstrap interval, scored on years κ never saw. Across the {summary.own} own-fit countries κ ranges {fmtNum(Math.min(...names.filter((n) => C(n).kappa_source !== "pooled").map((n) => C(n).kappa)), 3)}–{fmtNum(Math.max(...names.filter((n) => C(n).kappa_source !== "pooled").map((n) => C(n).kappa)), 3)} (median {fmtNum(median(names.filter((n) => C(n).kappa_source !== "pooled").map((n) => C(n).kappa)), 3)}), so it is a country property, not a constant.</li>
             </ul>
-            <p className="mt-3 text-xs text-[var(--text-muted)]">Source: scripts/fit_harmonization.py, step 3. The logistic curve&apos;s intervals come from 50 bootstrap refits on up to 200,000 resampled training detections.</p>
+            <p className="mt-3 text-xs text-[var(--text-muted)]">Source: scripts/fit_harmonization.py, step 3. The logistic curve&apos;s intervals come from 50 bootstrap refits on up to 200,000 resampled training detections. Countries on the borrowed (pooled) curve have no coefficient interval: their curve is a detection-weighted average of the own-fit countries&apos; coefficients, which was not resampled, so its uncertainty is not estimated (not zero). Their held-out score intervals above are computed as for every other country.</p>
           </section></Reveal>
 
           <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6">

@@ -71,6 +71,12 @@ export interface CountryFit {
   /** "own": fitted on this country's matches. "pooled": too few training matches, borrows the pooled curve. */
   fit_source?: "own" | "pooled";
   kappa_source?: "own" | "pooled";
+  /**
+   * World file only. true: logistic and FRP-at-50% intervals are bootstrap
+   * intervals. false (pooled fits): resampling was skipped and the "interval"
+   * is the point value twice -- uncertainty not estimated, never draw it.
+   */
+  coef_ci_estimated?: boolean;
   logistic: LogisticFit;
   frp_at_p50_mw: number;
   frp_at_p50_ci95_mw: Ci95;
