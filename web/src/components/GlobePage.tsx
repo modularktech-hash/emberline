@@ -30,7 +30,7 @@ export function GlobePage() {
       <PageHead eyebrow="Live · NASA FIRMS near-real-time" title="Every fire seen from orbit," italic="right now."
         lede={<>The last {win === "24h" ? "24 hours" : "7 days"} of active-fire detections worldwide, and the satellites that saw them, at their real positions from today&apos;s public orbital data. Drag to spin, scroll to zoom, hover a spike.</>} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Reveal>
           <div className="window relative">
             <div className="flex flex-wrap items-center gap-2 bg-white/30 px-4 py-3">
@@ -41,10 +41,10 @@ export function GlobePage() {
               <Chip on={spin} onClick={() => setSpin(!spin)}>Auto-spin</Chip>
               <label className="ml-auto flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                 Time ×<span className="tabular w-8">{speed}</span>
-                <input type="range" min={1} max={600} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="accent-[var(--ember)]" />
+                <input type="range" min={1} max={600} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Time speed" className="w-24 min-w-0 accent-[var(--ember)] sm:w-32" />
               </label>
             </div>
-            <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
+            <div data-cursor="Drag" className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
               <FireGlobe live={data?.live ?? null} tle={data?.tle.satellites ?? null} window={win} showFires={fires} showSats={sats}
                 showOrbits={orbits} speed={speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} />
             </div>

@@ -12,7 +12,21 @@ import { useParquet } from "@/lib/useParquet";
 import { ALL } from "@/lib/nav";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE } from "@/lib/motion";
+
+/** Splits a headline line into words that rise in one after another. */
+function Words({ text, delay = 0 }: { text: string; delay?: number }) {
+  return (
+    <>
+      {text.split(" ").map((w, i, a) => (
+        <span key={i} className="inline-block overflow-hidden pb-[0.12em] align-top">
+          <motion.span className="inline-block" initial={{ y: "105%", opacity: 0, rotate: 4 }} animate={{ y: "0%", opacity: 1, rotate: 0 }}
+            transition={{ duration: 0.8, ease: EASE, delay: delay + i * 0.07 }}>{w}{i < a.length - 1 ? "\u00a0" : ""}</motion.span>
+        </span>
+      ))}
+    </>
+  );
+}
 
 function useHomeData() {
   return useParquet(async () => {
@@ -34,7 +48,8 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
   const bestR2 = d ? Math.max(...d.table.countries.map((c) => c.r2_model)) : 0;
 
   return (
-    <section ref={ref} className="relative pb-10 pt-14 sm:pt-24">
+    <section ref={ref} className="hero-spot relative pb-10 pt-14 sm:pt-24"
+      onPointerMove={(e) => { if (e.pointerType !== "mouse") return; const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty("--sx", `${e.clientX - r.left}px`); e.currentTarget.style.setProperty("--sy", `${e.clientY - r.top}px`); }}>
       <motion.div style={{ y: textY, opacity: fade }} className="relative z-10 mx-auto max-w-3xl text-center">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
           className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
@@ -42,32 +57,43 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{live24.toLocaleString()}</span> fires seen from orbit in the last 24 hours</span> : "NASA FIRMS · MODIS + VIIRS · 2001–2025"}
         </motion.div>
         <h1 className="display mt-8 text-[3.1rem] leading-[0.98] sm:text-[5.6rem]">
-          <motion.span className="block" initial={{ opacity: 0, y: 24, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.9, ease: EASE, delay: 0.1 }}>
-            25 years of fire.
-          </motion.span>
-          <motion.span className="block whitespace-nowrap text-[2.6rem] italic text-[var(--ember)] sm:text-[5.6rem]" initial={{ opacity: 0, y: 24, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1, ease: EASE, delay: 0.3 }}>
-            One unbroken line.
-          </motion.span>
+          <span className="block"><Words text="25 years of fire." delay={0.1} /></span>
+          <span className="block whitespace-nowrap text-[2.6rem] italic text-[var(--ember)] sm:text-[5.6rem]"><Words text="One unbroken line." delay={0.38} /></span>
         </h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }}
           className="mx-auto mt-7 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">
           Two generations of NASA satellites, harmonized into a single fire record you can trust from 2001 to today.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
-          <Link href="/globe" className="glass rounded-full px-6 py-3 text-[15px] font-medium">Live globe &nbsp;→</Link>
+          <Link href="/explorer" data-magnetic className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
+          <Link href="/globe" data-magnetic className="glass rounded-full px-6 py-3 text-[15px] font-medium">Live globe &nbsp;→</Link>
         </motion.div>
       </motion.div>
 
       <motion.div style={{ y: globeY, scale: globeScale }} initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 1.4, ease: EASE }}
-        className="relative mx-auto -mt-2 max-w-[760px] cursor-grab active:cursor-grabbing">
+        data-cursor="Drag" className="relative mx-auto -mt-2 max-w-[760px] cursor-grab active:cursor-grabbing">
         <div aria-hidden className="pointer-events-none absolute inset-[12%] rounded-full bg-[radial-gradient(circle,rgba(255,140,80,0.28),transparent_68%)] blur-2xl" />
         <FireGlobe live={d?.live ?? null} tle={d?.tle.satellites ?? null} interactive allowZoom={false} showOrbits height={640} speed={60} />
         <p className="pointer-events-none -mt-6 text-center text-xs tracking-wide text-[var(--text-muted)]">Drag to spin · hover a fire for details</p>
       </motion.div>
 
       <Widgets d={d} live24={live24} detections={detections} bestR2={bestR2} />
+      {d && <Ticker names={[...d.table.countries.map((c) => c.country), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]} />}
     </section>
+  );
+}
+
+/* ------------------------------------------- ticker of existing names */
+function Ticker({ names }: { names: string[] }) {
+  const row = names.map((n) => (
+    <span key={n} className="flex items-center gap-6 pr-6 font-mono text-[12px] uppercase tracking-[0.24em] text-[var(--text-muted)]">
+      {n}<span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--ember)] opacity-70" />
+    </span>
+  ));
+  return (
+    <div className="marquee mx-auto mt-14 max-w-5xl py-2" aria-label={`Regions and satellites: ${names.join(", ")}`}>
+      <div aria-hidden>{row}{row.map((r, i) => <span key={i}>{r}</span>)}</div>
+    </div>
   );
 }
 
@@ -286,7 +312,7 @@ function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
         <Dial color="#3f7f96" label="Aqua · MODIS" mv={aq} />
         <Dial color="#d9431a" label="Suomi-NPP · VIIRS" mv={sn} />
       </div>
-      <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">Emberline builds its post-2012 record from Suomi-NPP, which has held its 13:30 orbit, so the harmonized record is not exposed to the drift. <Link className="underline decoration-[var(--ember)] underline-offset-4" href="/satellites">See every satellite →</Link></p></Reveal>
+      <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">Emberline builds its post-2012 record from Suomi-NPP, which has held its 13:30 orbit, so the harmonized record is not exposed to the drift. <Link className="link-ul" href="/satellites">See every satellite →</Link></p></Reveal>
     </section>
   );
 }
@@ -319,7 +345,7 @@ export function Home() {
             </Reveal>
           ))}
         </div>
-        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">Fitted 2012–2018, scored 2019–2021 per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="underline decoration-[var(--ember)] underline-offset-4">Full method and proof →</Link></p></Reveal>
+        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">Fitted 2012–2018, scored 2019–2021 per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Full method and proof →</Link></p></Reveal>
       </section>
 
       <DriftChapter drift={d?.drift} />
@@ -341,7 +367,7 @@ export function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Half of the apparent shift is VIIRS spotting small early-season burns MODIS never could. <Link href="/trends" className="underline decoration-[var(--ember)] underline-offset-4">Every region →</Link></p>
+              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Half of the apparent shift is VIIRS spotting small early-season burns MODIS never could. <Link href="/trends" className="link-ul">Every region →</Link></p>
             </div>
           </Reveal>
         </div>
@@ -353,7 +379,7 @@ export function Home() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ALL.map((t, i) => (
             <Reveal key={t.href} delay={(i % 3) * 0.07}>
-              <Link href={t.href} className="card group block h-full p-6 transition-transform hover:-translate-y-1">
+              <Link href={t.href} data-cursor="Open" className="card group block h-full p-6">
                 <p className="font-mono text-[11px] text-[var(--text-muted)]">{String(i + 1).padStart(2, "0")}</p>
                 <p className="display mt-3 text-3xl">{t.label}</p>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{t.blurb}</p>
@@ -369,7 +395,7 @@ export function Home() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_300px_at_50%_0%,rgba(255,180,110,0.35),transparent)]" />
           <h2 className="display relative text-5xl sm:text-7xl">Pick a place. <span className="italic text-[var(--ember)]">See its fires.</span></h2>
           <p className="relative mx-auto mt-4 max-w-lg text-[var(--text-secondary)]">Draw any area on the map, choose the years, and download the harmonized calendar as CSV. No account, no API key.</p>
-          <Link href="/explorer" className="pill-dark relative mt-8 inline-block px-7 py-3.5 text-[15px] font-medium">Open the calendar explorer →</Link>
+          <Link href="/explorer" data-magnetic className="pill-dark relative mt-8 inline-block px-7 py-3.5 text-[15px] font-medium">Open the calendar explorer →</Link>
         </section>
       </Reveal>
     </div>

@@ -69,4 +69,5 @@ export function downloadCsv(filename: string, header: Record<string, string>, co
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+  window.dispatchEvent(new CustomEvent("emberline:download")); // celebratory burst, see Interactions
 }

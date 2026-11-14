@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
+import { Cursor } from "@/components/Cursor";
+import { Interactions } from "@/components/Interactions";
+import { SmoothScroll } from "@/components/SmoothScroll";
 import { GlassLight } from "@/components/GlassLight";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
@@ -15,6 +18,7 @@ export const metadata: Metadata = {
   description:
     "A harmonized MODIS + VIIRS record of satellite-detected burning activity, as a calendar for any area.",
 };
+export const viewport = { themeColor: "#f7f3e8" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -22,6 +26,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <Backdrop />
         <GlassLight />
+        <SmoothScroll />
+        <Interactions />
+        <Cursor />
         <SiteNav />
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
         <SiteFooter />
