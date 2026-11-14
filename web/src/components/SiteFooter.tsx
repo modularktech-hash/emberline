@@ -42,7 +42,7 @@ export function SiteFooter() {
           <div>
             <p className="display text-4xl text-[#f7f3e8] sm:text-5xl">Emberline</p>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[#b8b2a2]">
-              25 years of satellite fire detections, harmonized across the MODIS–VIIRS sensor break so the sensor no longer matters.
+              Satellite fire detections, harmonized per country across the MODIS–VIIRS sensor break to reduce the discontinuity between records. Archive 2001–2025; harmonized record 2003–2025.
             </p>
           </div>
           <a href="#top" className="foot-top group inline-flex items-center gap-3 rounded-full border border-white/15 px-5 py-2.5 text-sm text-[#f7f3e8]">

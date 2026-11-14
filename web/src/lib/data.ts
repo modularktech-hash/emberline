@@ -83,3 +83,20 @@ export function clock(h: number): string {
   const m = Math.round(h * 60);
   return `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
+
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/**
+ * Axis ticks for a fire year that starts on day 1 of `startMonth`: one tick per
+ * real month boundary (day of the fire year, 1-based), in order. `refYear` is
+ * the calendar year the fire year starts in; the default (2001) has no 29 Feb,
+ * matching fireDayLabel. In a leap fire year every month after February starts
+ * one day later.
+ */
+export function fireYearMonthTicks(startMonth: number, refYear = 2001): Array<{ day: number; label: string }> {
+  const origin = Date.UTC(refYear, startMonth - 1, 1);
+  return Array.from({ length: 12 }, (_, i) => {
+    const m = (startMonth - 1 + i) % 12;
+    const y = refYear + Math.floor((startMonth - 1 + i) / 12);
+    return { day: Math.round((Date.UTC(y, m, 1) - origin) / 86_400_000) + 1, label: MONTH_SHORT[m] };
+  });
+}

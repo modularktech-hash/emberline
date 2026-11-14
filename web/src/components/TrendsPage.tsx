@@ -7,13 +7,14 @@ import { DotStat } from "@/components/DotMatrix";
 import { useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
-import { fireDayLabel, getCountryTable, getSeason } from "@/lib/data";
+import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
 type Metric = "onset" | "peak" | "end" | "length";
-const LABEL: Record<Metric, string> = { onset: "Season onset (10% of the year's detections)", peak: "Season peak (50%)", end: "Season end (90%)", length: "Season length (onset → end, days)" };
+const LABEL: Record<Metric, string> = { onset: "Season onset (10% of the year's detections)", peak: "Season midpoint (50% of the year's detections)", end: "Season end (90%)", length: "Season length (onset → end, days)" };
+const SHORT: Record<Metric, string> = { onset: "onset", peak: "midpoint", end: "end", length: "length" };
 const fmt = (v: number | null | undefined) => fmtSigned(v);
 
 export function TrendsPage() {
@@ -44,15 +45,12 @@ export function TrendsPage() {
   const years = c?.years.filter((y) => y.harm_onset != null) ?? [];
   const yx = (yr: number) => T + ((yr - 2003) / 22) * (H - T - B);
   const dx = (d: number) => L + (d / 366) * (W - L - R);
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const day = Math.round((i * 365) / 12) + 1;
-    return { day, label: fireDayLabel(day, c?.fire_year_start_month ?? 1).split(" ")[1] };
-  });
+  const months = fireYearMonthTicks(c?.fire_year_start_month ?? 1);;
 
   return (
     <div>
-      <PageHead eyebrow="Insights · season shift" title="Is the fire season moving?" italic="Or is it the sensor?"
-        lede="For every year: when the season starts (10% of the year's detections), peaks (50%) and ends (90%). In the raw record, VIIRS's sharper eyes catch small early burns MODIS never could, so seasons appear to start earlier. The harmonized record removes that." />
+      <PageHead compact eyebrow="Insights · season shift" title="Is the fire season moving?" italic="Or is it the sensor?"
+        lede="For every year: when the season starts (10% of the year's detections), reaches its midpoint (50%) and ends (90%). In the raw record, VIIRS's sharper eyes catch small early burns MODIS never could, so seasons appear to start earlier. The harmonized record removes that." />
 
       {error && <Failed error={error} />}
       {loading && <Loading h={420} />}
@@ -67,7 +65,7 @@ export function TrendsPage() {
           </div>
           {monthly && (
             <p className="mt-3 max-w-3xl text-xs leading-relaxed text-[var(--text-secondary)]">
-              Monthly resolution: there is no point-detection table for {prettyName(country)} here, so onset, peak and end are estimated from the monthly calendars, assuming detections are spread evenly within each month. Read dates as approximate.
+              Monthly resolution: there is no point-detection table for {prettyName(country)} here, so onset, midpoint and end are estimated from the monthly calendars, assuming detections are spread evenly within each month. Read dates as approximate.
               {mvd?.countries ? <> Where both exist ({mvd.countries} countries), the monthly method&apos;s trends differ from the daily ones by a median of {fmtSigned(mvd.trend_abs_diff_median, 1).replace("+", "")} and at most {fmtSigned(mvd.trend_abs_diff_max, 1).replace("+", "")} days per decade.</> : null}
             </p>
           )}
@@ -78,7 +76,7 @@ export function TrendsPage() {
               return (
                 <Reveal key={m} delay={i * 0.05}>
                   <button type="button" onClick={() => setMetric(m)} className={`card w-full p-5 text-left transition-transform hover:-translate-y-0.5 ${metric === m ? "!border-[var(--ember)]" : ""}`}>
-                    <Eyebrow>{m} · days per decade</Eyebrow>
+                    <Eyebrow>{SHORT[m]} · days per decade</Eyebrow>
                     <div className="mt-3 flex items-end gap-4">
                       <div><p className="display tabular text-4xl"><DotStat text={String(fmt(harm))} dot={6} /></p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
                       <div><p className="display tabular text-2xl text-[var(--seq-5)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
@@ -116,7 +114,7 @@ export function TrendsPage() {
                   );
                 })}
               </svg>
-              <p className="mt-2 text-xs text-[var(--text-muted)]">Bars run from onset (10%) to end (90%); the dot marks the peak (50%). Raw: MODIS to 2011, VIIRS from 2012. Harmonized: Aqua-equivalent throughout.</p>
+              <p className="mt-2 text-xs text-[var(--text-muted)]">Bars run from onset (10%) to end (90%); the dot marks the season midpoint (50% of the year&apos;s detections). Raw: MODIS to 2011, VIIRS from 2012. Harmonized: Aqua-equivalent throughout.</p>
             </section>
           </Reveal>
 
@@ -124,7 +122,7 @@ export function TrendsPage() {
             <section className="card mt-8 overflow-x-auto p-5 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="display text-3xl">{LABEL[metric]}</h2>
-                <Segmented label="metric" value={metric} onChange={setMetric} options={(["onset", "peak", "end", "length"] as Metric[]).map((m) => ({ value: m, label: m }))} />
+                <Segmented label="metric" value={metric} onChange={setMetric} options={(["onset", "peak", "end", "length"] as Metric[]).map((m) => ({ value: m, label: SHORT[m] }))} />
               </div>
               <table className="tabular mt-5 w-full min-w-[620px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Year</th><th className="font-normal">Raw</th><th className="font-normal">Harmonized</th><th className="font-normal">Difference</th><th className="font-normal">Raw detections</th><th className="font-normal">Harmonized</th></tr></thead>

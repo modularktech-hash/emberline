@@ -3,8 +3,8 @@ export interface NavGroup { label: string; items: NavItem[] }
 
 export const NAV: NavGroup[] = [
   { label: "Explore", items: [
-    { href: "/explorer", label: "Calendar explorer", blurb: "Month × year burning calendar for any area, raw or harmonized" },
-    { href: "/globe", label: "Live globe", blurb: "Every fire seen from orbit in the last 24 hours, and the satellites that saw them" },
+    { href: "/explorer", label: "Calendar explorer", blurb: "Month × year burning calendar for every fitted country or a drawn box, raw or harmonized" },
+    { href: "/globe", label: "Live globe", blurb: "Recent satellite fire detections (last 24 h, raw) and the satellites that made them" },
     { href: "/compare", label: "Compare", blurb: "Two regions side by side, same unit, same scale" },
   ]},
   { label: "Insights", items: [

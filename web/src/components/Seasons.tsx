@@ -1,6 +1,6 @@
 "use client";
 
-import { fmtRatio } from "@/lib/format";
+import { fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { Eyebrow } from "@/components/Figure";
 import { useMemo, useState } from "react";
 import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
@@ -35,7 +35,7 @@ export function Seasons() {
 
   return (
     <div>
-      <PageHead eyebrow="Insights · unusual conditions · critical periods" title="Is this year" italic="normal?"
+      <PageHead compact eyebrow="Insights · unusual conditions · critical periods" title="Is this year" italic="normal?"
         lede="Each month of a chosen year against that month's historical median and spread, on the harmonized record — so 2005 and 2025 are compared in the same unit." />
       <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -79,8 +79,12 @@ export function Seasons() {
               <span><span className="mr-1.5 inline-block h-0.5 w-5 bg-[var(--ember)] align-middle" />{year}</span>
               <span><span className="mr-1.5 inline-block w-5 border-t border-dashed border-[var(--cool)] align-middle" />median of other years</span>
               <span><span className="mr-1.5 inline-block h-2.5 w-5 bg-[var(--cool)] align-middle opacity-30" />middle 50% of years</span>
-              <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[var(--seq-7)] align-middle" />above the 90th percentile</span>
+              <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[var(--seq-7)] align-middle" />above the historical 90th percentile</span>
             </div>
+            <p className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+              Historical statements, not forecasts.
+              {(() => { const f = area.kind === "country" ? data?.params.countries[area.name] : undefined; return f ? <> {areaLabel(area)}&apos;s own fit: held-out R² {fmtR2(f.validation_test.model.r2)}, bias {fmtPct(f.validation_test.model.bias_pct)} ({data!.params.test_years[0]}–{data!.params.test_years[1]}){f.fit_source === "pooled" ? ", pooled curve" : ""}.</> : null; })()}
+            </p>
 
             <div className="mt-6 overflow-x-auto">
               <table className="tabular w-full min-w-[560px] text-sm">
@@ -95,7 +99,7 @@ export function Seasons() {
                         <td className="py-2 text-[var(--text-secondary)]">{MONTHS[i]}</td>
                         <td>{fmt(m.own)}</td><td className="text-[var(--text-secondary)]">{fmt(m.med)}</td>
                         <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : fmtRatio(ratio)}</td>
-                        <td className="text-xs text-[var(--text-secondary)]">{m.own === null ? "no data" : high ? "Critical: above 9 in 10 years" : above ? "Above the usual range" : "Within or below the usual range"}</td>
+                        <td className="text-xs text-[var(--text-secondary)]">{m.own === null ? "no data" : high ? "Unusually high: above the historical 90th percentile" : above ? "Above the usual range" : "Within or below the usual range"}</td>
                       </tr>
                     );
                   })}

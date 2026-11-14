@@ -69,7 +69,7 @@ export function FooterRecord() {
           {series.length > 0 && <div className="tabular mt-1 flex justify-between text-[10px] text-[#8f887a]"><span>{series[0].year}</span><span>{series[series.length - 1].year}</span></div>}
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
             <dt className="text-[#8f887a]">Countries</dt><dd className="text-[#e6dfcd]">{names.length ? <>{names.length} fitted, {d?.table.not_fitted?.length ?? 0} too sparse to fit (raw only) · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "…"}</dd>
-            <dt className="text-[#8f887a]">Years</dt><dd className="tabular text-[#e6dfcd]">{years.length ? span(Math.min(...years), Math.max(...years)) : "…"}</dd>
+            <dt className="text-[#8f887a]">Years</dt><dd className="tabular text-[#e6dfcd]">{years.length ? <>archive {span(Math.min(...years), Math.max(...years))}; harmonized {span(2003, Math.max(...years))}</> : "…"}</dd>
             <dt className="text-[#8f887a]">Fit</dt><dd className="tabular text-[#e6dfcd]">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "…"}</dd>
           </dl>
           <Link href="/method" className="foot-link mt-4 inline-flex items-center gap-1.5 rounded-md text-sm text-[#e6dfcd]">How it is corrected <span aria-hidden>→</span></Link>

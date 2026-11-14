@@ -55,13 +55,18 @@ right now, what state the working tree may be in, and how to pick it up.
 
 ### 1 · World data
 
-- [ ] `w1` App reads the world data files (with 4-country fallback)
-- [ ] `w2` Searchable country picker for ~171 countries
-- [ ] `w3` Rebuild countries, season and drift tables for the world
-- [ ] `w4` Data and Method tables usable at 171 rows; pooled and too-sparse labelled
-- [ ] `w5` Explorer custom-area and coverage messaging
-- [ ] `w6` Home numbers recomputed from world files
-- [ ] `w7` Explorer "0.00 R²" check and fix
+- [x] `w1` App reads the world data files (with 4-country fallback)
+- [x] `w2` Searchable country picker for ~171 countries
+  - Keyboard combobox; Enter picks the highlighted row, arrows move
+- [x] `w3` Rebuild countries, season and drift tables for the world
+  - Season timing: daily resolution for 166 countries whose detection tables (rebuilt here from data/global) match the published calendar exactly; monthly resolution (labelled) for 5 (Barbados, Estonia, Mauritius, Slovenia, Solomon Islands). Drift for the 166.
+- [x] `w4` Data and Method tables usable at 171 rows; pooled and too-sparse labelled
+- [x] `w5` Explorer custom-area and coverage messaging
+  - There was no map coverage layer to keep fast; H3 rows are read only for the row groups a drawn box needs. cell_day stays 4-country and is not used by the UI.
+- [x] `w6` Home numbers recomputed from world files
+  - Headline R² is the median over 130 own-fit countries (0.64); best single country (Montenegro 0.93) named as one country
+- [x] `w7` Explorer "0.00 R²" check and fix
+  - Not reproduced live (deploy had replaced it); cause in code: value initialised to 0 and set only when scrolled into view. Now renders the final value by default.
 
 ### 2 · Audit fixes: wording
 

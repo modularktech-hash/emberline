@@ -1,6 +1,6 @@
 "use client";
 
-import { fmtInt, fmtNum } from "@/lib/format";
+import { fmtInt, fmtNum, fmtUtc, parseUtc } from "@/lib/format";
 import { Eyebrow } from "@/components/Figure";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
@@ -31,8 +31,17 @@ export function GlobePage() {
 
   return (
     <div>
-      <PageHead eyebrow="Live · NASA FIRMS near-real-time" title="Every fire seen from orbit," italic="right now."
-        lede={<>The last {win === "24h" ? "24 hours" : "7 days"} of active-fire detections worldwide, and the satellites that saw them, at their real positions from today&apos;s public orbital data. Drag to spin, scroll to zoom, hover a spike.</>} />
+      <PageHead eyebrow="Live · NASA FIRMS near-real-time" title="Recent satellite" italic="fire detections."
+        lede={<>Raw active-fire detections from the near-real-time feeds over the last {win === "24h" ? "24 hours" : "7 days"} before the snapshot, and the satellites that made them. Uncorrected, and they include gas flares and volcanoes. Drag to spin, scroll to zoom, hover a spike.</>} />
+      {data && (
+        <dl className="-mt-6 mb-8 grid max-w-4xl gap-x-6 gap-y-2 rounded-2xl border border-[var(--hairline)] p-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+          <div><dt className="text-[var(--text-muted)]">Observation window</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{win === "24h" ? "last 24 h" : "last 7 days"} before the snapshot{w?.dates?.length ? `, acquisitions dated ${w.dates[0]}${w.dates.length > 1 ? ` to ${w.dates[w.dates.length - 1]}` : ""} (UTC)` : ""}</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Fire data last fetched</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{fmtUtc(parseUtc(data.live.fetched_utc))}</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Orbit elements (TLE) fetched</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{fmtUtc(parseUtc(data.tle.fetched))}</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Satellite motion</dt><dd className="mt-0.5 text-[var(--text-primary)]">simulated from the TLEs at ×{speed} speed; not the satellites&apos; live positions</dd></div>
+          <div className="sm:col-span-2 lg:col-span-4"><dt className="sr-only">Caveat</dt><dd className="font-medium text-[var(--ember)]">Raw and uncorrected · NOAA-20/21 VIIRS and MODIS, not the Suomi-NPP record Emberline harmonizes · includes gas flares and volcanoes</dd></div>
+        </dl>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Reveal>
@@ -101,9 +110,10 @@ export function GlobePage() {
       </div>
 
       <Reveal>
-        <section className="card mt-8 overflow-x-auto p-5 sm:p-6">
+        <section className="card mt-8 min-w-0 p-5 sm:p-6">
           <h2 className="display text-3xl">The fleet, live</h2>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">Positions propagated from today&apos;s TLEs with SGP4, at the simulated clock above.</p>
+          <div className="max-w-full overflow-x-auto" tabIndex={0} role="region" aria-label="Satellite positions">
           <table className="tabular mt-4 w-full min-w-[560px] text-sm">
             <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Satellite</th><th className="font-normal">Sensor</th><th className="font-normal">Latitude</th><th className="font-normal">Longitude</th><th className="font-normal">Altitude</th><th className="font-normal">Overpass</th></tr></thead>
             <tbody>
@@ -119,6 +129,7 @@ export function GlobePage() {
               })}
             </tbody>
           </table>
+          </div>
         </section>
       </Reveal>
     </div>

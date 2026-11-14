@@ -71,15 +71,15 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
           className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
           <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
-          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> active-fire detections from orbit in the last 24 h</span> : "NASA FIRMS · MODIS + VIIRS · 2001–2025"}
+          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> active-fire detections from orbit in the last 24 h</span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
         </motion.div>
         <h1 className="display t-hero mt-8">
-          <span className="block"><Words text="25 years of fire." delay={0.1} /></span>
-          <span className="block italic text-[var(--ember)] sm:whitespace-nowrap"><Words text="One unbroken line." delay={0.38} /></span>
+          <span className="block"><Words text="23 years of fire." delay={0.1} /></span>
+          <span className="block italic text-[var(--ember)] sm:whitespace-nowrap"><Words text="One steady line." delay={0.38} /></span>
         </h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }}
           className="mx-auto mt-7 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">
-          Two generations of NASA satellites, harmonized country by country into one consistent fire record from 2001 to today.
+          Two generations of NASA satellites, harmonized country by country to reduce the discontinuity between sensor records. Source archive from 2001; harmonized record 2003–2025.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
@@ -150,10 +150,10 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div>
             <Eyebrow>At a glance · read from the data files</Eyebrow>
-            <h2 id="glance" className="display t-d3 mt-2">One day of fire, and the 25-year record it joins.</h2>
+            <h2 id="glance" className="display t-d3 mt-2">One day of fire, and the long record it joins.</h2>
           </div>
           <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year since 2001 converted to one unit, so a fire season in 2005 and one in 2025 can be compared fairly.
+            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year from 2003 to 2025 converted to one unit (Aqua MODIS-equivalent), so a fire season in 2005 and one in 2025 can be compared on the same footing. Aqua launched in May 2002, so 2001–2002 have no Aqua reference.
           </p>
         </div>
       </Reveal>
@@ -218,8 +218,8 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         </Reveal>
         <Reveal delay={0.05}>
           <div className={`${tile} bg-[var(--ember)] text-white shadow-[0_24px_44px_-26px_rgba(217,67,26,0.8)]`}>
-            <Stat dot tone="ember" label="Accuracy · median country" value={acc ? fmtR2(acc.medianR2) : d ? NA : "…"} unit="R²"
-              note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against what Aqua MODIS really saw in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
+            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d ? NA : "…"} unit="R²"
+              note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against Aqua reference observations in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
               source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
           </div>
         </Reveal>
@@ -335,7 +335,7 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
             <defs><linearGradient id="hg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d9431a" stopOpacity="0.22" /><stop offset="1" stopColor="#d9431a" stopOpacity="0" /></linearGradient></defs>
             {[0.25, 0.5, 0.75, 1].map((f) => <line key={f} x1="20" x2="620" y1={276 - f * 252} y2={276 - f * 252} stroke="var(--gridline)" />)}
             <line x1={x2012} x2={x2012} y1="20" y2="276" stroke="var(--text-muted)" strokeDasharray="3 4" />
-            <text x={x2012 + 6} y="32" fontSize="11" fill="var(--text-secondary)">2012 · VIIRS launches</text>
+            <text x={x2012 + 6} y="32" fontSize="11" fill="var(--text-secondary)">2012 · VIIRS record begins</text>
             <motion.path d={area} fill="url(#hg)" style={{ opacity: draw }} />
             <motion.path d={d} fill="none" stroke="var(--ember)" strokeWidth="3" strokeLinejoin="round" style={{ pathLength: draw }} />
             {years.filter((a) => a.year % 4 === 3).map((a) => <text key={a.year} x={20 + ((a.year - 2003) / 22) * 600} y="294" fontSize="11" textAnchor="middle" fill="var(--text-muted)">{a.year}</text>)}
@@ -346,10 +346,10 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
           </motion.div>
           <motion.div style={{ opacity: cap2 }} className="card absolute right-6 top-6 max-w-[17rem] p-4">
             <p className="display tabular text-5xl">{fmtRatio(row?.step_harm)}</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Harmonized. Aqua MODIS, which never changed, says {fmtRatio(row?.step_aqua)}. The jump was the sensor.</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Harmonized. Aqua MODIS alone, an unchanged sensor, says {fmtRatio(row?.step_aqua)}. Much of the jump was the sensor.</p>
           </motion.div>
         </div>
-        <motion.p style={{ opacity: cap2 }} className="display mt-6 t-d3">The fires did not. <span className="italic text-[var(--ember)]">Keep scrolling.</span></motion.p>
+        <motion.p style={{ opacity: cap2 }} className="display mt-6 t-d3">Much of it was detection, not fire. <span className="italic text-[var(--ember)]">Keep scrolling.</span></motion.p>
       </div>
     </section>
   );

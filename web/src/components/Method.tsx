@@ -25,7 +25,7 @@ function Bar({ value, tone }: { value: number; tone: "good" | "bad" }) {
   );
 }
 
-type ValCol = "name" | "fit" | "r2" | "raw" | "thr" | "bias" | "n";
+type ValCol = "name" | "fit" | "r2" | "raw" | "thr" | "bias" | "rmse" | "n";
 type StepCol = "name" | "fit" | "splice" | "aqua" | "harm" | "gap";
 type DriftCol = "name" | "fit" | "y0" | "y1" | "y2" | "y3";
 
@@ -49,7 +49,7 @@ export function Method() {
 
   const val = useTable<string, ValCol>(names, (n) => n, (n, k) => {
     const t = C(n).validation_test;
-    return { name: prettyName(n), fit: fitKey(n), r2: t.model.r2, raw: t.raw_viirs.r2, thr: t.threshold.r2, bias: t.model.bias_pct, n: t.model.n_cell_months }[k];
+    return { name: prettyName(n), fit: fitKey(n), r2: t.model.r2, raw: t.raw_viirs.r2, thr: t.threshold.r2, bias: t.model.bias_pct, rmse: t.model.rmse, n: t.model.n_cell_months }[k];
   }, { k: "n", dir: -1 });
   const step = useTable<string, StepCol>(names, (n) => n, (n, k) => {
     const c = C(n).null_control;
@@ -103,15 +103,21 @@ export function Method() {
               {" "}Median held-out R² over the own-fit countries: <span className="tabular text-[var(--text-primary)]">{fmtR2(summary.medianR2)}</span>.
               {" "}The model beats raw VIIRS on held-out R² in {summary.beats} of {names.length}. Fit {p.fit_version}.
             </p>
+            <p className="mt-2 max-w-3xl text-xs leading-relaxed text-[var(--text-muted)]">
+              R² is held-out R², not a percentage accuracy. Bias = (predicted − observed Aqua total) ÷ observed, over the test years. RMSE is in detections per H3 resolution-5 cell (~250 km²) and month.
+              The 95% intervals come from 200 bootstrap resamples of the test cells (cells drawn with replacement, all their months kept).
+              This validation cell is far smaller than the ~300 km grid cells (H3 resolution 2) that a drawn box in the Explorer resolves to; those coarse cells only decide which data is summed, not how it is scored.
+            </p>
             <div className="mt-4"><TableSearch q={val.q} setQ={val.setQ} shown={val.shown.length} total={names.length} /></div>
             <ScrollBox>
-              <table className="tabular w-full min-w-[760px] text-sm">
+              <table className="tabular w-full min-w-[840px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                   <SortTh k="name" sort={val.sort} toggle={val.toggle}>Country</SortTh>
                   <SortTh k="r2" sort={val.sort} toggle={val.toggle}>Emberline R² (95% CI)</SortTh>
                   <SortTh k="raw" sort={val.sort} toggle={val.toggle}>Raw VIIRS R²</SortTh>
                   <SortTh k="thr" sort={val.sort} toggle={val.toggle}>Best single cut-off R²</SortTh>
                   <SortTh k="bias" sort={val.sort} toggle={val.toggle}>Bias</SortTh>
+                  <SortTh k="rmse" sort={val.sort} toggle={val.toggle} title="Root-mean-square error, detections per cell-month">RMSE</SortTh>
                   <SortTh k="n" sort={val.sort} toggle={val.toggle}>Cell-months</SortTh>
                 </tr></thead>
                 <tbody>
@@ -124,6 +130,7 @@ export function Method() {
                         <td className="px-3 text-[var(--text-secondary)]">{fmtR2(t.raw_viirs.r2)}</td>
                         <td className="px-3 text-[var(--text-secondary)]">{fmtR2(t.threshold.r2)}</td>
                         <td className="px-3 text-[var(--text-secondary)]">{fmtPct(t.model.bias_pct)}</td>
+                        <td className="px-3 text-[var(--text-secondary)]">{fmtNum(t.model.rmse, 2)}</td>
                         <td className="px-3 text-[var(--text-muted)]">{fmt(t.model.n_cell_months)}</td>
                       </tr>
                     );
@@ -142,7 +149,7 @@ export function Method() {
           <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6">
             <h2 className="display text-2xl">The control: a sensor that did not change</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
-              How much did yearly counts change from 2009–11 to 2012–14? Aqua MODIS flew unchanged through both periods, so it shows what fire really did.
+              How much did yearly counts change from 2009–11 to 2012–14? Aqua MODIS flew unchanged through both periods, so its own ratio is the reference: Aqua reference observations, not ground truth.
               A correct record should sit near Aqua, not near the raw splice. Sort by &ldquo;gap&rdquo; to see where it does not.
             </p>
             <div className="mt-4"><TableSearch q={step.q} setQ={step.setQ} shown={step.shown.length} total={names.length} /></div>
@@ -151,7 +158,7 @@ export function Method() {
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                   <SortTh k="name" sort={step.sort} toggle={step.toggle}>Country</SortTh>
                   <SortTh k="splice" sort={step.sort} toggle={step.toggle}>Raw splice (MODIS → VIIRS)</SortTh>
-                  <SortTh k="aqua" sort={step.sort} toggle={step.toggle}>Aqua only (truth)</SortTh>
+                  <SortTh k="aqua" sort={step.sort} toggle={step.toggle}>Aqua only (reference observations)</SortTh>
                   <SortTh k="harm" sort={step.sort} toggle={step.toggle}>Emberline</SortTh>
                   <SortTh k="gap" sort={step.sort} toggle={step.toggle} title="|Emberline − Aqua only|">Gap to Aqua</SortTh>
                 </tr></thead>
@@ -196,6 +203,18 @@ export function Method() {
           </section></Reveal>
 
           <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6">
+            <h2 className="display text-2xl">κ: from probabilities to a MODIS-scale count</h2>
+            <p className="tabular mt-3 font-mono text-sm text-[var(--text-primary)]">Aqua-equivalent count = κ × Σ P(FRPᵢ), summed over the VIIRS detections</p>
+            <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
+              <li><span className="text-[var(--text-primary)]">What it is.</span> One fire seen by VIIRS at 375 m can light several VIIRS pixels inside a single 1 km MODIS pixel, while MODIS records it once. So Σ P, the expected number of VIIRS detections MODIS would also have flagged, still counts in VIIRS pixels. κ converts that to MODIS detections.</li>
+              <li><span className="text-[var(--text-primary)]">How it is estimated.</span> Per country, on the training years only ({p.train_years[0]}–{p.train_years[1]}): κ = (number of Aqua detections) ÷ Σ P over that country&apos;s Suomi-NPP detections. Countries with fewer than 500 Aqua training detections borrow the pooled κ ({p.pooled_model ? fmtNum(p.pooled_model.kappa, 3) : "—"}); {names.filter((n) => C(n).kappa_source === "pooled").length} do.</li>
+              <li><span className="text-[var(--text-primary)]">Why it is needed after the probability weighting.</span> P answers &ldquo;would MODIS have seen this VIIRS detection?&rdquo;, one detection at a time; it says nothing about how many VIIRS detections make up one MODIS detection. Without κ the total would carry that pixel-count ratio. With κ the training-years total equals Aqua&apos;s by construction; the held-out years test whether that still holds.</li>
+              <li><span className="text-[var(--text-primary)]">How uncertain it is.</span> The fit stores no interval for κ on its own. The end-to-end check is the held-out bias above, with its bootstrap interval, scored on years κ never saw. Across the {summary.own} own-fit countries κ ranges {fmtNum(Math.min(...names.filter((n) => C(n).kappa_source !== "pooled").map((n) => C(n).kappa)), 3)}–{fmtNum(Math.max(...names.filter((n) => C(n).kappa_source !== "pooled").map((n) => C(n).kappa)), 3)} (median {fmtNum(median(names.filter((n) => C(n).kappa_source !== "pooled").map((n) => C(n).kappa)), 3)}), so it is a country property, not a constant.</li>
+            </ul>
+            <p className="mt-3 text-xs text-[var(--text-muted)]">Source: scripts/fit_harmonization.py, step 3. The logistic curve&apos;s intervals come from 50 bootstrap refits on up to 200,000 resampled training detections.</p>
+          </section></Reveal>
+
+          <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6">
             <h2 className="display text-2xl">The record is still shifting: orbital drift</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               Since 2022 Aqua has been drifting to a later overpass. These years were never used for fitting. The table shows observed Aqua divided by our prediction,
@@ -236,7 +255,7 @@ export function Method() {
             <div className="card min-w-0 p-5 sm:p-6">
               <h2 className="display text-2xl">Use the data</h2>
               <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">No account, no API key, no server. The files are plain Parquet:</p>
-              <pre className="mt-3 max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] p-3 text-xs leading-relaxed text-[var(--text-secondary)]"><code>{`import polars as pl
+              <pre tabIndex={0} role="region" aria-label="Python example" className="mt-3 max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] p-3 text-xs leading-relaxed text-[var(--text-secondary)]"><code>{`import polars as pl
 cal = pl.read_parquet(
   "${origin}/data/calendar_harmonized_global.parquet")
 print(cal.filter(pl.col("key") == "Canada"))`}</code></pre>
