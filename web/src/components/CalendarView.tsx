@@ -9,7 +9,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { ModeToggle } from "@/components/ModeToggle";
 import { MONTHS, MONTHS_SHORT, buildMatrix, formatValue } from "@/lib/calendarMatrix";
 import { sqrtScale } from "@/lib/colorScale";
-import { getCalendar, listCountries } from "@/lib/queries";
+import { buildCalendarCsv, csvFilename } from "@/lib/csv";
+import { getCalendar, getParams, listCountries } from "@/lib/queries";
 import { useResolvedTheme } from "@/lib/theme";
 import { useParquet } from "@/lib/useParquet";
 
@@ -24,6 +25,7 @@ export function CalendarView() {
   const [attempt, setAttempt] = useState(0);
 
   const countries = useParquet(listCountries, `countries#${attempt}`);
+  const params = useParquet(getParams, `params#${attempt}`);
   const calendars = useParquet(
     () =>
       Promise.all([
@@ -62,6 +64,37 @@ export function CalendarView() {
   const scale = useMemo(() => (matrix ? sqrtScale(matrix.min, matrix.max) : null), [matrix]);
 
   const retry = () => setAttempt((n) => n + 1);
+
+  const canDownload =
+    !!matrix && matrix.hasData && !calendars.loading && !!params.data && !!calendars.data && !notProcessed;
+  const downloadCsv = () => {
+    if (!matrix || !params.data || !calendars.data) return;
+    const [raw] = calendars.data;
+    const input = {
+      matrix,
+      mode,
+      area: {
+        scope: area.scope,
+        label: area.label,
+        bbox: area.bbox,
+        usedKeys: raw.keys,
+        unprocessedKeys: raw.unknownKeys,
+      },
+      fitVersion: params.data.fit_version,
+      harmonizedUnit: params.data.unit,
+      viirsFirstYear: splice,
+      downloadedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([buildCalendarCsv(input)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = csvFilename(input);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
   const error = calendars.error ?? countries.error;
 
   const yearOptions: number[] = [];
@@ -188,6 +221,19 @@ export function CalendarView() {
           <span id="series-label">Series</span>
           <ModeToggle value={mode} onChange={setMode} />
         </div>
+        <button
+          type="button"
+          onClick={downloadCsv}
+          disabled={!canDownload}
+          title={
+            params.error
+              ? "params.json could not be read, so the export cannot state the fit version"
+              : "Download the calendar shown below: this area, series and date range"
+          }
+          className="rounded-md border border-[var(--hairline)] bg-[var(--surface-1)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-page)] focus-visible:outline-2 focus-visible:outline-[var(--focus)] disabled:opacity-50"
+        >
+          Download CSV
+        </button>
       </div>
 
       <section
