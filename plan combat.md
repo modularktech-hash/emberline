@@ -767,10 +767,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E19 — Disclose actual work history and assistance
 
-- [ ] **Status:** P1 · Required verification · Submission · effort S
+- [x] **Status:** P1 · Required verification · Submission · effort S
 - **Evidence:** Internal docs include repo recreation advice
 - **Acceptance:** Accurate timeline; no concealment; current organizer rules applied
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Facts confirmed by the owner (team Shishir Bhat and Ridhan Teli; ~1 year on the problem; all scientific choices by the team; Claude via Claude Code built it under direction). Implemented: one identical disclosure paragraph in README.md ("Use of AI and work history"), docs/submission.md (Use of AI draft, checklist ticked) and /about. It states what was pre-event (planning/research docs, schemas, ingest package, download scripts, empty scaffold), that these were imported in the repo's first commit at event start, and that harmonization, fit, validation and app were built 14–15 Nov. No model version names. Git history untouched; generated-media disclosure kept.
 
 ### E20 — Make Data scroll region focusable
 
@@ -921,10 +921,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E41 — Add challenge project and team links
 
-- [ ] **Status:** P2 · Observed gap · About · effort S
+- [x] **Status:** P2 · Observed gap · About · effort S
 - **Evidence:** GenericTeamModulark and challenge phrase
 - **Acceptance:** Verified official challenge/project links and roles with consent
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Owner confirmed team names and links. Implemented: /about now runs problem, approach, user task, Evidence (links to Method validation and Data, no typed numbers), Limitations (2012–2021 fit window and drift holdout, regional not global, pooled/uncorrected fallback, NOAA-20/21 live layer), Data & credits, Use of AI, Team (Shishir Bhat, Ridhan Teli; project link github.com/modularktech-hash/emberline; official challenge page). Nothing removed. Verified: build + tsc OK; Playwright /about at 390 and 1440: 0 console errors, no overflow, both links and names present, sections in that order.
 
 ### E42 — Reconcile pooled wording in summaries
 
