@@ -711,10 +711,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E11 — Investigate threshold wins
 
-- [ ] **Status:** P1 · Observed gap · Science · effort L
+- [x] **Status:** P1 · Observed gap · Science · effort L
 - **Evidence:** 21 countries thresholdR2 above model
 - **Acceptance:** Weakness explained; any selection uses separate validation/test
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: threshold held-out R² > model in 21 of 171 (params_global.json). Implemented: descriptive section in `docs/results.md` after `global:end` (per-country table: fit origin, cell-months, model vs cut-off R² and bias, ratio-baseline R²; pattern vs the other 150). Findings: 19 of 21 have negative model R² and the cut-off mostly wins by predicting near zero (cut-off bias median −79%), only US (0.69) and Cyprus (0.50) have cut-off R² > 0.1; model bias positive in 20 of 21 (median |bias| 39% vs 7%); 12 are pooled fits; median 702 held-out cell-months vs 3,471; training match rate 0.17 vs 0.27; cut-off already beats the model on the training years in 15 of 21 (5 of 150 elsewhere); ratio baseline beats the model in 18 of 21; regions arid MENA, temperate agricultural/industrial N. America/Europe/E. Asia, small islands. Verified: all figures recomputed by script from published files. No model selection on 2019–2021. Not available: per-country FRP distributions (not in published files); no alternative model tested (would need a separate validation split).
 
 ### E12 — Rename causal sensor-share wording
 
