@@ -47,8 +47,10 @@ here before editing and pull first.
   - E12 remainder: rename "sensor share" to "change in estimated trend after harmonization", show both slopes
   - E20–E22, E25 accessibility (Data scroll region, keyboard row actions, calendar arrow keys/table, JS reduced motion)
   - E33–E37 Seasons absolute anomaly and zero median, Compare quality and index period, Globe FRP-sum label and fallbacks
-  - When the technical session lands E13: handle `season.json` `partial` fire years (null values) on Seasons/Trends
-- **Technical session, in order:** E13, E38/E39 manifest (running) → E16 mixed-version check → E07 current-month feasibility → E31/E32 → E40 fixture.
+  - **E13 landed (5da868e) — needed now:** `season.json` has a `partial` list and null values for incomplete fire years. `TrendsPage.tsx:45` silently drops years with null `harm_onset`, which also affects the year table (≈130–140) and the onset chart (≈101–112). Show them as "incomplete" instead. Add `partial?: ("raw"|"harm")[]` to the types in `lib/data.ts`.
+  - E38/E39 landed (2d06121): `web/public/data/manifest.json`. DataPage could link it and note that the calendar parquets hold both country and grid rows (summing both double-counts). Method copy to place: `docs/data-contract-additions.md` §4 (evaluation population) and §5.
+  - Any change under `web/public/data` must re-run `scripts/build_manifest.py` or `scripts/check_data_contract.py` fails.
+- **Technical session, in order:** E13, E38/E39 done → E07 feasibility (running) → E16 mixed-version check → E07 current-month feasibility → E31/E32 → E40 fixture.
 - **Owner:** E18 form/deadline, E19 disclosure, E41 team links.
 
 ## Who is doing what right now
