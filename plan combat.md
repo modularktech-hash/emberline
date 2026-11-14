@@ -921,10 +921,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E41 — Add challenge project and team links
 
-- [ ] **Status:** P2 · Observed gap · About · effort S
+- [x] **Status:** P2 · Observed gap · About · effort S
 - **Evidence:** GenericTeamModulark and challenge phrase
 - **Acceptance:** Verified official challenge/project links and roles with consent
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Owner confirmed team names and links. Implemented: /about now runs problem, approach, user task, Evidence (links to Method validation and Data, no typed numbers), Limitations (2012–2021 fit window and drift holdout, regional not global, pooled/uncorrected fallback, NOAA-20/21 live layer), Data & credits, Use of AI, Team (Shishir Bhat, Ridhan Teli; project link github.com/modularktech-hash/emberline; official challenge page). Nothing removed. Verified: build + tsc OK; Playwright /about at 390 and 1440: 0 console errors, no overflow, both links and names present, sections in that order.
 
 ### E42 — Reconcile pooled wording in summaries
 
