@@ -11,7 +11,7 @@ import { CoverageNote, CoverageSummaryText, useCoverage } from "@/components/Cov
 import { STATUS_LABEL } from "@/lib/coverage";
 import { FitQualityCard } from "@/components/FitQuality";
 import { qualityCsvHeader } from "@/lib/quality";
-import { MonthYearCalendar } from "@/components/MonthYearCalendar";
+import { MonthYearCalendar, type CellRef } from "@/components/MonthYearCalendar";
 import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
@@ -32,6 +32,9 @@ export function Explorer() {
   const [from, setFrom] = useState(FIRST);
   const [to, setTo] = useState(2025);
   const [box, setBox] = useState(["", "", "", ""]);
+  // Selected calendar month: kept across raw/harmonized and year changes.
+  const [selCell, setSelCell] = useState<CellRef | null>(null);
+  const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
   const { data, error, loading } = useAreaData(area);
@@ -119,36 +122,60 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explorer · burning activity calendar" title="Every fitted country. Every month." italic="2003–2025."
-        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Source archive from 2001; harmonized record 2003–2025; the calendar ends in 2025 (the live globe is separate)." />
+        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
-        <div className="flex items-center gap-3 bg-white/30 px-4 py-2.5">
-          <span className="flex gap-1.5">{[0, 1, 2].map((d) => <span key={d} className="h-2.5 w-2.5 rounded-full bg-[rgba(18,23,21,0.14)]" />)}</span>
-          <span className="tabular mx-auto rounded-md border border-[var(--hairline)] bg-[var(--surface-1)] px-3 py-0.5 font-mono text-[11px] text-[var(--text-secondary)]">emberline / burning-activity-calendar</span>
-        </div>
         <div className="p-4 sm:p-7">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Area">
-            <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind === "box" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => setArea({ kind: "country", name: c })} />
-            {area.kind === "box" && <span className="rounded-full border border-[var(--ember)] bg-[var(--ember-soft)] px-3.5 py-1.5 text-sm">Custom area</span>}
+        {/* One toolbar: area (country or drawn box) · years · series · download. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-3" role="toolbar" aria-label="Calendar controls">
+          <div className="glass-thin flex p-1" role="group" aria-label="Area type">
+            {(["country", "box"] as const).map((k) => (
+              <button key={k} type="button" aria-pressed={area.kind === k}
+                onClick={() => {
+                  if (k === "country") { if (area.kind === "box") setArea({ kind: "country", name: lastCountry.current }); }
+                  else { document.getElementById("area")?.scrollIntoView({ behavior: "smooth", block: "center" }); document.getElementById("box-west")?.focus({ preventScroll: true }); }
+                }}
+                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${area.kind === k ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                {k === "country" ? "Country" : "Draw area"}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Area">
+            <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind === "box" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => { lastCountry.current = c; setArea({ kind: "country", name: c }); }} />
             {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}
+            {fit && fit.fit_source !== "pooled" && flags.length === 0 && <span className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">own fit · R² {fmtR2(fit.validation_test.model.r2)}</span>}
             {flags.length > 0 && <span title={`Flagged as suspicious (docs/results.md): ${flags.join("; ")}`} className="self-center rounded-full border border-[var(--ember)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">check this fit</span>}
             {unfitted && <span title={covLabel ? `No fit: ${covLabel}` : undefined} className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected{covLabel && ` · ${covLabel}`}</span>}
+          </div>
+          <div className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)]" role="group" aria-label="Years">
+            <label className="flex items-center gap-1.5"><span className="sr-only">From year</span>
+              <select value={from} onChange={(e) => setFrom(Math.min(Number(e.target.value), to))} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
+                {years.map((y) => <option key={y}>{y}</option>)}
+              </select>
+            </label>
+            <span aria-hidden>–</span>
+            <label className="flex items-center gap-1.5"><span className="sr-only">To year</span>
+              <select value={to} onChange={(e) => setTo(Math.max(Number(e.target.value), from))} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
+                {years.map((y) => <option key={y}>{y}</option>)}
+              </select>
+            </label>
           </div>
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {m === "raw" ? "Raw record" : "Harmonized"}
               </button>
             ))}
           </div>
+          <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark ml-auto min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
+            Download CSV
+          </button>
         </div>
 
         {error && <p className="mt-8 text-sm text-[var(--text-secondary)]">Could not load the data files: {error.message}</p>}
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
-        {fit && data && <FitQualityCard fit={fit} params={data.params} className="mt-6" />}
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -189,7 +216,29 @@ export function Explorer() {
 
         {data && cal && view && !notProcessed && !rawOnly && (
           <div className="fade-in">
-            <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_17rem]">
+            <div className="mt-6">
+              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <Eyebrow>Burning activity calendar · {areaLabel(area)} · detections per month</Eyebrow>
+                <p className={`rounded-full px-3 py-1 text-xs font-medium ${mode === "raw" ? "bg-[var(--surface-2)] text-[var(--text-primary)]" : "bg-[var(--ember-soft)] text-[var(--text-primary)]"}`}>
+                  {mode === "raw" ? "Raw detections · uncorrected · MODIS to 2011, VIIRS from 2012" : `Harmonized · ${cal.unit} · fit ${data.params.fit_version}`}
+                  <span className="text-[var(--text-muted)]"> · historical record {view.lo}–{view.hi}</span>
+                </p>
+              </div>
+              <MonthYearCalendar cal={cal} from={view.lo} to={view.hi} max={view.max} selected={selCell} onSelect={setSelCell} areaName={areaLabel(area)} />
+              {(() => {
+                const rows = cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi && r.value !== null);
+                if (!rows.length) return null;
+                const peak = rows.reduce((a, b) => ((b.value ?? 0) > (a.value ?? 0) ? b : a));
+                const best = [...(mode === "raw" ? view.raw : view.harm)].sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0];
+                return (
+                  <p className="mt-4 text-sm text-[var(--text-secondary)]">
+                    Busiest month: <span className="text-[var(--text-primary)]">{MONTHS[peak.month - 1]} {peak.year}</span> ({fmt(peak.value)}).
+                    Busiest year: <span className="text-[var(--text-primary)]">{best.year}</span> ({fmt(best.value)}).
+                  </p>
+                );
+              })()}
+            </div>
+            <div className="mt-8 grid gap-6 border-t border-[var(--hairline)] pt-6 lg:grid-cols-[1fr_17rem]">
               <div>
                 <Eyebrow>Detections per year · {areaLabel(area)}</Eyebrow>
                 <AnnualLine raw={view.raw} harmonized={view.harm} mode={mode} />
@@ -229,46 +278,26 @@ export function Explorer() {
               </div>
             </div>
 
-            <div className="mt-8 border-t border-[var(--hairline)] pt-6">
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <Eyebrow>Burning activity calendar · detections per month</Eyebrow>
-                <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                  <label className="flex items-center gap-1.5">From
-                    <select value={from} onChange={(e) => setFrom(Math.min(Number(e.target.value), to))} className="field rounded-xl px-2 py-1">
-                      {years.map((y) => <option key={y}>{y}</option>)}
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-1.5">to
-                    <select value={to} onChange={(e) => setTo(Math.max(Number(e.target.value), from))} className="field rounded-xl px-2 py-1">
-                      {years.map((y) => <option key={y}>{y}</option>)}
-                    </select>
-                  </label>
-                  <button type="button" onClick={exportCsv} className="glass rounded-full px-3.5 py-1 font-medium text-[var(--text-primary)]">
-                    Download CSV
-                  </button>
-                </div>
-              </div>
-              <MonthYearCalendar cal={cal} from={view.lo} to={view.hi} max={view.max} />
-              {(() => {
-                const rows = cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi && r.value !== null);
-                if (!rows.length) return null;
-                const peak = rows.reduce((a, b) => ((b.value ?? 0) > (a.value ?? 0) ? b : a));
-                const best = [...(mode === "raw" ? view.raw : view.harm)].sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0];
-                return (
-                  <p className="mt-4 text-sm text-[var(--text-secondary)]">
-                    Busiest month: <span className="text-[var(--text-primary)]">{MONTHS[peak.month - 1]} {peak.year}</span> ({fmt(peak.value)}).
-                    Busiest year: <span className="text-[var(--text-primary)]">{best.year}</span> ({fmt(best.value)}).
-                  </p>
-                );
-              })()}
-            </div>
           </div>
+        )}
+        {fit && data && !notProcessed && <FitQualityCard fit={fit} params={data.params} className="mt-8" />}
+        {data && (
+          <details className="mt-6 rounded-2xl border border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
+            <summary className="cursor-pointer font-medium text-[var(--text-primary)]">Provenance</summary>
+            <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
+              <dt className="text-[var(--text-muted)]">Fit version</dt><dd className="tabular">{data.params.fit_version} · trained {data.params.train_years[0]}–{data.params.train_years[1]}, tested {data.params.test_years[0]}–{data.params.test_years[1]}</dd>
+              <dt className="text-[var(--text-muted)]">Files</dt><dd>{data.raw.dataset === "world" ? "calendar_raw_global.parquet, calendar_harmonized_global.parquet, params_global.json" : "four-country fallback: calendar_raw.parquet, calendar_harmonized.parquet, params.json"}</dd>
+              <dt className="text-[var(--text-muted)]">Source</dt><dd>NASA FIRMS archive: MODIS C6.1 (Terra, Aqua), VIIRS 375 m (Suomi-NPP); daytime vegetation-fire detections, nominal and high confidence</dd>
+              {coverage && data.raw.dataset === "world" && <><dt className="text-[var(--text-muted)]">Coverage</dt><dd><CoverageSummaryText coverage={coverage} /></dd></>}
+              <dt className="text-[var(--text-muted)]">Record</dt><dd>Archive 2001–2025; harmonized 2003–2025. Historical snapshot: the live globe is a separate, uncorrected layer.</dd>
+            </dl>
+          </details>
         )}
         </div>
       </section></Reveal>
 
       <Reveal>
-      <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <section id="area" className="mt-10 grid scroll-mt-24 gap-6 lg:grid-cols-[1fr_20rem]">
         <div ref={mapSlot}>
           {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} cells={area.kind === "box" ? data?.raw.keys : undefined} onSelect={selectBox} className="h-[340px]" />
             : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" aria-label="Map loading" />}
@@ -283,7 +312,7 @@ export function Explorer() {
               const fieldErr = boxErr?.fields[BOX_FIELDS[i]];
               return (
               <label key={l} className="text-xs text-[var(--text-muted)]">{l}
-                <input inputMode="decimal" value={box[i]}
+                <input id={i === 0 ? "box-west" : undefined} inputMode="decimal" value={box[i]}
                   onChange={(e) => {
                     setBox(box.map((v, j) => (j === i ? e.target.value : v)));
                     if (fieldErr) setBoxErr((prev) => prev && { ...prev, fields: { ...prev.fields, [BOX_FIELDS[i]]: undefined } });
@@ -321,28 +350,20 @@ export function Explorer() {
 }
 
 /**
- * Coverage: reason-coded and counted from coverage_status.json when it loads;
- * otherwise counted from params_global.json (own fit, pooled fit, no fit).
+ * Coverage in one line, counted from params_global.json (own fit, pooled fit,
+ * no fit). The reason-coded breakdown (coverage_status.json) is under Provenance.
  */
 function Coverage() {
   const { data: p } = useParquet(() => getParams(), "params");
-  const coverage = useCoverage();
   if (!p) return null;
-  if (coverage && p.dataset === "world") {
-    return (
-      <p data-testid="coverage-summary" className="-mt-4 mb-6 max-w-3xl text-sm text-[var(--text-secondary)]">
-        Coverage: <CoverageSummaryText coverage={coverage} /> · fit {p.fit_version}.
-      </p>
-    );
-  }
   const fits = Object.values(p.countries);
   const pooled = fits.filter((f) => f.fit_source === "pooled").length;
   const failed = Object.keys(p.failed ?? {}).length;
   return (
-    <p className="-mt-4 mb-6 max-w-3xl text-sm text-[var(--text-secondary)]">
+    <p data-testid="coverage-summary" className="-mt-4 mb-5 max-w-3xl text-sm text-[var(--text-secondary)]">
       Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
       <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
-      <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected) · fit {p.fit_version}.
+      <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected). Reasons under Provenance.
       {p.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );

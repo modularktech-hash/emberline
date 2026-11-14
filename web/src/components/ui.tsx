@@ -64,7 +64,7 @@ export function PageHead({ eyebrow, title, italic, lede, compact = false }: { ey
     <header className={compact ? "pb-8 pt-8 sm:pb-10 sm:pt-14" : "pb-12 pt-20 sm:pb-16 sm:pt-28"}>
       <Reveal><Eyebrow>{eyebrow}</Eyebrow></Reveal>
       <Reveal delay={0.06}>
-        <h1 className={`display ${compact ? "t-d2" : "t-d1"} mt-3 max-w-4xl`}>
+        <h1 className={`display ${compact ? "t-tool" : "t-d1"} mt-3 max-w-4xl`}>
           {title}{italic && <> <span className="italic text-[var(--ember)]">{italic}</span></>}
         </h1>
       </Reveal>

@@ -71,7 +71,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
           className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
           <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
-          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> active-fire detections from orbit in the last 24 h</span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
+          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> near-real-time, raw detections in the 24 h to <span className="tabular">{fmtUtc(parseUtc(d.live.fetched_utc))}</span></span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
         </motion.div>
         <h1 className="display t-hero mt-8">
           <span className="block"><Words text="23 years of fire." delay={0.1} /></span>
@@ -162,7 +162,7 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <Reveal className="md:col-span-2">
           <div className={`${tile} ${dark}`}>
             <div className="flex items-start justify-between gap-4">
-              <Eyebrow className="!text-white/60">Live · last 24 hours · worldwide</Eyebrow>
+              <Eyebrow className="!text-white/60">Near-real-time · raw detections · last 24 hours</Eyebrow>
               <span className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-[var(--ember)]" aria-hidden />
             </div>
             <div className="mt-5">

@@ -11,13 +11,27 @@ const BASIS: Record<string, string> = {
   predicted_from_viirs: "Aqua-equivalent, predicted from VIIRS",
 };
 
-/** The burning activity calendar: one row per year, one column per month. */
-export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult; from: number; to: number; max: number }) {
-  const [hover, setHover] = useState<{ year: number; month: number } | null>(null);
+export type CellRef = { year: number; month: number };
+
+/**
+ * The burning activity calendar: one row per year, one column per month.
+ * Hover or focus previews a month; click, tap or Enter selects it, and the
+ * detail strip keeps showing the selection (controlled by `selected` /
+ * `onSelect` when given, so it survives a raw/harmonized switch).
+ */
+export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, areaName }: {
+  cal: CalendarResult; from: number; to: number; max: number;
+  selected?: CellRef | null; onSelect?: (c: CellRef | null) => void; areaName?: string;
+}) {
+  const [hover, setHover] = useState<CellRef | null>(null);
+  const [ownSel, setOwnSel] = useState<CellRef | null>(null);
+  const sel = selected !== undefined ? selected : ownSel;
+  const choose = (c: CellRef) => { const same = sel && sel.year === c.year && sel.month === c.month; (onSelect ?? setOwnSel)(same ? null : c); };
+  const shownCell = hover ?? sel;
   const years: number[] = [];
   for (let y = from; y <= to; y += 1) years.push(y);
   const at = (y: number, m: number) => cal.rows.find((r) => r.year === y && r.month === m);
-  const h = hover ? at(hover.year, hover.month) : null;
+  const h = shownCell ? at(shownCell.year, shownCell.month) : null;
   const breaks = rampBreaks(max);
   return (
     <div>
@@ -40,8 +54,11 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
                   type="button"
                   onMouseEnter={() => setHover({ year: y, month: mi + 1 })}
                   onFocus={() => setHover({ year: y, month: mi + 1 })}
+                  onBlur={() => setHover(null)}
+                  onClick={() => choose({ year: y, month: mi + 1 })}
+                  aria-pressed={!!sel && sel.year === y && sel.month === mi + 1}
                   aria-label={`${MONTHS[mi]} ${y}: ${row?.value == null ? "no data" : fmt(row.value)}`}
-                  className="h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-1 sm:h-[22px]"
+                  className={`h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-2 sm:h-[22px] ${sel && sel.year === y && sel.month === mi + 1 ? "ring-2 ring-[var(--ink)]" : ""}`}
                   style={{
                     background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, rgba(18,23,21,0.1) 3px 4px)" : RAMP[idx],
                     transition: `background-color 600ms cubic-bezier(0.22,1,0.36,1) ${yi * 14}ms`,
@@ -54,14 +71,16 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
       </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-[var(--text-secondary)]">
-        <div className="tabular min-h-[1.25rem]">
-          {hover && h ? (
+        <div className="tabular min-h-[1.25rem]" aria-live="polite">
+          {shownCell && h ? (
             <span>
-              <span className="text-[var(--text-primary)]">{MONTHS[hover.month - 1]} {hover.year}</span> ·{" "}
-              {h.value == null ? "no data" : <><span className="text-[var(--ember)]">{fmt(h.value)}</span> detections · {BASIS[h.basis]}</>}
+              <span className="font-medium text-[var(--text-primary)]">{MONTHS[shownCell.month - 1]} {shownCell.year}</span>
+              {areaName && <> · {areaName}</>} · {cal.mode === "raw" ? "Raw detections (uncorrected)" : "Harmonized, Aqua-equivalent detections"} ·{" "}
+              {h.value == null ? "no data" : <span className="text-[var(--ember)]">{fmt(h.value)}</span>}
+              <span className="text-[var(--text-muted)]"> · {BASIS[h.basis]}{sel && !hover ? " · selected (click again to clear)" : ""}</span>
             </span>
           ) : (
-            <span className="text-[var(--text-muted)]">Hover a month for its count.</span>
+            <span className="text-[var(--text-muted)]">Hover, tap or focus a month for its count; click or press Enter to keep it.</span>
           )}
         </div>
         <div className="flex items-center gap-2" aria-label={`Colour scale: ${RAMP_NAME}`}>

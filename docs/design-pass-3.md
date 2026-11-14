@@ -28,17 +28,20 @@ readouts. Make it more disciplined and easier to use. Labels say
         OG image. Gap widened in the favicon so the dot stays separate at 16 px.
 
 ### P1 — "First" priorities from the review
-- [ ] D1 Two page templates: story pages (Home, About) keep big heroes; working
+- [x] D1 Two page templates: story pages (Home, About) keep big heroes; working
       pages (Explorer, Compare, Seasons, Trends, Lab, Data, Method tables) get a
       compact header (36–44 px desktop, 28–32 px mobile) and controls at once.
-- [ ] D2 Explorer: one toolbar (Country / Draw area switch · years ·
+      - Done: Compact header (`t-tool`, 28 px at 375 → ~42 px at 1440) on Explorer, Compare, Seasons, Trends, Lab, Data, Method; Home/About/Globe/Satellites keep the big hero.
+- [x] D2 Explorer: one toolbar (Country / Draw area switch · years ·
       Raw/Harmonized · Download CSV); calendar ABOVE the annual chart; stable
       selected-cell detail strip ("Jul 2023 · Canada · Raw detections ·
       183,034") by hover, tap and keyboard; remove the fake browser address
       strip; version id into a provenance disclosure; fit status by the selector.
-- [ ] D3 Raw/harmonized, units and snapshot status always explicit; switching
+      - Done: One toolbar (Country/Draw area · picker + fit status · years · Raw/Harmonized · CSV); calendar above the chart; selected-month strip by hover, tap and Enter; address strip removed; fit version, files, source and the reason-coded coverage in a Provenance disclosure; fit-quality card moved below the chart.
+- [x] D3 Raw/harmonized, units and snapshot status always explicit; switching
       mode keeps region, years and selected cell. Live count says
       "near-real-time, raw detections" with its timestamp beside it.
+      - Done: Mode strip above the calendar names the series and unit; region, years and the selected month survive a mode switch; home live count reads "near-real-time, raw detections in the 24 h to <fetch time>".
 - [ ] D4 Mobile: readable chart labels (fewer ticks), sticky first column +
       visible scroll cue on Data/Method tables, ~44 px touch targets.
 

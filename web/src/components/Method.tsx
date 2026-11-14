@@ -82,7 +82,7 @@ export function Method() {
 
   return (
     <div>
-      <PageHead eyebrow="Science · method & proof" title="How we know the correction" italic="is real."
+      <PageHead compact eyebrow="Science · method & validation" title="How we know the correction" italic="is real."
         lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Every country is fitted separately: these are regional results, not a global correction." />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[

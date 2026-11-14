@@ -92,6 +92,7 @@ html[data-perf=low] .backdrop-cream::after { display: none; }
 .display .italic, .accent { font-style: normal; font-weight: var(--display-weight); }
 .t-hero { font-size: var(--display-hero); line-height: 0.98; }
 .t-d1 { font-size: var(--display-1); line-height: 1.02; }
+.t-tool { font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.6rem); line-height: 1.06; }
 .t-d2 { font-size: var(--display-2); line-height: 1.05; }
 .t-d3 { font-size: var(--display-3); line-height: 1.12; letter-spacing: -0.028em; }
 .tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
