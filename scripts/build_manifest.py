@@ -49,6 +49,9 @@ FILES = {
     "validation_points.json": dict(
         dataset="world", fit="self", source=FIRMS_ARCHIVE,
         purpose="Held-out (2019-2021) cell-month sample per fitted country and the training-only ratio baseline"),
+    "transfer_validation.json": dict(
+        dataset="world", fit="self", source="derived from params_global.json and the FIRMS archive (scripts/transfer_validation.py)",
+        purpose="E28 analysis: leave-one-country-out held-out (2019-2021) scores of the pooled curve vs own fits; not a published fit"),
     "countries.json": dict(
         dataset="world", fit="self", source="derived from the world calendars and params_global.json",
         purpose="One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)"),
@@ -85,6 +88,10 @@ FILES = {
         dataset="live", fit=None, source=FIRMS_NRT,
         purpose="Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, "
                 "not the Suomi-NPP record, not comparable with the historical calendars"),
+    "current_month.json": dict(
+        dataset="live", fit=None, source="FIRMS NRT and standard archive, NOAA-20 VIIRS (scripts, E07 prototype)",
+        purpose="Prototype same-platform NOAA-20 recent window vs NOAA-20 history; not harmonized, "
+                "not Aqua-equivalent"),
     "tle.json": dict(
         dataset="live", fit=None, source=TLE,
         purpose="Orbital elements for the satellite view"),

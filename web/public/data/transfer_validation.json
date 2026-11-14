@@ -1,0 +1,74 @@
+{
+  "analysis": "E28 leave-one-country-out transfer validation (analysis only, not a published fit)",
+  "fit_version": "v1-20261114T1240",
+  "method": "pooled curve = n_train_viirs-weighted mean of the published pool sources' b0, b1, kappa, excluding the scored country; applied with own kappa (2012-2018 rule) and with pooled kappa; scored on 2019-2021 H3 res-5 cell-months against observed Aqua with fit_harmonization.metrics",
+  "n_countries": 130,
+  "errors": [],
+  "own_fit_reproduction_max_abs_r2_diff": 8.881784197001252e-16,
+  "all_own_fit_countries": {
+    "n": 130,
+    "own": {
+      "median_r2": 0.6402345197080466,
+      "n_r2_below_0": 11,
+      "median_abs_bias_pct": 5.835819687715331
+    },
+    "pooled_curve_own_kappa": {
+      "median_r2": 0.6418513668797601,
+      "n_r2_below_0": 9,
+      "median_abs_bias_pct": 5.938098606638464
+    },
+    "pooled_curve_pooled_kappa": {
+      "median_r2": 0.5807184115599504,
+      "n_r2_below_0": 13,
+      "median_abs_bias_pct": 17.975969583388157
+    },
+    "median_r2_loss_own_kappa": -0.002101478702285886,
+    "n_pooled_beats_own_own_kappa": 76,
+    "median_r2_loss_pooled_kappa": 0.01366198220392495,
+    "n_pooled_beats_own_pooled_kappa": 47
+  },
+  "pool_sources_left_out": {
+    "n": 61,
+    "own": {
+      "median_r2": 0.7386804943005028,
+      "n_r2_below_0": 1,
+      "median_abs_bias_pct": 2.7187008864510034
+    },
+    "pooled_curve_own_kappa": {
+      "median_r2": 0.7454102707215301,
+      "n_r2_below_0": 1,
+      "median_abs_bias_pct": 3.2641718326760976
+    },
+    "pooled_curve_pooled_kappa": {
+      "median_r2": 0.6866041599778274,
+      "n_r2_below_0": 1,
+      "median_abs_bias_pct": 16.972619406966594
+    },
+    "median_r2_loss_own_kappa": 0.0005493968614443956,
+    "n_pooled_beats_own_own_kappa": 26,
+    "median_r2_loss_pooled_kappa": 0.01856128628247844,
+    "n_pooled_beats_own_pooled_kappa": 16
+  },
+  "not_pool_sources": {
+    "n": 69,
+    "own": {
+      "median_r2": 0.45862739205439607,
+      "n_r2_below_0": 10,
+      "median_abs_bias_pct": 8.796538323027255
+    },
+    "pooled_curve_own_kappa": {
+      "median_r2": 0.5261392077798581,
+      "n_r2_below_0": 8,
+      "median_abs_bias_pct": 8.239348007454558
+    },
+    "pooled_curve_pooled_kappa": {
+      "median_r2": 0.41148989603996844,
+      "n_r2_below_0": 12,
+      "median_abs_bias_pct": 22.499776519107677
+    },
+    "median_r2_loss_own_kappa": -0.009483943408395867,
+    "n_pooled_beats_own_own_kappa": 50,
+    "median_r2_loss_pooled_kappa": 0.010429700642295536,
+    "n_pooled_beats_own_pooled_kappa": 31
+  }
+}

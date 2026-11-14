@@ -830,17 +830,17 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E28 — Explain weighted-coefficient pooling
 
-- [ ] **Status:** P2 · Source concern · Statistics · effort M
+- [x] **Status:** P2 · Source concern · Statistics · effort M
 - **Evidence:** fit_harmonization weighted coefficients
 - **Acceptance:** Name transfer method and validate out-of-country performance
-- **Implementation / verification notes:** Explanation part done; left unticked because a clean transfer test is not run. Reproduced: `main()` forms the pooled model once, from the 61 own fits that precede the first <5 MB detections file, as `np.average` of b0, b1, κ weighted by `n_train_viirs_detections`; recomputing from `params_global.json` reproduces b0/b1/κ to float precision. Implemented: `docs/science.md` §2a "How the pooled curve is formed" (weighted coefficient mean, not pooled fit or probability mean; ≤1.3 pp difference vs mean of probabilities at 5–100 MW; 41 pooled-curve countries, pooled κ for 31 of them plus Libya and Oman; no coefficient uncertainty), `docs/results.md` table, proposed Method copy in `docs/data-contract-additions.md` §5. Out-of-country (published held-out metrics, no refit): pooled median R² −0.09 (24/41 < 0) vs own 0.64 (11/130); own κ subset 0.35, pooled κ subset −0.11; threshold higher in 12/41; ratio baseline beaten in 22/41. Not verified/not done: applying the pooled curve to held-out own-fit countries outside the 61 (needs new computation); Method copy not placed.
+- **Implementation / verification notes:** Explanation part done; left unticked because a clean transfer test is not run. Reproduced: `main()` forms the pooled model once, from the 61 own fits that precede the first <5 MB detections file, as `np.average` of b0, b1, κ weighted by `n_train_viirs_detections`; recomputing from `params_global.json` reproduces b0/b1/κ to float precision. Implemented: `docs/science.md` §2a "How the pooled curve is formed" (weighted coefficient mean, not pooled fit or probability mean; ≤1.3 pp difference vs mean of probabilities at 5–100 MW; 41 pooled-curve countries, pooled κ for 31 of them plus Libya and Oman; no coefficient uncertainty), `docs/results.md` table, proposed Method copy in `docs/data-contract-additions.md` §5. Out-of-country (published held-out metrics, no refit): pooled median R² −0.09 (24/41 < 0) vs own 0.64 (11/130); own κ subset 0.35, pooled κ subset −0.11; threshold higher in 12/41; ratio baseline beaten in 22/41. Not verified/not done: applying the pooled curve to held-out own-fit countries outside the 61 (needs new computation); Method copy not placed. **Update (E28 transfer test) — implemented and verified:** `scripts/transfer_validation.py` rebuilds the pooled curve leave-one-country-out for all 130 own-fit countries and scores it on 2019–2021 cell-months with the fit script's `metrics` (own-fit re-score reproduces published R² to 8.9e-16). Borrowed curve + own κ: median R² 0.642 vs own 0.640 (left-out sources 0.745 vs 0.739); borrowed curve + pooled κ: 0.581, median |bias| 18.0% vs 5.8%. Curve shape transfers; pooled κ is the weak part. Not tested: transfer to the small countries that actually borrow (all scored countries have ≥5,000 training detections). Results `docs/results.md` (after `global:end`), `web/public/data/transfer_validation.json`.
 
 ### E29 — Test matching rule sensitivity
 
-- [ ] **Status:** P2 · Source concern · Statistics · effort L
+- [x] **Status:** P2 · Source concern · Statistics · effort L
 - **Evidence:** SameUTCdate and neighboringres7 cells
 - **Acceptance:** Distance/time sensitivity and examples reported
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Implemented and verified: `scripts/matching_sensitivity.py` refits Canada, Brazil, Australia, Portugal, India and Republic of Korea (pooled-fit country, diagnostic own refit) under same-cell / k-ring 1 (published) / k-ring 2 / ±1 day with the fit script's functions on 2012–2018, scored on 2019–2021. Published-rule refit reproduces published b0/b1 exactly. FRP50 moves 2–7× with the rule (e.g. Canada 19.3 → 2.8 → 1.5 → 0.8 MW) but held-out R² moves ≤0.03 and bias ≤1.2 pp because κ rescales. Table and matched/unmatched examples in `docs/results.md`. Not done: km-distance rule, land-cover/season strata, cloud masks. Not published as the model.
 
 ### E30 — Document evaluation population
 
@@ -889,7 +889,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Source concern · Globe · effort S
 - **Evidence:** build_live sums observations over time
 - **Acceptance:** No instantaneous power/energy interpretation of window sum
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: `build_live.py` sums `frp` over every detection from every platform/overpass in the 24 h / 7 d window per 0.5° cell (`frp_sum_mw`) and ranks hottest cells by it. Implemented (data side): additive `field_definitions`, `hottest_cells_rank_by`, per-window `platforms`, `detections_total`, `frp_sum_definition`, `window_start_utc/end_utc`; existing snapshot annotated via `--annotate-only` without refetch (cells/totals verified byte-identical; window span null until next refresh). Hand-off wording in `docs/data-contract-additions.md` §9 and STATUS. Not verified: UI label (UI session).
 
 ### E37 — Test stale snapshot and WebGL fallback
 
