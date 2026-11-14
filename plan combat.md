@@ -774,17 +774,17 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E20 — Make Data scroll region focusable
 
-- [ ] **Status:** P2 · Confirmed · Accessibility · effort S
+- [x] **Status:** P2 · Confirmed · Accessibility · effort S
 - **Evidence:** axe-data.json one scrollable-region-focusable violation
 - **Acceptance:** Keyboard can reach and scroll region; axe regression passes
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: axe-core on /data (390 px) found `scrollable-region-focusable` (the selected country's yearly table scroller) and `landmark-unique` (two scroll regions both named "Scrollable table"). Implemented: yearly scroller has tabIndex=0, role=region and a per-country aria-label; `ScrollBox` takes a unique `label` (Data uses "Fitted countries table" / "Countries not fitted table"; default unchanged for other pages). Verified: axe-core (wcag2a/aa + best-practice) on /data at 390 and 1440: no violations; build + tsc OK; 0 console errors, no overflow.
 
 ### E21 — Make table row actions keyboard operable
 
-- [ ] **Status:** P2 · Source concern · Accessibility · effort S
+- [x] **Status:** P2 · Source concern · Accessibility · effort S
 - **Evidence:** Trends/Data clickable rows
 - **Acceptance:** Named links/buttons usable by keyboard with focus indication
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Data page only (Trends is another builder's file). Reproduced: Data's fitted-countries rows were selectable only by clicking the `<tr>`. Implemented: the country name in each row is a real `<button data-row-select>` ("Show X year by year", aria-pressed), focus ring from the global :focus-visible style; header sort is a button with aria-sort (already present, verified); Data also links manifest.json and adds the scope note (calendar Parquets hold country and h3_parent rows over the same detections; summing both double-counts) and the JS snippet filters scope. Verified: Playwright Tab + focus on a row button: BUTTON, :focus-visible true, box-shadow ring rgb(217,67,26) 4px; th aria-sort="descending" on the sorted column; axe clean. Not done: Trends rows (other builder).
 
 ### E22 — Add efficient calendar navigation and table view
 
