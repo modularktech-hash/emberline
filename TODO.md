@@ -17,14 +17,14 @@ what, `docs/submission.md` has the full submission rules.
 ## 1. Global data (running in the "app build" cloud session)
 
 - [x] Rebuild the FIRMS country list (`scripts/countries_global.txt`, 237 names, `5ae02bd`)
-- [ ] Download the country archive for every country (resumable, 3 jobs max) — in progress
-- [ ] Build slim tables and raw calendars (`scripts/run_global.py`)
-- [ ] Fit every country (`scripts/fit_harmonization.py`), pooled curve for sparse ones
-- [ ] Regression check: Portugal, Chile, Australia, Canada reproduce `params.json`
-- [ ] List countries with suspicious results (negative R², odd step ratios)
-- [ ] Publish `params_global.json`, `calendar_raw_global.parquet`,
+- [x] Download the country archive for every country (9,243 country-source-years settled, 0 failures)
+- [x] Build slim tables and raw calendars (`scripts/run_global.py`, 237 countries)
+- [x] Fit every country (`scripts/fit_harmonization.py`): 171 fitted (130 own, 41 pooled), 66 too sparse (`4f47247`)
+- [x] Regression check: Portugal, Chile, Australia, Canada reproduce `params.json`
+- [x] List countries with suspicious results (47 flagged, in `docs/results.md`)
+- [x] Publish `params_global.json`, `calendar_raw_global.parquet`,
       `calendar_harmonized_global.parquet` to `web/public/data/` (each < 50 MB)
-- [ ] Update `docs/results.md` with the global results
+- [x] Update `docs/results.md` with the global results (`scripts/report_global.py`)
 
 ## 2. App: switch to the global data
 
