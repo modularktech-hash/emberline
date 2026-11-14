@@ -68,7 +68,9 @@ while read -r country; do
     [ "$year" -ge 2012 ] && { [ -e "$OUT/viirs-snpp_${year}_${country}.csv.absent" ] || echo "viirs-snpp $year $country"; }
   done
 done < "$LIST" | xargs -P "$JOBS" -L 1 bash -c 'fetch "$0" "$1" "$2"'
+download_status=${PIPESTATUS[1]}
 
 echo
 echo "files: $(find "$OUT" -name '*.csv.gz' | wc -l), on disk: $(du -sh "$OUT" | cut -f1)"
 echo "failed: re-run the same command to retry (it resumes)."
+exit "$download_status"
