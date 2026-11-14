@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AoiProvider } from "@/components/AoiProvider";
+import { AreaProvider } from "@/components/AreaProvider";
 import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
 
@@ -20,16 +20,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AoiProvider>
+        <AreaProvider>
           <SiteNav />
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
             {children}
           </main>
           <footer className="border-t border-[var(--hairline)] px-4 py-4 text-xs text-[var(--text-muted)] sm:px-6">
-            Active fire data from NASA FIRMS (MODIS MCD14ML, VIIRS VNP14IMGML /
-            VJ114IMGML). Land cover from MCD12Q1; burned area from MCD64A1.
+            Data: NASA FIRMS
           </footer>
-        </AoiProvider>
+        </AreaProvider>
       </body>
     </html>
   );

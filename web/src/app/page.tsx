@@ -1,5 +1,5 @@
-import { RebuildNotice } from "@/components/RebuildNotice";
+import { CalendarView } from "@/components/CalendarView";
 
 export default function CalendarPage() {
-  return <RebuildNotice title="Burning activity calendar" />;
+  return <CalendarView />;
 }

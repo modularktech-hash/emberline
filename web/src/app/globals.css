@@ -1,14 +1,9 @@
 @import "tailwindcss";
 
 /*
- * Chart tokens come from the validated reference palette. Both modes are
- * selected rather than flipped: the dark sequential ramp is its own set of
- * steps, re-stepped for the dark surface and validated against it.
- *
- * The sequential ramp is one hue (blue), light to dark, carrying burning
- * activity as continuous magnitude. Its lightest step deliberately recedes
- * toward the surface -- on a calendar heatmap, "near zero" should read as
- * nearly-empty rather than as a competing colour.
+ * Chrome tokens from the validated reference palette; both modes are
+ * selected, not flipped. The calendar's colour ramp (Magma, sqrt scale)
+ * lives in src/lib/colorScale.ts because its fills are interpolated in JS.
  */
 
 :root {
@@ -18,23 +13,12 @@
   --surface-page: #f9f9f7;
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
-  --text-muted: #898781;
+  --text-muted: #6f6e69;
   --gridline: #e1e0d9;
   --baseline: #c3c2b7;
   --hairline: rgba(11, 11, 11, 0.1);
-
-  /* Sequential: burning activity, low -> high */
-  --seq-0: #eef4fd;
-  --seq-1: #cde2fb;
-  --seq-2: #9ec5f4;
-  --seq-3: #6da7ec;
-  --seq-4: #3987e5;
-  --seq-5: #256abf;
-  --seq-6: #104281;
-
-  /* Categorical slots, used for the two series in the anomaly view */
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
+  --bar-fill: #6b6a65;
+  --focus: #2a78d6;
 
   /* Status: reserved for exceedance, never reused as a series colour */
   --status-serious: #ec835a;
@@ -53,17 +37,8 @@
     --gridline: #2c2c2a;
     --baseline: #383835;
     --hairline: rgba(255, 255, 255, 0.1);
-
-    --seq-0: #14243a;
-    --seq-1: #184f95;
-    --seq-2: #256abf;
-    --seq-3: #3987e5;
-    --seq-4: #6da7ec;
-    --seq-5: #9ec5f4;
-    --seq-6: #cde2fb;
-
-    --series-1: #3987e5;
-    --series-2: #d95926;
+    --bar-fill: #a3a29b;
+    --focus: #6da7ec;
   }
 }
 
@@ -78,17 +53,8 @@
   --gridline: #2c2c2a;
   --baseline: #383835;
   --hairline: rgba(255, 255, 255, 0.1);
-
-  --seq-0: #14243a;
-  --seq-1: #184f95;
-  --seq-2: #256abf;
-  --seq-3: #3987e5;
-  --seq-4: #6da7ec;
-  --seq-5: #9ec5f4;
-  --seq-6: #cde2fb;
-
-  --series-1: #3987e5;
-  --series-2: #d95926;
+  --bar-fill: #a3a29b;
+  --focus: #6da7ec;
 }
 
 @theme inline {
