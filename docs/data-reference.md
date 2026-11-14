@@ -275,8 +275,10 @@ For trap 1, build a persistent-hotspot mask from archive `type ∈ {1,2}`
 detections (volcanoes and static industrial sources recur in the same place)
 and apply it spatially to NRT.
 
-**NOAA-20/21 are NRT-only** — absent from the country archive under every slug
-tried. Archive slugs are `modis` and `viirs-snpp` only.
+**NOAA-20 IS in the country archive** under slug `viirs-jpss1` (verified 14 Nov
+2026, `viirs-jpss1_<year>_<Country>.csv`, from 2018-04-01, with a `type` column;
+the host often resets this path, so retry). Other slugs tried return 404 JSON.
+See `docs/current-month.md`.
 
 ## Overpass drift: the record is still changing
 

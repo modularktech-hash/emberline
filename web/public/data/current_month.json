@@ -1,0 +1,134 @@
+{
+ "generated_utc": "2026-11-14T22:47Z",
+ "status": "prototype",
+ "comparison": "same-platform NOAA-20 window vs NOAA-20 history; not harmonized, not Aqua-equivalent",
+ "platform": "NOAA-20 VIIRS 375 m (current: NRT 2.0NRT; history: standard archive v2)",
+ "filters": "daytime only; confidence nominal or high; FRP > 0; thermal-source type NOT filtered (absent from NRT)",
+ "membership": "point in Natural Earth 110 m country polygon, both sides",
+ "nrt_feed": "J1_VIIRS_C2_Global_7d",
+ "nrt_feed_span_utc": [
+  "2026-11-07T00:56Z",
+  "2026-11-14T19:19Z"
+ ],
+ "acquisition_cutoff_utc": "2026-11-13T23:59Z",
+ "window_utc": [
+  "2026-11-08",
+  "2026-11-13"
+ ],
+ "elapsed_days": 6,
+ "month_to_date": false,
+ "month_to_date_note": "Keyless NRT reaches back 7 days only; November 1 to 2026-11-08 needs a FIRMS MAP_KEY.",
+ "provisional_nrt": true,
+ "reference_years": [
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "countries": {
+  "Canada": {
+   "count_to_date": 505,
+   "history_by_year": {
+    "2018": 768,
+    "2019": 234,
+    "2020": 534,
+    "2021": 1142,
+    "2022": 418,
+    "2023": 697,
+    "2024": 804,
+    "2025": 751
+   },
+   "history_median": 724.0,
+   "history_iqr": [
+    505.0,
+    777.0
+   ],
+   "n_years": 8,
+   "abs_deviation": -219.0,
+   "ratio": 0.6975138121546961,
+   "percentile_vs_history": 25.0,
+   "history_polygon_capture_mean": 0.992,
+   "history_nonveg_type_share_mean": 0.013,
+   "completeness": "6 complete UTC days of NRT; NRT may still receive late granules"
+  },
+  "Portugal": {
+   "count_to_date": 3,
+   "history_by_year": {
+    "2018": 1,
+    "2019": 3,
+    "2020": 3,
+    "2021": 45,
+    "2022": 25,
+    "2023": 11,
+    "2024": 25,
+    "2025": 5
+   },
+   "history_median": 8.0,
+   "history_iqr": [
+    3.0,
+    25.0
+   ],
+   "n_years": 8,
+   "abs_deviation": -5.0,
+   "ratio": 0.375,
+   "percentile_vs_history": 25.0,
+   "history_polygon_capture_mean": 0.837,
+   "history_nonveg_type_share_mean": 0.003,
+   "completeness": "6 complete UTC days of NRT; NRT may still receive late granules"
+  },
+  "Chile": {
+   "count_to_date": 129,
+   "history_by_year": {
+    "2018": 118,
+    "2019": 130,
+    "2020": 128,
+    "2021": 110,
+    "2022": 55,
+    "2023": 95,
+    "2024": 274,
+    "2025": 155
+   },
+   "history_median": 123.0,
+   "history_iqr": [
+    106.25,
+    136.25
+   ],
+   "n_years": 8,
+   "abs_deviation": 6.0,
+   "ratio": 1.048780487804878,
+   "percentile_vs_history": 62.5,
+   "history_polygon_capture_mean": 0.977,
+   "history_nonveg_type_share_mean": 0.101,
+   "completeness": "6 complete UTC days of NRT; NRT may still receive late granules"
+  },
+  "Australia": {
+   "count_to_date": 28355,
+   "history_by_year": {
+    "2018": 20596,
+    "2019": 34995,
+    "2020": 10555,
+    "2021": 9062,
+    "2022": 11070,
+    "2023": 26811,
+    "2024": 28190,
+    "2025": 14442
+   },
+   "history_median": 17519.0,
+   "history_iqr": [
+    10941.25,
+    27155.75
+   ],
+   "n_years": 8,
+   "abs_deviation": 10836.0,
+   "ratio": 1.6185284548204806,
+   "percentile_vs_history": 87.5,
+   "history_polygon_capture_mean": 0.988,
+   "history_nonveg_type_share_mean": 0.002,
+   "completeness": "6 complete UTC days of NRT; NRT may still receive late granules"
+  }
+ }
+}
