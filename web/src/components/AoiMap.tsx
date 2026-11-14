@@ -20,8 +20,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
  * module scope, which would break the server render of this route.
  */
 
-const LIGHT_STYLE =
-  "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 const DARK_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
@@ -80,15 +78,11 @@ export function AoiMap({ bbox, onSelect, styleUrl, className }: Props) {
         const maplibregl = await import("maplibre-gl");
         if (cancelled || !containerRef.current) return;
 
-        const prefersDark =
-          typeof window !== "undefined" &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches;
-
         const map = new maplibregl.Map({
           container: containerRef.current,
-          style: styleUrl ?? (prefersDark ? DARK_STYLE : LIGHT_STYLE),
-          center: [133.2, -12.5],
-          zoom: 3,
+          style: styleUrl ?? DARK_STYLE,
+          center: [20, 10],
+          zoom: 0.9,
           attributionControl: { compact: true },
         });
 
@@ -111,13 +105,13 @@ export function AoiMap({ bbox, onSelect, styleUrl, className }: Props) {
             id: `${BOX_SOURCE}-fill`,
             type: "fill",
             source: BOX_SOURCE,
-            paint: { "fill-color": "#2a78d6", "fill-opacity": 0.12 },
+            paint: { "fill-color": "#ff7a1a", "fill-opacity": 0.12 },
           });
           map.addLayer({
             id: `${BOX_SOURCE}-line`,
             type: "line",
             source: BOX_SOURCE,
-            paint: { "line-color": "#2a78d6", "line-width": 2 },
+            paint: { "line-color": "#ff7a1a", "line-width": 2 },
           });
           if (!cancelled) setReady(true);
         });
@@ -206,14 +200,12 @@ export function AoiMap({ bbox, onSelect, styleUrl, className }: Props) {
   const toggleDraw = useCallback(() => setDrawing((d) => !d), []);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border border-[var(--hairline)] ${className ?? "h-80"}`}>
+    <div className={`relative overflow-hidden rounded-2xl border border-[var(--hairline)] ${className ?? "h-80"}`}>
       <div ref={containerRef} className="absolute inset-0" />
 
       {failed ? (
         <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)] px-6 text-center text-sm text-[var(--text-secondary)]">
-          The basemap could not be loaded. Area selection still works from the
-          preset areas; pass a different{" "}
-          <code className="tabular">styleUrl</code> to use another basemap.
+          The basemap could not be loaded. Type coordinates below instead.
         </div>
       ) : (
         <button

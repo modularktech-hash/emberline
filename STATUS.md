@@ -12,7 +12,7 @@ it, commit and push. Times are IST.
 | Global data download + build | Cloud session (Claude, "data host") | **RUNNING** (unattended) | `data/global/*.csv.gz` (~190 countries) → `scripts/run_global.py` → `data/global_public/`. Cloud session only — never committed |
 | Global fit | Cloud session | **queued** after the build | `web/public/data/params_global.json`, `calendar_*_global.parquet` — published only after checking |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
-| App build — B1+B2 | **Taken over by the cloud "data host" session** (user's request). Desktop session: stopped after the data layer (merged into main) | **IN PROGRESS on `main`** | deployed URL when live |
+| App build — B1+B2 | **Taken over by the cloud "data host" session** (user's request). Desktop session: stopped after the data layer (merged into main) | **v1 DONE on `main`** | deployed URL when live |
 
 **A2 v1 is done — do not re-run it elsewhere.** Headline numbers are in `docs/results.md`. Next science step (cloud session): run on the global data when it lands.
 Person A: you are free. Good uses of your time: help B1, write the README and
@@ -27,6 +27,21 @@ land in `docs/results.md`.
   (~32 GB). When it finishes, that session runs the pipeline on it and pushes
   the small aggregated tables to `web/public/data/`.
 - `web/public/data/` — what the app reads. Committed. Keep files < 50 MB.
+
+## Plan — what is left, in order (updated 14 Nov, afternoon)
+
+| # | Task | Owner | State |
+|---|---|---|---|
+| 1 | Web app v1: calendar + toggle, seasons, method & proof, CSV, area picker | Cloud session | **DONE** — on `main`, builds clean |
+| 2 | **Vercel deploy** — import the repo, Root Directory `web` | **You (browser, 3 min)** | **TODO — blocks everything visible** |
+| 3 | Check the live URL on a phone; check the map basemap loads (could not be verified in the cloud sandbox) | You | after 2 |
+| 4 | Global download (~190 countries) → build tables | Cloud session | running unattended |
+| 5 | Global fit → publish global calendars + params; app picks up new countries automatically | Cloud session | after 4 |
+| 6 | Polish pass: country search for 190 names, live 7-day layer (NOAA-20/21), mobile check | Cloud session | after 5 |
+| 7 | README with real numbers + figures | Person A / cloud | Sat evening |
+| 8 | Project page text, Use-of-AI field (`docs/submission.md`) | Person A | Sat evening |
+| 9 | 30-second video (record the toggle on Canada) | Both | Sun morning |
+| 10 | Freeze 14:00 Sun, submit 16:00 Sun | Both | |
 
 ## How the global run works (for anyone picking this up)
 

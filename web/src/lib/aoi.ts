@@ -1,5 +1,4 @@
-import { cellToLatLng, polygonToCells } from "h3-js";
-import type { AoiSelection } from "@/lib/types";
+import { cellToLatLng, latLngToCell, polygonToCells } from "h3-js";
 
 /**
  * Area-of-interest helpers.
@@ -63,47 +62,17 @@ export function formatBbox(bbox: Bbox): string {
 }
 
 /**
- * Preset areas, chosen to span the regimes the correction has to survive:
- * a savanna fire season, a boreal one, a tropical deforestation frontier, a
- * Mediterranean-climate one, and an agricultural burning region -- the last
- * being where MODIS and VIIRS disagree most, because most of those fires are
- * small enough that only VIIRS resolves them.
+ * H3 res-2 parent cells a box touches. The calendar tables are keyed on these
+ * (~86,000 km2 each), so a drawn area resolves to the coarse cells it overlaps.
+ * Sampled on a grid, because a small box may contain no res-2 cell centre.
  */
-export const PRESET_AOIS: Array<{ name: string; bbox: Bbox; note: string }> = [
-  {
-    name: "Top End, Australia",
-    bbox: [130.0, -16.0, 137.0, -11.0],
-    note: "Tropical savanna; the most regular fire season on Earth",
-  },
-  {
-    name: "Central Siberia",
-    bbox: [88.0, 58.0, 104.0, 68.0],
-    note: "Boreal forest; large, high-energy fires",
-  },
-  {
-    name: "Rondônia, Brazil",
-    bbox: [-66.0, -13.0, -59.0, -8.0],
-    note: "Deforestation frontier; strong year-to-year swings",
-  },
-  {
-    name: "Northern California",
-    bbox: [-124.0, 38.0, -119.0, 42.0],
-    note: "Mediterranean climate; extreme individual events",
-  },
-  {
-    name: "Punjab, India",
-    bbox: [73.5, 29.5, 77.0, 32.5],
-    note: "Post-harvest crop residue burning; the hardest case for MODIS",
-  },
-];
-
-export function presetToSelection(
-  preset: (typeof PRESET_AOIS)[number],
-  resolution: number = DEFAULT_RESOLUTION,
-): AoiSelection {
-  return {
-    name: preset.name,
-    bbox: preset.bbox,
-    cells: bboxToCells(preset.bbox, resolution).cells,
-  };
+export function bboxToParents(bbox: Bbox, samples = 14): string[] {
+  const [west, south, east, north] = bbox;
+  const out = new Set<string>();
+  for (let i = 0; i <= samples; i += 1) {
+    for (let j = 0; j <= samples; j += 1) {
+      out.add(latLngToCell(south + ((north - south) * i) / samples, west + ((east - west) * j) / samples, 2));
+    }
+  }
+  return [...out];
 }

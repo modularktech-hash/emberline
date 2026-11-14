@@ -1,115 +1,60 @@
 @import "tailwindcss";
 
 /*
- * Chart tokens come from the validated reference palette. Both modes are
- * selected rather than flipped: the dark sequential ramp is its own set of
- * steps, re-stepped for the dark surface and validated against it.
- *
- * The sequential ramp is one hue (blue), light to dark, carrying burning
- * activity as continuous magnitude. Its lightest step deliberately recedes
- * toward the surface -- on a calendar heatmap, "near zero" should read as
- * nearly-empty rather than as a competing colour.
+ * Emberline — one dark theme. Warm near-black surfaces, a single ember accent.
+ * The sequential ramp ("Ember") rises monotonically in lightness from the
+ * surface to pale gold, so it stays ordered for colour-blind readers and in
+ * greyscale. Low activity recedes into the page; high activity glows.
  */
-
 :root {
-  color-scheme: light;
-
-  --surface-1: #fcfcfb;
-  --surface-page: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --hairline: rgba(11, 11, 11, 0.1);
-
-  /* Sequential: burning activity, low -> high */
-  --seq-0: #eef4fd;
-  --seq-1: #cde2fb;
-  --seq-2: #9ec5f4;
-  --seq-3: #6da7ec;
-  --seq-4: #3987e5;
-  --seq-5: #256abf;
-  --seq-6: #104281;
-
-  /* Categorical slots, used for the two series in the anomaly view */
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-
-  /* Status: reserved for exceedance, never reused as a series colour */
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-
-    --surface-1: #1a1a19;
-    --surface-page: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --baseline: #383835;
-    --hairline: rgba(255, 255, 255, 0.1);
-
-    --seq-0: #14243a;
-    --seq-1: #184f95;
-    --seq-2: #256abf;
-    --seq-3: #3987e5;
-    --seq-4: #6da7ec;
-    --seq-5: #9ec5f4;
-    --seq-6: #cde2fb;
-
-    --series-1: #3987e5;
-    --series-2: #d95926;
-  }
-}
-
-:root[data-theme="dark"] {
   color-scheme: dark;
+  --surface-page: #0b0908;
+  --surface-1: #141110;
+  --surface-2: #1c1816;
+  --text-primary: #f6efe8;
+  --text-secondary: #b9aea4;
+  --text-muted: #7d736b;
+  --hairline: rgba(246, 239, 232, 0.09);
+  --gridline: rgba(246, 239, 232, 0.06);
+  --ember: #ff7a1a;
+  --ember-soft: rgba(255, 122, 26, 0.14);
+  --cool: #6fb1c9;
 
-  --surface-1: #1a1a19;
-  --surface-page: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --baseline: #383835;
-  --hairline: rgba(255, 255, 255, 0.1);
-
-  --seq-0: #14243a;
-  --seq-1: #184f95;
-  --seq-2: #256abf;
-  --seq-3: #3987e5;
-  --seq-4: #6da7ec;
-  --seq-5: #9ec5f4;
-  --seq-6: #cde2fb;
-
-  --series-1: #3987e5;
-  --series-2: #d95926;
+  --seq-0: #1b1614;
+  --seq-1: #3a1a12;
+  --seq-2: #6a2410;
+  --seq-3: #a1360d;
+  --seq-4: #d6560f;
+  --seq-5: #f48a2a;
+  --seq-6: #ffc163;
+  --seq-7: #fff0c7;
 }
 
 @theme inline {
-  --color-surface: var(--surface-1);
-  --color-page: var(--surface-page);
-  --color-ink: var(--text-primary);
-  --color-ink-secondary: var(--text-secondary);
-  --color-ink-muted: var(--text-muted);
-  --color-gridline: var(--gridline);
-  --color-baseline: var(--baseline);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
+html { background: var(--surface-page); }
 body {
-  background: var(--surface-page);
+  background:
+    radial-gradient(1100px 520px at 78% -12%, rgba(255, 122, 26, 0.13), transparent 62%),
+    radial-gradient(800px 420px at -8% 4%, rgba(214, 86, 15, 0.07), transparent 60%),
+    var(--surface-page);
+  background-repeat: no-repeat;
   color: var(--text-primary);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
-
-/* Axis ticks and table columns align only with tabular figures. */
-.tabular {
-  font-variant-numeric: tabular-nums;
+.display { font-family: var(--font-display), Georgia, serif; letter-spacing: -0.015em; }
+.tabular { font-variant-numeric: tabular-nums; }
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008));
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
 }
+.eyebrow { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); }
+::selection { background: var(--ember); color: #1a0d05; }
+select, input { color-scheme: dark; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

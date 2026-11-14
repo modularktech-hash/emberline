@@ -1,5 +1,5 @@
-import { RebuildNotice } from "@/components/RebuildNotice";
+import { Method } from "@/components/Method";
 
-export default function MethodPage() {
-  return <RebuildNotice title="How the record is harmonized" />;
+export default function Page() {
+  return <Method />;
 }

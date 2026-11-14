@@ -1,5 +1,5 @@
-import { RebuildNotice } from "@/components/RebuildNotice";
+import { Seasons } from "@/components/Seasons";
 
-export default function AnomalyPage() {
-  return <RebuildNotice title="Anomaly" />;
+export default function Page() {
+  return <Seasons />;
 }
