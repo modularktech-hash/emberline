@@ -85,7 +85,7 @@ export function DotLoader({ label = "Loading" }: { label?: string }) {
  * animation); on first view the whole display wipes in left to right with one
  * clip-path animation (.dot-wipe in globals.css).
  */
-export const DotText = memo(function DotText({ text, dot = 7, gap = 2.4, lit = "currentColor", dim = "rgba(127,127,127,0.12)", className = "" }:
+export const DotText = memo(function DotText({ text, dot = 7, gap = 7 / 3, lit = "currentColor", dim = "rgba(127,127,127,0.12)", className = "" }:
   { text: string; dot?: number; gap?: number; lit?: string; dim?: string; className?: string }) {
   const ref = useRef<SVGSVGElement>(null);
   const seen = useInView(ref, { once: true });

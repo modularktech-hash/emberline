@@ -10,9 +10,9 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by the "data host" cloud session (session_012Vv…), 14 Nov ~21:05 UTC, owner's instruction
+## `web/` — RELEASED by the "data host" cloud session after design pass 3 (14 Nov ~21:30 UTC); was claimed from ~21:05 UTC
 
-Design pass 3: named page transitions, the new "ember + line" logo, and the owner's design review. Checklist and resume notes: [`docs/design-pass-3.md`](docs/design-pass-3.md). **No other session edits `web/` until this is released.**
+Design pass 3 done: named page transitions (T1), the "ember + line" logo (L1), and the owner's design review D1–D14, each ticked with notes in [`docs/design-pass-3.md`](docs/design-pass-3.md).
 
 ### Previous: `web/` — RELEASED by builder subagent (session_01RwRY…) after plan-combat E03 (aeb18fd), E04+E05 (4b4b1af), E06 (ff6d72b), 14 Nov
 

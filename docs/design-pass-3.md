@@ -77,5 +77,6 @@ readouts. Make it more disciplined and easier to use. Labels say
       - Done: Compact footer (site map + credits, no story block or chart) on the seven working pages; "…" placeholders replaced by "loading".
 
 ### P3 — "Then" (only if time remains)
-- [ ] D14 Calm the gradient behind dense content; fewer, quieter shadows on
+- [x] D14 Calm the gradient behind dense content; fewer, quieter shadows on
       small controls; one dot-matrix rule set (size/spacing ratio, reserved width).
+      - Done: working pages set `html[data-page=tool]` → quieter backdrop glows and grain; `.glass-thin` small controls get a lighter shadow; dot-matrix rule is gap = dot ÷ 3 everywhere (DotText default aligned). Reserved-width rule not done.

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { NAV } from "@/lib/nav";
@@ -41,6 +42,8 @@ const TOOL_PAGES = new Set(["/explorer", "/compare", "/seasons", "/trends", "/la
 
 export function SiteFooter() {
   const compact = TOOL_PAGES.has(usePathname());
+  // Working pages also get a calmer backdrop behind their dense content (globals.css, html[data-page=tool]).
+  useEffect(() => { document.documentElement.dataset.page = compact ? "tool" : "story"; }, [compact]);
   return (
     <footer className={`relative px-3 pb-3 text-[#efe9d9] sm:px-6 sm:pb-6 ${compact ? "mt-16" : "mt-32"}`}>
       <div className="glass-dark mx-auto max-w-6xl !rounded-[32px]">

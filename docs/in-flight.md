@@ -143,3 +143,7 @@ right now, what state the working tree may be in, and how to pick it up.
 - Submission (Sunday 16:00): 30 s video, Use-of-AI text, 9 fields — `docs/submission.md`.
 - The Claude artifact copy of the site (https://claude.ai/artifact/33LmHNK76DxGhpewWHf9yu)
   is from before the polish passes; rebuild steps are in `docs/handoff-web-ui.md`.
+
+## Design pass 3 (14 Nov, ~21:05–21:30 UTC)
+
+Done and pushed: T1 named page transition (`components/RouteTransition.tsx`), L1 logo (`components/Logo.tsx`, icons, OG image), D1–D14. Checklist with notes: `docs/design-pass-3.md`. `web/` released in STATUS.
