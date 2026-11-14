@@ -155,6 +155,7 @@
     "Democratic_Republic_of_the_Congo": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.6876305134530192,
         "b1": 0.5694635453182508,
@@ -331,6 +332,7 @@
     "Angola": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.4843602687921278,
         "b1": 0.6339128503071615,
@@ -507,6 +509,7 @@
     "Brazil": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.97803598463099,
         "b1": 0.6249894172863869,
@@ -683,6 +686,7 @@
     "Australia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -0.7758348607861051,
         "b1": 0.5062550998025334,
@@ -859,6 +863,7 @@
     "Russian_Federation": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -0.6905295944767766,
         "b1": 0.772474280765426,
@@ -1035,6 +1040,7 @@
     "Zambia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.5268914240858953,
         "b1": 0.5910538993736394,
@@ -1211,6 +1217,7 @@
     "Mozambique": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.5830079410707196,
         "b1": 0.5608021174528512,
@@ -1387,6 +1394,7 @@
     "South_Sudan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.2142947961579527,
         "b1": 0.5052938916976161,
@@ -1563,6 +1571,7 @@
     "Central_African_Republic": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.5790754971809415,
         "b1": 0.6038649529242921,
@@ -1739,6 +1748,7 @@
     "Tanzania": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.9805631642852446,
         "b1": 0.5688979391056679,
@@ -1915,6 +1925,7 @@
     "India": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.397243139647816,
         "b1": 0.7254445780566013,
@@ -2091,6 +2102,7 @@
     "United_States": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.7382095871172254,
         "b1": 0.8773238142816944,
@@ -2267,6 +2279,7 @@
     "Nigeria": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.5415747631238466,
         "b1": 0.7538447416401788,
@@ -2443,6 +2456,7 @@
     "Madagascar": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.713182227740627,
         "b1": 0.7827804644442077,
@@ -2619,6 +2633,7 @@
     "China": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.4846659150763344,
         "b1": 0.8799706863375139,
@@ -2795,6 +2810,7 @@
     "Guinea": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.8464726690180395,
         "b1": 0.6174537461767216,
@@ -2971,6 +2987,7 @@
     "Myanmar": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.293206265816845,
         "b1": 0.7526701938551975,
@@ -3147,6 +3164,7 @@
     "Canada": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -0.4800380683671595,
         "b1": 0.4699844221465515,
@@ -3323,6 +3341,7 @@
     "Mexico": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.782901463769018,
         "b1": 0.8326655368715806,
@@ -3499,6 +3518,7 @@
     "Bolivia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.6187532217361107,
         "b1": 0.6037865299169802,
@@ -3675,6 +3695,7 @@
     "Indonesia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.207927120994412,
         "b1": 0.6016752281816629,
@@ -3851,6 +3872,7 @@
     "Argentina": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.094964398314754,
         "b1": 0.927259041257223,
@@ -4027,6 +4049,7 @@
     "Cameroon": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.5263896566092616,
         "b1": 0.8176908996218153,
@@ -4203,6 +4226,7 @@
     "Ghana": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.0842399877226216,
         "b1": 0.734071821931672,
@@ -4379,6 +4403,7 @@
     "Chad": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.5908026885781714,
         "b1": 0.552876840917001,
@@ -4555,6 +4580,7 @@
     "Venezuela": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.468434008545578,
         "b1": 0.6551210307907288,
@@ -4731,6 +4757,7 @@
     "Ethiopia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.7834747318127584,
         "b1": 0.5650285750110037,
@@ -4907,6 +4934,7 @@
     "Lao_PDR": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.57794090081205,
         "b1": 0.5604778665107363,
@@ -5083,6 +5111,7 @@
     "Sudan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.5611484618659348,
         "b1": 0.5522308560443919,
@@ -5259,6 +5288,7 @@
     "South_Africa": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.6971436848150083,
         "b1": 0.7568024661606324,
@@ -5435,6 +5465,7 @@
     "Cambodia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.0255296556750424,
         "b1": 0.5642075944948454,
@@ -5611,6 +5642,7 @@
     "Mali": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.076405768391432,
         "b1": 0.6464246628870229,
@@ -5787,6 +5819,7 @@
     "Paraguay": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.091420876467262,
         "b1": 0.8511925441749187,
@@ -5963,6 +5996,7 @@
     "Cote_d_Ivoire": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.252552103387762,
         "b1": 0.6815200837052859,
@@ -6139,6 +6173,7 @@
     "Kazakhstan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -0.7410935283844241,
         "b1": 0.5761074957131594,
@@ -6315,6 +6350,7 @@
     "Colombia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.495525797996171,
         "b1": 0.6189129402765597,
@@ -6491,6 +6527,7 @@
     "Thailand": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.209640217092677,
         "b1": 1.0054943689279001,
@@ -6667,6 +6704,7 @@
     "Sierra_Leone": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.519138167960655,
         "b1": 0.4347543042108058,
@@ -6843,6 +6881,7 @@
     "Republic_of_Congo": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2458652794267793,
         "b1": 0.6610367421971413,
@@ -7019,6 +7058,7 @@
     "Uganda": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2712761465958593,
         "b1": 0.5862990761064115,
@@ -7195,6 +7235,7 @@
     "Zimbabwe": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.6373774522277398,
         "b1": 0.692588138393497,
@@ -7371,6 +7412,7 @@
     "Ukraine": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.7128615737812967,
         "b1": 0.6190294856651006,
@@ -7547,6 +7589,7 @@
     "Peru": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.6801365521698184,
         "b1": 0.664169165567476,
@@ -7723,6 +7766,7 @@
     "Vietnam": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.6049800236733143,
         "b1": 0.6134020061885204,
@@ -7899,6 +7943,7 @@
     "Senegal": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.8121695134419604,
         "b1": 0.7058442062210092,
@@ -8075,6 +8120,7 @@
     "Benin": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.8483487906280596,
         "b1": 0.9271584131406435,
@@ -8251,6 +8297,7 @@
     "Burkina_Faso": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.566591934325557,
         "b1": 0.86153378161801,
@@ -8427,6 +8474,7 @@
     "Botswana": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -0.6540446256729794,
         "b1": 0.5040806740616436,
@@ -8603,6 +8651,7 @@
     "Malawi": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.854149901587771,
         "b1": 0.8671630975701173,
@@ -8779,6 +8828,7 @@
     "Namibia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -0.7155846566095139,
         "b1": 0.5511102672874488,
@@ -8955,6 +9005,7 @@
     "Pakistan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.385133564104847,
         "b1": 0.7320318132158492,
@@ -9131,6 +9182,7 @@
     "Liberia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2344488724057943,
         "b1": 0.4870180262102314,
@@ -9307,6 +9359,7 @@
     "Togo": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.883255951084626,
         "b1": 0.895979644320857,
@@ -9483,6 +9536,7 @@
     "Honduras": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.657890235966683,
         "b1": 0.5795542490959446,
@@ -9659,6 +9713,7 @@
     "Papua_New_Guinea": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.6335309108092275,
         "b1": 0.7780404423840646,
@@ -9835,6 +9890,7 @@
     "Guatemala": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.9104066784940614,
         "b1": 0.7977044686773541,
@@ -10011,6 +10067,7 @@
     "Turkey": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.4163839565884695,
         "b1": 0.7422362015625358,
@@ -10187,6 +10244,7 @@
     "Philippines": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.3515440443526754,
         "b1": 0.6285884786759398,
@@ -10363,6 +10421,7 @@
     "Nicaragua": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.727733134386934,
         "b1": 0.5581572022936439,
@@ -10539,6 +10598,7 @@
     "Cuba": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.848612465314252,
         "b1": 0.872095806336994,
@@ -10715,6 +10775,7 @@
     "Chile": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2238572816155675,
         "b1": 0.9981321599773673,
@@ -10891,6 +10952,7 @@
     "Guinea-Bissau": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.8215994205457955,
         "b1": 0.5558007487965698,
@@ -11067,6 +11129,7 @@
     "Ecuador": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.189959904239691,
         "b1": 0.4521205959828352,
@@ -11243,6 +11306,7 @@
     "Kenya": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.0179371741299192,
         "b1": 0.8011486730915565,
@@ -11419,6 +11483,7 @@
     "Iran": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.513870784782102,
         "b1": 0.8296031407483155,
@@ -11595,6 +11660,7 @@
     "Italy": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.3957307520651305,
         "b1": 1.115733579313902,
@@ -11771,6 +11837,7 @@
     "Romania": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.299520712774945,
         "b1": 0.7454593376113047,
@@ -11947,6 +12014,7 @@
     "Malaysia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.0035621032957884,
         "b1": 0.8330996007277746,
@@ -12123,6 +12191,7 @@
     "Nepal": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.504938305504544,
         "b1": 0.8439480745736003,
@@ -12299,6 +12368,7 @@
     "Iraq": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.855847475822593,
         "b1": 0.6960861630823462,
@@ -12475,6 +12545,7 @@
     "Algeria": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.077580044471629,
         "b1": 1.1267216317001552,
@@ -12651,6 +12722,7 @@
     "Guyana": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.79260991294764,
         "b1": 0.682401760753158,
@@ -12827,6 +12899,7 @@
     "Bangladesh": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.09489544307456,
         "b1": 0.7794427370739598,
@@ -13003,6 +13076,7 @@
     "Spain": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.20626439091075,
         "b1": 1.2162675109536287,
@@ -13179,6 +13253,7 @@
     "Uzbekistan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.7333712192779083,
         "b1": 0.8470376950278513,
@@ -13355,6 +13430,7 @@
     "Panama": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.787711796715288,
         "b1": 0.5644636789222605,
@@ -13531,6 +13607,7 @@
     "Gabon": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.3944173539662073,
         "b1": 0.6459136323975313,
@@ -13707,6 +13784,7 @@
     "Mongolia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": 0.03944207205793242,
         "b1": 0.38173438444884833,
@@ -13883,6 +13961,7 @@
     "Bulgaria": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.943418385464708,
         "b1": 0.7288408041070173,
@@ -14059,6 +14138,7 @@
     "Niger": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.793358793279033,
         "b1": 0.5258011851216328,
@@ -14235,6 +14315,7 @@
     "Sri_Lanka": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.7187367784023313,
         "b1": 0.8298851166913486,
@@ -14411,6 +14492,7 @@
     "Dominican_Republic": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.617277850096194,
         "b1": 0.8724061287933317,
@@ -14587,6 +14669,7 @@
     "Turkmenistan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.9303624239931723,
         "b1": 0.7630196446670112,
@@ -14763,6 +14846,7 @@
     "Serbia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2708007340949914,
         "b1": 0.8442673930531079,
@@ -14939,6 +15023,7 @@
     "Belarus": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.0688973398113446,
         "b1": 0.9445619857053814,
@@ -15115,6 +15200,7 @@
     "Portugal": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.0155589385224713,
         "b1": 1.012814233458223,
@@ -15291,6 +15377,7 @@
     "Belize": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.596164618455854,
         "b1": 0.7265896251828814,
@@ -15467,6 +15554,7 @@
     "Swaziland": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.085820237928067,
         "b1": 0.9027155130014767,
@@ -15643,6 +15731,7 @@
     "Greece": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.930544562481378,
         "b1": 1.0392511564261264,
@@ -15819,6 +15908,7 @@
     "Syria": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.191722187632366,
         "b1": 0.9345955544748596,
@@ -15995,6 +16085,7 @@
     "Egypt": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.1329938512581297,
         "b1": 0.3390347369525162,
@@ -16171,6 +16262,7 @@
     "Azerbaijan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.7444990528481625,
         "b1": 1.0432390698790672,
@@ -16347,6 +16439,7 @@
     "France": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.6837303636762537,
         "b1": 0.921711979193684,
@@ -16523,6 +16616,7 @@
     "Costa_Rica": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.5966133118669177,
         "b1": 0.7512296200086696,
@@ -16699,6 +16793,7 @@
     "El_Salvador": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.3265907909739147,
         "b1": 0.9175387345428792,
@@ -16875,6 +16970,7 @@
     "Dem_Rep_Korea": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.5350540778778377,
         "b1": 1.1457158546804218,
@@ -17051,6 +17147,7 @@
     "Uruguay": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.8347381146845114,
         "b1": 0.8701240833207201,
@@ -17227,6 +17324,7 @@
     "The_Gambia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.077365037747755,
         "b1": 0.7087547214253,
@@ -17403,6 +17501,7 @@
     "Timor-Leste": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.974912201597675,
         "b1": 0.6997566417271514,
@@ -17579,6 +17678,7 @@
     "Saudi_Arabia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -5.235395607873731,
         "b1": 0.9777340309402982,
@@ -17755,6 +17855,7 @@
     "New_Zealand": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.8105317967258028,
         "b1": 0.6814240238250833,
@@ -17931,6 +18032,7 @@
     "Bosnia_and_Herzegovina": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.723006720828689,
         "b1": 1.3862408852368429,
@@ -18107,6 +18209,7 @@
     "Suriname": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.4816292696638182,
         "b1": 0.6205256135322644,
@@ -18283,6 +18386,7 @@
     "Japan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.703845815616158,
         "b1": 1.3164423687576796,
@@ -18459,6 +18563,7 @@
     "Somalia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.6830591772465033,
         "b1": 1.1038360442834194,
@@ -18635,6 +18740,7 @@
     "Moldova": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2274549483956614,
         "b1": 0.6780444832716765,
@@ -18811,6 +18917,7 @@
     "Georgia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.35030773311987,
         "b1": 0.8049650637948051,
@@ -18987,6 +19094,7 @@
     "Burundi": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.027307782145355,
         "b1": 0.8823588286557974,
@@ -19163,6 +19271,7 @@
     "Albania": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.545975417722407,
         "b1": 1.2002668615559489,
@@ -19339,6 +19448,7 @@
     "Germany": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -4.43706104699563,
         "b1": 1.1015581084667494,
@@ -19515,6 +19625,7 @@
     "United_Kingdom": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.4759287076901875,
         "b1": 1.1653319536410371,
@@ -19691,6 +19802,7 @@
     "Mauritania": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.5648147153263312,
         "b1": 0.49263960412741314,
@@ -19867,6 +19979,7 @@
     "Fiji": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.7914578540049613,
         "b1": 0.7572868620446811,
@@ -20043,6 +20156,7 @@
     "Hungary": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.784784435888238,
         "b1": 0.8493165337395433,
@@ -20219,6 +20333,7 @@
     "Haiti": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.907027843597833,
         "b1": 0.97069407138464,
@@ -20395,6 +20510,7 @@
     "Croatia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.0032158057545026,
         "b1": 1.3028005485717296,
@@ -20571,6 +20687,7 @@
     "Poland": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.9102639067145084,
         "b1": 0.8266190806789669,
@@ -20747,6 +20864,7 @@
     "Lesotho": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2729407223599254,
         "b1": 0.7243354091460589,
@@ -20923,6 +21041,7 @@
     "Kyrgyzstan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.021080274981956,
         "b1": 0.9534256451180899,
@@ -21099,6 +21218,7 @@
     "Macedonia_Former_Yugoslav_Republic_of": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.16178835313148,
         "b1": 1.2844710021526409,
@@ -21275,6 +21395,7 @@
     "Libya": {
       "fit_source": "own",
       "kappa_source": "pooled",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -5.869010540187907,
         "b1": 1.1069342051306907,
@@ -21451,6 +21572,7 @@
     "Republic_of_Korea": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -21627,6 +21749,7 @@
     "Montenegro": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.867593908490415,
         "b1": 0.9960320013432914,
@@ -21803,6 +21926,7 @@
     "French_Guiana": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.2913893710869915,
         "b1": 0.5387405390358192,
@@ -21979,6 +22103,7 @@
     "Armenia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.8659649787460237,
         "b1": 1.0399909524282793,
@@ -22155,6 +22280,7 @@
     "Morocco": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -4.633152642878205,
         "b1": 1.5271876159312545,
@@ -22331,6 +22457,7 @@
     "Tunisia": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.278326705957057,
         "b1": 1.1868707589871792,
@@ -22507,6 +22634,7 @@
     "Bahamas": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -1.8850268103659762,
         "b1": 0.6255903371424181,
@@ -22683,6 +22811,7 @@
     "Jamaica": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -3.7788163132711037,
         "b1": 1.1242772225787314,
@@ -22859,6 +22988,7 @@
     "Equatorial_Guinea": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -23035,6 +23165,7 @@
     "Eritrea": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -23211,6 +23342,7 @@
     "Bhutan": {
       "fit_source": "own",
       "kappa_source": "own",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -2.162143657021756,
         "b1": 0.8034568719722108,
@@ -23387,6 +23519,7 @@
     "Kosovo": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -23563,6 +23696,7 @@
     "Oman": {
       "fit_source": "own",
       "kappa_source": "pooled",
+      "coef_ci_estimated": true,
       "logistic": {
         "b0": -6.029031912427525,
         "b1": 1.0185255214354423,
@@ -23739,6 +23873,7 @@
     "New_Caledonia": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -23915,6 +24050,7 @@
     "Afghanistan": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -24091,6 +24227,7 @@
     "Rwanda": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -24267,6 +24404,7 @@
     "Sweden": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -24443,6 +24581,7 @@
     "Kuwait": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -24619,6 +24758,7 @@
     "Trinidad_and_Tobago": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -24795,6 +24935,7 @@
     "Taiwan": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -24971,6 +25112,7 @@
     "Israel": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -25147,6 +25289,7 @@
     "Netherlands": {
       "fit_source": "pooled",
       "kappa_source": "own",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -25323,6 +25466,7 @@
     "Tajikistan": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -25499,6 +25643,7 @@
     "Lebanon": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -25675,6 +25820,7 @@
     "Finland": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -25851,6 +25997,7 @@
     "Czech_Republic": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -26027,6 +26174,7 @@
     "Lithuania": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -26203,6 +26351,7 @@
     "Denmark": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -26379,6 +26528,7 @@
     "Latvia": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -26555,6 +26705,7 @@
     "United_Arab_Emirates": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -26731,6 +26882,7 @@
     "Ireland": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -26907,6 +27059,7 @@
     "Slovakia": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -27083,6 +27236,7 @@
     "Norway": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -27259,6 +27413,7 @@
     "Yemen": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -27435,6 +27590,7 @@
     "Belgium": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -27611,6 +27767,7 @@
     "Puerto_Rico": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -27787,6 +27944,7 @@
     "Palestine": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -27963,6 +28121,7 @@
     "Mauritius": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -28139,6 +28298,7 @@
     "Austria": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -28315,6 +28475,7 @@
     "Solomon_Islands": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -28491,6 +28652,7 @@
     "Jordan": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -28667,6 +28829,7 @@
     "Comoros": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -28843,6 +29006,7 @@
     "Cyprus": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -29019,6 +29183,7 @@
     "Brunei_Darussalam": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -29195,6 +29360,7 @@
     "Switzerland": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -29371,6 +29537,7 @@
     "Estonia": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -29547,6 +29714,7 @@
     "Slovenia": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -29723,6 +29891,7 @@
     "Barbados": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -29899,6 +30068,7 @@
     "Djibouti": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,
@@ -30075,6 +30245,7 @@
     "Sao_Tome_and_Principe": {
       "fit_source": "pooled",
       "kappa_source": "pooled",
+      "coef_ci_estimated": false,
       "logistic": {
         "b0": -1.7577471128486146,
         "b1": 0.6423665394652569,

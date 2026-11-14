@@ -192,3 +192,21 @@ logged-out with Playwright, iPhone 13 emulation and 1280 px desktop: `/` shows
 the Portugal calendar with raw 2011 = 1,953 and 2012 = 4,128, `/method` renders
 its tables, `/data/calendar_raw.parquet` answers range requests with 206, no
 console errors, no horizontal overflow. Not yet checked on a physical phone.
+
+### 14 Nov — data-contract additions after external review (session "app build")
+
+`scripts/build_coverage_validation.py` (additive; no coefficient or published metric changed):
+
+- `params_global.json`: `coef_ci_estimated` per country; `false` for the 41 pooled fits whose
+  coefficient "intervals" are the point value twice. File otherwise byte-identical.
+- `coverage_status.json`: reason-coded status for all 237 built countries. The 66 published
+  `TypeError`s come from three lines of `fit_harmonization.py` (threshold-baseline `np.sqrt(None)`,
+  31; null-control `float(None)`, 9; bootstrap `np.percentile` over `None`, 26). Each was re-run and
+  the failing line matched the status derived from the counts. Result: 23 insufficient training,
+  17 insufficient reference, 18 insufficient held-out variation, 8 no observations, 0 numerical.
+  5 of the 66 (American Samoa, Antarctica, Maldives, Marshall Islands, South Georgia) have no raw calendar rows.
+- `validation_points.json`: ≤300 held-out cell-month [observed, predicted] pairs per fitted country
+  and a training-only multiplicative baseline. Model R² recomputed from the published b0/b1/κ matches
+  the published R² to 1.8e-15. Model beats the scalar baseline on held-out R² in 84 of 171; does not
+  in 87 (see `docs/results.md`). Lower MAE in 141 of 171.
+- Contract for the web builder: `docs/data-contract-additions.md`. Check: `scripts/check_data_contract.py`.
