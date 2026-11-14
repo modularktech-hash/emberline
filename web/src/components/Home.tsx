@@ -34,7 +34,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
 
   return (
     <section ref={ref} className="relative -mx-4 overflow-hidden px-4 pb-8 pt-10 sm:-mx-6 sm:px-6 sm:pt-16">
-      <motion.div style={{ y: globeY, scale: globeScale }} className="pointer-events-none absolute inset-x-0 top-24 mx-auto max-w-[900px] opacity-90 sm:top-10">
+      <motion.div style={{ y: globeY, scale: globeScale }} className="pointer-events-none absolute inset-x-0 top-[330px] mx-auto max-w-[900px] opacity-90 sm:top-[360px]">
         <FireGlobe live={d?.live ?? null} tle={d?.tle.satellites ?? null} interactive={false} showOrbits height={720} speed={90} />
       </motion.div>
       <motion.div style={{ y: textY, opacity: fade }} className="relative z-10 mx-auto max-w-4xl text-center">
@@ -48,7 +48,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
             </motion.span>
           ))}
           <br />
-          <motion.span className="inline-block italic text-[var(--ember)]" initial={{ opacity: 0, y: 40, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1, ease: EASE, delay: 0.45 }}>
+          <motion.span className="inline-block whitespace-nowrap text-[2.7rem] italic text-[var(--ember)] sm:text-[6.6rem]" initial={{ opacity: 0, y: 40, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1, ease: EASE, delay: 0.45 }}>
             One unbroken line.
           </motion.span>
         </h1>
