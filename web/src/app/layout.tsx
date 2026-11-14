@@ -23,7 +23,7 @@ export const viewport = { themeColor: "#f7f3e8" };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+      <body id="top" className="flex min-h-full flex-col">
         <Backdrop />
         <PerfMode />
         <Interactions />

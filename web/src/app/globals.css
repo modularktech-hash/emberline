@@ -294,3 +294,20 @@ html[data-perf=low] .dot-wipe { animation: none; }
 /* Overpass clock hands: one CSS transform transition per year step (DriftClocks). */
 .drift-hand { transform-box: view-box; transform-origin: 60px 60px; transition: transform 520ms var(--ease-out); }
 
+/* Footer: links slide their arrow, the credit and back-to-top light up; all on hover and keyboard focus. */
+.foot-link { transition: color 180ms ease; }
+.foot-link .foot-arrow, .foot-maker .foot-arrow { display: inline-block; opacity: 0; transform: translateX(-4px); transition: opacity 180ms ease, transform 220ms var(--ease-out); }
+.foot-link:is(:hover, :focus-visible) { color: #ff9a6b; }
+.foot-link:is(:hover, :focus-visible) .foot-arrow, .foot-maker:is(:hover, :focus-visible) .foot-arrow { opacity: 1; transform: none; }
+.foot-maker, .foot-top { transition: border-color 200ms ease, background-color 200ms ease, transform 220ms var(--ease-out); }
+.foot-maker:is(:hover, :focus-visible), .foot-top:is(:hover, :focus-visible) { border-color: rgba(255,154,107,0.7); background-color: rgba(217,67,26,0.16); }
+.foot-maker .foot-arrow { opacity: 0.6; transform: none; }
+.foot-maker:is(:hover, :focus-visible) .foot-arrow { transform: translate(2px, -2px); }
+.foot-top-arrow { transition: transform 260ms var(--ease-spring); }
+.foot-top:is(:hover, :focus-visible) .foot-top-arrow { transform: translateY(-3px); }
+.foot-group summary::-webkit-details-marker { display: none; }
+.foot-plus { transition: transform 220ms var(--ease-out); }
+.foot-group[open] .foot-plus { transform: rotate(45deg); }
+.foot-group summary:focus-visible { border-radius: 8px; }
+.foot-bar { transition: background-color 160ms ease, height 600ms var(--ease-out); }
+
