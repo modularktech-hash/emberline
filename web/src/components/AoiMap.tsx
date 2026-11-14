@@ -211,7 +211,7 @@ export function AoiMap({ bbox, onSelect, styleUrl, className }: Props) {
           type="button"
           onClick={toggleDraw}
           aria-pressed={drawing}
-          className="absolute left-3 top-3 z-10 rounded-lg border border-[var(--hairline)] bg-[var(--surface-1)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-sm"
+          className="absolute left-3 top-3 z-10 glass-thin px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-sm"
         >
           {drawing ? "Drag to draw · cancel" : "Draw area"}
         </button>

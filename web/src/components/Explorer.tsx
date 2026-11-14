@@ -78,7 +78,7 @@ export function Explorer() {
         lede="Pick a region or draw your own, flip between the raw and harmonized record, choose the years, and download exactly what you see." />
 
       <section id="explorer" className="window scroll-mt-24">
-        <div className="flex items-center gap-3 border-b border-[var(--hairline)] bg-[var(--surface-2)] px-4 py-2.5">
+        <div className="flex items-center gap-3 bg-white/30 px-4 py-2.5">
           <span className="flex gap-1.5">{[0, 1, 2].map((d) => <span key={d} className="h-2.5 w-2.5 rounded-full bg-[rgba(18,23,21,0.14)]" />)}</span>
           <span className="tabular mx-auto rounded-md border border-[var(--hairline)] bg-[var(--surface-1)] px-3 py-0.5 font-mono text-[11px] text-[var(--text-secondary)]">emberline / burning-activity-calendar</span>
         </div>
@@ -88,7 +88,7 @@ export function Explorer() {
             <CountryPicker value={area.kind === "country" ? area.name : "Custom area"} options={data?.countries ?? ["Canada"]} onChange={(c) => setArea({ kind: "country", name: c })} />
             {area.kind === "box" && <span className="rounded-full border border-[var(--ember)] bg-[var(--ember-soft)] px-3.5 py-1.5 text-sm">Custom area</span>}
           </div>
-          <div className="flex rounded-full border border-[var(--hairline)] p-1" role="group" aria-label="Series">
+          <div className="glass-thin flex p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
@@ -151,12 +151,12 @@ export function Explorer() {
                 <p className="eyebrow">Burning activity calendar · detections per month</p>
                 <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                   <label className="flex items-center gap-1.5">From
-                    <select value={from} onChange={(e) => setFrom(Math.min(Number(e.target.value), to))} className="rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2 py-1">
+                    <select value={from} onChange={(e) => setFrom(Math.min(Number(e.target.value), to))} className="field rounded-xl px-2 py-1">
                       {years.map((y) => <option key={y}>{y}</option>)}
                     </select>
                   </label>
                   <label className="flex items-center gap-1.5">to
-                    <select value={to} onChange={(e) => setTo(Math.max(Number(e.target.value), from))} className="rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2 py-1">
+                    <select value={to} onChange={(e) => setTo(Math.max(Number(e.target.value), from))} className="field rounded-xl px-2 py-1">
                       {years.map((y) => <option key={y}>{y}</option>)}
                     </select>
                   </label>
@@ -196,7 +196,7 @@ export function Explorer() {
               <label key={l} className="text-xs text-[var(--text-muted)]">{l}
                 <input inputMode="decimal" value={box[i]} onChange={(e) => setBox(box.map((v, j) => (j === i ? e.target.value : v)))}
                   placeholder={["-9.5", "37", "-6.2", "42.2"][i]}
-                  className="tabular mt-1 w-full rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2.5 py-1.5 text-sm text-[var(--text-primary)]" />
+                  className="tabular mt-1 w-full field rounded-xl px-2.5 py-1.5 text-sm text-[var(--text-primary)]" />
               </label>
             ))}
           </div>

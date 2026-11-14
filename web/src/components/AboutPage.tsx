@@ -49,7 +49,7 @@ export function AboutPage() {
             <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">A small lab in Tumkur, Karnataka. Emberline is open source under the MIT license.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a href="https://github.com/shishirbhat/emberline" className="pill-dark px-5 py-2.5 text-sm font-medium">Source on GitHub</a>
-              <Link href="/method" className="rounded-full border border-[var(--hairline)] px-5 py-2.5 text-sm font-medium">Read the method</Link>
+              <Link href="/method" className="glass-thin px-5 py-2.5 text-sm font-medium">Read the method</Link>
             </div>
             <p className="mt-6 text-xs text-[var(--text-muted)]">Not affiliated with or endorsed by NASA. No NASA logos or insignia are used.</p>
           </section>

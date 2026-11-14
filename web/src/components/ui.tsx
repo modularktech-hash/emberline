@@ -40,25 +40,25 @@ export function CountUp({ to, decimals = 0, prefix = "", suffix = "", className 
 
 export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; title: string; italic?: string; lede: ReactNode }) {
   return (
-    <header className="pb-10 pt-16 sm:pt-20">
+    <header className="pb-12 pt-20 sm:pb-16 sm:pt-28">
       <Reveal><p className="eyebrow">{eyebrow}</p></Reveal>
       <Reveal delay={0.06}>
-        <h1 className="display mt-4 max-w-4xl text-[2.9rem] leading-[1.02] sm:text-[4.6rem]">
+        <h1 className="display mt-4 max-w-4xl text-[2.8rem] leading-[1.02] sm:text-[4.4rem]">
           {title}{italic && <> <span className="italic text-[var(--ember)]">{italic}</span></>}
         </h1>
       </Reveal>
-      <Reveal delay={0.12}><p className="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">{lede}</p></Reveal>
+      <Reveal delay={0.12}><p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-primary)]/80">{lede}</p></Reveal>
     </header>
   );
 }
 
 export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: Array<{ value: T; label: string }>; onChange: (v: T) => void; label: string }) {
   return (
-    <div className="glass flex rounded-full p-1" role="group" aria-label={label}>
+    <div className="glass-thin flex p-1" role="group" aria-label={label}>
       {options.map((o) => (
         <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={value === o.value}
-          className={`relative z-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${value === o.value ? "text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
-          {value === o.value && <motion.span layoutId={`seg-${label}`} className="glass-dark absolute inset-0 -z-10" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+          className={`relative z-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${value === o.value ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+          {value === o.value && <motion.span layoutId={`seg-${label}`} className="glass absolute inset-0 -z-10 !rounded-full !bg-white/80" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
           {o.label}
         </button>
       ))}
@@ -69,7 +69,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
 export function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={on}
-      className={`glass rounded-full px-3.5 py-1.5 text-sm ${on ? "!border-[var(--ember)] text-[var(--text-primary)] shadow-[0_0_0_3px_rgba(217,67,26,0.14)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+      className={`glass-thin px-3.5 py-1.5 text-sm ${on ? "!bg-[rgba(217,67,26,0.16)] font-medium text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
       {children}
     </button>
   );
@@ -86,8 +86,8 @@ export function Stat({ label, value, note }: { label: string; value: ReactNode; 
 }
 
 export function Loading({ h = 320 }: { h?: number }) {
-  return <div className="animate-pulse rounded-2xl bg-[var(--surface-2)]" style={{ height: h }} />;
+  return <div className="animate-pulse rounded-[28px] bg-white/40" style={{ height: h }} />;
 }
 export function Failed({ error }: { error: Error }) {
-  return <p className="rounded-2xl border border-[var(--hairline)] p-5 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>;
+  return <p className="glass p-5 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>;
 }

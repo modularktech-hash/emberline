@@ -69,7 +69,7 @@ export function DataPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] p-4">
                 <div><h2 className="display text-3xl">Regions</h2><p className="text-xs text-[var(--text-muted)]">{rows.length} of {data.countries.length} · fit {data.fit_version} · click a row for its yearly table</p></div>
                 <div className="flex gap-2">
-                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search regions…" className="w-48 rounded-full border border-[var(--hairline)] bg-[var(--surface-2)] px-4 py-2 text-sm" />
+                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search regions…" className="w-48 field rounded-full px-4 py-2 text-sm" />
                   <button type="button" onClick={() => downloadCsv("emberline_regions.csv", { source: "Emberline countries.json", fit_version: data.fit_version, unit: data.unit }, COLS.map((c) => c.key), rows.map((r) => COLS.map((c) => String(r[c.key] ?? ""))))}
                     className="pill-dark px-4 py-2 text-sm font-medium">CSV</button>
                 </div>

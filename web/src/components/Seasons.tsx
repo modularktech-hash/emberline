@@ -39,7 +39,7 @@ export function Seasons() {
         <div className="flex flex-wrap items-center gap-3">
           <CountryPicker value={area.kind === "country" ? area.name : "Custom area"} options={data?.countries ?? []} onChange={(c) => setArea({ kind: "country", name: c })} />
           <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
-            <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2.5 py-1.5 text-[var(--text-primary)]">
+            <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5 text-[var(--text-primary)]">
               {(v?.years ?? [year]).map((yy) => <option key={yy}>{yy}</option>)}
             </select>
           </label>

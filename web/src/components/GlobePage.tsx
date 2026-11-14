@@ -33,7 +33,7 @@ export function GlobePage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Reveal>
           <div className="window relative">
-            <div className="flex flex-wrap items-center gap-2 border-b border-[var(--hairline)] bg-[var(--surface-2)] px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2 bg-white/30 px-4 py-3">
               <Segmented label="window" value={win} onChange={setWin} options={[{ value: "24h", label: "24 hours" }, { value: "7d", label: "7 days" }]} />
               <Chip on={fires} onClick={() => setFires(!fires)}>Fires</Chip>
               <Chip on={sats} onClick={() => setSats(!sats)}>Satellites</Chip>

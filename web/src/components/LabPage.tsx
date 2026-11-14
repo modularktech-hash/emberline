@@ -43,7 +43,7 @@ function Out({ label, value, big }: { label: string; value: ReactNode; big?: boo
 }
 const Num = ({ v, set, step = 1, min, max, w = "w-24" }: { v: number; set: (n: number) => void; step?: number; min?: number; max?: number; w?: string }) => (
   <input type="number" value={v} step={step} min={min} max={max} onChange={(e) => set(Number(e.target.value))}
-    className={`tabular ${w} rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2.5 py-1.5 text-sm`} />
+    className={`tabular ${w} field rounded-xl px-2.5 py-1.5 text-sm`} />
 );
 
 export function LabPage() {
@@ -141,7 +141,7 @@ export function LabPage() {
 
         <Tool n="02" title="VIIRS → MODIS-equivalent converter" intro="Paste the FRP of any set of VIIRS detections (MW, comma- or space-separated). Emberline weights each by its detection probability and scales by κ."
           formula={`Aqua-equivalent count = κ · Σ P(FRPᵢ) = ${fit?.kappa.toFixed(3)} × ${sumP.toFixed(3)} = ${fit ? (fit.kappa * sumP).toFixed(3) : "—"}`}>
-          <textarea value={list} onChange={(e) => setList(e.target.value)} rows={3} className="tabular w-full rounded-xl border border-[var(--hairline)] bg-[var(--surface-2)] p-3 font-mono text-sm" />
+          <textarea value={list} onChange={(e) => setList(e.target.value)} rows={3} className="tabular w-full field rounded-2xl p-3 font-mono text-sm" />
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out label="VIIRS detections" value={values.length} />
             <Out label="Σ P (expected MODIS sightings)" value={sumP.toFixed(2)} />
@@ -192,7 +192,7 @@ export function LabPage() {
         <Tool n="06" title="Anomaly calculator" intro="Where does one month sit against the same month in every other year, on the harmonized record?">
           <div className="flex flex-wrap items-center gap-3 text-sm">
             Year <Num v={ay} set={setAy} min={2003} max={2025} w="w-20" />
-            Month <select value={am} onChange={(e) => setAm(Number(e.target.value))} className="rounded-lg border border-[var(--hairline)] bg-[var(--surface-2)] px-2.5 py-1.5">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
+            Month <select value={am} onChange={(e) => setAm(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out label={`${MONTHS[am - 1]} ${ay}`} value={fmt(anomaly?.v)} />
