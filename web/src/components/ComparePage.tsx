@@ -113,6 +113,24 @@ export function ComparePage() {
                   return <text key={`lab-${k}`} x={x(s.length - 1)} y={Math.max(T + 10, yy)} textAnchor="end" fontSize={fs(12)} fontWeight="600" fill={COLORS[k]}>{k === 0 ? "A" : "B"} · {prettyName(k === 0 ? a : b)}</text>;
                 })}
               </svg>
+              <ul className="mt-3 grid gap-2 text-xs sm:grid-cols-2" data-testid="cmp-quality" aria-label="Certainty of each series">
+                {[a, b].map((n, k) => {
+                  const f = params?.countries[n];
+                  const q = f ? fitQuality(f) : null;
+                  return (
+                    <li key={`q-${k}`} className="flex items-start gap-2 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-[var(--text-secondary)]">
+                      <span aria-hidden className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: COLORS[k] }} />
+                      <span><b className="font-medium text-[var(--text-primary)]">{k === 0 ? "A" : "B"} · {prettyName(n)}</b>{" — "}
+                        {mode === "raw" ? "raw record, uncorrected (no fit applied)" : q ? <>{q.origin}; {q.label}</> : "no published fit — no harmonized record"}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              {mode === "harmonized" && (() => {
+                const qs = [a, b].map((n) => params?.countries[n] ? fitQuality(params.countries[n]) : null);
+                const differ = qs[0] && qs[1] && (qs[0].level !== qs[1].level || qs[0].origin !== qs[1].origin);
+                return differ ? <p className="mt-2 text-xs text-[var(--text-secondary)]">The two series do not carry equal certainty: their corrections differ in origin or quality, so read differences between the lines with that in mind.</p> : null;
+              })()}
             </section>
           </Reveal>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">

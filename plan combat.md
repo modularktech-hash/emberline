@@ -872,10 +872,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E34 — Carry both model-quality states
 
-- [ ] **Status:** P2 · Observed gap · Compare · effort S
+- [x] **Status:** P2 · Observed gap · Compare · effort S
 - **Evidence:** Countries can have very different validation
 - **Acceptance:** Own/pooled/weak status alongside each series
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: the chart showed both lines with no certainty info (only the cards below had a tag). ComparePage.tsx adds, directly under the chart, one legend item per series with origin + quality label from lib/quality.ts fitQuality (read-only); raw mode says "uncorrected"; no fit says so; a note appears when origin or level differ. Verified Playwright 390/1440, 0 errors, 0 overflow: Canada vs Barbados → "own fit; No suspicious-result flags" / "borrowed curve (pooled fit); Experimental correction…" plus the unequal-certainty note.
 
 ### E35 — Explain indexing and common period
 
