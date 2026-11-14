@@ -4,6 +4,8 @@ One board for every person and every AI session. Before starting work: read
 this, claim your task by editing the table, commit and push. When done: update
 it, commit and push. Times are IST.
 
+**To-do list until submission: [`TODO.md`](TODO.md)** — every remaining task (global data, app switch-over, testing, deployment, submission). Tick items there as you finish them.
+
 ## Who is doing what right now
 
 | Task | Who | State | Output |
@@ -44,6 +46,7 @@ land in `docs/results.md`.
 
 ## Log (newest first)
 
+- 14 Nov — `TODO.md` added: the full list of what is left until submission. Vercel project created by the owner (URL to be recorded here once confirmed).
 - 14 Nov — App build: steps 1–5 done on `main` (area selection 51b6a9f, CSV 7b4904f, `/method` 40a9646, basemap verified). Deploy blocked on Vercel project creation (403) — owner action. Global download + fit now running in the app-build session (data-host session ran out of usage).
 - 14 Nov — App build: data layer (hyparquet, Supabase removed) and the calendar home page (raw vs harmonized) are on `main`. Same session continues with area selection, CSV export, `/method`, deploy.
 - 14 Nov ~12:20 — App build taken over by the cloud session on `main`; Desktop session's hyparquet data layer merged in. Do not edit `web/` from another session.

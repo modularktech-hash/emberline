@@ -1,6 +1,6 @@
 # Project context
 
-**Read [`STATUS.md`](STATUS.md) first** — who is doing what right now; claim your task there before starting. Then [`docs/HANDOFF.md`](docs/HANDOFF.md). It is written for someone
+**Read [`STATUS.md`](STATUS.md) first** — who is doing what right now; claim your task there before starting. Then [`TODO.md`](TODO.md) — everything left until submission; tick items as you finish them. Then [`docs/HANDOFF.md`](docs/HANDOFF.md). It is written for someone
 opening this repository with no prior context and points at everything else in
 the right order.
 
