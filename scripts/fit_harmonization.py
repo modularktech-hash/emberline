@@ -49,7 +49,7 @@ import polars as pl
 ROOT = Path(__file__).resolve().parents[1]
 import os
 DATA = Path(os.environ.get("EMBERLINE_DATA", ROOT / "data" / "public"))
-WEB = ROOT / "web" / "public" / "data"
+WEB = Path(os.environ.get("EMBERLINE_OUTPUT", ROOT / "web" / "public" / "data"))
 FIG = ROOT / "docs" / "figures"
 
 TRAIN = (2012, 2018)
@@ -351,7 +351,21 @@ def main() -> int:
             print(f"  {c}: FAILED {failed[c]}", flush=True)
             continue
         results[c] = p; annuals[c] = annual
-        cals.append(calendar(c, v, aqua))
+        cal = calendar(c, v, aqua)
+        # Preserve each expensive completed fit even if a later country or the
+        # process fails. These are recovery artifacts, never auto-published or
+        # blindly reused when the input data / pooled model has changed.
+        checkpoint = DATA / "fit_checkpoints" / c
+        checkpoint.mkdir(parents=True, exist_ok=True)
+        for filename, frame in (("calendar.parquet", cal), ("annual.parquet", annual)):
+            temporary = checkpoint / (filename + ".tmp")
+            frame.write_parquet(temporary, compression="zstd")
+            temporary.replace(checkpoint / filename)
+        temporary = checkpoint / "params.json.tmp"
+        temporary.write_text(json.dumps({"fit_version": FIT_VERSION, "country": c,
+                                         "params": p, "pooled_model": POOLED or None}, indent=2, default=float))
+        temporary.replace(checkpoint / "params.json")
+        cals.append(cal)
         t = p["validation_test"]
         print(f"  {c}: [{p['fit_source']}] test R2 model={_fmt(t['model']['r2'])} raw={_fmt(t['raw_viirs']['r2'])} "
               f"bias={_fmt(t['model']['bias_pct'], '{:+.1f}%')} P50={_fmt(p['frp_at_p50_mw'], '{:.1f}')} MW "

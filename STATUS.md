@@ -8,12 +8,22 @@ it, commit and push. Times are IST.
 
 **To-do list until submission: [`TODO.md`](TODO.md)** — every remaining task (global data, app switch-over, testing, deployment, submission). Tick items there as you finish them.
 
+**`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
+
+## ⚠️ Claimed by the cloud "data host" session (14 Nov, evening) — owner's instruction
+
+- **All of `web/`** — full multi-tab rebuild (home scroll story, 3D globe, satellites,
+  calculators, data tables, seasons, trends, compare). **No other session edits `web/`.**
+- **The world dataset** — 8,213 country-year files (37.8 GB) downloading here
+  since 11:07 UTC, then build + fit. The local Codex download can stop; if it
+  finishes first, push the outputs and say so here.
+
 ## Who is doing what right now
 
 | Task | Who | State | Output |
 |---|---|---|---|
 | A1 — raw pipeline (Portugal, Chile) | Person A's session | **DONE** | `scripts/build_tables.py`, `web/public/data/{cell_day,calendar_raw}.parquet`, `docs/figures/raw_counts_*.png`, notes in `docs/session-notes.md` |
-| Global data download + build + fit | Cloud session "app build" (session_01RwRY…) — **took over**: the data-host session ran out of usage and its `data/global/` is gone | **RUNNING** — download re-started here ~13:20 (237 FIRMS country names from the archive index; 3,400+ country-year files staged so far), build running per finished country, fit after | `scripts/countries_global.txt`, `data/global/` and `data/global_public/` (this session only, never committed) → `web/public/data/params_global.json`, `calendar_*_global.parquet`, published only after the four-country regression check |
+| Global data download + build + fit | Local Codex session — user reassigned after Claude stopped | **DOWNLOADING locally**; 237 archive names × 39 source-years. Previous cloud raw files unavailable here. Completed countries build automatically. Global fit and regression validation remain pending. | `data/global/`, `data/global_public/`; recovery details in `docs/data-takeover.md`. User owns UI. |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
 | App build — B1+B2 | Cloud session "app build" (session_01RwRY…, not the data host). **Other sessions: do not edit `web/` — pull first, and coordinate here** | **Steps 1–5 DONE on `main`** (data layer, calendar, area selection, CSV export, `/method`). Step 6 deploy **DONE** by the owner: https://emberline-tan.vercel.app/ (checked logged-out, phone and desktop). Global download + fit now also running in this session (data host out of usage) | `web/`; details in `docs/session-notes.md`; deployed URL when live |
 
@@ -46,6 +56,8 @@ land in `docs/results.md`.
    country as `fit_source: pooled`).
 
 ## Log (newest first)
+
+- 14 Nov ~15:10 IST — Local Codex took over data only. Durable download service and five-minute build timer installed on the laptop; raw files from the old cloud session were not available. Recovery fixes and five regression tests added; full Python suite: 89 passed. Published data unchanged; global fit and four-country validation still pending.
 
 - 14 Nov — Live: https://emberline-tan.vercel.app/ — checked logged-out at phone and desktop size: `/` renders the calendar (Portugal raw 2011 = 1,953, 2012 = 4,128), `/method` renders, Parquet range requests return 206, no console errors, no horizontal overflow.
 - 14 Nov — Global download/build/fit now owned by the "app build" cloud session; app switch-over to the global files being prepared in parallel (reads `*_global` when present, falls back to the four-country files).

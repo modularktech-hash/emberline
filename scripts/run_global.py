@@ -91,12 +91,29 @@ def raw_calendar(country: str, det: pl.DataFrame) -> pl.DataFrame:
          .with_columns(pl.lit("country").alias("scope"), pl.lit(country).alias("key")))
     b = (det.group_by("h3_parent", "year", "month", "sensor").agg(pl.len().alias("n_detections"), pl.col("frp_mw").sum().alias("frp_sum_mw"))
          .with_columns(pl.lit("h3_parent").alias("scope")).rename({"h3_parent": "key"}))
-    return pl.concat([a.select(cols), b.select(cols)], how="vertical_relaxed")
+    observed = pl.concat([a.select(cols), b.select(cols)], how="vertical_relaxed")
+    # A valid archive with no detections means zero; an absent archive means
+    # unknown. The original global builder dropped all zero months, unlike A1.
+    coverage = pl.DataFrame(
+        [(bt.SENSOR_OF_SOURCE[s], y) for s, ys in YEARS.items() for y in ys
+         if (SRC / f"{s}_{y}_{country}.csv.gz").exists()],
+        schema={"sensor": pl.String, "year": observed.schema["year"]}, orient="row",
+    )
+    months = pl.DataFrame({"month": range(1, 13)}, schema={"month": observed.schema["month"]})
+    grid = observed.select("scope", "key").unique().join(coverage, how="cross").join(months, how="cross")
+    result = (grid.join(observed, on=["scope", "key", "sensor", "year", "month"], how="left")
+              .with_columns(pl.col("n_detections").fill_null(0), pl.col("frp_sum_mw").fill_null(0.0))
+              .select(cols).sort("scope", "key", "sensor", "year", "month"))
+    assert result["n_detections"].sum() == observed["n_detections"].sum(), "calendar lost detections"
+    return result
 
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    todo = [c for c in complete_countries() if not (OUT / f"detections_{c}.parquet").exists()]
+    todo = [c for c in complete_countries() if not all(
+        (OUT / f"{kind}_{c}.parquet").exists()
+        for kind in ("detections", "calendar_raw")
+    )]
     print(f"{len(complete_countries())} complete countries, {len(todo)} to build", flush=True)
     for c in todo:
         det = build_one(c)
@@ -105,9 +122,13 @@ def main() -> int:
             continue
         # Only the columns the fit reads: the full schema costs ~3x the disk and
         # the whole world does not fit next to the archive otherwise.
+        detections_path = OUT / f"detections_{c}.parquet"
+        calendar_path = OUT / f"calendar_raw_{c}.parquet"
         det.select("lat", "lon", "acq_ts", "platform", "frp_mw", "lst_hours").write_parquet(
-            OUT / f"detections_{c}.parquet", compression="zstd")
-        raw_calendar(c, det).write_parquet(OUT / f"calendar_raw_{c}.parquet", compression="zstd")
+            detections_path.with_suffix(".parquet.tmp"), compression="zstd")
+        raw_calendar(c, det).write_parquet(calendar_path.with_suffix(".parquet.tmp"), compression="zstd")
+        detections_path.with_suffix(".parquet.tmp").replace(detections_path)
+        calendar_path.with_suffix(".parquet.tmp").replace(calendar_path)
         print(f"  {c}: {det.height:,} detections", flush=True)
     return 0
 
