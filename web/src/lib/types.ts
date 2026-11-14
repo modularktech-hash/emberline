@@ -1,20 +1,164 @@
 /**
- * Row contracts for the Supabase RPCs defined in db/migrations/0002_rpc.sql.
+ * Data contracts for the static files in web/public/data/.
  *
- * These are hand-written rather than generated so the app compiles before the
- * database exists. Regenerate against the live project once it is provisioned
- * (`supabase gen types typescript`) and reconcile any drift.
+ * Read path: static Parquet over HTTP range requests (ADR 0001). Only
+ * src/lib/queries.ts reads the files; everything else consumes these types.
  */
 
 /** A sensor family. The whole project exists because these two are not directly comparable. */
 export type Sensor = "MODIS" | "VIIRS";
 
-export type ConfidenceClass = "low" | "nominal" | "high";
-
 /** Which series the calendar is showing. */
 export type Series = "raw" | "harmonized";
 
-/** One day of activity for an area of interest. `calendar_for_aoi`. */
+/** How calendar rows are keyed: by country name or by H3 res-2 parent cell id. */
+export type CalendarScope = "country" | "h3_parent";
+
+/* ------------------------------------------------------------------ */
+/* params.json -- the published fit (scripts/fit_harmonization.py)    */
+/* ------------------------------------------------------------------ */
+
+export type YearSpan = [number, number];
+export type Ci95 = [number, number];
+
+/** Agreement of one predictor with observed Aqua, over cell x month. */
+export interface ValidationStats {
+  r2: number;
+  bias_pct: number;
+  rmse: number;
+  n_cell_months: number;
+  obs_total: number;
+  pred_total: number;
+}
+
+/** The fitted model and its two baselines, scored on the same cell-months. */
+export interface ValidationSet {
+  model: ValidationStats;
+  raw_viirs: ValidationStats;
+  threshold: ValidationStats;
+}
+
+export interface LogisticFit {
+  b0: number;
+  b1: number;
+  feature: string;
+  b0_ci95: Ci95;
+  b1_ci95: Ci95;
+}
+
+export interface NullControl {
+  spliced_raw_step_ratio_2012: number;
+  aqua_only_step_ratio_2012: number;
+  harmonized_step_ratio_2012: number;
+  definition: string;
+}
+
+export interface DriftEraYear {
+  year: number;
+  aqua: number;
+  aqua_eq: number;
+  obs_over_pred: number;
+  aqua_lst: number;
+}
+
+export interface FrozenEraYear {
+  year: number;
+  obs_over_pred: number;
+  aqua_lst: number;
+}
+
+export interface CountryFit {
+  logistic: LogisticFit;
+  frp_at_p50_mw: number;
+  frp_at_p50_ci95_mw: Ci95;
+  kappa: number;
+  threshold_baseline_mw: number;
+  train_match_rate: number;
+  n_train_viirs_detections: number;
+  validation_train: ValidationSet;
+  validation_test: ValidationSet;
+  validation_test_ci95: { r2: Ci95; bias_pct: Ci95 };
+  null_control: NullControl;
+  drift_era: DriftEraYear[];
+  frozen_era_obs_over_pred: FrozenEraYear[];
+}
+
+export interface Params {
+  fit_version: string;
+  unit: string;
+  train_years: YearSpan;
+  test_years: YearSpan;
+  drift_years: YearSpan;
+  match_rule: string;
+  countries: Record<string, CountryFit>;
+}
+
+/* ------------------------------------------------------------------ */
+/* Calendar (calendar_raw.parquet, calendar_harmonized.parquet)       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Where a calendar value comes from.
+ * - "MODIS" / "VIIRS": raw counts from that sensor (raw mode).
+ * - "observed_aqua": harmonized, before 2012 -- observed Aqua MODIS.
+ * - "predicted_from_viirs": harmonized, 2012 on -- Aqua-equivalent predicted
+ *   from Suomi-NPP VIIRS with the published fit.
+ */
+export type CalendarBasis = "MODIS" | "VIIRS" | "observed_aqua" | "predicted_from_viirs";
+
+export interface CalendarRow {
+  year: number;
+  month: number; // 1-12
+  /** Summed across the requested keys. Null means no data, which is not the same as 0. */
+  value: number | null;
+  basis: CalendarBasis;
+}
+
+export interface CalendarResult {
+  scope: CalendarScope;
+  mode: Series;
+  /** Unit of `value`. */
+  unit: string;
+  /** Requested keys that exist in the data. */
+  keys: string[];
+  /** Requested keys not present in any processed table ("not processed yet"). */
+  unknownKeys: string[];
+  /** Inclusive year range of the grid; every (year, month) in it has a row. */
+  years: YearSpan;
+  /** One row per (year, month), year-major. */
+  rows: CalendarRow[];
+  /** The (year, month) cells whose value is null. */
+  missing: Array<{ year: number; month: number }>;
+}
+
+/* ------------------------------------------------------------------ */
+/* cell_day.parquet -- H3 res-5 x UTC day x platform, demo AOIs only   */
+/* ------------------------------------------------------------------ */
+
+export interface CellDayRow {
+  h3: string;
+  h3_parent: string;
+  /** UTC acquisition date, YYYY-MM-DD. */
+  acq_date: string;
+  year: number;
+  month: number;
+  doy: number;
+  sensor: Sensor;
+  platform: string;
+  n_detections: number;
+  frp_sum_mw: number;
+  frp_mean_mw: number;
+  frp_max_mw: number;
+  mean_pixel_area_km2: number;
+  /** Mean local solar time of the detections, hours. */
+  mean_lst_hours: number;
+}
+
+/* ------------------------------------------------------------------ */
+/* Legacy view contracts, still consumed by components awaiting rebuild */
+/* ------------------------------------------------------------------ */
+
+/** One day of activity for an area of interest. Used by CalendarHeatmap. */
 export interface CalendarDay {
   acq_date: string;
   year: number;
@@ -23,11 +167,10 @@ export interface CalendarDay {
   n_detections: number;
   frp_raw_mw: number | null;
   frp_harmonized_mw: number | null;
-  /** Cells in the AOI with no fitted correction factor, surfaced rather than hidden. */
   uncorrected_cells: number;
 }
 
-/** One day against its day-of-year climatology. `anomaly_for_aoi`. */
+/** One day against its day-of-year climatology. Used by AnomalyChart. */
 export interface AnomalyDay {
   acq_date: string;
   doy: number;
@@ -40,45 +183,7 @@ export interface AnomalyDay {
   exceeds_p95: boolean | null;
 }
 
-/** An individual hotspot. `detections_in_bbox`. Demo AOIs only. */
-export interface Detection {
-  lat: number;
-  lon: number;
-  acq_ts: string;
-  sensor: Sensor;
-  platform: string;
-  frp_mw: number | null;
-  confidence_class: ConfidenceClass | null;
-  event_id: number | null;
-}
-
-/** One fitted correction and the statistics that justify it. `harmonization_report`. */
-export interface HarmonizationRow {
-  fit_version: string;
-  landcover_class: number;
-  landcover_name: string;
-  frp_threshold_mw: number;
-  slope: number;
-  intercept: number;
-  r2: number;
-  bias: number;
-  rmse: number;
-  n_cells: number;
-  holdout_r2: number | null;
-  is_active: boolean;
-}
-
-/** A saved area of interest. `list_aois`. */
-export interface Aoi {
-  id: string;
-  name: string;
-  h3_cells: string[];
-  /** [west, south, east, north] */
-  bbox: [number, number, number, number];
-  is_demo: boolean;
-}
-
-/** A user-drawn or preset area of interest, before it has been saved. */
+/** A user-drawn or preset area of interest. */
 export interface AoiSelection {
   name: string;
   bbox: [number, number, number, number];

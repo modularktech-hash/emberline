@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AoiProvider } from "@/components/AoiProvider";
-import { DemoBanner } from "@/components/DemoBanner";
 import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
 
@@ -22,7 +21,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <AoiProvider>
-          <DemoBanner />
           <SiteNav />
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
             {children}

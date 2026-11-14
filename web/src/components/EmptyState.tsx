@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 /**
  * Empty states carry the difference between "not set up yet" and "nothing
- * here". During the build the database is empty for days, so the app has to
+ * here". Data files may not cover an area yet, so the app has to
  * say which of the two it is instead of rendering a blank panel.
  */
 

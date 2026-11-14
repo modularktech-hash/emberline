@@ -4,10 +4,9 @@ import type { AoiSelection } from "@/lib/types";
 /**
  * Area-of-interest helpers.
  *
- * The RPCs take a list of H3 cells rather than a geometry, so the conversion
- * happens here on the client. That keeps the database query a plain indexed
- * lookup on the cell column -- no spatial join per request -- which is what
- * lets an arbitrary user-drawn area answer in milliseconds.
+ * The data layer is keyed by H3 cells rather than geometry, so the
+ * conversion happens here on the client. A drawn area is mapped to its H3
+ * parent cells, which is what the static Parquet files are filtered on.
  */
 
 export type Bbox = [number, number, number, number];
