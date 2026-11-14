@@ -788,10 +788,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E22 — Add efficient calendar navigation and table view
 
-- [ ] **Status:** P2 · Observed gap · Accessibility · effort M
+- [x] **Status:** P2 · Observed gap · Accessibility · effort M
 - **Evidence:** Hundreds of button Tab stops
 - **Acceptance:** Roving focus/arrow keys or equally capable table; easy exit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: 276 month buttons, each a Tab stop. Implemented in `web/src/components/MonthYearCalendar.tsx` (Explorer and Compare both use it; Explorer.tsx untouched): role=grid with row/columnheader/rowheader/gridcell, one roving tabindex; Left/Right month (wraps year), Up/Down year, Home/End within year, Ctrl+Home/End corners, Enter/Space select (aria-selected), Escape returns focus to the scroll region. Each cell name: month, year, value, unit (raw uncorrected / harmonized Aqua-equivalent detections), basis. In-component "Show as table" toggle renders a captioned table (predicted-from-VIIRS cells marked *); no Explorer prop needed. Verified (Playwright, `next start`, 390 and 1440): 1 of 276 cells tabbable, Tab enters grid once, arrows/End move focus, Enter selects, next Tab leaves, Escape leaves; axe 0 violations on grid and table; 0 console errors; no horizontal overflow. Not verified: real screen reader (E23).
 
 ### E23 — Screen-reader end-to-end review
 
