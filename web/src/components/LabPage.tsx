@@ -126,7 +126,7 @@ export function LabPage() {
         lede="Every coefficient Emberline uses, exposed as a calculator. Pick a region, move the numbers, and see exactly how a VIIRS detection becomes a MODIS-equivalent count." />
 
       {labError && <div className="mb-4"><Failed error={labError} retry={labRetry} what="the fitted coefficients" /></div>}
-      {data?.tableMissing && <p className="mb-4 text-sm text-[var(--text-secondary)]">The per-country annual totals (countries.json) are unavailable{data.params.dataset === "four" ? " with the four-country fallback data" : ""}; the annual chart below is hidden. The coefficients come from {data.params.dataset === "four" ? "params.json (four-country fallback)" : "params_global.json"}.</p>}
+      {data?.tableMissing && <p className="mb-4 text-sm text-[var(--text-secondary)]">The per-country annual totals (countries.json) are unavailable{data.params.dataset === "four" ? " with the four-country fallback data" : ""}; the annual chart below is hidden. The coefficients come from {data.params.dataset === "four" ? "params.json (four-country fallback)" : "params_global.json"}. <button type="button" onClick={labRetry} className="underline underline-offset-2">Retry</button></p>}
       <div className="card sticky top-24 z-20 flex flex-wrap items-center gap-3 p-3">
         <Eyebrow as="span" className="pl-2">Region</Eyebrow>
         <CountryPicker value={region} options={names.length ? names : [region]} tags={Object.fromEntries(names.map((n) => [n, fitTag(data?.params, n)]))} onChange={setRegion} />

@@ -10,7 +10,21 @@ import type { CoverageStatusFile } from "@/lib/types";
 
 /** coverage_status.json through the data layer; null while loading or if it cannot be read. */
 export function useCoverage(): CoverageStatusFile | null {
-  return useParquet(() => getCoverageStatus(), "coverage-status").data;
+  return useCoverageState().data;
+}
+export function useCoverageState() {
+  return useParquet(() => getCoverageStatus(), "coverage-status");
+}
+
+/** Visible notice when coverage_status.json could not be used (instead of silently dropping the reasons). */
+export function CoverageError({ state, className = "" }: { state: ReturnType<typeof useCoverageState>; className?: string }) {
+  if (!state.error) return null;
+  return (
+    <p role="status" className={`text-xs text-[var(--text-secondary)] ${className}`}>
+      Coverage reasons (coverage_status.json) are unavailable, so why a country has no fit is not shown: {state.error.message}{" "}
+      <button type="button" onClick={state.retry} className="underline underline-offset-2 hover:text-[var(--ember)]">Retry</button>
+    </p>
+  );
 }
 
 /**

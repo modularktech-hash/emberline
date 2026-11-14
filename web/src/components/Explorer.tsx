@@ -8,7 +8,7 @@ import { Failed, CountUp, PageHead, Reveal } from "@/components/ui";
 import { Eyebrow } from "@/components/Figure";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
-import { CoverageNote, CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { CoverageNote, CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 import { FitQualityCard } from "@/components/FitQuality";
 import { qualityCsvHeader } from "@/lib/quality";
@@ -40,7 +40,8 @@ export function Explorer() {
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
   const { data, error, loading, retry } = useAreaData(area);
   const ds = useDataset();
-  const coverage = useCoverage();
+  const coverageState = useCoverageState();
+  const coverage = coverageState.data;
   // The map (maplibre, ~1 MB of JS plus tiles) mounts only once the calendar has
   // its data and the map slot is near the viewport, so it never competes with it.
   const mapSlot = useRef<HTMLDivElement>(null);
@@ -177,6 +178,7 @@ export function Explorer() {
         </div>
 
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
+        <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (

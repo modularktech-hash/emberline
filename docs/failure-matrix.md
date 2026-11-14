@@ -46,3 +46,12 @@ No page exposed a retry button in any case, so "preserved inputs after retry" co
 ## Verdict
 
 E48 not passed. Defects handed to the UI session in `STATUS.md`.
+
+## Re-run after the E16 fix (14 Nov, local build)
+
+Same script, `SETTLE_MS=7000`, pages `/`, `/explorer`, `/trends`, `/seasons`, `/compare`, `/lab`, `/data`, `/method`.
+Every blocked case that the page requested now shows an error or status line and at least one
+retry control; clicking it after unblocking restored the unblocked number count on every page.
+Blocking `params_global.json` or only the `_global` calendars makes the page request all three
+four-country files together and shows the site-wide fallback banner; no page mixes sets.
+0 page errors. Map tiles: still not requested headless, not verified.

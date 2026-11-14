@@ -236,6 +236,8 @@ export interface DatasetInfo {
   fitVersion: string;
   /** Why the world set was not used (only when dataset === "four"). */
   reason?: string;
+  /** false when manifest.json could not be read, so the fit-version check was skipped. */
+  manifestChecked: boolean;
 }
 
 let datasetPromise: Promise<{ info: DatasetInfo; params: Params }> | null = null;
@@ -291,7 +293,7 @@ function resolveDataset(): Promise<{ info: DatasetInfo; params: Params }> {
       if (expected && params.fit_version !== expected) {
         throw new Error(`Refusing to show mixed data: ${dataset === "world" ? FILESETS.params[0] : FILESETS.params[1]} has fit ${params.fit_version} but manifest.json lists ${expected}. The site is probably mid-deploy: reload in a minute.`);
       }
-      const info: DatasetInfo = { dataset, fitVersion: params.fit_version, reason };
+      const info: DatasetInfo = { dataset, fitVersion: params.fit_version, reason, manifestChecked: manifest != null };
       resolvedInfo = info;
       for (const fn of datasetListeners) fn(info);
       return { info, params: { ...params, failed: params.failed ?? {}, dataset } };

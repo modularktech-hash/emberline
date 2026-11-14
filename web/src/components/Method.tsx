@@ -13,7 +13,7 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 import type { CountryFit } from "@/lib/types";
 import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
-import { CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
@@ -47,7 +47,8 @@ export function Method() {
       const frp = 10 ** ((i / 79) * 3);
       return `${i ? "L" : "M"}${x(frp).toFixed(1)},${y(1 / (1 + Math.exp(-(b0 + b1 * Math.log(frp))))).toFixed(1)}`;
     }).join(" ");
-  const coverage = useCoverage();
+  const coverageState = useCoverageState();
+  const coverage = coverageState.data;
   const C = (n: string) => p!.countries[n];
   const fitKey = (n: string) => (C(n).fit_source === "pooled" ? "pooled" : "own");
 
@@ -95,6 +96,7 @@ export function Method() {
       </div>
 
       {error && <div className="mt-8"><Failed error={error} retry={retry} what="the fit (params)" /></div>}
+      <CoverageError state={coverageState} className="mt-4" />
       {loading && <div className="mt-8 h-64 animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
       {p && summary && (
         <>

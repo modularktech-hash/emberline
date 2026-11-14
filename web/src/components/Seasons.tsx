@@ -9,7 +9,7 @@ import { FirePulse } from "@/components/FirePulse";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, PageHead, Reveal } from "@/components/ui";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
-import { CoverageNote, useCoverage } from "@/components/CoverageNote";
+import { CoverageNote, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { FitQualityTag } from "@/components/FitQuality";
 import { STATUS_LABEL } from "@/lib/coverage";
 
@@ -38,7 +38,8 @@ export function Seasons() {
   const [year, setYear] = useState(2023);
   const { ref: chartRef, fs, narrow } = useChartScale(720);
   const { data, error, loading, retry } = useAreaData(area);
-  const coverage = useCoverage();
+  const coverageState = useCoverageState();
+  const coverage = coverageState.data;
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
 
   const v = useMemo(() => {
@@ -78,6 +79,7 @@ export function Seasons() {
         </div>
 
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
+        <CoverageError state={coverageState} className="mt-4" />
         {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {data && !v && (
           <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">
