@@ -233,3 +233,27 @@ hover/detail; label the column "descriptive"; for `trend_approximate` prefix
 dates with "≈" and say "monthly estimate". Types to add in `lib/data.ts`:
 `trend_stats?: Record<string, TrendStats>`, `trend_approximate?: boolean` on the
 season country, and the five `onset_trend_*` fields on `CountryRow`.
+
+## 9. `live.json` — explicit FRP-sum metadata (E36) — additive
+
+Reproduced from `scripts/build_live.py`: each 0.5° cell's `frp_sum_mw` is the
+sum of the `frp` column over **every detection from every listed platform and
+overpass in the window** (24 h: NOAA-20 + NOAA-21 + MODIS; 7 d: NOAA-20 +
+MODIS). A cell seen on several overpasses is counted several times, so the
+value is neither instantaneous power nor energy. "Hottest cells" are ranked by
+this sum. Nothing in `cells` or `totals` changed.
+
+New fields: top level `field_definitions` (one string per cell column) and
+`hottest_cells_rank_by: "frp_sum_mw"`; per window `platforms`,
+`detections_total`, `frp_sum_definition`, `window_start_utc`,
+`window_end_utc`. The current snapshot (fetched 2026-11-14T11:10Z) was
+annotated without a refetch, so its window start/end are `null` with a
+`window_span_note`; `python3 scripts/build_live.py` (next refresh) fills them
+from the first/last `acq_date`+`acq_time`. Use `--annotate-only` to add the
+metadata without fetching.
+
+UI wording (Globe hottest-cells list and tooltip): label the column
+"Summed FRP (MW·detections)" or "Σ FRP", with the note **"sum of reported FRP
+across detections in this window — not instantaneous power or energy"**; show
+`detections`, `frp_max_mw` and `satellites` beside it; show the window as
+start–end UTC when present, else the `dates` list.

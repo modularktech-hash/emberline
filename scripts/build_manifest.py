@@ -88,6 +88,10 @@ FILES = {
         dataset="live", fit=None, source=FIRMS_NRT,
         purpose="Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, "
                 "not the Suomi-NPP record, not comparable with the historical calendars"),
+    "current_month.json": dict(
+        dataset="live", fit=None, source="FIRMS NRT and standard archive, NOAA-20 VIIRS (scripts, E07 prototype)",
+        purpose="Prototype same-platform NOAA-20 recent window vs NOAA-20 history; not harmonized, "
+                "not Aqua-equivalent"),
     "tle.json": dict(
         dataset="live", fit=None, source=TLE,
         purpose="Orbital elements for the satellite view"),

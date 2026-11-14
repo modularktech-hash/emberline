@@ -42,7 +42,8 @@
    "fit_version": null,
    "params_file": null,
    "files": {
-    "live.json": "1b0bc4f14e88bb795e61a95f7dcc700d83d56523a6b0b9b2b2d516e2f3d1f034",
+    "current_month.json": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
+    "live.json": "3011dc87fa2888477dc1d892b3c4e34b74b2f56ce33a3f529c860107d2460e7b",
     "tle.json": "c26a8153ebc3b57e61ea3a2474fdf8262e40b29ef09812572edd91d78e534533"
    },
    "consistent": true,
@@ -445,6 +446,37 @@
    "fit_version": "v1-20261114T1240"
   },
   {
+   "name": "current_month.json",
+   "dataset": "live",
+   "purpose": "Prototype same-platform NOAA-20 recent window vs NOAA-20 history; not harmonized, not Aqua-equivalent",
+   "source": "FIRMS NRT and standard archive, NOAA-20 VIIRS (scripts, E07 prototype)",
+   "bytes": 3208,
+   "sha256": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
+   "format": "json",
+   "top_level_keys": [
+    "generated_utc",
+    "status",
+    "comparison",
+    "platform",
+    "filters",
+    "membership",
+    "nrt_feed",
+    "nrt_feed_span_utc",
+    "acquisition_cutoff_utc",
+    "window_utc",
+    "elapsed_days",
+    "month_to_date",
+    "month_to_date_note",
+    "provisional_nrt",
+    "reference_years",
+    "countries"
+   ],
+   "rows": 4,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "fit_version": null
+  },
+  {
    "name": "drift.json",
    "dataset": "world",
    "purpose": "Mean local solar overpass time per satellite per year (Terra/Aqua orbital drift), with observed/predicted Aqua ratios",
@@ -480,13 +512,15 @@
    "dataset": "live",
    "purpose": "Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, not the Suomi-NPP record, not comparable with the historical calendars",
    "source": "NASA FIRMS near-real-time: VIIRS 375 m NOAA-20 and NOAA-21, MODIS Terra/Aqua (raw, uncorrected)",
-   "bytes": 904006,
-   "sha256": "1b0bc4f14e88bb795e61a95f7dcc700d83d56523a6b0b9b2b2d516e2f3d1f034",
+   "bytes": 905371,
+   "sha256": "3011dc87fa2888477dc1d892b3c4e34b74b2f56ce33a3f529c860107d2460e7b",
    "format": "json",
    "top_level_keys": [
     "fetched_utc",
     "cell_deg",
-    "windows"
+    "windows",
+    "field_definitions",
+    "hottest_cells_rank_by"
    ],
    "fetched_utc": "2026-11-14T11:10Z",
    "fit_version": null
