@@ -17,8 +17,10 @@ export interface TleFile { source: string; fetched: string; satellites: Tle[] }
 
 export interface SeasonYear {
   year: number;
-  raw_onset?: number | null; raw_peak?: number | null; raw_end?: number | null; raw_length?: number | null; raw_total?: number;
-  harm_onset?: number | null; harm_peak?: number | null; harm_end?: number | null; harm_length?: number | null; harm_total?: number;
+  raw_onset?: number | null; raw_peak?: number | null; raw_end?: number | null; raw_length?: number | null; raw_total?: number | null;
+  harm_onset?: number | null; harm_peak?: number | null; harm_end?: number | null; harm_length?: number | null; harm_total?: number | null;
+  /** Series whose fire-year window is not fully inside the record: values are null and the year is excluded from trends. */
+  partial?: ("raw" | "harm")[];
 }
 export interface SeasonCountry {
   fire_year_start_month: number;
@@ -28,7 +30,7 @@ export interface SeasonCountry {
   trend_days_per_decade: Record<string, number | null>;
 }
 export interface SeasonFile {
-  fit_version: string; unit: string; resolution_note?: string;
+  fit_version: string; unit: string; resolution_note?: string; partial_note?: string; trend_note?: string;
   monthly_vs_daily?: { countries: number; trend_abs_diff_median: number | null; trend_abs_diff_max: number | null; definition: string };
   countries: Record<string, SeasonCountry>;
 }
@@ -70,6 +72,12 @@ export const getTle = () => load<TleFile>("tle.json");
 export const getSeason = () => load<SeasonFile>("season.json");
 export const getDrift = () => load<DriftFile>("drift.json");
 export const getCountryTable = () => load<CountriesFile>("countries.json");
+
+/** Why a fire year's series is incomplete (season.json `partial`). */
+export function partialReason(year: number, startMonth: number, series: "raw" | "harm"): string {
+  if (year >= 2025 && startMonth >= 2 && startMonth <= 6) return "fire year runs past 31 Dec 2025, the end of the record";
+  return series === "harm" ? "fire year starts before Aqua data begins (4 Jul 2002)" : "fire year starts before the record begins";
+}
 
 /** Fire-year day (1 = first day of the quietest month) to a short date label. */
 export function fireDayLabel(day: number | null | undefined, startMonth: number): string {

@@ -8,7 +8,7 @@ import { DotStat } from "@/components/DotMatrix";
 import { useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
-import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason } from "@/lib/data";
+import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason, partialReason } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
@@ -52,7 +52,10 @@ export function TrendsPage() {
   }, { k: "name", dir: 1 });
 
   const W = 760, H = 380, L = 54, R = 18, T = 18, B = 30;
-  const years = c?.years.filter((y) => y.harm_onset != null) ?? [];
+  // Every year is kept; years whose window is incomplete (season.json `partial`) are shown as "incomplete", not dropped.
+  const years = c?.years ?? [];
+  const isPart = (y: { partial?: ("raw" | "harm")[] }, s: "raw" | "harm") => y.partial?.includes(s) ?? false;
+  const partReason = (y: { year: number; partial?: ("raw" | "harm")[] }) => (y.partial ?? []).map((s) => `${s === "raw" ? "raw" : "harmonized"}: ${partialReason(y.year, c!.fire_year_start_month, s)}`).join("; ");
   const yx = (yr: number) => T + ((yr - 2003) / 22) * (H - T - B);
   const dx = (d: number) => L + (d / 366) * (W - L - R);
   const months = fireYearMonthTicks(c?.fire_year_start_month ?? 1);;
@@ -120,6 +123,13 @@ export function TrendsPage() {
                       {y.harm_onset != null && y.harm_end != null && (
                         <rect x={dx(y.harm_onset)} y={cy} width={dx(y.harm_end) - dx(y.harm_onset)} height="5" rx="2.5" fill="var(--ink)" opacity="0.8" />
                       )}
+                      {(y.partial?.length ?? 0) > 0 && (
+                        <g>
+                          <title>{`${y.year} incomplete — ${partReason(y)}`}</title>
+                          <line x1={L + 4} x2={W - R} y1={cy + 2} y2={cy + 2} stroke="var(--text-muted)" strokeDasharray="3 4" opacity="0.6" />
+                          <text x={L + 8} y={cy - 1} fontSize={fs(10)} fill="var(--text-muted)">incomplete{y.partial!.length === 1 ? ` (${y.partial![0] === "raw" ? "raw" : "harmonized"})` : ""}</text>
+                        </g>
+                      )}
                       {y.harm_peak != null && <circle cx={dx(y.harm_peak)} cy={cy + 2.5} r="3.5" fill="var(--ember)" stroke="#fff" strokeWidth="1" />}
                     </g>
                   );
@@ -141,19 +151,24 @@ export function TrendsPage() {
                   {years.map((y) => {
                     const r = y[`raw_${metric}` as keyof typeof y] as number | null | undefined;
                     const h = y[`harm_${metric}` as keyof typeof y] as number | null | undefined;
-                    const show = (v: number | null | undefined) => (metric === "length" ? (v ?? "—") : fireDayLabel(v, c.fire_year_start_month));
+                    const show = (v: number | null | undefined, s?: "raw" | "harm") => (s && isPart(y, s) ? <span title={partialReason(y.year, c.fire_year_start_month, s)} className="font-mono text-[10px] uppercase text-[var(--ember)]">incomplete</span> : metric === "length" ? (v ?? "—") : fireDayLabel(v, c.fire_year_start_month));
                     return (
                       <tr key={y.year} className="border-t border-[var(--hairline)]">
                         <td className={`py-2 ${y.year === 2012 ? "text-[var(--ember)]" : ""}`}>{y.year}</td>
-                        <td className="text-[var(--text-secondary)]">{show(r)}</td><td>{show(h)}</td>
+                        <td className="text-[var(--text-secondary)]">{show(r, "raw")}</td><td>{show(h, "harm")}</td>
                         <td className="text-[var(--text-secondary)]">{r != null && h != null ? `${fmtSigned(r - h, 0)} d` : "—"}</td>
-                        <td className="text-[var(--text-muted)]">{fmtInt(y.raw_total)}</td>
-                        <td className="text-[var(--text-muted)]">{fmtInt(y.harm_total)}</td>
+                        <td className="text-[var(--text-muted)]">{isPart(y, "raw") ? "—" : fmtInt(y.raw_total)}</td>
+                        <td className="text-[var(--text-muted)]">{isPart(y, "harm") ? "—" : fmtInt(y.harm_total)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+              {years.some((y) => (y.partial?.length ?? 0) > 0) && (
+                <ul className="mt-3 space-y-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                  {years.filter((y) => (y.partial?.length ?? 0) > 0).map((y) => <li key={y.year}><span className="text-[var(--ember)]">{y.year} incomplete</span> — {partReason(y)}. Not a low or missing season: this year is left out of the trends.</li>)}
+                </ul>
+              )}
             </section>
           </Reveal>
 
