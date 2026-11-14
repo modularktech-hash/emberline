@@ -56,11 +56,42 @@ fetch() {
   echo "FAIL   $name"
   return 1
 }
-export -f fetch classify
-export BASE OUT
+# Bulk pass for one country: every missing file in ONE curl invocation, so the
+# TLS connection is reused and the flaky handshake happens once, not per file.
+# Only a transfer curl reports as exit 0 is classified; anything else is left
+# for the per-file pass below, which retries it.
+bulk() {
+  local country="$1" cfg="$OUT/.bulk_$1.cfg" year src name
+  : > "$cfg"
+  for year in $(seq "$FIRST_YEAR" "$LAST_YEAR"); do
+    for src in modis viirs-snpp; do
+      [ "$src" = viirs-snpp ] && [ "$year" -lt 2012 ] && continue
+      name="${src}_${year}_${country}.csv"
+      [ -s "$OUT/$name.gz" ] || [ -e "$OUT/$name.absent" ] && continue
+      printf 'url = "%s/%s/%s/%s"\noutput = "%s/%s.part"\n' "$BASE" "$src" "$year" "$name" "$OUT" "$name" >> "$cfg"
+    done
+  done
+  [ -s "$cfg" ] || { rm -f "$cfg"; return 0; }
+  curl -sS --connect-timeout 5 -m 1800 -K "$cfg" -w '%{exitcode} %{filename_effective}\n' 2>/dev/null |
+  while read -r rc part; do
+    name="$(basename "$part" .part)"
+    if [ "$rc" = 0 ]; then
+      case "$(classify "$part")" in
+        ok)    gzip -c "$part" > "$OUT/$name.gz.tmp" && mv -f "$OUT/$name.gz.tmp" "$OUT/$name.gz"; echo "got    $name" ;;
+        error) : > "$OUT/$name.absent"; echo "absent $name" ;;
+      esac
+    fi
+    rm -f "$part"
+  done
+  rm -f "$cfg"
+}
+export -f fetch classify bulk
+export BASE OUT FIRST_YEAR LAST_YEAR
 
-# Work list: every country x year x source, in the order the list gives
-# countries, so the highest-fire countries finish first.
+grep -v '^$' "$LIST" | xargs -P "$JOBS" -I{} bash -c 'bulk "$0"' {}
+
+# Per-file pass for whatever the bulk pass did not settle, in the order the
+# list gives countries, so the highest-fire countries finish first.
 while read -r country; do
   [ -z "$country" ] && continue
   for year in $(seq "$FIRST_YEAR" "$LAST_YEAR"); do

@@ -26,6 +26,8 @@ import tempfile
 from pathlib import Path
 
 import h3
+import h3.api.basic_int as H3I
+import numpy as np
 import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -63,19 +65,27 @@ def build_one(country: str) -> pl.DataFrame | None:
                 with gzip.open(gz, "rb") as fi, open(csv, "wb") as fo:
                     shutil.copyfileobj(fi, fo)
                 if bt.count_csv_rows(csv) > 0:
-                    frames.append(bt.standard_pipeline(bt.scan_archive(csv, product)).collect())
+                    # Same filters; only the columns the outputs use are kept,
+                    # so the largest countries fit in memory.
+                    frames.append(bt.standard_pipeline(bt.scan_archive(csv, product))
+                                  .with_columns(bt.lst_hours_expr())
+                                  .select("lat", "lon", "acq_ts", "platform", "sensor", "frp_mw", "lst_hours")
+                                  .collect())
                 csv.unlink()
     if not frames:
         return None
-    det = pl.concat(frames, how="vertical")
-    return det.with_columns(pl.lit(country).alias("country"), bt.lst_hours_expr()).sort("acq_ts")
+    return pl.concat(frames, how="vertical").sort("acq_ts")
 
 
 def raw_calendar(country: str, det: pl.DataFrame) -> pl.DataFrame:
     det = det.with_columns(pl.col("acq_ts").dt.year().alias("year"), pl.col("acq_ts").dt.month().alias("month"))
-    parents = [h3.cell_to_parent(h3.latlng_to_cell(a, b, 5), 2)
-               for a, b in zip(det["lat"].to_numpy(), det["lon"].to_numpy())]
-    det = det.with_columns(pl.Series("h3_parent", parents))
+    # Integer cells, converted to strings once per distinct parent: a Python
+    # string per detection runs the largest countries out of memory.
+    lat, lon = det["lat"].to_numpy(), det["lon"].to_numpy()
+    c5 = np.fromiter((H3I.latlng_to_cell(a, b, 5) for a, b in zip(lat, lon)), dtype=np.uint64, count=len(lat))
+    u5, inv = np.unique(c5, return_inverse=True)
+    names = np.array([h3.int_to_str(H3I.cell_to_parent(int(c), 2)) for c in u5], dtype=object)
+    det = det.select("year", "month", "sensor", "frp_mw").with_columns(pl.Series("h3_parent", names[inv], dtype=pl.Utf8))
     cols = ["scope", "key", "year", "month", "sensor", "n_detections", "frp_sum_mw"]
     a = (det.group_by("year", "month", "sensor").agg(pl.len().alias("n_detections"), pl.col("frp_mw").sum().alias("frp_sum_mw"))
          .with_columns(pl.lit("country").alias("scope"), pl.lit(country).alias("key")))

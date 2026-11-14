@@ -42,6 +42,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import h3
+import h3.api.basic_int as H3I
 import numpy as np
 import polars as pl
 
@@ -74,26 +75,39 @@ def load(country: str) -> pl.DataFrame:
         pl.col("acq_ts").dt.year().alias("year"),
         pl.col("acq_ts").dt.month().alias("month"),
     ).drop("acq_ts")
+    # H3 cells are kept as 64-bit integers (the same cells as the string form,
+    # converted only for output): tens of millions of Python strings do not
+    # fit in memory for the largest countries. Parents are looked up once per
+    # distinct res-7 cell.
     lat, lon = d["lat"].to_numpy(), d["lon"].to_numpy()
-    c7 = [h3.latlng_to_cell(a, b, 7) for a, b in zip(lat, lon)]
-    c5 = [h3.cell_to_parent(c, 5) for c in c7]
-    c2 = [h3.cell_to_parent(c, 2) for c in c5]
+    c7 = np.fromiter((H3I.latlng_to_cell(a, b, 7) for a, b in zip(lat, lon)), dtype=np.uint64, count=len(lat))
+    u7, inv = np.unique(c7, return_inverse=True)
+    u5 = np.fromiter((H3I.cell_to_parent(int(c), 5) for c in u7), dtype=np.uint64, count=len(u7))
+    u2 = np.fromiter((H3I.cell_to_parent(int(c), 2) for c in u7), dtype=np.uint64, count=len(u7))
     return d.with_columns(
-        pl.Series("h3_7", c7), pl.Series("h3_5", c5), pl.Series("h3_parent", c2),
+        pl.Series("h3_7", c7), pl.Series("h3_5", u5[inv]), pl.Series("h3_parent", u2[inv]),
         pl.lit(country).alias("country"),
     )
 
 
 def label_viirs(d: pl.DataFrame) -> pl.DataFrame:
-    """Suomi-NPP detections in 2012-2025, with seen_by_aqua (0/1)."""
-    aqua = d.filter((pl.col("platform") == "Aqua") & (pl.col("year") >= 2012))
-    pairs = set()
-    for day, cell in zip(aqua["date"].to_list(), aqua["h3_7"].to_list()):
-        for n in h3.grid_disk(cell, 1):
-            pairs.add((day, n))
+    """Suomi-NPP detections in 2012-2025, with seen_by_aqua (0/1).
+
+    seen = 1 when Aqua detected on the same UTC date in the same res-7 cell or
+    one of its six neighbours. Done as a join on (date, cell) so memory stays
+    columnar."""
+    aqua = d.filter((pl.col("platform") == "Aqua") & (pl.col("year") >= 2012)).select("date", "h3_7").unique()
+    cells = aqua["h3_7"].unique().to_numpy()
+    src, nbr = [], []
+    for c in cells:
+        for n in H3I.grid_disk(int(c), 1):
+            src.append(int(c)); nbr.append(n)
+    disk = pl.DataFrame({"h3_7": src, "nbr": nbr}, schema={"h3_7": pl.UInt64, "nbr": pl.UInt64})
+    seen_pairs = (aqua.join(disk, on="h3_7").select("date", pl.col("nbr").alias("h3_7")).unique()
+                  .with_columns(pl.lit(1, dtype=pl.Int8).alias("seen")))
     v = d.filter((pl.col("platform") == "Suomi-NPP") & (pl.col("year") >= 2012))
-    seen = [1 if (a, b) in pairs else 0 for a, b in zip(v["date"].to_list(), v["h3_7"].to_list())]
-    return v.with_columns(pl.Series("seen", seen, dtype=pl.Int8))
+    return (v.with_row_index("_i").join(seen_pairs, on=["date", "h3_7"], how="left")
+            .sort("_i").drop("_i").with_columns(pl.col("seen").fill_null(0)))
 
 
 # --------------------------------------------------------------- logistic
@@ -276,7 +290,8 @@ def calendar(country: str, v: pl.DataFrame, aqua: pl.DataFrame) -> pl.DataFrame:
         c = c.with_columns(pl.lit(scope).alias("scope"),
                            (pl.col(key) if key else pl.lit(country)).alias("key"))
         if key:
-            c = c.drop(key)
+            c = c.drop(key).with_columns(
+                pl.col("key").map_elements(h3.int_to_str, return_dtype=pl.Utf8))
         out.append(c.select("scope", "key", "year", "month", "n_harmonized"))
     return pl.concat(out)
 
