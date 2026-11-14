@@ -257,3 +257,14 @@ UI wording (Globe hottest-cells list and tooltip): label the column
 across detections in this window — not instantaneous power or energy"**; show
 `detections`, `frp_max_mw` and `satellites` beside it; show the window as
 start–end UTC when present, else the `dates` list.
+
+## 10. `harmonized_uncertainty.json` — coefficient-only intervals (E27) — new
+
+Per country: `status` ("estimated" | "not estimated" for pooled curves),
+`annual` {year: [point, lower, upper]} and `monthly` {"YYYY-MM": [...]} from
+2012 on, in Aqua-equivalent detections; `covers.included` / `covers.not_included`
+lists what the interval does and does not contain. Display as a thin band or
+"95% coef. interval" beside harmonized totals. Required label: **"Range from
+fit-coefficient uncertainty only — excludes κ, model-form, matching-rule and
+drift uncertainty."** Never call it a confidence interval of the fire count.
+Pooled countries: show "uncertainty not estimated". Method in `docs/science.md` §2a.

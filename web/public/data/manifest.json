@@ -14,6 +14,7 @@
     "countries.json": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
     "coverage_status.json": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
+    "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
     "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
     "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
     "transfer_validation.json": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
@@ -505,6 +506,33 @@
     ]
    },
    "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "harmonized_uncertainty.json",
+   "dataset": "world",
+   "purpose": "E27: 95% bootstrap interval of harmonized country totals from logistic-coefficient uncertainty only (see its `covers` field); pooled-curve countries not estimated",
+   "source": "derived from the FIRMS archive and params_global.json (scripts/output_uncertainty.py)",
+   "bytes": 703532,
+   "sha256": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
+   "format": "json",
+   "top_level_keys": [
+    "analysis",
+    "fit_version",
+    "unit",
+    "interval",
+    "columns",
+    "covers",
+    "method",
+    "pre_2012",
+    "self_check",
+    "summary",
+    "countries"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "unit": "Aqua-equivalent detections",
    "fit_version": "v1-20261114T1240"
   },
   {

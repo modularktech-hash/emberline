@@ -823,10 +823,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E27 — Propagate appropriate uncertainty
 
-- [ ] **Status:** P2 · Source concern · Statistics · effort L
+- [x] **Status:** P2 · Source concern · Statistics · effort L
 - **Evidence:** Coefficient/score intervals not monthly intervals
 - **Acceptance:** Output uncertainty accurately labeled and separately computed
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: no bootstrap draws were saved, only marginal b0/b1 CIs. Draws show b0/b1 correlated (about -0.8 to -0.95), so the marginals cannot be resampled independently. Implemented: `scripts/output_uncertainty.py` reruns an H3 res-5 cluster bootstrap (B=200) of the 2012-2018 training coefficients. Kappa is re-derived per draw by the published rule; its own sampling uncertainty is not included. Output: `web/public/data/harmonized_uncertainty.json` (country x year and month, `covers` field; 41 pooled = not estimated). Verified: refit reproduces published b0/b1 (max diff 4.7e-14) and calendar point totals (4.0e-14). Relative width median 0.25%, p90 2.2%, max 14.7% (country-years >=100). Documented in `docs/science.md` §2a. UI display handed off (§10). Not verified: UI.
 
 ### E28 — Explain weighted-coefficient pooling
 
@@ -973,7 +973,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Required verification · Failure states · effort M
 - **Evidence:** Static loaders may fail independently
 - **Acceptance:** Preserve input; actionable status; no wrong-data fallback
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Implemented (test), not passed: `scripts/qa/failure_matrix.cjs` blocks each data file per page on a local production build; results `docs/failure-matrix.md`. Reproduced defects: silent fallback to four-country params/calendars on 5 pages (fallback mixing), blank sections without message on `/` and `/method`, generic 'Failed to fetch' without retry on `/trends` and `/data`, no retry control anywhere, manifest unused. Map-tile failure not verified. Handed to UI session in STATUS.md. Left unticked.
 
 ### E49 — Add finer local geometry
 
