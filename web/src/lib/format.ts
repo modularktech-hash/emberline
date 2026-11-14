@@ -5,7 +5,7 @@
  *   counts      120,306        thousands separators, no decimals      fmtInt
  *   compact     120K, 4.5M     only where space is tight (axes, dots)  fmtCompact (lib/ember)
  *   ratios      ×1.23          two decimals, multiplication sign       fmtRatio
- *   R²          0.81, −5.3     two decimals (one when |v| ≥ 10)         fmtR2
+ *   R²          0.81, −5.3     two decimals inside ±1, one outside      fmtR2
  *   signed      +1.2, −3.4     explicit sign, true minus (U+2212)      fmtSigned
  *   percent     +4.1%          signed, one decimal                     fmtPct
  *   clock       13:48          local solar or UTC, 24 h                fmtClock
@@ -36,7 +36,7 @@ export function fmtSigned(v: number | null | undefined, dp = 1, empty = MISSING)
 }
 export const fmtPct = (v: number | null | undefined, dp = 1, empty = MISSING) => (ok(v) ? `${fmtSigned(v, dp)}%` : empty);
 export const fmtRatio = (v: number | null | undefined, dp = 2, empty = MISSING) => (ok(v) ? `×${fmtNum(v, dp)}` : empty);
-export const fmtR2 = (v: number | null | undefined, empty = MISSING) => (ok(v) ? fmtNum(v, Math.abs(v) >= 10 ? 1 : 2) : empty);
+export const fmtR2 = (v: number | null | undefined, empty = MISSING) => (ok(v) ? fmtNum(v, Math.abs(v) >= 1 ? 1 : 2) : empty);
 
 /** Hours (13.75) to "13:45". */
 export function fmtClock(h: number | null | undefined, empty = MISSING): string {
