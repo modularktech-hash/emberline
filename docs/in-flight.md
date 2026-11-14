@@ -127,7 +127,8 @@ right now, what state the working tree may be in, and how to pick it up.
   - README rewritten: live URL, fit v1-20261114T1240 numbers, method, run, credits, pre-event work, Use of AI, MIT
 - [x] `d2` TODO and STATUS updated
   - TODO §2–§3 ticked, STATUS log entry, web/ released
-- [ ] `d3` Pushed to main; Vercel live site checked
+- [x] `d3` Pushed to main; Vercel live site checked
+  - Live site serves 6dabf19+ (checked: Lab citation text, world parquet 206, 5 routes at 1440/375 clean)
 
 ## Not in this pass (needs the owner or new analysis)
 
