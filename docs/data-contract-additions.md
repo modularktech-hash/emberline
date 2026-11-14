@@ -96,3 +96,18 @@ Points are held-out H3 res-5 cell × month values (2019–2021), the same table 
 published R² uses, including cell-months where Aqua saw nothing. The baseline
 is one country-wide ratio, Aqua ÷ Suomi-NPP detections over 2012–2018, applied
 to each held-out cell-month's raw Suomi-NPP count.
+
+## 4. Proposed Method-page copy — evaluation population (for the web builder to place)
+
+> **What the scores are computed on.** Each held-out score compares, for every
+> H3 resolution-5 cell (~250 km²) and month in 2019–2021, the number of Aqua
+> MODIS detections with the model's Aqua-equivalent estimate. A cell-month is
+> included when Aqua or Suomi-NPP VIIRS saw at least one fire there; months when
+> neither saw anything are left out, so the scores describe agreement where at
+> least one record saw fire, not across every square kilometre. Cell-months
+> where only VIIRS saw fire count as an observed zero. Counts are compared as
+> they are (no log), and R² is measured against the average of this table, so a
+> negative R² means the estimate did worse than that average. The intervals
+> resample whole cells and describe the uncertainty of the score, not of any
+> single month's count. Raw VIIRS, the FRP cut-off and the single-ratio baseline
+> are scored on exactly the same cell-months.

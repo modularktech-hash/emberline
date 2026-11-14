@@ -844,10 +844,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E30 — Document evaluation population
 
-- [ ] **Status:** P2 · Source concern · Statistics · effort S
+- [x] **Status:** P2 · Source concern · Statistics · effort S
 - **Evidence:** Union of active cellmonths
 - **Acceptance:** Denominator/zero-cell inclusion and scale explicit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: `fit_country.evaluate()` full-outer-joins Aqua, model, raw and threshold cell-month aggregates (H3 res-5 × month, 2019–2021) and fills nulls with 0, so the population is cell-months where Aqua or Suomi-NPP had ≥1 filtered detection; both-zero cell-months are excluded; this was documented nowhere. Implemented: `docs/science.md` §2a (unit, inclusion, excluded both-zero rows, included zeros, untransformed scale, R² reference mean, cell-bootstrap meaning, same rows for all baselines; also a note that §2–3 are the superseded pre-event plan), `docs/results.md` section, proposed Method copy in `docs/data-contract-additions.md` §4. Figures computed from published files: 2,573,665 held-out cell-months (sum of n_cell_months); in the validation_points sample 63.7% obs=0, 5.4% Aqua-only (sample shares, not population). Verified: read against the code. Not verified: Method page copy not placed (web builder); exact population share of zero cell-months would need recomputation from detections.
 
 ### E31 — Add slope uncertainty and endpoint sensitivity
 

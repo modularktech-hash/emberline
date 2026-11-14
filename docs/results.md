@@ -362,3 +362,18 @@ Coverage statuses for all 237 built countries (`web/public/data/coverage_status.
 41 borrowed fit, 23 insufficient training observations, 17 insufficient reference observations,
 18 insufficient held-out variation, 8 no observations, 0 numerical fit failures. Rules:
 `docs/data-contract-additions.md`.
+
+## What the held-out scores are computed on (evaluation population)
+
+Every held-out score above (R², bias, RMSE; MAE in `validation_points.json`) uses one table per
+country: H3 res-5 cell × month, 2019–2021, built by the full outer join in
+`scripts/fit_harmonization.py` (`fit_country.evaluate`). A cell-month is included when Aqua **or**
+Suomi-NPP recorded at least one filtered daytime vegetation-fire detection there; cell-months
+where neither did are not in the table. Included zeros are kept: in the published sample
+(`validation_points.json`, 48,645 cell-months, at most 300 per country) 63.7% have observed
+Aqua = 0 and 5.4% have Aqua > 0 with no Suomi-NPP detection (sample shares, each country weighted
+equally; not population totals). Across the 171 fitted countries the table has 2,573,665
+held-out cell-months in all (sum of `n_cell_months`). Scores are on untransformed counts; R² is
+relative to the mean of this table. Adding the both-zero cell-months would change every score, so
+the numbers describe agreement where at least one record saw fire. Full definition:
+`docs/science.md` §2a.

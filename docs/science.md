@@ -50,6 +50,11 @@ observation, not assumed.
 
 ## 2. The core claim
 
+> **Pre-event design, partly superseded.** Sections 2 and 3 below are the plan
+> written before the event. The published fit (`v1-20261114T1240`) uses a
+> per-country logistic co-detection model instead of land-cover FRP censoring;
+> section 2a describes exactly what the code does.
+
 > Do not harmonize counts. Harmonize energy, under a common detection limit.
 
 Every detection carries **Fire Radiative Power** (FRP) in megawatts, estimating
@@ -112,6 +117,52 @@ Three cheap details that raise credibility a lot:
    overcount — and overcount *differently* on either side of 2012. Space-time
    DBSCAN collapses them into single events, which is also the unit a land
    manager actually counts in.
+
+## 2a. What the published fit does (`scripts/fit_harmonization.py`, fit `v1-20261114T1240`)
+
+### Held-out evaluation population
+
+Every published R², bias, RMSE (and the MAE in `validation_points.json`) is
+computed on one table per country, built in `fit_country.evaluate()`:
+
+- **Unit:** one row per H3 resolution-5 cell × calendar month (UTC year and
+  month of the detection), held-out years 2019–2021. The cell is the res-5
+  parent of each detection's location; only that country's FIRMS archive is
+  used, so a cell straddling a border holds only the detections assigned to
+  this country.
+- **Rows included:** the full outer join of four cell-month aggregates —
+  observed Aqua detections, model prediction (Σ κ·P over Suomi-NPP
+  detections), raw Suomi-NPP count, and the Suomi-NPP count above the
+  threshold-baseline cut-off. In practice a cell-month is in the table if
+  **Aqua or Suomi-NPP recorded at least one filtered detection there**
+  (daytime, vegetation type, same filters as the calendar). Missing values in
+  the join are filled with 0.
+- **Rows excluded:** cell-months where neither sensor detected anything. These
+  are not in the denominator at all; the table is not every possible cell-month
+  of the country. Including the (many) both-zero cell-months would raise R²
+  mechanically and shrink RMSE/MAE, so the scores are conditional on activity
+  in at least one record.
+- **Zeros that are included:** cell-months with Suomi-NPP detections but no
+  Aqua detection enter with observed = 0, and Aqua-only cell-months enter with
+  prediction = 0. In the published validation sample (`validation_points.json`,
+  ≤ 300 cell-months per country, 48,645 in all) 63.7% of sampled cell-months
+  have observed Aqua = 0 (per-country median 65%, range 30–95%) and 5.4% have
+  Aqua > 0 with no Suomi-NPP detection. These shares come from the sample,
+  which weights each country equally; they are not population totals.
+- **Scale:** counts per cell-month, untransformed and unweighted, pooled across
+  all cells and the 36 held-out months. R² = 1 − SS_res/SS_tot with SS_tot
+  around the mean of this table, so a negative R² means worse than predicting
+  that mean for every row; it is not a percentage of fires detected.
+  bias_pct = 100·(Σpred − Σobs)/Σobs over the table. RMSE and MAE are per
+  cell-month, in detections.
+- **Intervals:** the 95% intervals on held-out R² and bias resample H3 res-5
+  cells with replacement (200 draws), each drawn cell carrying all its
+  cell-months; they describe the spread of the score, not an interval on any
+  month's count.
+- **Same table for every baseline:** raw VIIRS, the FRP threshold and the
+  training-only ratio baseline (`scripts/build_coverage_validation.py`) are
+  scored on the identical rows. Note that the threshold and ratio baselines,
+  like the model, predict zero exactly where Suomi-NPP saw nothing.
 
 ## 3. Things that will go wrong
 
