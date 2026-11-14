@@ -133,3 +133,68 @@ Explorer load to first calendar, on a Fast-3G-like link (562 ms RTT, 1.44 Mbit/s
 - Open bug 1 (sideways scroll at 375 px) no longer reproduces: `scrollWidth` equals the viewport width on every route at 375 px.
 - Lighthouse was not re-run.
 - Pass 2 (content clarity, footer, number styling) has not started.
+
+## Polish pass 2 (14 Nov, "app build" session)
+
+The owner's second polish request. The look is kept and no UI was removed; the performance-pass rules above still apply.
+
+1. **Home "at a glance" panel.** This replaces the old 120K, clock and date tiles. Every figure now has a label, a unit, a note in plain words and a source line.
+   - Live count: the full number (`fmtInt`), split by feed with a bar. The feeds are NOAA-20 VIIRS, NOAA-21 VIIRS, and MODIS (Terra and Aqua together, as `build_live.py` fetches it).
+   - The panel shows `live.json`'s own `fetched_utc` as the "as of" time, plus a client-side age ("updated 3 h ago", ticking once a minute) and the feed's acquisition dates.
+   - It labels the live layer as raw and uncorrected, says it is not the Suomi-NPP record, and says it includes volcanoes and gas flares.
+   - The other tiles are UTC time now (with why UTC matters), the record (detection count, years and regions from `countries.json`), best held-out R² with its test years and fit version, and the fleet (count and names from `tle.json`, record and live-only satellites split).
+   - A missing value reads "not available".
+2. **Overpass clocks** (`components/DriftClocks.tsx`, on `/` and `/satellites`).
+   - The hand is each satellite's mean local solar overpass time over the chosen region and year, read from `drift.json`.
+   - The dial is 24-hour, with noon at the top and labelled hours.
+   - The fire-peak band (about 12:00–14:00, Andela et al. 2015) is explained in a legend outside the dial. The old "gold = 13:00 fire peak" text that overlapped the ticks is gone.
+   - Three short paragraphs explain what the hand shows, why drift matters and why Emberline is not exposed.
+   - Play/scrub runs through 2012 → latest year, one state change per year, and plays once when scrolled into view. Under reduced motion or low-power mode it jumps to the latest year.
+   - Each satellite shows its 2012–21 mean, latest year and shift in minutes, all from the data. Its nominal design time is labelled "nominal".
+   - The old "held its 13:30 orbit" claim is replaced by measured values.
+   - The hands are HTML elements rotated on the compositor (an SVG transform transition repaints every frame).
+3. **One number and label system.**
+   - `lib/format.ts`: `fmtInt`, `fmtNum`, `fmtSigned`, `fmtPct`, `fmtRatio` (×1.23), `fmtR2`, `fmtClock`, `fmtMinutes`, `fmtUtc`, `fmtAge`, `span`. Each uses the true minus "−", and `fmt`/`fmtCompact`/`CountUp` now do too.
+   - `components/Figure.tsx`:
+     - `Eyebrow` renders "06 · Still shifting" with the index in ember and every "·" as the same spaced separator.
+     - `Stat` gives label, value, unit, note and source.
+   - Rule:
+     - Dot-matrix numerals are for ONE headline figure per panel: the home live count, record, R² and fleet, the home R² cards, the Explorer 2012 step, the Season-shift headline trends, the globe total and 404.
+     - Secondary figures are plain display tabular: Compare tiles, Explorer R², Lab outputs, clock times.
+     - Tables and prose use body tabular.
+   - Applied on every route.
+   - The orbit-chapter heat panel no longer shows an invented "FRP ≈ 140 MW".
+4. **Footer** (`SiteFooter.tsx` + `FooterRecord.tsx`).
+   - Site map grouped like the nav, in `<details>` on phones and open columns from md up.
+   - A harmonized-record bar chart (sum of the processed regions, 2003–latest, hover a bar for its value). It also shows regions, years and fit version, trained and tested years. Data is loaded only when the footer nears the viewport.
+   - "Back to top" is a plain `#top` anchor (native scrolling, no script).
+   - "Made by Modulark" links to https://modularktech.com (new tab, `noopener noreferrer`).
+   - Every link has a hover and focus state.
+   - The NASA disclaimer is kept; no logos.
+5. **Motion.**
+   - Explorer and Seasons cross-fade from skeleton to content, and the calendar wipes in once (one clip-path animation).
+   - Method sections reveal, and the live breakdown counts up.
+   - Lab outputs lift on hover.
+   - `Reveal` is a plain fade in low-power mode. Everything is off under reduced motion.
+6. `SAT_COLORS` moved to `lib/sats.ts` (FireGlobe re-exports it).
+
+**Scroll numbers** (measure.js, 4x CPU, SwiftShader, auto mode = low power here; two runs):
+
+| Route | Median / p95 frame | Frames > 100 ms | Long-task ms during scroll | Pass-1 "after" |
+|---|---|---|---|---|
+| / | 16.7 / 50 ms | 8–12 | 0–51 | 16.7 / 50, 7, 0 |
+| /explorer | 16.7 / 33–50 ms | 2 | 428–474 (maplibre init, as before) | 16.7 / 50, 4, 484 |
+| /satellites | 16.7 / 133–150 ms | 9–10 | 0–64 | 16.7 / 150, 13, 0 |
+
+/satellites first measured p95 ≈ 230 ms with the clocks in a glass card. The cost was software raster of nested glass, not the clocks' script: replacing them with an empty block gave the same result. With flat surfaces it is back to the pass-1 level.
+
+**Generic-template candidates.** These are left in place for the owner to decide:
+- the hero's word-by-word rise;
+- the marquee ticker of region and satellite names;
+- the fake browser chrome (traffic-light dots, "emberline / burning-activity-calendar") on the Explorer;
+- the confetti burst on CSV download;
+- the "sensor view" pill and pseudo-random fire grid in the orbit chapter (illustrative);
+- "One record. Nine ways in." card grid;
+- About's "Built in 48 hours, for the people who fight fires."
+
+About's "1.5× to 6.6×" is hard-coded text, but it matches `countries.json` `step_raw` (1.50–6.60).
