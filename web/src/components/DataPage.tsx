@@ -47,7 +47,7 @@ const FILES = [
 ];
 
 export function DataPage() {
-  const { data, error, loading } = useParquet(() => getCountryTable(), "table");
+  const { data, error, loading, retry } = useParquet(() => getCountryTable(), "table");
   const [focus, setFocus] = useState<string | null>(null);
   const [q2, setQ2] = useState("");
   const coverage = useCoverage();
@@ -70,7 +70,7 @@ export function DataPage() {
     <div>
       <PageHead compact eyebrow="Science · data" title="Every table." italic="Every download."
         lede="All of Emberline's data is plain files on this site — no account, no API key, no server. Browse it here, download it, or query it straight from your own code." />
-      {error && <Failed error={error} />}
+      {error && <Failed error={error} retry={retry} what="the country table (countries.json)" />}
       {loading && <Loading h={360} />}
       {data && (
         <>

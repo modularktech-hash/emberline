@@ -104,6 +104,14 @@ export function Chip({ on, onClick, children }: { on: boolean; onClick: () => vo
 export function Loading({ h = 320 }: { h?: number }) {
   return <div className="flex items-center justify-center rounded-[28px] bg-white/35" style={{ height: h }}><DotLoader /></div>;
 }
-export function Failed({ error }: { error: Error }) {
-  return <p className="glass p-5 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>;
+/** A data-load failure: what failed, what to do, and a Retry that keeps the page's selections. */
+export function Failed({ error, retry, what = "the data" }: { error: Error; retry?: () => void; what?: string }) {
+  const network = /failed to fetch|network|load failed|HTTP 5/i.test(error.message);
+  return (
+    <div role="alert" className="glass p-5 text-sm text-[var(--text-secondary)]">
+      <p className="text-[var(--text-primary)]">Could not load {what}.</p>
+      <p className="mt-1">{network ? "The data file did not arrive — check your connection, then retry. " : ""}<span className="font-mono text-xs">{error.message}</span></p>
+      {retry && <button type="button" onClick={retry} className="glass-thin mt-3 px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--ember)]">Retry</button>}
+    </div>
+  );
 }

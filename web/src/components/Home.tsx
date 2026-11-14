@@ -9,6 +9,7 @@ import { CountUp, Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getSeason, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
+import { Failed } from "@/components/ui";
 import { ALL } from "@/lib/nav";
 import { Eyebrow, Stat } from "@/components/Figure";
 import { DriftClocks } from "@/components/DriftClocks";
@@ -392,12 +393,13 @@ function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
 
 /* ---------------------------------------------------------------- page */
 export function Home() {
-  const { data: d } = useHomeData();
+  const { data: d, error: homeError, retry: homeRetry } = useHomeData();
   const canada = d?.table.countries.find((c) => c.country === "Canada");
   const chile = d?.season.countries.Chile?.trend_days_per_decade;
   return (
     <div>
       <Hero d={d} />
+      {homeError && <div className="mx-auto mb-8 max-w-3xl"><Failed error={homeError} retry={homeRetry} what="the summary figures" /></div>}
       <OrbitChapter />
       <JumpChapter row={canada} />
       <DriftChapter drift={d?.drift} />

@@ -5,7 +5,7 @@ import { Eyebrow } from "@/components/Figure";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
-import { PageHead, Reveal } from "@/components/ui";
+import { Failed, PageHead, Reveal } from "@/components/ui";
 import { useMemo, useState } from "react";
 import { median } from "@/lib/ember";
 import { fitTag, prettyName } from "@/lib/names";
@@ -36,7 +36,7 @@ const FitBadge = ({ c }: { c: CountryFit }) =>
   c.fit_source === "pooled" ? <span title="Too few training matches for its own curve: uses the pooled curve of the own-fit countries" className="ml-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">pooled</span> : null;
 
 export function Method() {
-  const { data: p, error, loading } = useParquet(() => getParams(), "params");
+  const { data: p, error, loading, retry } = useParquet(() => getParams(), "params");
   const names = useMemo(() => (p ? Object.keys(p.countries) : []), [p]);
   const [pick, setPick] = useState("Canada");
   const origin = typeof window === "undefined" ? "https://<this-site>" : window.location.origin;
@@ -94,7 +94,7 @@ export function Method() {
         ))}
       </div>
 
-      {error && <p className="mt-8 text-sm text-[var(--text-secondary)]">Could not load the fit: {error.message}</p>}
+      {error && <div className="mt-8"><Failed error={error} retry={retry} what="the fit (params)" /></div>}
       {loading && <div className="mt-8 h-64 animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
       {p && summary && (
         <>

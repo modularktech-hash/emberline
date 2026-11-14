@@ -27,7 +27,7 @@ const shareUnstable = (v: number | null) => v != null && (v < 0 || v > 1);
 const fmt = (v: number | null | undefined) => fmtSigned(v);
 
 export function TrendsPage() {
-  const { data, error, loading } = useParquet(async () => {
+  const { data, error, loading, retry } = useParquet(async () => {
     const [season, table] = await Promise.all([getSeason(), getCountryTable().catch(() => null)]);
     return { ...season, pooled: new Set((table?.countries ?? []).filter((r) => r.fit_source === "pooled").map((r) => r.country)) };
   }, "season+table");
@@ -65,7 +65,7 @@ export function TrendsPage() {
       <PageHead compact eyebrow="Insights · season shift" title="Is the fire season moving?" italic="Or is it the sensor?"
         lede="For every year: when the season starts (10% of the year's detections), reaches its midpoint (50%) and ends (90%). In the raw record, VIIRS's sharper eyes catch small early burns MODIS never could, so seasons appear to start earlier. The harmonized record removes that." />
 
-      {error && <Failed error={error} />}
+      {error && <Failed error={error} retry={retry} what="the season timings (season.json)" />}
       {loading && <Loading h={420} />}
       {c && (
         <>

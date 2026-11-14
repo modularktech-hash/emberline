@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnualLine } from "@/components/AnnualLine";
-import { CountUp, PageHead, Reveal } from "@/components/ui";
+import { useDataset } from "@/components/DatasetBanner";
+import { Failed, CountUp, PageHead, Reveal } from "@/components/ui";
 import { Eyebrow } from "@/components/Figure";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
@@ -37,7 +38,8 @@ export function Explorer() {
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
-  const { data, error, loading } = useAreaData(area);
+  const { data, error, loading, retry } = useAreaData(area);
+  const ds = useDataset();
   const coverage = useCoverage();
   // The map (maplibre, ~1 MB of JS plus tiles) mounts only once the calendar has
   // its data and the map slot is near the viewport, so it never competes with it.
@@ -174,12 +176,12 @@ export function Explorer() {
           </button>
         </div>
 
-        {error && <p className="mt-8 text-sm text-[var(--text-secondary)]">Could not load the data files: {error.message}</p>}
+        {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
-            {data.raw.dataset === "world" ? (
+            {ds?.dataset === "world" ? (
               <>
                 <p className="text-[var(--text-primary)]">No processed data in this area.</p>
                 <p className="mt-1">
@@ -286,9 +288,9 @@ export function Explorer() {
             <summary className="cursor-pointer font-medium text-[var(--text-primary)]">Provenance</summary>
             <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
               <dt className="text-[var(--text-muted)]">Fit version</dt><dd className="tabular">{data.params.fit_version} · trained {data.params.train_years[0]}–{data.params.train_years[1]}, tested {data.params.test_years[0]}–{data.params.test_years[1]}</dd>
-              <dt className="text-[var(--text-muted)]">Files</dt><dd>{data.raw.dataset === "world" ? "calendar_raw_global.parquet, calendar_harmonized_global.parquet, params_global.json" : "four-country fallback: calendar_raw.parquet, calendar_harmonized.parquet, params.json"}</dd>
+              <dt className="text-[var(--text-muted)]">Files</dt><dd>{ds?.dataset === "world" ? "calendar_raw_global.parquet, calendar_harmonized_global.parquet, params_global.json" : "four-country fallback: calendar_raw.parquet, calendar_harmonized.parquet, params.json"}</dd>
               <dt className="text-[var(--text-muted)]">Source</dt><dd>NASA FIRMS archive: MODIS C6.1 (Terra, Aqua), VIIRS 375 m (Suomi-NPP); daytime vegetation-fire detections, nominal and high confidence</dd>
-              {coverage && data.raw.dataset === "world" && <><dt className="text-[var(--text-muted)]">Coverage</dt><dd><CoverageSummaryText coverage={coverage} /></dd></>}
+              {coverage && ds?.dataset === "world" && <><dt className="text-[var(--text-muted)]">Coverage</dt><dd><CoverageSummaryText coverage={coverage} /></dd></>}
               <dt className="text-[var(--text-muted)]">Record</dt><dd>Archive 2001–2025; harmonized 2003–2025. Historical snapshot: the live globe is a separate, uncorrected layer.</dd>
             </dl>
           </details>
@@ -355,6 +357,7 @@ export function Explorer() {
  */
 function Coverage() {
   const { data: p } = useParquet(() => getParams(), "params");
+  const ds = useDataset();
   if (!p) return null;
   const fits = Object.values(p.countries);
   const pooled = fits.filter((f) => f.fit_source === "pooled").length;
@@ -364,7 +367,7 @@ function Coverage() {
       Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
       <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
       <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected). Reasons under Provenance.
-      {p.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
+      {ds?.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );
 }

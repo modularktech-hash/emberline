@@ -2,6 +2,7 @@
  * Loaders for the JSON tables in web/public/data/. Each file is fetched once
  * per session. Parquet stays behind queries.ts; these are small summaries.
  */
+import { currentDataset } from "@/lib/queries";
 
 export interface LiveWindow {
   totals: Record<string, number>;
@@ -28,6 +29,15 @@ export interface SeasonCountry {
   resolution?: "daily" | "monthly";
   years: SeasonYear[];
   trend_days_per_decade: Record<string, number | null>;
+  /** E31: descriptive OLS uncertainty per raw/harm onset/peak/end (season.json trend_note). */
+  trend_stats?: Record<string, TrendStats>;
+  /** E32: true for monthly-resolution countries — dates interpolated within months. */
+  trend_approximate?: boolean;
+}
+export interface TrendStats {
+  n_years: number; first_year?: number | null; last_year?: number | null;
+  slope_per_decade?: number | null; se_per_decade?: number | null; ci95?: [number, number] | null;
+  drop_first3?: number | null; drop_last3?: number | null; sensitivity_range?: [number, number] | null;
 }
 export interface SeasonFile {
   fit_version: string; unit: string; resolution_note?: string; partial_note?: string; trend_note?: string;
@@ -43,6 +53,8 @@ export interface CountryRow {
   peak_year: number | null; step_raw: number; step_aqua: number; step_harm: number; r2_model: number; r2_raw: number;
   bias_pct: number; frp_p50: number; fit_source: string; onset_trend_raw: number | null; onset_trend_harm: number | null;
   season_resolution?: "daily" | "monthly";
+  onset_trend_raw_ci95?: [number, number] | null; onset_trend_harm_ci95?: [number, number] | null;
+  onset_trend_harm_n_years?: number | null; onset_trend_harm_sensitivity?: [number, number] | null; onset_trend_approximate?: boolean;
   annual: Array<{ year: number; raw: number; harm: number }>;
 }
 export interface NotFittedRow { country: string; detections_filtered: number; has_raw_calendar: boolean }
@@ -69,9 +81,20 @@ function load<T>(name: string): Promise<T> {
 
 export const getLive = () => load<Live>("live.json");
 export const getTle = () => load<TleFile>("tle.json");
-export const getSeason = () => load<SeasonFile>("season.json");
-export const getDrift = () => load<DriftFile>("drift.json");
-export const getCountryTable = () => load<CountriesFile>("countries.json");
+/**
+ * World-only summaries (E16): refused when the session fell back to the
+ * four-country dataset, and refused if their fit version differs from the
+ * loaded fit, so world summaries never sit beside fallback numbers.
+ */
+async function worldOnly<T extends { fit_version?: string }>(name: string): Promise<T> {
+  const [file, info] = await Promise.all([load<T>(name), currentDataset()]);
+  if (info.dataset !== "world") throw new Error(`${name} is unavailable with the four-country fallback data (fit ${info.fitVersion}); it belongs to the world dataset. Reload the page to try the world data again.`);
+  if (file.fit_version && file.fit_version !== info.fitVersion) throw new Error(`Refusing to mix: ${name} is fit ${file.fit_version}, the loaded fit is ${info.fitVersion}. The site may be mid-deploy: reload in a minute.`);
+  return file;
+}
+export const getSeason = () => worldOnly<SeasonFile>("season.json");
+export const getDrift = () => worldOnly<DriftFile>("drift.json");
+export const getCountryTable = () => worldOnly<CountriesFile>("countries.json");
 
 /** Why a fire year's series is incomplete (season.json `partial`). */
 export function partialReason(year: number, startMonth: number, series: "raw" | "harm"): string {

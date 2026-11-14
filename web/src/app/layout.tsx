@@ -6,6 +6,7 @@ import { PerfMode } from "@/components/PerfMode";
 import { RouteTransition } from "@/components/RouteTransition";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
+import { DatasetBanner } from "@/components/DatasetBanner";
 import "./globals.css";
 
 // UI and headings use the system stack (real San Francisco on Apple devices; see --font-ui
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <PerfMode />
         <Interactions />
         <SiteNav />
+        <DatasetBanner />
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
         <SiteFooter />
         <RouteTransition />

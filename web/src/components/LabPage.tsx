@@ -5,7 +5,7 @@ import { Eyebrow } from "@/components/Figure";
 import { motion } from "motion/react";
 import { useMemo, useState, type ReactNode } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
-import { Chip, PageHead, Reveal, Segmented } from "@/components/ui";
+import { Failed, Chip, PageHead, Reveal, Segmented } from "@/components/ui";
 import { MONTHS, fmt, median, quantile } from "@/lib/ember";
 import { getCountryTable } from "@/lib/data";
 import { getCalendar, getParams } from "@/lib/queries";
@@ -54,7 +54,11 @@ const Num = ({ v, set, step = 1, min, max, w = "w-24", label }: { v: number; set
 );
 
 export function LabPage() {
-  const { data } = useParquet(async () => ({ params: await getParams(), table: await getCountryTable() }), "lab");
+  const { data, error: labError, retry: labRetry } = useParquet(async () => {
+    const params = await getParams();
+    const table = await getCountryTable().catch(() => null);
+    return { params, table: table ?? { countries: [] as Awaited<ReturnType<typeof getCountryTable>>["countries"] } , tableMissing: !table };
+  }, "lab");
   const names = data ? Object.keys(data.params.countries).sort() : [];
   const [region, setRegion] = useState("Australia");
   const fit = data?.params.countries[region];
@@ -121,6 +125,8 @@ export function LabPage() {
       <PageHead compact eyebrow="Science · lab" title="The model," italic="in your hands."
         lede="Every coefficient Emberline uses, exposed as a calculator. Pick a region, move the numbers, and see exactly how a VIIRS detection becomes a MODIS-equivalent count." />
 
+      {labError && <div className="mb-4"><Failed error={labError} retry={labRetry} what="the fitted coefficients" /></div>}
+      {data?.tableMissing && <p className="mb-4 text-sm text-[var(--text-secondary)]">The per-country annual totals (countries.json) are unavailable{data.params.dataset === "four" ? " with the four-country fallback data" : ""}; the annual chart below is hidden. The coefficients come from {data.params.dataset === "four" ? "params.json (four-country fallback)" : "params_global.json"}.</p>}
       <div className="card sticky top-24 z-20 flex flex-wrap items-center gap-3 p-3">
         <Eyebrow as="span" className="pl-2">Region</Eyebrow>
         <CountryPicker value={region} options={names.length ? names : [region]} tags={Object.fromEntries(names.map((n) => [n, fitTag(data?.params, n)]))} onChange={setRegion} />

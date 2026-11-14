@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
 import { FirePulse } from "@/components/FirePulse";
 import { CountryPicker } from "@/components/CountryPicker";
-import { PageHead, Reveal } from "@/components/ui";
+import { Failed, PageHead, Reveal } from "@/components/ui";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
 import { CoverageNote, useCoverage } from "@/components/CoverageNote";
 import { FitQualityTag } from "@/components/FitQuality";
@@ -37,7 +37,7 @@ export function Seasons() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
   const [year, setYear] = useState(2023);
   const { ref: chartRef, fs, narrow } = useChartScale(720);
-  const { data, error, loading } = useAreaData(area);
+  const { data, error, loading, retry } = useAreaData(area);
   const coverage = useCoverage();
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
 
@@ -77,7 +77,7 @@ export function Seasons() {
           </label>
         </div>
 
-        {error && <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>}
+        {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {data && !v && (
           <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">

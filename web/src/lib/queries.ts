@@ -56,14 +56,15 @@ export function setDataBaseUrl(url: string): void {
   rawTable = null;
   harmonizedTable = null;
   paramsPromise = null;
+  datasetPromise = null;
   coveragePromise = null;
   cellDayParentsPromise = null;
 }
 
 /**
  * The world files (every FIRMS country, fit v1-20261114T1240) and the
- * four-country files they replace. Every reader tries the world file first
- * and falls back to the four-country one if it cannot be loaded.
+ * four-country files they replace. resolveDataset() picks ONE set for params
+ * and both calendars; they are never mixed.
  */
 const FILESETS = {
   raw: ["calendar_raw_global.parquet", "calendar_raw.parquet"],
@@ -225,25 +226,98 @@ async function fetchJson<T>(name: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+/* ------------------------------------------------------------------ */
+/* Dataset resolution (E16): one dataset for params + raw + harmonized  */
+/* ------------------------------------------------------------------ */
+
+export interface DatasetInfo {
+  dataset: DataSet;
+  /** fit_version of the params file actually loaded (checked against manifest.json). */
+  fitVersion: string;
+  /** Why the world set was not used (only when dataset === "four"). */
+  reason?: string;
+}
+
+let datasetPromise: Promise<{ info: DatasetInfo; params: Params }> | null = null;
+let resolvedInfo: DatasetInfo | null = null;
+const datasetListeners = new Set<(d: DatasetInfo) => void>();
+
+/** Subscribe to the resolved dataset (called at once if already resolved). Does not trigger loading. */
+export function onDataset(fn: (d: DatasetInfo) => void): () => void {
+  datasetListeners.add(fn);
+  if (resolvedInfo) fn(resolvedInfo);
+  return () => {
+    datasetListeners.delete(fn);
+  };
+}
+
+interface ManifestDatasets { datasets?: Record<string, { fit_version?: string | null }> }
+
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
 /**
- * The published fit: params_global.json (every fitted country), or
- * params.json (four countries) if the world file cannot be loaded.
- * `dataset` records which one it is.
+ * Resolve the dataset ONCE per session: the world set only if params_global.json
+ * and both _global calendar footers load; otherwise the four-country set for all
+ * three. Never mixes. Refuses (throws) if the loaded params fit version differs
+ * from the one manifest.json lists for that dataset.
+ */
+function resolveDataset(): Promise<{ info: DatasetInfo; params: Params }> {
+  if (!datasetPromise) {
+    datasetPromise = (async () => {
+      const manifest = await fetchJson<ManifestDatasets>("manifest.json").catch(() => null);
+      let dataset: DataSet = "world";
+      let reason: string | undefined;
+      let params: Params;
+      try {
+        [params] = await Promise.all([
+          fetchJson<Params>(FILESETS.params[0]),
+          openParquet(FILESETS.raw[0]),
+          openParquet(FILESETS.harmonized[0]),
+        ]);
+      } catch (e) {
+        dataset = "four";
+        reason = errMsg(e);
+        try {
+          [params] = await Promise.all([
+            fetchJson<Params>(FILESETS.params[1]),
+            openParquet(FILESETS.raw[1]),
+            openParquet(FILESETS.harmonized[1]),
+          ]);
+        } catch (e2) {
+          throw new Error(`Neither the world data (${reason}) nor the four-country fallback (${errMsg(e2)}) could be loaded. Check your connection and retry.`);
+        }
+      }
+      const expected = manifest?.datasets?.[dataset === "world" ? "world" : "fallback_four_country"]?.fit_version;
+      if (expected && params.fit_version !== expected) {
+        throw new Error(`Refusing to show mixed data: ${dataset === "world" ? FILESETS.params[0] : FILESETS.params[1]} has fit ${params.fit_version} but manifest.json lists ${expected}. The site is probably mid-deploy: reload in a minute.`);
+      }
+      const info: DatasetInfo = { dataset, fitVersion: params.fit_version, reason };
+      resolvedInfo = info;
+      for (const fn of datasetListeners) fn(info);
+      return { info, params: { ...params, failed: params.failed ?? {}, dataset } };
+    })();
+    datasetPromise.catch(() => {
+      datasetPromise = null;
+    });
+  }
+  return datasetPromise;
+}
+
+/** Which dataset this session reads: "world", or the four-country fallback for params AND both calendars. */
+export async function currentDataset(): Promise<DatasetInfo> {
+  return (await resolveDataset()).info;
+}
+
+/** The dataset if it has already been resolved, without triggering a load. */
+export const resolvedDataset = (): DatasetInfo | null => resolvedInfo;
+
+/**
+ * The published fit from the resolved dataset: params_global.json (world) or
+ * params.json (four-country fallback). `dataset` records which one it is.
  */
 export function getParams(): Promise<Params> {
   if (!paramsPromise) {
-    paramsPromise = (async () => {
-      let lastError: unknown;
-      for (const name of FILESETS.params) {
-        try {
-          const p = await fetchJson<Params>(name);
-          return { ...p, failed: p.failed ?? {}, dataset: setOf(name) };
-        } catch (e) {
-          lastError = e;
-        }
-      }
-      throw lastError instanceof Error ? lastError : new Error("params: not available");
-    })();
+    paramsPromise = resolveDataset().then((r) => r.params);
     paramsPromise.catch(() => {
       paramsPromise = null;
     });
@@ -265,7 +339,12 @@ let coveragePromise: Promise<CoverageStatusFile> | null = null;
  */
 export function getCoverageStatus(): Promise<CoverageStatusFile> {
   if (!coveragePromise) {
-    coveragePromise = fetchJson<CoverageStatusFile>("coverage_status.json");
+    coveragePromise = (async () => {
+      const [file, info] = await Promise.all([fetchJson<CoverageStatusFile>("coverage_status.json"), currentDataset()]);
+      if (info.dataset !== "world") throw new Error("coverage_status.json is unavailable with the four-country fallback data");
+      if (file.fit_version && file.fit_version !== info.fitVersion) throw new Error(`Refusing to mix: coverage_status.json is fit ${file.fit_version}, the loaded fit is ${info.fitVersion}`);
+      return file;
+    })();
     coveragePromise.catch(() => {
       coveragePromise = null;
     });
@@ -339,16 +418,10 @@ function mayHold(g: GroupInfo, scope: CalendarScope, keys: string[] | null): boo
 }
 
 async function openTable<V>(kind: "raw" | "harmonized"): Promise<Table<V>> {
-  let lastError: unknown;
-  for (const name of FILESETS[kind]) {
-    try {
-      const open = await openParquet(name);
-      return { name, dataset: setOf(name), open, groups: groupInfo(open.metadata), loaded: new Map(), index: new Map() };
-    } catch (e) {
-      lastError = e;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error(`${kind} calendar: not available`);
+  const { dataset } = await currentDataset();
+  const name = FILESETS[kind][dataset === "world" ? 0 : 1];
+  const open = await openParquet(name);
+  return { name, dataset: setOf(name), open, groups: groupInfo(open.metadata), loaded: new Map(), index: new Map() };
 }
 
 /**

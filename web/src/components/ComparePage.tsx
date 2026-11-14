@@ -21,16 +21,17 @@ import { prettyName } from "@/lib/names";
 const COLORS = ["#d9431a", "#3f7f96"];
 
 export function ComparePage() {
-  const { data: table } = useParquet(() => getCountryTable(), "table");
-  const { data: params } = useParquet(() => getParams(), "params");
-  const names = table?.countries.map((c) => c.country) ?? [];
+  const { data: table, error: tableError } = useParquet(() => getCountryTable(), "table");
+  const { data: params, error: paramsError, retry: paramsRetry } = useParquet(() => getParams(), "params");
+  // Fallback dataset: countries.json (world-only) is refused, so pick from the loaded fit's countries.
+  const names = table?.countries.map((c) => c.country) ?? (params ? Object.keys(params.countries).sort() : []);
   const tags = Object.fromEntries((table?.countries ?? []).map((c) => [c.country, c.fit_source === "pooled" ? ("pooled" as const) : null]));
   const [a, setA] = useState("Canada");
   const [b, setB] = useState("Australia");
   const [mode, setMode] = useState<Series>("harmonized");
   const [norm, setNorm] = useState<"abs" | "idx">("idx");
   const { ref: chartRef, fs, narrow } = useChartScale(760);
-  const { data, error, loading } = useParquet(async () => Promise.all([a, b].map((k) => getCalendar({ scope: "country", keys: [k], mode }))), `${a}|${b}|${mode}`);
+  const { data, error, loading, retry } = useParquet(async () => Promise.all([a, b].map((k) => getCalendar({ scope: "country", keys: [k], mode }))), `${a}|${b}|${mode}`);
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -78,7 +79,9 @@ export function ComparePage() {
         </p>
       </div>
       <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries without a fit (reasons on the Data page) have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
-      {error && <div className="mt-6"><Failed error={error} /></div>}
+      {paramsError && <div className="mt-6"><Failed error={paramsError} retry={paramsRetry} what="the fit" /></div>}
+      {tableError && !paramsError && <p className="mt-4 text-sm text-[var(--text-secondary)]">Country summaries (countries.json) unavailable: {tableError.message}</p>}
+      {error && <div className="mt-6"><Failed error={error} retry={retry} what="the calendars" /></div>}
       {loading && <div className="mt-6"><Loading h={300} /></div>}
       {view && data && (
         <>
