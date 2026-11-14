@@ -8,7 +8,7 @@ import { DotStat } from "@/components/DotMatrix";
 import { useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
-import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason, partialReason } from "@/lib/data";
+import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason, partialReason, type TrendStats } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
@@ -25,11 +25,18 @@ const DEF: Record<Metric, string> = {
 /** Sensor share = 1 − harmonized trend ÷ raw trend. Outside 0–100% the ratio is unstable (opposite signs, or a small raw trend). */
 const shareUnstable = (v: number | null) => v != null && (v < 0 || v > 1);
 const fmt = (v: number | null | undefined) => fmtSigned(v);
+/** E31: "95% −41.1 to −0.2 · n 22" from season.json trend_stats (descriptive). */
+const ciText = (s: TrendStats | undefined) => (s?.ci95 ? `95% ${fmtSigned(s.ci95[0])} to ${fmtSigned(s.ci95[1])} · ${s.n_years} yrs` : s ? `${s.n_years} usable yrs · no interval` : "");
+const sensText = (s: TrendStats | undefined) => s?.sensitivity_range
+  ? `Endpoint sensitivity: ${fmtSigned(s.sensitivity_range[0])} to ${fmtSigned(s.sensitivity_range[1])} d/decade (full ${fmtSigned(s.slope_per_decade)}, drop first 3 yrs ${fmtSigned(s.drop_first3)}, drop last 3 yrs ${fmtSigned(s.drop_last3)}). Usable years ${s.first_year}–${s.last_year}.`
+  : s?.ci95 ? "Endpoint sensitivity not computed (fewer than 8 years would remain)." : "No trend published: fewer than 8 usable years.";
+/** A CI that spans zero, or a sensitivity range that changes sign, must not be read as a shift. */
+const spansZero = (s: TrendStats | undefined) => (s?.ci95 != null && s.ci95[0] <= 0 && s.ci95[1] >= 0) || (s?.sensitivity_range != null && s.sensitivity_range[0] < 0 && s.sensitivity_range[1] > 0);
 
 export function TrendsPage() {
   const { data, error, loading, retry } = useParquet(async () => {
     const [season, table] = await Promise.all([getSeason(), getCountryTable().catch(() => null)]);
-    return { ...season, pooled: new Set((table?.countries ?? []).filter((r) => r.fit_source === "pooled").map((r) => r.country)) };
+    return { ...season, tableMissing: !table, pooled: new Set((table?.countries ?? []).filter((r) => r.fit_source === "pooled").map((r) => r.country)) };
   }, "season+table");
   const names = data ? Object.keys(data.countries).sort() : [];
   const [country, setCountry] = useState("Chile");
@@ -37,6 +44,8 @@ export function TrendsPage() {
   const { ref: chartRef, fs, narrow } = useChartScale(760);
   const c = data?.countries[country];
   const monthly = c?.resolution === "monthly";
+  const approx = c?.trend_approximate ?? monthly;
+  const dayLabel = (v: number | null | undefined) => (v == null ? "—" : `${approx ? "≈" : ""}${fireDayLabel(v, c!.fire_year_start_month)}`);
   const nDaily = names.filter((n) => data?.countries[n].resolution !== "monthly").length;
   const mvd = data?.monthly_vs_daily;
   type Col = "name" | "res" | "raw_onset" | "harm_onset" | "raw_length" | "harm_length" | "share";
@@ -67,6 +76,7 @@ export function TrendsPage() {
 
       {error && <Failed error={error} retry={retry} what="the season timings (season.json)" />}
       {loading && <Loading h={420} />}
+      {data?.tableMissing && <p role="status" className="mb-4 text-xs text-[var(--text-secondary)]">countries.json could not be loaded, so &quot;pooled&quot; fit tags are not shown. <button type="button" onClick={retry} className="underline underline-offset-2">Retry</button></p>}
       {c && (
         <>
           <div className="flex flex-wrap items-center gap-3">
@@ -86,20 +96,33 @@ export function TrendsPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {(["onset", "peak", "end", "length"] as Metric[]).map((m, i) => {
               const raw = c.trend_days_per_decade[`raw_${m}`], harm = c.trend_days_per_decade[`harm_${m}`];
+              const sr = c.trend_stats?.[`raw_${m}`], sh = c.trend_stats?.[`harm_${m}`];
               return (
                 <Reveal key={m} delay={i * 0.05}>
                   <button type="button" onClick={() => setMetric(m)} className={`card w-full p-5 text-left transition-transform hover:-translate-y-0.5 ${metric === m ? "!border-[var(--ember)]" : ""}`}>
-                    <Eyebrow>{SHORT[m]} · days per decade</Eyebrow>
+                    <Eyebrow>{SHORT[m]} · days per decade · descriptive</Eyebrow>
                     <div className="mt-3 flex items-end gap-4">
                       <div><p className="display tabular text-4xl"><DotStat text={String(fmt(harm))} dot={6} /></p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
                       <div><p className="display tabular text-2xl text-[var(--seq-5)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
                     </div>
-                    <p className="mt-3 text-[11px] leading-snug text-[var(--text-muted)]">{DEF[m]} Trend 2003–2025, negative = earlier / shorter.</p>
+                    {m !== "length" ? (
+                      <div className="mt-2 space-y-0.5 text-[11px] leading-snug text-[var(--text-secondary)]">
+                        <p title={sensText(sh)}>harmonized: <span className="tabular">{ciText(sh)}</span>{spansZero(sh) && <span className="ml-1 font-mono text-[10px] uppercase text-[var(--ember)]">spans zero</span>}</p>
+                        <p title={sensText(sr)}>raw: <span className="tabular">{ciText(sr)}</span>{spansZero(sr) && <span className="ml-1 font-mono text-[10px] uppercase text-[var(--ember)]">spans zero</span>}</p>
+                      </div>
+                    ) : <p className="mt-2 text-[11px] text-[var(--text-muted)]">No interval published for length.</p>}
+                    <p className="mt-3 text-[11px] leading-snug text-[var(--text-muted)]">{DEF[m]} Descriptive least-squares trend over usable fire years; 95% interval assumes independent years. Negative = earlier / shorter.{approx ? " Monthly estimate: dates are approximate (≈)." : ""}</p>
                   </button>
                 </Reveal>
               );
             })}
           </div>
+
+          {metric !== "length" && (
+            <p data-testid="trend-sensitivity" className="mt-3 max-w-4xl text-xs leading-relaxed text-[var(--text-muted)]">
+              <span className="text-[var(--text-secondary)]">Selected: {SHORT[metric]}.</span> Harmonized — {sensText(c.trend_stats?.[`harm_${metric}`])} Raw — {sensText(c.trend_stats?.[`raw_${metric}`])}
+            </p>
+          )}
 
           <Reveal>
             <section className="window mt-8 p-4 sm:p-6">
@@ -151,12 +174,12 @@ export function TrendsPage() {
                   {years.map((y) => {
                     const r = y[`raw_${metric}` as keyof typeof y] as number | null | undefined;
                     const h = y[`harm_${metric}` as keyof typeof y] as number | null | undefined;
-                    const show = (v: number | null | undefined, s?: "raw" | "harm") => (s && isPart(y, s) ? <span title={partialReason(y.year, c.fire_year_start_month, s)} className="font-mono text-[10px] uppercase text-[var(--ember)]">incomplete</span> : metric === "length" ? (v ?? "—") : fireDayLabel(v, c.fire_year_start_month));
+                    const show = (v: number | null | undefined, s?: "raw" | "harm") => (s && isPart(y, s) ? <span title={partialReason(y.year, c.fire_year_start_month, s)} className="font-mono text-[10px] uppercase text-[var(--ember)]">incomplete</span> : metric === "length" ? (v == null ? "—" : `${approx ? "≈" : ""}${v}`) : dayLabel(v));
                     return (
                       <tr key={y.year} className="border-t border-[var(--hairline)]">
                         <td className={`py-2 ${y.year === 2012 ? "text-[var(--ember)]" : ""}`}>{y.year}</td>
                         <td className="text-[var(--text-secondary)]">{show(r, "raw")}</td><td>{show(h, "harm")}</td>
-                        <td className="text-[var(--text-secondary)]">{r != null && h != null ? `${fmtSigned(r - h, 0)} d` : "—"}</td>
+                        <td className="text-[var(--text-secondary)]">{r != null && h != null ? `${approx ? "≈" : ""}${fmtSigned(r - h, 0)} d` : "—"}</td>
                         <td className="text-[var(--text-muted)]">{isPart(y, "raw") ? "—" : fmtInt(y.raw_total)}</td>
                         <td className="text-[var(--text-muted)]">{isPart(y, "harm") ? "—" : fmtInt(y.harm_total)}</td>
                       </tr>
@@ -175,7 +198,7 @@ export function TrendsPage() {
           <Reveal>
             <section className="card mt-8 min-w-0 p-5 sm:p-6">
               <h2 className="display text-3xl">Every fitted country, side by side</h2>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">Least-squares trend 2003–2025, days per decade. Negative = earlier. {nDaily} at daily resolution, {names.length - nDaily} at monthly resolution (marked). Click a row to open it above.</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Descriptive least-squares trend over usable fire years, days per decade; the 95% interval and usable-year count sit under each onset slope (hover a slope for endpoint sensitivity). The interval assumes independent years; one that spans zero is not a shift. Negative = earlier. {nDaily} at daily resolution, {names.length - nDaily} at monthly resolution (marked). Click a row to open it above.</p>
               <div className="mt-4"><TableSearch q={tbl.q} setQ={tbl.setQ} shown={tbl.shown.length} total={names.length} /></div>
               <ScrollBox>
               <table className="tabular w-full min-w-[720px] text-sm">
@@ -194,7 +217,8 @@ export function TrendsPage() {
                       <tr key={n} onClick={() => { setCountry(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} className={`cursor-pointer border-t border-[var(--hairline)] hover:bg-[var(--ember-soft)] ${n === country ? "bg-[var(--ember-soft)]" : ""}`}>
                         <td className="py-2.5 pr-3">{prettyName(n)}{data!.pooled.has(n) && <span className="ml-1.5 font-mono text-[10px] uppercase text-[var(--ember)]">pooled</span>}</td>
                         <td className="px-3 text-xs text-[var(--text-muted)]">{mon ? "monthly" : "daily"}</td>
-                        <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_onset)}</td><td className="px-3">{fmt(t.harm_onset)}</td>
+                        <td className="px-3 text-[var(--seq-5)]" title={sensText(data!.countries[n].trend_stats?.raw_onset)}>{fmt(t.raw_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.raw_onset)}</span></td>
+                        <td className="px-3" title={sensText(data!.countries[n].trend_stats?.harm_onset)}>{fmt(t.harm_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.harm_onset)}</span></td>
                         <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_length)}</td><td className="px-3">{fmt(t.harm_length)}</td>
                         <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : shareUnstable(share) ? <span title="Outside 0–100%: the raw and harmonized trends have opposite signs or the raw trend is small, so the ratio is not meaningful">{Math.round(share * 100)}% <span className="font-mono text-[10px] uppercase text-[var(--ember)]">unstable</span></span> : `${Math.round(share * 100)}%`}</td>
                       </tr>

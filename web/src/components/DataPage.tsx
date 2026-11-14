@@ -11,7 +11,7 @@ import { FitQualityTag } from "@/components/FitQuality";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
-import { CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL, coverageReason } from "@/lib/coverage";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
@@ -26,7 +26,7 @@ const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint:
   { key: "r2_model", label: "Held-out R²", f: (r) => fmtR2(r.r2_model), hint: "vs observed Aqua, 2019–2021, cell × month" },
   { key: "bias_pct", label: "Bias", f: (r) => fmtPct(r.bias_pct), hint: "Held-out total bias" },
   { key: "frp_p50", label: "FRP @ 50%", f: (r) => `${fmtNum(r.frp_p50, 1)} MW`, hint: "FRP at which Aqua detects half the fires VIIRS sees" },
-  { key: "onset_trend_harm", label: "Onset trend", f: (r) => (r.onset_trend_harm == null ? "—" : `${fmtSigned(r.onset_trend_harm)} d/dec`), hint: "Harmonized season onset, days per decade" },
+  { key: "onset_trend_harm", label: "Onset trend", f: (r) => (r.onset_trend_harm == null ? "—" : `${fmtSigned(r.onset_trend_harm)} d/dec`), hint: "Harmonized season onset, days per decade — descriptive least-squares trend; 95% interval assumes independent years" },
 ];
 
 const FILES = [
@@ -50,7 +50,8 @@ export function DataPage() {
   const { data, error, loading, retry } = useParquet(() => getCountryTable(), "table");
   const [focus, setFocus] = useState<string | null>(null);
   const [q2, setQ2] = useState("");
-  const coverage = useCoverage();
+  const coverageState = useCoverageState();
+  const coverage = coverageState.data;
   const { data: params } = useParquet(() => getParams(), "params");
   const [lang, setLang] = useState<"py" | "js" | "sql">("py");
   const origin = typeof window === "undefined" ? "https://emberline-tan.vercel.app" : window.location.origin;
@@ -71,6 +72,7 @@ export function DataPage() {
       <PageHead compact eyebrow="Science · data" title="Every table." italic="Every download."
         lede="All of Emberline's data is plain files on this site — no account, no API key, no server. Browse it here, download it, or query it straight from your own code." />
       {error && <Failed error={error} retry={retry} what="the country table (countries.json)" />}
+      <CoverageError state={coverageState} className="mt-3" />
       {loading && <Loading h={360} />}
       {data && (
         <>
@@ -99,7 +101,8 @@ export function DataPage() {
                           <td key={c.key} className={`px-3 py-2.5 first:pl-0 ${c.key === "country" ? "font-medium" : ""} ${c.key === "step_raw" ? "text-[var(--seq-5)]" : ""}`}>
                             {c.f(r)}
                             {c.key === "country" && r.fit_source === "pooled" && <span title="Too few training matches for its own curve: uses the pooled curve" className="ml-1.5 font-mono text-[10px] font-normal uppercase text-[var(--ember)]">pooled</span>}
-                            {c.key === "onset_trend_harm" && r.season_resolution === "monthly" && r.onset_trend_harm != null && <span title="Estimated from monthly calendars" className="ml-1 text-[10px] text-[var(--text-muted)]">(monthly)</span>}
+                            {c.key === "onset_trend_harm" && (r.onset_trend_approximate || r.season_resolution === "monthly") && r.onset_trend_harm != null && <span title="Monthly estimate: dates interpolated within months, approximate" className="ml-1 text-[10px] text-[var(--text-muted)]">≈ monthly estimate</span>}
+                            {c.key === "onset_trend_harm" && r.onset_trend_harm_ci95 && <span title={r.onset_trend_harm_sensitivity ? `Endpoint sensitivity ${fmtSigned(r.onset_trend_harm_sensitivity[0])} to ${fmtSigned(r.onset_trend_harm_sensitivity[1])} d/dec` : undefined} className="block text-[10px] text-[var(--text-muted)]">95% {fmtSigned(r.onset_trend_harm_ci95[0])} to {fmtSigned(r.onset_trend_harm_ci95[1])} · {r.onset_trend_harm_n_years} yrs · descriptive</span>}
                           </td>
                         ))}
                       </tr>

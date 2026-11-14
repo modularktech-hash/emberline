@@ -851,17 +851,17 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E31 — Add slope uncertainty and endpoint sensitivity
 
-- [ ] **Status:** P2 · Observed gap · Trends · effort M
+- [x] **Status:** P2 · Observed gap · Trends · effort M
 - **Evidence:** Point slopes with caveat
 - **Acceptance:** CI/usable years/sensitivity shown or descriptive-only label
-- **Implementation / verification notes:** Reproduced: season.json/countries.json carried only point slopes. Implemented: `build_insights.py` `trend_stats()` adds per country and per raw/harm onset/peak/end the OLS SE, 95% t-CI, usable years and first/last year, and slope after dropping the first or last 3 usable years (null if <8 remain) with the min–max range; `trend_note` says descriptive. Verified: rebuilt with the same EMBERLINE_KEEP_RESOLUTION pinning; stripping the new keys gives JSON equal to the published files (season, countries; drift.json byte-unchanged); slopes asserted equal to `trend_days_per_decade`; check_seasons.py and check_data_contract.py OK. Not verified: on-screen display (UI hand-off, `docs/data-contract-additions.md` §8).
+- **Implementation / verification notes:** Reproduced: season.json/countries.json carried only point slopes. Implemented: `build_insights.py` `trend_stats()` adds per country and per raw/harm onset/peak/end the OLS SE, 95% t-CI, usable years and first/last year, and slope after dropping the first or last 3 usable years (null if <8 remain) with the min–max range; `trend_note` says descriptive. Verified: rebuilt with the same EMBERLINE_KEEP_RESOLUTION pinning; stripping the new keys gives JSON equal to the published files (season, countries; drift.json byte-unchanged); slopes asserted equal to `trend_days_per_decade`; check_seasons.py and check_data_contract.py OK. Not verified: on-screen display (UI hand-off, `docs/data-contract-additions.md` §8). Display (web): Season Shift cards show "95% a to b · n yrs" under the harmonized and raw slope for onset/midpoint/end, labelled "descriptive", a "spans zero" flag when the CI spans zero or the sensitivity range changes sign, endpoint sensitivity on hover and in a line for the selected metric (tap); country table shows CI + n under each onset slope; Data page onset column shows CI, n and sensitivity on hover. Length has no published interval and says so. Verified: Playwright /trends at 390/1440, 0 errors, 0 overflow, 345 "95%" labels rendered.
 
 ### E32 — Respect monthly estimate precision
 
-- [ ] **Status:** P2 · Source concern · Trends · effort S
+- [x] **Status:** P2 · Source concern · Trends · effort S
 - **Evidence:** 5 monthly countries; maximum trend discrepancy37.61
 - **Acceptance:** Approximate dates and method differences remain visible
-- **Implementation / verification notes:** Reproduced: 5 monthly countries had no per-estimate precision flag. Implemented: `trend_approximate` per season country and `onset_trend_approximate` in countries.json (true for Barbados, Estonia, Mauritius, Slovenia, Solomon_Islands); monthly-vs-daily discrepancy metadata kept. Verified: flags match `resolution == "monthly"`; added-fields-only diff check passed. Not verified: ≈ display in UI (hand-off §8).
+- **Implementation / verification notes:** Reproduced: 5 monthly countries had no per-estimate precision flag. Implemented: `trend_approximate` per season country and `onset_trend_approximate` in countries.json (true for Barbados, Estonia, Mauritius, Slovenia, Solomon_Islands); monthly-vs-daily discrepancy metadata kept. Verified: flags match `resolution == "monthly"`; added-fields-only diff check passed. Not verified: ≈ display in UI (hand-off §8). Display (web): for `trend_approximate` countries every date, length and difference on Season Shift is prefixed "≈" and the cards say "Monthly estimate"; Data page shows "≈ monthly estimate". Verified: Playwright, Barbados shows 15 "≈" values.
 
 ### E33 — Add absolute anomaly and zero-median handling
 
