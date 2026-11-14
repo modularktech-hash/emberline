@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
+import { Eyebrow } from "@/components/Figure";
 import { motion } from "motion/react";
 import { useMemo, useState, type ReactNode } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
@@ -21,7 +23,7 @@ function Tool({ n, title, intro, children, formula }: { n: string; title: string
     <Reveal>
       <section className="card p-5 sm:p-7">
         <div className="flex items-start gap-4">
-          <span className="font-mono text-xs text-[var(--text-muted)]">{n}</span>
+          <span className="eyebrow pt-2"><span className="eyebrow-n">{n}</span></span>
           <div className="min-w-0 flex-1">
             <h2 className="display text-3xl">{title}</h2>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">{intro}</p>
@@ -36,7 +38,7 @@ function Tool({ n, title, intro, children, formula }: { n: string; title: string
 function Out({ label, value, big }: { label: string; value: ReactNode; big?: boolean }) {
   return (
     <div className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-1)] p-4">
-      <p className="text-xs text-[var(--text-muted)]">{label}</p>
+      <Eyebrow className="!tracking-[0.14em]">{label}</Eyebrow>
       <motion.p key={String(value)} initial={{ opacity: 0.3, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`display tabular ${big ? "text-5xl text-[var(--ember)]" : "text-3xl"}`}>{value}</motion.p>
     </div>
   );
@@ -113,9 +115,9 @@ export function LabPage() {
         lede="Every coefficient Emberline uses, exposed as a calculator. Pick a region, move the numbers, and see exactly how a VIIRS detection becomes a MODIS-equivalent count." />
 
       <div className="card sticky top-24 z-20 flex flex-wrap items-center gap-3 p-3">
-        <span className="eyebrow pl-2">Region</span>
+        <Eyebrow as="span" className="pl-2">Region</Eyebrow>
         <CountryPicker value={region} options={names} onChange={setRegion} />
-        {fit && <span className="tabular ml-auto pr-2 text-xs text-[var(--text-muted)]">b₀ {fit.logistic.b0.toFixed(3)} · b₁ {fit.logistic.b1.toFixed(3)} · κ {fit.kappa.toFixed(3)}</span>}
+        {fit && <span className="tabular ml-auto pr-2 text-xs text-[var(--text-muted)]">b₀ {fmtNum(fit.logistic.b0, 3)} · b₁ {fmtNum(fit.logistic.b1, 3)} · κ {fmtNum(fit.kappa, 3)}</span>}
       </div>
 
       <div className="mt-6 space-y-6">
@@ -132,9 +134,9 @@ export function LabPage() {
               </svg>
             </div>
             <div className="space-y-3">
-              <Out big label={`P(Aqua also detects) · ${region}`} value={fit ? `${(P(frp, fit.logistic.b0, fit.logistic.b1) * 100).toFixed(1)}%` : "—"} />
-              <Out label="FRP at 50% (95% CI)" value={fit ? `${fit.frp_at_p50_mw.toFixed(1)} MW` : "—"} />
-              <p className="text-xs text-[var(--text-muted)]">CI {fit?.frp_at_p50_ci95_mw.map((v) => v.toFixed(1)).join("–")} MW. Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019) — a sanity check, not the same quantity.</p>
+              <Out big label={`P(Aqua also detects) · ${region}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
+              <Out label="FRP at 50% (95% CI)" value={fit ? `${fmtNum(fit.frp_at_p50_mw, 1)} MW` : "—"} />
+              <p className="text-xs text-[var(--text-muted)]">CI {fit?.frp_at_p50_ci95_mw.map((v) => fmtNum(v, 1)).join("–")} MW. Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019) — a sanity check, not the same quantity.</p>
             </div>
           </div>
         </Tool>
@@ -144,9 +146,9 @@ export function LabPage() {
           <textarea value={list} onChange={(e) => setList(e.target.value)} rows={3} className="tabular w-full field rounded-2xl p-3 font-mono text-sm" />
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out label="VIIRS detections" value={values.length} />
-            <Out label="Σ P (expected MODIS sightings)" value={sumP.toFixed(2)} />
-            <Out label="κ (pixels per MODIS detection)" value={fit?.kappa.toFixed(3) ?? "—"} />
-            <Out big label="MODIS-equivalent count" value={fit ? (fit.kappa * sumP).toFixed(2) : "—"} />
+            <Out label="Σ P (expected MODIS sightings)" value={fmtNum(sumP, 2)} />
+            <Out label="κ (pixels per MODIS detection)" value={fmtNum(fit?.kappa, 3)} />
+            <Out big label="MODIS-equivalent count" value={fit ? fmtNum(fit.kappa * sumP, 2) : "—"} />
           </div>
         </Tool>
 
@@ -159,7 +161,7 @@ export function LabPage() {
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <Out label="Mean before" value={fmt(before)} /><Out label="Mean after" value={fmt(after)} />
-            <Out big label="Ratio" value={before && after != null ? `×${(after / before).toFixed(2)}` : "—"} />
+            <Out big label="Ratio" value={before && after != null ? fmtRatio(after / before) : "—"} />
           </div>
         </Tool>
 
@@ -172,9 +174,9 @@ export function LabPage() {
             <span className="text-xs text-[var(--text-muted)]">Try 13.5 (Suomi-NPP) vs 14.9 (Aqua over Australia, 2025)</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <Out label="A sees, of peak" value={`${(share(tA, DIURNAL[cover]) * 100).toFixed(0)}%`} />
-            <Out label="B sees, of peak" value={`${(share(tB, DIURNAL[cover]) * 100).toFixed(0)}%`} />
-            <Out big label="B ÷ A" value={`×${(share(tB, DIURNAL[cover]) / share(tA, DIURNAL[cover])).toFixed(2)}`} />
+            <Out label="A sees, of peak" value={`${fmtNum(share(tA, DIURNAL[cover]) * 100, 0)}%`} />
+            <Out label="B sees, of peak" value={`${fmtNum(share(tB, DIURNAL[cover]) * 100, 0)}%`} />
+            <Out big label="B ÷ A" value={fmtRatio(share(tB, DIURNAL[cover]) / share(tA, DIURNAL[cover]))} />
           </div>
         </Tool>
 
@@ -182,9 +184,9 @@ export function LabPage() {
           formula={trend ? `slope = ${trend.slope.toFixed(1)} detections/yr  (${trend.pct.toFixed(2)}% of mean per yr)   R² = ${trend.r2.toFixed(3)}   t = ${trend.t.toFixed(2)}, n = ${trend.n}` : "need ≥ 3 years"}>
           <div className="flex flex-wrap items-center gap-3 text-sm">From <Num v={t0} set={setT0} min={2001} max={2025} w="w-20" /> to <Num v={t1} set={setT1} min={2001} max={2025} w="w-20" /></div>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
-            <Out big label="Change per year" value={trend ? `${trend.pct >= 0 ? "+" : ""}${trend.pct.toFixed(1)}%` : "—"} />
+            <Out big label="Change per year" value={trend ? fmtPct(trend.pct) : "—"} />
             <Out label="Slope (detections / yr)" value={trend ? fmt(trend.slope) : "—"} />
-            <Out label="R²" value={trend ? trend.r2.toFixed(2) : "—"} />
+            <Out label="R²" value={trend ? fmtR2(trend.r2) : "—"} />
             <Out label="|t| > 2.1 ≈ significant" value={trend ? (Math.abs(trend.t) > 2.1 ? "yes" : "no") : "—"} />
           </div>
         </Tool>
@@ -197,7 +199,7 @@ export function LabPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out label={`${MONTHS[am - 1]} ${ay}`} value={fmt(anomaly?.v)} />
             <Out label="Median of other years" value={fmt(anomaly?.med)} />
-            <Out label="× median" value={anomaly?.med ? `×${(anomaly.v / anomaly.med).toFixed(2)}` : "—"} />
+            <Out label="× median" value={anomaly?.med ? fmtRatio(anomaly.v / anomaly.med) : "—"} />
             <Out big label="Percentile" value={anomaly ? `${Math.round(anomaly.rank * 100)}th` : "—"} />
           </div>
           {anomaly && anomaly.q90 != null && anomaly.v > anomaly.q90 && <p className="mt-3 text-sm font-medium text-[var(--ember)]">Critical period: above the 90th percentile for {MONTHS[am - 1]}.</p>}

@@ -1,18 +1,18 @@
 "use client";
 
-import { DotClock, DotText, dotCompact, useToday } from "@/components/DotMatrix";
+import { DotClock, DotStat, DotText, dotCompact, useToday } from "@/components/DotMatrix";
 import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { CountUp, Reveal } from "@/components/ui";
+import { Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getSeason, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { ALL } from "@/lib/nav";
 import { Eyebrow, Stat } from "@/components/Figure";
 import { DriftClocks } from "@/components/DriftClocks";
-import { NA, fmtAge, fmtClock, fmtInt, fmtR2, fmtUtc, parseUtc, span } from "@/lib/format";
+import { NA, fmtAge, fmtClock, fmtInt, fmtR2, fmtRatio, fmtSigned, fmtUtc, parseUtc, span } from "@/lib/format";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
 import { EASE } from "@/lib/motion";
@@ -250,7 +250,7 @@ function OrbitChapter() {
       <div className="md:pr-4">
         {steps.map(([e, t, b], i) => (
           <StoryStep key={i} i={i} n={steps.length} p={p}>
-            <p className="eyebrow">{e}</p>
+            <Eyebrow>{e}</Eyebrow>
             <h2 className="display mt-3 t-d2">{t}</h2>
             <p className="mt-4 max-w-md text-lg leading-relaxed text-[var(--text-secondary)]">{b}</p>
           </StoryStep>
@@ -268,7 +268,7 @@ function OrbitChapter() {
             </g>
           </motion.svg>
           <motion.div style={{ opacity: heat }} className="absolute inset-8 rounded-2xl bg-[radial-gradient(circle_at_40%_45%,#fff0c7_0%,#f49b3f_22%,#c93f1c_40%,rgba(86,17,20,0.08)_70%,transparent)]">
-            <p className="tabular absolute bottom-3 left-4 font-mono text-[11px] text-[var(--ink)]">FRP ≈ 140 MW</p>
+            <p className="tabular absolute bottom-3 left-4 font-mono text-[11px] text-[var(--ink)]">fire radiative power, in MW</p>
           </motion.div>
           <motion.div style={{ opacity: coarse }} className="absolute inset-8 grid grid-cols-4 gap-1">
             {Array.from({ length: 16 }, (_, i) => <div key={i} className={`rounded-md ${[5, 10].includes(i) ? "bg-[var(--seq-5)]" : "bg-[var(--surface-2)]"}`} />)}
@@ -306,7 +306,7 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
   return (
     <section ref={ref} className="relative mt-10" style={{ height: "320vh" }}>
       <div className="sticky top-20 flex min-h-[86vh] flex-col justify-center">
-        <p className="eyebrow">05 · The jump · Canada, detections per year</p>
+        <Eyebrow>05 · The jump · Canada, detections per year</Eyebrow>
         <h2 className="display mt-3 t-d2">The record says fire <span className="italic text-[var(--ember)]">exploded.</span></h2>
         <div className="window relative mt-8 p-4 sm:p-6">
           <svg viewBox="0 0 640 300" className="w-full">
@@ -319,12 +319,12 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
             {years.filter((a) => a.year % 4 === 3).map((a) => <text key={a.year} x={20 + ((a.year - 2003) / 22) * 600} y="294" fontSize="11" textAnchor="middle" fill="var(--text-muted)">{a.year}</text>)}
           </svg>
           <motion.div style={{ opacity: cap1 }} className="card absolute right-6 top-6 max-w-[16rem] p-4">
-            <p className="display text-5xl text-[var(--ember)]">×{row?.step_raw.toFixed(1)}</p>
+            <p className="display tabular text-5xl text-[var(--ember)]">{fmtRatio(row?.step_raw)}</p>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">Yearly detections, 2012–14 against 2009–11, in the raw record.</p>
           </motion.div>
           <motion.div style={{ opacity: cap2 }} className="card absolute right-6 top-6 max-w-[17rem] p-4">
-            <p className="display text-5xl">×{row?.step_harm.toFixed(2)}</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Harmonized. Aqua MODIS, which never changed, says ×{row?.step_aqua.toFixed(2)}. The jump was the sensor.</p>
+            <p className="display tabular text-5xl">{fmtRatio(row?.step_harm)}</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Harmonized. Aqua MODIS, which never changed, says {fmtRatio(row?.step_aqua)}. The jump was the sensor.</p>
           </motion.div>
         </div>
         <motion.p style={{ opacity: cap2 }} className="display mt-6 t-d3">The fires did not. <span className="italic text-[var(--ember)]">Keep scrolling.</span></motion.p>
@@ -362,15 +362,15 @@ export function Home() {
       <JumpChapter row={canada} />
 
       <section className="mt-8 py-12">
-        <Reveal><p className="eyebrow">07 · How we know</p></Reveal>
+        <Reveal><Eyebrow>07 · How we know</Eyebrow></Reveal>
         <Reveal delay={0.05}><h2 className="display mt-3 max-w-3xl t-d2">Tested on years the model <span className="italic text-[var(--ember)]">never saw.</span></h2></Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(d?.table.countries ?? []).map((c, i) => (
             <Reveal key={c.country} delay={i * 0.07}>
               <div className="card p-5">
-                <p className="eyebrow">{c.country}</p>
-                <p className="display mt-2 text-5xl"><CountUp to={c.r2_model} decimals={2} /></p>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">held-out R² vs observed Aqua · raw VIIRS: {c.r2_raw.toFixed(1)}</p>
+                <Eyebrow>{c.country}</Eyebrow>
+                <p className="mt-3 text-[var(--ink)]"><DotStat text={fmtR2(c.r2_model)} dot={7} /></p>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">held-out R² against observed Aqua · raw VIIRS {fmtR2(c.r2_raw)}</p>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[var(--surface-2)]">
                   <motion.div className="h-full rounded-full bg-[var(--ember)]" initial={{ width: 0 }} whileInView={{ width: `${Math.max(0, c.r2_model) * 100}%` }} viewport={{ once: true }} transition={{ duration: 1.4, ease: EASE, delay: 0.2 + i * 0.07 }} />
                 </div>
@@ -384,16 +384,16 @@ export function Home() {
       <DriftChapter drift={d?.drift} />
 
       <section className="py-16">
-        <Reveal><p className="eyebrow">08 · What it changes</p></Reveal>
+        <Reveal><Eyebrow>08 · What it changes</Eyebrow></Reveal>
         <div className="mt-6 grid items-center gap-8 lg:grid-cols-2">
           <Reveal><h2 className="display t-d2">Is the fire season starting earlier? <span className="italic text-[var(--ember)]">Less than the raw data says.</span></h2></Reveal>
           <Reveal delay={0.1}>
             <div className="card p-6">
-              <p className="eyebrow">Chile · season onset trend, 2003–2025</p>
+              <Eyebrow>Chile · season onset trend, 2003–2025</Eyebrow>
               <div className="mt-5 space-y-5">
                 {[["Raw record", chile?.raw_onset, "#c93f1c"], ["Harmonized", chile?.harm_onset, "var(--ink)"]].map(([l, v, c]) => (
                   <div key={l as string}>
-                    <div className="flex justify-between text-sm"><span>{l as string}</span><span className="tabular display text-2xl">{v == null ? "—" : `${(v as number).toFixed(1)} days / decade`}</span></div>
+                    <div className="flex justify-between text-sm"><span>{l as string}</span><span className="tabular display text-2xl">{v == null ? "—" : <>{fmtSigned(v as number)} <span className="stat-unit text-[var(--text-secondary)]">days / decade</span></>}</span></div>
                     <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
                       <motion.div className="h-full rounded-full" style={{ background: c as string }} initial={{ width: 0 }} whileInView={{ width: `${Math.min(100, Math.abs((v as number) ?? 0) * 10)}%` }} viewport={{ once: true }} transition={{ duration: 1.2, ease: EASE }} />
                     </div>
@@ -407,13 +407,13 @@ export function Home() {
       </section>
 
       <section className="py-16">
-        <Reveal><p className="eyebrow">09 · Everything inside</p></Reveal>
+        <Reveal><Eyebrow>09 · Everything inside</Eyebrow></Reveal>
         <Reveal delay={0.05}><h2 className="display mt-3 t-d2">One record. <span className="italic text-[var(--ember)]">Nine ways in.</span></h2></Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ALL.map((t, i) => (
             <Reveal key={t.href} delay={(i % 3) * 0.07}>
               <Link href={t.href} className="card group block h-full p-6">
-                <p className="font-mono text-[11px] text-[var(--text-muted)]">{String(i + 1).padStart(2, "0")}</p>
+                <Eyebrow><span className="eyebrow-n">{String(i + 1).padStart(2, "0")}</span></Eyebrow>
                 <p className="display mt-3 text-3xl">{t.label}</p>
                 <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{t.blurb}</p>
                 <p className="mt-5 text-sm font-medium text-[var(--ember)] transition-transform group-hover:translate-x-1">Open →</p>

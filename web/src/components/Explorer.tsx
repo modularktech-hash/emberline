@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnualLine } from "@/components/AnnualLine";
-import { PageHead } from "@/components/ui";
+import { CountUp, PageHead } from "@/components/ui";
+import { Eyebrow } from "@/components/Figure";
+import { fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { bboxToParents, type Bbox } from "@/lib/aoi";
@@ -124,30 +126,30 @@ export function Explorer() {
           <>
             <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_17rem]">
               <div>
-                <p className="eyebrow">Detections per year · {areaLabel(area)}</p>
+                <Eyebrow>Detections per year · {areaLabel(area)}</Eyebrow>
                 <AnnualLine raw={view.raw} harmonized={view.harm} mode={mode} />
               </div>
               <div className="flex flex-col justify-center gap-5 border-t border-[var(--hairline)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                 <div>
-                  <p className="eyebrow">The 2012 step</p>
+                  <Eyebrow>The 2012 step</Eyebrow>
                   <p className="display tabular mt-3 text-6xl text-[var(--ember)]">
-                    <DotStat text={`×${((mode === "raw" ? view.stepRaw : view.stepHarm) ?? NaN).toFixed(2)}`} dot={8} />
+                    <DotStat text={fmtRatio(mode === "raw" ? view.stepRaw : view.stepHarm)} dot={8} />
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                     Mean yearly count 2012–14 over 2009–11.{" "}
                     {mode === "raw"
-                      ? `Harmonized: ×${(view.stepHarm ?? NaN).toFixed(2)}.`
-                      : `The raw record says ×${(view.stepRaw ?? NaN).toFixed(2)}.`}
-                    {fit && ` The unchanged Aqua sensor alone: ×${fit.null_control.aqua_only_step_ratio_2012.toFixed(2)}.`}
+                      ? `Harmonized: ${fmtRatio(view.stepHarm)}.`
+                      : `The raw record says ${fmtRatio(view.stepRaw)}.`}
+                    {fit && ` The unchanged Aqua sensor alone: ${fmtRatio(fit.null_control.aqua_only_step_ratio_2012)}.`}
                   </p>
                 </div>
                 {fit && (
                   <div>
-                    <p className="eyebrow">Held-out accuracy</p>
-                    <p className="display tabular mt-1 text-3xl">R² {fit.validation_test.model.r2.toFixed(2)}</p>
+                    <Eyebrow>Held-out accuracy</Eyebrow>
+                    <p className="display tabular mt-2 text-3xl"><CountUp to={fit.validation_test.model.r2} decimals={2} /> <span className="stat-unit text-[var(--text-secondary)]">R²</span></p>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                       Against observed Aqua, {data.params.test_years[0]}–{data.params.test_years[1]}, years the model never saw.
-                      Raw VIIRS scores {fit.validation_test.raw_viirs.r2.toFixed(1)}.
+                      Raw VIIRS scores {fmtR2(fit.validation_test.raw_viirs.r2)}.
                     </p>
                   </div>
                 )}
@@ -161,7 +163,7 @@ export function Explorer() {
 
             <div className="mt-8 border-t border-[var(--hairline)] pt-6">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <p className="eyebrow">Burning activity calendar · detections per month</p>
+                <Eyebrow>Burning activity calendar · detections per month</Eyebrow>
                 <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                   <label className="flex items-center gap-1.5">From
                     <select value={from} onChange={(e) => setFrom(Math.min(Number(e.target.value), to))} className="field rounded-xl px-2 py-1">
@@ -203,7 +205,7 @@ export function Explorer() {
             : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" aria-label="Map loading" />}
         </div>
         <div className="card p-5">
-          <p className="eyebrow">Choose your own area</p>
+          <Eyebrow>Choose your own area</Eyebrow>
           <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
             Press <span className="text-[var(--text-primary)]">Draw area</span> and drag a box on the map, or type bounds in degrees.
           </p>

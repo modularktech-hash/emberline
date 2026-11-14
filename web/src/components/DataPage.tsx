@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtNum, fmtPct, fmtR2, fmtRatio, fmtSigned } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { Chip, Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
 import { downloadCsv, fmt } from "@/lib/ember";
@@ -12,12 +13,12 @@ const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint:
   { key: "harm_mean_2003_2025", label: "Mean / yr (harm.)", f: (r) => fmt(r.harm_mean_2003_2025), hint: "Aqua-equivalent detections, 2003–2025 mean" },
   { key: "harm_2025", label: "2025 (harm.)", f: (r) => fmt(r.harm_2025), hint: "Aqua-equivalent detections in 2025" },
   { key: "raw_2025", label: "2025 (raw)", f: (r) => fmt(r.raw_2025), hint: "Raw VIIRS detections in 2025" },
-  { key: "step_raw", label: "2012 step raw", f: (r) => `×${r.step_raw.toFixed(2)}`, hint: "Mean 2012–14 / 2009–11, raw splice" },
-  { key: "step_harm", label: "2012 step harm.", f: (r) => `×${r.step_harm.toFixed(2)}`, hint: "Same ratio, harmonized" },
-  { key: "r2_model", label: "Held-out R²", f: (r) => r.r2_model.toFixed(2), hint: "vs observed Aqua, 2019–2021, cell × month" },
-  { key: "bias_pct", label: "Bias", f: (r) => `${r.bias_pct > 0 ? "+" : ""}${r.bias_pct.toFixed(1)}%`, hint: "Held-out total bias" },
-  { key: "frp_p50", label: "FRP @ 50%", f: (r) => `${r.frp_p50.toFixed(1)} MW`, hint: "FRP at which Aqua detects half the fires VIIRS sees" },
-  { key: "onset_trend_harm", label: "Onset trend", f: (r) => (r.onset_trend_harm == null ? "—" : `${r.onset_trend_harm > 0 ? "+" : ""}${r.onset_trend_harm.toFixed(1)} d/dec`), hint: "Harmonized season onset, days per decade" },
+  { key: "step_raw", label: "2012 step raw", f: (r) => fmtRatio(r.step_raw), hint: "Mean 2012–14 / 2009–11, raw splice" },
+  { key: "step_harm", label: "2012 step harm.", f: (r) => fmtRatio(r.step_harm), hint: "Same ratio, harmonized" },
+  { key: "r2_model", label: "Held-out R²", f: (r) => fmtR2(r.r2_model), hint: "vs observed Aqua, 2019–2021, cell × month" },
+  { key: "bias_pct", label: "Bias", f: (r) => fmtPct(r.bias_pct), hint: "Held-out total bias" },
+  { key: "frp_p50", label: "FRP @ 50%", f: (r) => `${fmtNum(r.frp_p50, 1)} MW`, hint: "FRP at which Aqua detects half the fires VIIRS sees" },
+  { key: "onset_trend_harm", label: "Onset trend", f: (r) => (r.onset_trend_harm == null ? "—" : `${fmtSigned(r.onset_trend_harm)} d/dec`), hint: "Harmonized season onset, days per decade" },
 ];
 
 const FILES = [
@@ -119,7 +120,7 @@ export function DataPage() {
                           <tr key={a.year} className="border-t border-[var(--hairline)]">
                             <td className={`px-4 py-2 ${a.year === 2012 ? "text-[var(--ember)]" : ""}`}>{a.year}</td>
                             <td>{fmt(a.raw)}</td><td className="text-xs text-[var(--text-muted)]">{a.year < 2012 ? "MODIS" : "VIIRS"}</td>
-                            <td>{a.harm ? fmt(a.harm) : <span className="text-xs text-[var(--text-muted)]">no Aqua data yet</span>}</td><td className="text-[var(--text-secondary)]">{a.harm ? `×${(a.raw / a.harm).toFixed(2)}` : "—"}</td>
+                            <td>{a.harm ? fmt(a.harm) : <span className="text-xs text-[var(--text-muted)]">no Aqua data yet</span>}</td><td className="text-[var(--text-secondary)]">{a.harm ? fmtRatio(a.raw / a.harm) : "—"}</td>
                             <td className="pr-4"><div className="h-2 rounded-full bg-[var(--surface-2)]"><div className="h-2 rounded-full bg-[var(--ember)]" style={{ width: `${(a.harm / max) * 100}%` }} /></div></td>
                           </tr>
                         );

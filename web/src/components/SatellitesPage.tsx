@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtNum } from "@/lib/format";
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
@@ -95,7 +96,7 @@ export function SatellitesPage() {
               <FireGlobe live={null} tle={data?.tle.satellites ?? null} showFires={false} speed={180} height={520} satLabels />
             </div>
             <div className="border-t border-[var(--hairline)] p-6 lg:border-l lg:border-t-0">
-              <p className="eyebrow">Orbits, live</p>
+              <Eyebrow>Orbits, live</Eyebrow>
               <h2 className="display mt-2 text-3xl">Sun-synchronous, pole to pole.</h2>
               <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Each satellite crosses the equator at the same local solar time on every orbit, about 14 times a day. That is why a fire seen by Aqua and by Suomi-NPP was seen at nearly the same moment — and why it matters when that moment drifts.
@@ -118,7 +119,7 @@ export function SatellitesPage() {
         <section className="card mt-10 p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="eyebrow">Measured from the detections</p>
+              <Eyebrow>Measured from the detections</Eyebrow>
               <h2 className="display mt-2 t-d3">When each satellite actually passed, year by year</h2>
             </div>
             <CountryPicker value={country} options={countries} onChange={setCountry} />
@@ -149,7 +150,7 @@ export function SatellitesPage() {
 
       <Reveal>
         <section className="card mt-10 p-5 sm:p-7">
-          <p className="eyebrow">Why the drift matters</p>
+          <Eyebrow>Why the drift matters</Eyebrow>
           <h2 className="display mt-2 t-d3">Fire has a daily rhythm. <span className="italic text-[var(--ember)]">Satellites sample one moment of it.</span></h2>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="flex flex-wrap gap-1.5">{Object.keys(DIURNAL).map((c) => <Chip key={c} on={c === cover} onClick={() => setCover(c)}>{c}</Chip>)}</div>
@@ -175,7 +176,7 @@ export function SatellitesPage() {
             })}
           </svg>
           <p className="mt-3 max-w-3xl text-xs leading-relaxed text-[var(--text-muted)]">
-            Curve: the published fire diurnal cycle for {cover.toLowerCase()} (Andela et al. 2015, ACP 15:8831, Table 1: peak {p.h.toFixed(2)} h, σ {p.s} h), shown for illustration — it was fitted on geostationary data at 0.1°, and real cycles widen at coarser scales. Overpass times: measured over {country} in {year}. As Aqua drifts off the peak it samples less of each day&apos;s fire; Suomi-NPP stays on it.
+            Curve: the published fire diurnal cycle for {cover.toLowerCase()} (Andela et al. 2015, ACP 15:8831, Table 1: peak {fmtNum(p.h, 2)} h, σ {p.s} h), shown for illustration — it was fitted on geostationary data at 0.1°, and real cycles widen at coarser scales. Overpass times: measured over {country} in {year}. As Aqua drifts off the peak it samples less of each day&apos;s fire; Suomi-NPP stays on it.
           </p>
         </section>
       </Reveal>

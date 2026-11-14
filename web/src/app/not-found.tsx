@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Eyebrow } from "@/components/Figure";
 import { DotText } from "@/components/DotMatrix";
 
 export const metadata = { title: "Not found — Emberline" };
@@ -15,7 +16,7 @@ export default function NotFound() {
           <DotText text="404" dot={13} gap={4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" />
         </div>
       </div>
-      <p className="eyebrow mt-10">Nothing burning here</p>
+      <Eyebrow className="mt-10">Nothing burning here</Eyebrow>
       <h1 className="display mt-3 t-d1">This page <span className="italic text-[var(--ember)]">slipped out of orbit.</span></h1>
       <p className="mx-auto mt-5 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">The link may be old, or the address mistyped. The record itself is right where you left it.</p>
       <div className="mt-9 flex flex-wrap items-center justify-center gap-3">

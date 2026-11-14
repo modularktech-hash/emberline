@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtClock, fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
+import { Eyebrow } from "@/components/Figure";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
@@ -35,11 +37,11 @@ export function Method() {
         lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest." />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
-          ["1 · Match", "On the same day and place (within ~3.5 km), did the old sensor, Aqua MODIS, also see the fire that VIIRS saw? Both pass overhead in the early afternoon."],
-          ["2 · Learn", "From 2012–2018 we learn the chance that MODIS sees a fire, given how much energy it radiates. Big fires: almost always. Small ones: rarely."],
-          ["3 · Rebuild", "Every VIIRS detection is weighted by that chance. The total is the count a MODIS-class sensor would have made, comparable back to 2003."],
+          ["01 · Match", "On the same day and place (within ~3.5 km), did the old sensor, Aqua MODIS, also see the fire that VIIRS saw? Both pass overhead in the early afternoon."],
+          ["02 · Learn", "From 2012–2018 we learn the chance that MODIS sees a fire, given how much energy it radiates. Big fires: almost always. Small ones: rarely."],
+          ["03 · Rebuild", "Every VIIRS detection is weighted by that chance. The total is the count a MODIS-class sensor would have made, comparable back to 2003."],
         ].map(([t, d]) => (
-          <div key={t} className="card p-5"><p className="text-sm font-medium text-[var(--ember)]">{t}</p><p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{d}</p></div>
+          <div key={t} className="card p-5"><Eyebrow>{t}</Eyebrow><p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{d}</p></div>
         ))}
       </div>
 
@@ -62,10 +64,10 @@ export function Method() {
                     return (
                       <tr key={n} className="border-t border-[var(--hairline)]">
                         <td className="py-2.5">{n}</td>
-                        <td><span className="text-[var(--ember)]">{t.model.r2.toFixed(2)}</span> <span className="text-xs text-[var(--text-muted)]">({ci.r2[0].toFixed(2)}–{ci.r2[1].toFixed(2)})</span> <Bar value={t.model.r2} tone="good" /></td>
-                        <td className="text-[var(--text-secondary)]">{t.raw_viirs.r2.toFixed(1)} <Bar value={1} tone="bad" /></td>
-                        <td className="text-[var(--text-secondary)]">{t.threshold.r2.toFixed(2)}</td>
-                        <td className="text-[var(--text-secondary)]">{t.model.bias_pct > 0 ? "+" : ""}{t.model.bias_pct.toFixed(1)}%</td>
+                        <td><span className="text-[var(--ember)]">{fmtR2(t.model.r2)}</span> <span className="text-xs text-[var(--text-muted)]">({fmtR2(ci.r2[0])} to {fmtR2(ci.r2[1])})</span> <Bar value={t.model.r2} tone="good" /></td>
+                        <td className="text-[var(--text-secondary)]">{fmtR2(t.raw_viirs.r2)} <Bar value={1} tone="bad" /></td>
+                        <td className="text-[var(--text-secondary)]">{fmtR2(t.threshold.r2)}</td>
+                        <td className="text-[var(--text-secondary)]">{fmtPct(t.model.bias_pct)}</td>
                         <td className="text-[var(--text-muted)]">{fmt(t.model.n_cell_months)}</td>
                       </tr>
                     );
@@ -88,9 +90,9 @@ export function Method() {
                   {names.map((n) => { const k = p.countries[n].null_control; return (
                     <tr key={n} className="border-t border-[var(--hairline)]">
                       <td className="py-2.5">{n}</td>
-                      <td className="text-[#96221a]">×{k.spliced_raw_step_ratio_2012.toFixed(2)}</td>
-                      <td>×{k.aqua_only_step_ratio_2012.toFixed(2)}</td>
-                      <td className="text-[var(--ember)]">×{k.harmonized_step_ratio_2012.toFixed(2)}</td>
+                      <td className="text-[#96221a]">{fmtRatio(k.spliced_raw_step_ratio_2012)}</td>
+                      <td>{fmtRatio(k.aqua_only_step_ratio_2012)}</td>
+                      <td className="text-[var(--ember)]">{fmtRatio(k.harmonized_step_ratio_2012)}</td>
                     </tr>); })}
                 </tbody>
               </table>
@@ -114,7 +116,7 @@ export function Method() {
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[var(--text-secondary)]">
               {names.map((n, i) => { const c = p.countries[n]; return (
                 <span key={n} className="tabular"><span className="mr-1.5 inline-block h-0.5 w-5 align-middle" style={{ background: HUES[i % HUES.length] }} />
-                  {n}: 50% at {c.frp_at_p50_mw.toFixed(1)} MW ({c.frp_at_p50_ci95_mw[0].toFixed(1)}–{c.frp_at_p50_ci95_mw[1].toFixed(1)})</span>); })}
+                  {n}: 50% at {fmtNum(c.frp_at_p50_mw, 1)} MW ({fmtNum(c.frp_at_p50_ci95_mw[0], 1)}–{fmtNum(c.frp_at_p50_ci95_mw[1], 1)})</span>); })}
             </div>
           </section>
 
@@ -132,8 +134,8 @@ export function Method() {
                   {names.map((n) => { const c = p.countries[n]; const f = c.frozen_era_obs_over_pred.map((d) => d.obs_over_pred); return (
                     <tr key={n} className="border-t border-[var(--hairline)]">
                       <td className="py-2.5">{n}</td>
-                      {c.drift_era.map((d) => <td key={d.year}>×{d.obs_over_pred.toFixed(2)} <span className="text-xs text-[var(--text-muted)]">{Math.floor(d.aqua_lst)}:{String(Math.round((d.aqua_lst % 1) * 60)).padStart(2, "0")}</span></td>)}
-                      <td className="text-[var(--text-muted)]">×{Math.min(...f).toFixed(2)}–{Math.max(...f).toFixed(2)}</td>
+                      {c.drift_era.map((d) => <td key={d.year}>{fmtRatio(d.obs_over_pred)} <span className="text-xs text-[var(--text-muted)]">{fmtClock(d.aqua_lst)}</span></td>)}
+                      <td className="text-[var(--text-muted)]">{fmtRatio(Math.min(...f))}–{fmtNum(Math.max(...f), 2)}</td>
                     </tr>); })}
                 </tbody>
               </table>

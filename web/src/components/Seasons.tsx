@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtRatio } from "@/lib/format";
+import { Eyebrow } from "@/components/Figure";
 import { useMemo, useState } from "react";
 import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
 import { FirePulse } from "@/components/FirePulse";
@@ -87,7 +89,7 @@ export function Seasons() {
                       <tr key={i} className="border-t border-[var(--hairline)]">
                         <td className="py-2 text-[var(--text-secondary)]">{MONTHS[i]}</td>
                         <td>{fmt(m.own)}</td><td className="text-[var(--text-secondary)]">{fmt(m.med)}</td>
-                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : `×${ratio.toFixed(2)}`}</td>
+                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : fmtRatio(ratio)}</td>
                         <td className="text-xs text-[var(--text-secondary)]">{m.own === null ? "no data" : high ? "Critical: above 9 in 10 years" : above ? "Above the usual range" : "Within or below the usual range"}</td>
                       </tr>
                     );
@@ -104,7 +106,7 @@ export function Seasons() {
     <Reveal>
         <section className="card mt-10 grid items-center gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
           <div>
-            <p className="eyebrow">Fire Pulse</p>
+            <Eyebrow>Fire Pulse</Eyebrow>
             <h2 className="display mt-2 text-4xl">Twenty-three fire seasons in one glance.</h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
               Each ring is a year, oldest at the centre; each slice is a month. A fire season shows as a band of colour sweeping around the clock — if it widens, shifts, or burns darker in recent rings, you can see it here before you read a number. Harmonized record, same Ember ramp as the calendar.

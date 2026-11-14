@@ -1,10 +1,13 @@
 "use client";
 
+import { fmtInt, fmtNum } from "@/lib/format";
+import { Eyebrow } from "@/components/Figure";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 import { getLive, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
-import { Chip, CountUp, PageHead, Reveal, Segmented } from "@/components/ui";
+import { Chip, PageHead, Reveal, Segmented } from "@/components/ui";
+import { DotStat } from "@/components/DotMatrix";
 import type { Cell, SatState } from "@/components/FireGlobe";
 import { SAT_COLORS } from "@/lib/sats";
 
@@ -59,11 +62,11 @@ export function GlobePage() {
         <div className="space-y-4">
           <Reveal delay={0.05}>
             <div className="card p-5">
-              <p className="eyebrow">Detections, last {win}</p>
-              <p className="display mt-2 text-5xl"><CountUp key={win + total} to={total} /></p>
+              <Eyebrow>Detections, last {win}</Eyebrow>
+              <div className="mt-3">{w ? <DotStat text={fmtInt(total)} dot={5} /> : <span className="display text-4xl">…</span>}</div>
               <div className="mt-4 space-y-1.5 text-sm">
                 {w && Object.entries(w.totals).map(([k, v]) => (
-                  <div key={k} className="flex justify-between"><span className="text-[var(--text-secondary)]">{k}</span><span className="tabular">{v.toLocaleString()}</span></div>
+                  <div key={k} className="flex justify-between"><span className="text-[var(--text-secondary)]">{k}</span><span className="tabular">{fmtInt(v)}</span></div>
                 ))}
               </div>
               <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">
@@ -73,21 +76,21 @@ export function GlobePage() {
           </Reveal>
           {picked && (
             <div className="card border-[var(--ember)] p-5">
-              <p className="eyebrow">Selected cell</p>
-              <p className="tabular mt-2 text-lg">{picked[0].toFixed(2)}°, {picked[1].toFixed(2)}°</p>
-              <p className="tabular text-sm text-[var(--text-secondary)]">{picked[2].toLocaleString()} detections · {Math.round(picked[3]).toLocaleString()} MW · peak {Math.round(picked[4])} MW</p>
+              <Eyebrow>Selected cell</Eyebrow>
+              <p className="tabular mt-2 text-lg">{fmtNum(picked[0], 2)}°, {fmtNum(picked[1], 2)}°</p>
+              <p className="tabular text-sm text-[var(--text-secondary)]">{fmtInt(picked[2])} detections · {fmtInt(picked[3])} MW · peak {fmtInt(picked[4])} MW</p>
               <p className="text-xs text-[var(--text-muted)]">Seen by {picked[5]}</p>
             </div>
           )}
           <Reveal delay={0.1}>
             <div className="card p-5">
-              <p className="eyebrow">Hottest cells</p>
+              <Eyebrow>Hottest cells</Eyebrow>
               <ol className="mt-3 space-y-2 text-sm">
                 {top.map((c, i) => (
                   <li key={i}>
                     <button type="button" onClick={() => setPicked(c)} className="tabular flex w-full justify-between rounded-lg px-1 text-left hover:bg-[var(--surface-2)]">
-                      <span className="text-[var(--text-secondary)]">{i + 1}. {c[0].toFixed(1)}°, {c[1].toFixed(1)}°</span>
-                      <span>{Math.round(c[3]).toLocaleString()} MW</span>
+                      <span className="text-[var(--text-secondary)]">{i + 1}. {fmtNum(c[0], 1)}°, {fmtNum(c[1], 1)}°</span>
+                      <span>{fmtInt(c[3])} MW</span>
                     </button>
                   </li>
                 ))}
@@ -109,8 +112,8 @@ export function GlobePage() {
                 return (
                   <tr key={s.name} className="border-t border-[var(--hairline)]">
                     <td className="py-2.5"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm" style={{ background: SAT_COLORS[s.name] }} />{s.name}</td>
-                    <td>{s.instrument}</td><td>{s.lat.toFixed(2)}°</td><td>{s.lng.toFixed(2)}°</td>
-                    <td>{Math.round(s.alt * 6371)} km</td><td className="text-xs text-[var(--text-secondary)]">{t?.overpass}</td>
+                    <td>{s.instrument}</td><td>{fmtNum(s.lat, 2)}°</td><td>{fmtNum(s.lng, 2)}°</td>
+                    <td>{fmtInt(s.alt * 6371)} km</td><td className="text-xs text-[var(--text-secondary)]">{t?.overpass}</td>
                   </tr>
                 );
               })}

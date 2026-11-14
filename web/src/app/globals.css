@@ -293,3 +293,4 @@ html[data-perf=low] .dot-wipe { animation: none; }
 
 /* Overpass clock hands: one CSS transform transition per year step (DriftClocks). */
 .drift-hand { transform-box: view-box; transform-origin: 60px 60px; transition: transform 520ms var(--ease-out); }
+

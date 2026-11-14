@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtInt, fmtSigned } from "@/lib/format";
+import { Eyebrow } from "@/components/Figure";
 import { DotStat } from "@/components/DotMatrix";
 
 import { useState } from "react";
@@ -10,7 +12,7 @@ import { useParquet } from "@/lib/useParquet";
 
 type Metric = "onset" | "peak" | "end" | "length";
 const LABEL: Record<Metric, string> = { onset: "Season onset (10% of the year's detections)", peak: "Season peak (50%)", end: "Season end (90%)", length: "Season length (onset → end, days)" };
-const fmt = (v: number | null | undefined) => (v == null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(1)}`);
+const fmt = (v: number | null | undefined) => fmtSigned(v);
 
 export function TrendsPage() {
   const { data, error, loading } = useParquet(() => getSeason(), "season");
@@ -45,7 +47,7 @@ export function TrendsPage() {
               return (
                 <Reveal key={m} delay={i * 0.05}>
                   <button type="button" onClick={() => setMetric(m)} className={`card w-full p-5 text-left transition-transform hover:-translate-y-0.5 ${metric === m ? "!border-[var(--ember)]" : ""}`}>
-                    <p className="eyebrow">{m} · days per decade</p>
+                    <Eyebrow>{m} · days per decade</Eyebrow>
                     <div className="mt-3 flex items-end gap-4">
                       <div><p className="display tabular text-4xl"><DotStat text={String(fmt(harm))} dot={6} /></p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
                       <div><p className="display tabular text-2xl text-[var(--seq-5)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
@@ -59,7 +61,7 @@ export function TrendsPage() {
           <Reveal>
             <section className="window mt-8 p-4 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="eyebrow">{country} · the fire season, year by year (fire year starts {fireDayLabel(1, c.fire_year_start_month)})</p>
+                <Eyebrow>{country} · the fire season, year by year (fire year starts {fireDayLabel(1, c.fire_year_start_month)})</Eyebrow>
                 <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--ink)] align-middle opacity-80" />harmonized</span>
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-4)] align-middle opacity-60" />raw</span>
@@ -104,9 +106,9 @@ export function TrendsPage() {
                       <tr key={y.year} className="border-t border-[var(--hairline)]">
                         <td className={`py-2 ${y.year === 2012 ? "text-[var(--ember)]" : ""}`}>{y.year}</td>
                         <td className="text-[var(--text-secondary)]">{show(r)}</td><td>{show(h)}</td>
-                        <td className="text-[var(--text-secondary)]">{r != null && h != null ? `${r - h > 0 ? "+" : ""}${r - h} d` : "—"}</td>
-                        <td className="text-[var(--text-muted)]">{Math.round(y.raw_total ?? 0).toLocaleString()}</td>
-                        <td className="text-[var(--text-muted)]">{Math.round(y.harm_total ?? 0).toLocaleString()}</td>
+                        <td className="text-[var(--text-secondary)]">{r != null && h != null ? `${fmtSigned(r - h, 0)} d` : "—"}</td>
+                        <td className="text-[var(--text-muted)]">{fmtInt(y.raw_total)}</td>
+                        <td className="text-[var(--text-muted)]">{fmtInt(y.harm_total)}</td>
                       </tr>
                     );
                   })}

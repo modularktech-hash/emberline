@@ -17,8 +17,9 @@ export function rampBreaks(max: number): number[] {
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 const full = new Intl.NumberFormat("en", { maximumFractionDigits: 0 });
-export const fmt = (v: number | null | undefined) => (v == null ? "—" : full.format(v));
-export const fmtCompact = (v: number | null | undefined) => (v == null ? "—" : compact.format(v));
+// True minus sign (U+2212) for negatives, as everywhere else (lib/format.ts).
+export const fmt = (v: number | null | undefined) => (v == null ? "—" : full.format(v).replace(/^-/, "\u2212"));
+export const fmtCompact = (v: number | null | undefined) => (v == null ? "—" : compact.format(v).replace(/^-/, "\u2212"));
 export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export interface YearTotal { year: number; value: number | null }

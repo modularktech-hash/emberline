@@ -4,7 +4,8 @@ import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransf
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { EASE, SPRING, SPRING_BOUNCY } from "@/lib/motion";
-import { DotLoader, DotRule, DotStat } from "@/components/DotMatrix";
+import { DotLoader, DotRule } from "@/components/DotMatrix";
+import { Eyebrow } from "@/components/Figure";
 
 /** Fades and lifts its children into view once, as they scroll in (opacity + transform only, compositor-friendly). */
 export function Reveal({ children, delay = 0, y = 24, className }: { children: ReactNode; delay?: number; y?: number; className?: string }) {
@@ -31,7 +32,7 @@ export function CountUp({ to, decimals = 0, prefix = "", suffix = "", className 
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   const mv = useMotionValue(0);
-  const text = useTransform(mv, (v) => `${prefix}${v.toLocaleString("en", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}${suffix}`);
+  const text = useTransform(mv, (v) => `${prefix}${v.toLocaleString("en", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).replace(/^-/, "\u2212")}${suffix}`);
   useEffect(() => {
     if (!inView) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { mv.set(to); return; }
@@ -44,7 +45,7 @@ export function CountUp({ to, decimals = 0, prefix = "", suffix = "", className 
 export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; title: string; italic?: string; lede: ReactNode }) {
   return (
     <header className="pb-12 pt-20 sm:pb-16 sm:pt-28">
-      <Reveal><p className="eyebrow">{eyebrow}</p></Reveal>
+      <Reveal><Eyebrow>{eyebrow}</Eyebrow></Reveal>
       <Reveal delay={0.06}>
         <h1 className="display t-d1 mt-4 max-w-4xl">
           {title}{italic && <> <span className="italic text-[var(--ember)]">{italic}</span></>}
@@ -82,15 +83,6 @@ export function Chip({ on, onClick, children }: { on: boolean; onClick: () => vo
   );
 }
 
-export function Stat({ label, value, note }: { label: string; value: ReactNode; note?: ReactNode }) {
-  return (
-    <div className="card p-5">
-      <p className="eyebrow">{label}</p>
-      <p className="display tabular mt-2 text-4xl">{typeof value === "string" || typeof value === "number" ? <DotStat text={String(value)} dot={6} /> : value}</p>
-      {note && <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">{note}</p>}
-    </div>
-  );
-}
 
 export function Loading({ h = 320 }: { h?: number }) {
   return <div className="flex items-center justify-center rounded-[28px] bg-white/35" style={{ height: h }}><DotLoader /></div>;
