@@ -20,6 +20,8 @@ Usage: python3 scripts/publish_global.py
 
 from __future__ import annotations
 
+import json
+import math
 import sys
 from pathlib import Path
 
@@ -32,25 +34,40 @@ SENSOR_YEARS = {"MODIS": range(2001, 2026), "VIIRS": range(2012, 2026)}
 LIMIT = 50 * 1024 * 1024
 
 
+ARCHIVE = ROOT / "data" / "global"
+SOURCE_SENSOR = {"modis": "MODIS", "viirs-snpp": "VIIRS"}
+COLS = ["scope", "key", "year", "month", "sensor", "n_detections", "frp_sum_mw"]
+
+
+def country_raw(path: Path) -> pl.DataFrame:
+    """One country's raw calendar, zero-filled over the sensor-years whose
+    archive file exists (a valid file with no detections in a month is zero;
+    a year FIRMS has no file for stays missing, i.e. unknown)."""
+    country = path.stem.removeprefix("calendar_raw_")
+    obs = pl.read_parquet(path).with_columns(pl.col("year").cast(pl.Int16), pl.col("month").cast(pl.Int8),
+                                             pl.col("n_detections").cast(pl.Int64))
+    cov = [(SOURCE_SENSOR[s], y) for s, ys in (("modis", SENSOR_YEARS["MODIS"]), ("viirs-snpp", SENSOR_YEARS["VIIRS"]))
+           for y in ys if (ARCHIVE / f"{s}_{y}_{country}.csv.gz").exists()]
+    coverage = pl.DataFrame(cov, schema={"sensor": pl.Utf8, "year": pl.Int16}, orient="row")
+    months = pl.DataFrame({"month": list(range(1, 13))}, schema={"month": pl.Int8})
+    grid = obs.select("scope", "key").unique().join(coverage, how="cross").join(months, how="cross")
+    on = ["scope", "key", "sensor", "year", "month"]
+    lost = obs.join(grid, on=on, how="anti")
+    if lost.height:
+        raise SystemExit(f"{country}: {lost.height} observed rows outside the archive coverage")
+    return (grid.join(obs, on=on, how="left")
+            .with_columns(pl.col("n_detections").fill_null(0), pl.col("frp_sum_mw").fill_null(0.0)).select(COLS))
+
+
 def raw() -> pl.DataFrame:
-    parts = [pl.read_parquet(p) for p in sorted(SRC.glob("calendar_raw_*.parquet"))]
-    obs = (pl.concat(parts, how="vertical_relaxed")
+    parts = [country_raw(p) for p in sorted(SRC.glob("calendar_raw_*.parquet"))]
+    before = sum(int(p["n_detections"].sum()) for p in parts)
+    out = (pl.concat(parts, how="vertical_relaxed")
            .group_by("scope", "key", "year", "month", "sensor")
            .agg(pl.col("n_detections").sum(), pl.col("frp_sum_mw").sum())
-           .with_columns(pl.col("year").cast(pl.Int16), pl.col("month").cast(pl.Int8)))
-    # Zero-fill every (scope, key, sensor) over that sensor's archive years.
-    keys = obs.select("scope", "key").unique()
-    sy = pl.concat([pl.DataFrame({"sensor": s, "year": list(y)}, schema={"sensor": pl.Utf8, "year": pl.Int16})
-                    for s, y in SENSOR_YEARS.items()])
-    months = pl.DataFrame({"month": list(range(1, 13))}, schema={"month": pl.Int8})
-    grid = keys.join(sy, how="cross").join(months, how="cross")
-    out = (grid.join(obs, on=["scope", "key", "year", "month", "sensor"], how="left")
-           .with_columns(pl.col("n_detections").fill_null(0), pl.col("frp_sum_mw").fill_null(0.0)))
-    unexpected = obs.join(grid, on=["scope", "key", "year", "month", "sensor"], how="anti")
-    if unexpected.height:
-        raise SystemExit(f"{unexpected.height} observed rows fall outside the archive years:\n{unexpected.head()}")
-    return out.select("scope", "key", "year", "month", "sensor", "n_detections", "frp_sum_mw").sort(
-        "scope", "key", "year", "month", "sensor")
+           .select(COLS).sort("scope", "key", "year", "month", "sensor"))
+    assert int(out["n_detections"].sum()) == before, "merge lost detections"
+    return out
 
 
 def harmonized() -> pl.DataFrame:
@@ -59,7 +76,22 @@ def harmonized() -> pl.DataFrame:
             .select("scope", "key", "year", "month", "n_harmonized").sort("scope", "key", "year", "month"))
 
 
+def clean(o):
+    """Non-finite floats (e.g. obs/pred with a zero prediction) become null:
+    JSON has no NaN/Infinity and browsers reject them."""
+    if isinstance(o, float) and not math.isfinite(o):
+        return None
+    if isinstance(o, dict):
+        return {k: clean(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [clean(v) for v in o]
+    return o
+
+
 def main() -> int:
+    pj = WEB / "params_global.json"
+    pj.write_text(json.dumps(clean(json.loads(pj.read_text())), indent=2, allow_nan=False))
+    print(f"params_global.json: {len(json.loads(pj.read_text())['countries'])} countries, {pj.stat().st_size / 1e6:.1f} MB")
     r = raw()
     h = harmonized()
     for name, df in (("calendar_raw_global.parquet", r), ("calendar_harmonized_global.parquet", h)):
