@@ -812,7 +812,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Required verification · Motion · effort S
 - **Evidence:** CSS and globe reduction exist; JS charts animate
 - **Acceptance:** All nonessential movement paused/reduced; data still visible
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: CSS and globe honoured reduced motion; Motion (JS) animations did not globally (template page fade, Home hero words, SiteNav pills/menus, Satellites springs/path draw; ui.tsx Reveal/counter and Interactions already checked). Implemented: `web/src/components/MotionPrefs.tsx` wraps the layout; under `prefers-reduced-motion: reduce` it sets `MotionGlobalConfig.skipAnimations` (every Motion animation jumps to its final values) plus `MotionConfig reducedMotion="user"`, live-updated on setting change. Verified (Playwright `reducedMotion: reduce`, 390 and 1440, 11 routes, `next start`): `document.getAnimations()` has 0 running animations after load on every route except `/`; in-view reveals show final state instantly when reached; no overflow; no failed requests. Not done: Home (`/`) keeps 3 scroll-scrubbed ViewTimeline opacity/transform effects (hero fade, story steps, raw→harmonized morph) that move only with the user's scroll; Home.tsx belongs to another builder, needs a `useReducedMotion()` guard there. Not ticked until that lands.
 
 ### E26 — Show observed versus predicted and residuals
 

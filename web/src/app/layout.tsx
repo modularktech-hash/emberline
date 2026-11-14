@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
 import { Interactions } from "@/components/Interactions";
+import { MotionPrefs } from "@/components/MotionPrefs";
 import { PerfMode } from "@/components/PerfMode";
 import { RouteTransition } from "@/components/RouteTransition";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`}>
       <body id="top" className="flex min-h-full flex-col">
+        <MotionPrefs>
         <Backdrop />
         <PerfMode />
         <Interactions />
@@ -37,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
         <SiteFooter counts={fitCounts()} />
         <RouteTransition />
+        </MotionPrefs>
       </body>
     </html>
   );
