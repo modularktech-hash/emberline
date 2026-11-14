@@ -15,6 +15,8 @@ import { getCalendar, getParams } from "@/lib/queries";
 import { FitQualityTag } from "@/components/FitQuality";
 import { fitQuality } from "@/lib/quality";
 import { useParquet } from "@/lib/useParquet";
+import { useUrlState } from "@/lib/urlState";
+import { CopyLink } from "@/components/CopyLink";
 import type { Series } from "@/lib/types";
 import { prettyName } from "@/lib/names";
 
@@ -30,6 +32,12 @@ export function ComparePage() {
   const [b, setB] = useState("Australia");
   const [mode, setMode] = useState<Series>("harmonized");
   const [norm, setNorm] = useState<"abs" | "idx">("idx");
+  useUrlState((q) => {
+    const ok = (s: string | null) => (s && /^[^\u0000-\u001f<>]{1,80}$/.test(s) ? s : null);
+    setA(ok(q.get("a")) ?? "Canada"); setB(ok(q.get("b")) ?? "Australia");
+    setMode(q.get("mode") === "raw" ? "raw" : "harmonized");
+    setNorm(q.get("scale") === "abs" ? "abs" : "idx");
+  }, () => ({ a, b, mode, scale: norm }), [a, b, mode, norm]);
   const { ref: chartRef, fs, narrow } = useChartScale(760);
   const { data, error, loading, retry } = useParquet(async () => Promise.all([a, b].map((k) => getCalendar({ scope: "country", keys: [k], mode }))), `${a}|${b}|${mode}`);
 
@@ -60,6 +68,7 @@ export function ComparePage() {
           ))}
           <button type="button" onClick={() => { setA(b); setB(a); }} aria-label="Swap region A and region B"
             className="glass-thin min-h-[36px] px-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">⇄ Swap</button>
+          <CopyLink />
         </div>
         <div className="ml-auto flex flex-wrap items-end gap-4">
           <div>

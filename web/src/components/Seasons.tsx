@@ -8,7 +8,9 @@ import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
 import { FirePulse } from "@/components/FirePulse";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, PageHead, Reveal } from "@/components/ui";
-import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaFromQuery, areaToQuery, intParam, useUrlState } from "@/lib/urlState";
+import { CopyLink } from "@/components/CopyLink";
 import { CoverageNote, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { FitQualityTag } from "@/components/FitQuality";
 import { STATUS_LABEL } from "@/lib/coverage";
@@ -36,6 +38,11 @@ function bandOf(m: { own: number | null; q1: number | null; q3: number | null; p
 export function Seasons() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
   const [year, setYear] = useState(2023);
+  useUrlState((q) => {
+    const a = areaFromQuery(q);
+    setArea(a?.ok ? a.area : { kind: "country", name: "Canada" });
+    setYear(intParam(q, "year", 2003, 2025) ?? 2023);
+  }, () => ({ ...areaToQuery(area), year }), [areaKey(area), year]);
   const { ref: chartRef, fs, narrow } = useChartScale(720);
   const { data, error, loading, retry } = useAreaData(area);
   const coverageState = useCoverageState();
@@ -71,7 +78,8 @@ export function Seasons() {
       <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <CountryPicker value={area.kind === "country" ? area.name : ""} options={data?.countries ?? [area.kind === "country" ? area.name : "Canada"]} tags={data?.tags} onChange={(c) => setArea({ kind: "country", name: c })} />
-          <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
+          <CopyLink className="ml-auto" />
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
             <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5 text-[var(--text-primary)]">
               {(v?.years ?? [year]).map((yy) => <option key={yy}>{yy}</option>)}
             </select>

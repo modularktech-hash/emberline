@@ -690,10 +690,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E08 — Persist area mode dates and baseline in URL
 
-- [ ] **Status:** P1 · Observed gap · Workflow · effort M
+- [x] **Status:** P1 · Observed gap · Workflow · effort M
 - **Evidence:** Refresh resets2023 range to2003–2025
 - **Acceptance:** Shared link refresh/back restores exact analysis
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: refresh reset Explorer to Canada raw 2003–2025. Implemented: `lib/urlState.ts` `useUrlState` (window.location + native History API, so the pages stay statically prerendered without a useSearchParams Suspense boundary; first write replaces, later changes push) and `areaFromQuery` (box goes through `validateBoxInput`, invalid box shows the field errors and is never queried). Explorer: `country` or `box=w,s,e,n` (west > east = antimeridian), `mode`, `from`, `to`; Compare: `a`, `b`, `mode`, `scale`; Seasons: `country`/`box`, `year`. "Copy link" button on all three. No baseline control exists in the app, so none is persisted. Verified (Playwright, next start): Canada harmonized 2023–2023 → reload → same URL, same selects and identical numbers; copied URL in a fresh context → identical numbers; Back → previous state (to 2025); antimeridian box 170,-50,-170,-40 restores as Custom area; box=999,… shows "Link: Longitude must be between -180 and 180" with no query; Compare and Seasons restored after reload; 0 console errors, 0 overflow at 390/1440.
 
 ### E09 — Export an evidence brief and chart
 

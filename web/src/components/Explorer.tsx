@@ -17,7 +17,9 @@ import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normal
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
-import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaFromQuery, areaToQuery, intParam, useUrlState } from "@/lib/urlState";
+import { CopyLink } from "@/components/CopyLink";
 import { prettyName } from "@/lib/names";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
@@ -38,6 +40,18 @@ export function Explorer() {
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
+  useUrlState((q) => {
+    const a = areaFromQuery(q);
+    if (a?.ok) {
+      setArea(a.area); setBoxErr(null);
+      if (a.area.kind === "country") lastCountry.current = a.area.name; else if (a.fields) setBox(a.fields);
+    } else if (a && !a.ok) { setBox(a.fields); setBoxErr({ fields: a.fieldErrors, message: a.message }); }
+    else { setArea({ kind: "country", name: "Canada" }); }
+    const m = q.get("mode");
+    setMode(m === "harmonized" ? "harmonized" : "raw");
+    const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
+    if (f <= t) { setFrom(f); setTo(t); } else { setFrom(FIRST); setTo(2025); }
+  }, () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to }), [areaKey(area), mode, from, to]);
   const { data, error, loading, retry } = useAreaData(area);
   const ds = useDataset();
   const coverageState = useCoverageState();
@@ -172,7 +186,8 @@ export function Explorer() {
               </button>
             ))}
           </div>
-          <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark ml-auto min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
+          <CopyLink className="ml-auto" />
+          <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download CSV
           </button>
         </div>
