@@ -36,3 +36,5 @@ data/
 # The /data page route (a "data/" dir, otherwise caught by the rule above)
 !web/src/app/data/
 !web/src/app/data/**
+.venv-repro/
+!tests/fixtures/**/*.csv

@@ -85,6 +85,28 @@ country archive, `scripts/run_global.py` builds per-country detection tables and
 
 Read path: static Parquet over HTTP range requests (hyparquet). No database, no API server.
 
+## Reproduce in 5 minutes
+
+A committed fixture (`tests/fixtures/portugal_feb_dec/`, 104 KB) holds every FIRMS
+archive row for Portugal in February and December 2019–2021 (997 raw rows, MODIS C6.1
+and VIIRS 375 m Suomi-NPP, unmodified; cut by `scripts/make_fixture.py`). From a fresh
+clone, with Python ≥ 3.10 and pip access:
+
+```bash
+git clone https://github.com/modularktech-hash/emberline && cd emberline
+./scripts/repro_fixture.sh
+```
+
+It creates `.venv-repro/`, installs polars 2.1.0, numpy 2.5.3, pyarrow 22.0.0, h3 4.3.1,
+pytest 8.4.2, scikit-learn 1.7.2, httpx 0.28.1 and `packages/firms-ingest`, then
+(1) runs the firms-ingest tests, (2) builds detections, H3 cell-day rows and the raw
+calendar with the same functions as `scripts/build_tables.py`, (3) compares the Portugal
+monthly counts and FRP sums with `tests/fixtures/portugal_feb_dec_expected.json`, and
+(4) checks the counts equal the published `web/public/data/calendar_raw_global.parquet`
+that the website reads. It ends with `REPRO OK`. Tested with Python 3.13.
+The fixture covers ingestion and table building only; the harmonization fit needs
+2012–2021 data for a whole country and is not part of it.
+
 ## Data, libraries and papers
 
 - NASA FIRMS: MODIS Collection 6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP) country
