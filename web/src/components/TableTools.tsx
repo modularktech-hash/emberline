@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { searchText } from "@/lib/names";
 
 /**
@@ -50,7 +50,30 @@ export function TableSearch({ q, setQ, shown, total, label = "Search countriesâ€
   );
 }
 
-/** Scroll box: the table scrolls inside it (both ways), so the page never scrolls sideways; headers stay on top. */
+/**
+ * Scroll box: the table scrolls inside it (both ways), so the page never
+ * scrolls sideways; headers stay on top and the first column stays pinned.
+ * When columns are hidden to the right, a cue says so and the edge fades.
+ */
 export function ScrollBox({ children, h = "34rem", className = "" }: { children: ReactNode; h?: string; className?: string }) {
-  return <div className={`mt-4 max-w-full overflow-auto overscroll-x-contain rounded-xl border border-[var(--hairline)] px-3 ${className}`} style={{ maxHeight: h }}>{children}</div>;
+  const box = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const check = () => setMore(el.scrollWidth - el.clientWidth - el.scrollLeft > 4);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    el.addEventListener("scroll", check, { passive: true });
+    return () => { ro.disconnect(); el.removeEventListener("scroll", check); };
+  }, []);
+  return (
+    <div className="relative mt-4">
+      {more && <p className="mb-1 text-right text-[11px] text-[var(--text-muted)]" aria-hidden>Scroll sideways for more columns â†’</p>}
+      <div ref={box} tabIndex={0} role="region" aria-label="Scrollable table"
+        className={`sticky-first max-w-full overflow-auto overscroll-x-contain rounded-xl border border-[var(--hairline)] px-3 ${className}`} style={{ maxHeight: h }}>{children}</div>
+      {more && <div aria-hidden className="pointer-events-none absolute bottom-0 right-0 top-5 w-10 rounded-r-xl bg-[linear-gradient(to_right,transparent,var(--surface-page))]" />}
+    </div>
+  );
 }

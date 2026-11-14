@@ -1,6 +1,7 @@
 "use client";
 
 import { fmtPct, fmtR2, fmtRatio } from "@/lib/format";
+import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow } from "@/components/Figure";
 import { useMemo, useState } from "react";
 import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
@@ -18,6 +19,7 @@ const W = 720, H = 300, L = 46, R = 16, T = 18, B = 30;
 export function Seasons() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
   const [year, setYear] = useState(2023);
+  const { ref: chartRef, fs, narrow } = useChartScale(720);
   const { data, error, loading } = useAreaData(area);
   const coverage = useCoverage();
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
@@ -62,14 +64,14 @@ export function Seasons() {
         {data && !v && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-4" />}
         {v && (
           <div className="fade-in">
-            <svg viewBox={`0 0 ${W} ${H}`} className="mt-6 w-full" role="img" aria-label={`Monthly detections in ${year} against the historical median`}>
+            <svg ref={chartRef} viewBox={`0 0 ${W} ${H}`} className="mt-6 w-full overflow-visible" role="img" aria-label={`Monthly detections in ${year} against the historical median`}>
               {[0, 0.25, 0.5, 0.75, 1].map((f) => (
                 <g key={f}>
                   <line x1={L} x2={W - R} y1={y(f * v.max, v.max)} y2={y(f * v.max, v.max)} stroke="var(--gridline)" />
-                  <text x={L - 8} y={y(f * v.max, v.max) + 3.5} textAnchor="end" fontSize="10" fill="var(--text-muted)" className="tabular">{fmtCompact(f * v.max)}</text>
+                  <text x={L - 8} y={y(f * v.max, v.max) + 3.5} textAnchor="end" fontSize={fs(10)} fill="var(--text-muted)" className="tabular">{fmtCompact(f * v.max)}</text>
                 </g>
               ))}
-              {MONTHS.map((m, i) => <text key={m} x={x(i)} y={H - 9} textAnchor="middle" fontSize="10" fill="var(--text-muted)">{m}</text>)}
+              {MONTHS.map((m, i) => (narrow && i % 2 === 1) ? null : <text key={m} x={x(i)} y={H - 9} textAnchor="middle" fontSize={fs(10)} fill="var(--text-muted)">{m}</text>)}
               <path fill="var(--cool)" opacity="0.16"
                 d={`${v.months.map((m, i) => `${i ? "L" : "M"}${x(i)},${y(m.q3 ?? 0, v.max)}`).join(" ")} ${[...v.months].reverse().map((m, i) => `L${x(11 - i)},${y(m.q1 ?? 0, v.max)}`).join(" ")} Z`} />
               <path fill="none" stroke="var(--cool)" strokeWidth="1.6" strokeDasharray="4 4"

@@ -42,8 +42,9 @@ readouts. Make it more disciplined and easier to use. Labels say
       mode keeps region, years and selected cell. Live count says
       "near-real-time, raw detections" with its timestamp beside it.
       - Done: Mode strip above the calendar names the series and unit; region, years and the selected month survive a mode switch; home live count reads "near-real-time, raw detections in the 24 h to <fetch time>".
-- [ ] D4 Mobile: readable chart labels (fewer ticks), sticky first column +
+- [x] D4 Mobile: readable chart labels (fewer ticks), sticky first column +
       visible scroll cue on Data/Method tables, ~44 px touch targets.
+      - Done: `lib/useChartScale.ts` keeps SVG chart labels at ~11 px on phones and thins ticks (Explorer annual, Seasons, Compare, Trends); ScrollBox pins the first column and shows a "scroll sideways" cue + edge fade; toolbar/segmented/select/field controls are 44 px on phones.
 
 ### P2 — "Next"
 - [ ] D5 Nav: show the active page inside open dropdowns; page labels

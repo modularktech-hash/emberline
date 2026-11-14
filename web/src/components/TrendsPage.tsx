@@ -1,6 +1,7 @@
 "use client";
 
 import { fmtInt, fmtSigned } from "@/lib/format";
+import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow } from "@/components/Figure";
 import { DotStat } from "@/components/DotMatrix";
 
@@ -25,6 +26,7 @@ export function TrendsPage() {
   const names = data ? Object.keys(data.countries).sort() : [];
   const [country, setCountry] = useState("Chile");
   const [metric, setMetric] = useState<Metric>("onset");
+  const { ref: chartRef, fs, narrow } = useChartScale(760);
   const c = data?.countries[country];
   const monthly = c?.resolution === "monthly";
   const nDaily = names.filter((n) => data?.countries[n].resolution !== "monthly").length;
@@ -96,13 +98,13 @@ export function TrendsPage() {
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-4)] align-middle opacity-60" />raw</span>
                 </div>
               </div>
-              <svg viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full" role="img" aria-label={`Fire season timing in ${prettyName(country)}`}>
-                {months.map((m) => <g key={m.day}><line x1={dx(m.day)} x2={dx(m.day)} y1={T} y2={H - B} stroke="var(--gridline)" /><text x={dx(m.day) + 3} y={H - 10} fontSize="10" fill="var(--text-muted)">{m.label}</text></g>)}
+              <svg ref={chartRef} viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full overflow-visible" role="img" aria-label={`Fire season timing in ${prettyName(country)}`}>
+                {months.map((m, mi) => <g key={m.day}><line x1={dx(m.day)} x2={dx(m.day)} y1={T} y2={H - B} stroke="var(--gridline)" /><text x={dx(m.day) + 3} y={H - 10} fontSize={fs(10)} fill="var(--text-muted)">{narrow && mi % 2 === 1 ? "" : m.label}</text></g>)}
                 {years.map((y) => {
                   const cy = yx(y.year);
                   return (
                     <g key={y.year}>
-                      <text x={L - 8} y={cy + 3.5} textAnchor="end" fontSize="10" fill={y.year === 2012 ? "var(--ember)" : "var(--text-muted)"}>{y.year}</text>
+                      {(!narrow || (y.year - 2012) % 3 === 0) && <text x={L - 8} y={cy + 3.5} textAnchor="end" fontSize={fs(10)} fill={y.year === 2012 ? "var(--ember)" : "var(--text-muted)"}>{y.year}</text>}
                       {y.raw_onset != null && y.raw_end != null && (
                         <rect x={dx(y.raw_onset)} y={cy - 6} width={dx(y.raw_end) - dx(y.raw_onset)} height="5" rx="2.5" fill="var(--seq-4)" opacity="0.55" />
                       )}
