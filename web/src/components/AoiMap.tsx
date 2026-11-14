@@ -40,7 +40,10 @@ interface Props {
 }
 
 function bboxToFeature(bbox: Bbox): GeoJSON.Feature<GeoJSON.Polygon> {
-  const [west, south, east, north] = bbox;
+  const [west, south, eastIn, north] = bbox;
+  // A box that crosses the antimeridian (west > east, see lib/aoi.ts) is drawn
+  // with its east edge past 180 so it spans the Pacific, not the other 340°.
+  const east = eastIn < west ? eastIn + 360 : eastIn;
   return {
     type: "Feature",
     properties: {},
@@ -175,7 +178,7 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
       map.fitBounds(
         [
           [bbox[0], bbox[1]],
-          [bbox[2], bbox[3]],
+          [bbox[2] < bbox[0] ? bbox[2] + 360 : bbox[2], bbox[3]],
         ],
         { padding: 48, duration: 600, maxZoom: 8 },
       );

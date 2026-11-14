@@ -8,7 +8,7 @@ import { Eyebrow } from "@/components/Figure";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
-import { bboxToParents, cellsExtent, type Bbox } from "@/lib/aoi";
+import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
@@ -28,6 +28,8 @@ export function Explorer() {
   const [from, setFrom] = useState(FIRST);
   const [to, setTo] = useState(2025);
   const [box, setBox] = useState(["", "", "", ""]);
+  // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
+  const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
   const { data, error, loading } = useAreaData(area);
   // The map (maplibre, ~1 MB of JS plus tiles) mounts only once the calendar has
   // its data and the map slot is near the viewport, so it never competes with it.
@@ -57,13 +59,19 @@ export function Explorer() {
     };
   }, [data, from, to]);
 
-  const selectBox = (bbox: Bbox) => {
+  const selectBox = (drawn: Bbox) => {
+    const bbox = normalizeDrawnBbox(drawn);
+    setBoxErr(null);
     setBox(bbox.map((v) => v.toFixed(2)));
     setArea({ kind: "box", bbox, parents: bboxToParents(bbox) });
   };
+  // Invalid or blank bounds never reach the query: the user's entry stays in
+  // the fields, each bad field is marked, and the message is announced.
   const applyTyped = () => {
-    const [w, s, e, n] = box.map(Number);
-    if ([w, s, e, n].every(Number.isFinite) && e > w && n > s) selectBox([w, s, e, n]);
+    const check = validateBoxInput(box);
+    if (!check.ok) { setBoxErr({ fields: check.fieldErrors, message: check.message }); return; }
+    setBoxErr(null);
+    setArea({ kind: "box", bbox: check.bbox, parents: bboxToParents(check.bbox) });
   };
 
   const cal = data ? (mode === "raw" ? data.raw : data.harmonized) : null;
@@ -260,19 +268,36 @@ export function Explorer() {
             Press <span className="text-[var(--text-primary)]">Draw area</span> and drag a box on the map, or type bounds in degrees.
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {["West", "South", "East", "North"].map((l, i) => (
+            {["West", "South", "East", "North"].map((l, i) => {
+              const fieldErr = boxErr?.fields[BOX_FIELDS[i]];
+              return (
               <label key={l} className="text-xs text-[var(--text-muted)]">{l}
-                <input inputMode="decimal" value={box[i]} onChange={(e) => setBox(box.map((v, j) => (j === i ? e.target.value : v)))}
+                <input inputMode="decimal" value={box[i]}
+                  onChange={(e) => {
+                    setBox(box.map((v, j) => (j === i ? e.target.value : v)));
+                    if (fieldErr) setBoxErr((prev) => prev && { ...prev, fields: { ...prev.fields, [BOX_FIELDS[i]]: undefined } });
+                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter") applyTyped(); }}
                   placeholder={["-9.5", "37", "-6.2", "42.2"][i]}
-                  className="tabular mt-1 w-full field rounded-xl px-2.5 py-1.5 text-sm text-[var(--text-primary)]" />
+                  aria-invalid={fieldErr ? true : undefined}
+                  aria-describedby={fieldErr ? `box-err-${BOX_FIELDS[i]}` : "box-help"}
+                  className={`tabular mt-1 w-full field rounded-xl px-2.5 py-1.5 text-sm text-[var(--text-primary)] ${fieldErr ? "outline outline-2 outline-[var(--ember)]" : ""}`} />
+                {fieldErr && <span id={`box-err-${BOX_FIELDS[i]}`} className="mt-1 block text-[11px] leading-snug text-[var(--ember)]">{fieldErr}</span>}
               </label>
-            ))}
+              );
+            })}
+          </div>
+          <p id="box-help" className="mt-2 text-[11px] leading-snug text-[var(--text-muted)]">
+            Latitude −90 to 90, longitude −180 to 180, south below north. A west value greater than east means the box crosses the 180° meridian (W 170, E −170 is the 20° over the Pacific).
+          </p>
+          <div role="alert" aria-live="assertive" className="mt-2 text-xs leading-relaxed text-[var(--ember)]">
+            {boxErr && <>Not searched: {boxErr.message}</>}
           </div>
           <button type="button" onClick={applyTyped} className="mt-3 w-full rounded-lg pill-dark px-3 py-2.5 text-sm font-medium">Show this area</button>
           <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
             {area.kind === "box" && data && (() => { const ex = cellsExtent(data.raw.keys); return (
               <span className="mb-2 block rounded-lg bg-[var(--surface-2)] p-2 text-[var(--text-secondary)]">
-                <span className="block">Requested: {area.bbox.map((v) => v.toFixed(2)).join(", ")} (W, S, E, N)</span>
+                <span className="block">Requested: {area.bbox.map((v) => v.toFixed(2)).join(", ")} (W, S, E, N){bboxCrossesAntimeridian(area.bbox) && " — crosses the 180° meridian"}</span>
                 <span className="block">Effective coverage: {data.raw.keys.length} of {area.parents.length} touched cells have data{ex ? <>, spanning {ex.map((v) => v.toFixed(1)).join(", ")}</> : ""} — dashed blue on the map.</span>
               </span>); })()}
             Areas resolve to the ~300 km grid cells (H3 resolution 2) they touch, anywhere in the processed FIRMS record, so a small box reports its surrounding cell. A cell is summed whole: it can straddle a border.
