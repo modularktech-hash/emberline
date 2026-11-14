@@ -893,10 +893,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E37 — Test stale snapshot and WebGL fallback
 
-- [ ] **Status:** P2 · Required verification · Globe · effort M
+- [x] **Status:** P2 · Required verification · Globe · effort M
 - **Evidence:** Recentfeed timestamp shown; graphics environment dependent
 - **Acceptance:** Stale/fallback state and table remain usable
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Chromium with `--disable-webgl --disable-3d-apis` showed the poster but logged 4 THREE.WebGLRenderer console errors (the probe only checked that the WebGL classes exist); no stale state; no non-globe table; JS motion (ring pulses, dash animation, camera flights, satellite clock) ignored reduced motion except auto-spin. Implemented: real `getContext` probe in `FireGlobe.tsx` (poster with note, no three.js init); poster fits narrow screens; stale banner on Globe when the live snapshot is older than **24 h** (`STALE_AFTER_HOURS` in `GlobePage.tsx`: past that, even the 24 h window no longer overlaps today), with age and fetch time; "Hottest cells, as a table" (top 25: coordinates, window, detections, platforms, Σ FRP, peak; focusable scroll region); E25 for the globe: `useReducedMotion` hook disables rings, dash animation, camera flight and auto-spin and freezes the satellite clock until the viewer presses Play (Globe starts paused). Verified: build + tsc OK; Playwright 390/1440 on /, /globe, /satellites with and without WebGL: 0 console errors, no overflow; no-WebGL /globe has 0 canvases, the fallback note and 25 table rows; with the clock set to 2026-11-16 the stale banner reads "fetched 2 days ago"; at 2026-11-14T15:00Z none; under reduced motion the sim button starts at Play. Not verified: real devices / GPU-blocklisted browsers; WebGL context loss mid-session.
 
 ### E38 — Publish versioned manifest and schema
 

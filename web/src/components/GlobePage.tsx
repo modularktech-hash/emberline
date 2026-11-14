@@ -3,7 +3,7 @@
 import { fmtInt, fmtNum, fmtUtc, parseUtc } from "@/lib/format";
 import { Eyebrow } from "@/components/Figure";
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getLive, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { Chip, PageHead, Reveal, Segmented } from "@/components/ui";
@@ -17,6 +17,13 @@ type LiveWindowMeta = LiveWindow & { platforms?: string[]; detections_total?: nu
 export const FRP_SUM_NOTE = "sum of reported FRP across detections in this window — not instantaneous power or energy";
 import { SAT_COLORS } from "@/lib/sats";
 
+/**
+ * Stale-snapshot threshold (E37): the page describes "the last 24 hours before the snapshot".
+ * Once the snapshot is older than 24 h, even the 24 h window no longer overlaps the present day,
+ * so the page says the snapshot is stale and gives its age. Documented in plan combat.md E37.
+ */
+export const STALE_AFTER_HOURS = 24;
+
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
 
 export function GlobePage() {
@@ -28,6 +35,14 @@ export function GlobePage() {
   const [spin, setSpin] = useState(true);
   const [speed, setSpeed] = useState(60);
   const [paused, setPaused] = useState(false);
+  const [played, setPlayed] = useState(false);
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPaused(true);
+    const t = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
   const [picked, setPicked] = useState<Cell | null>(null);
   const [satState, setSatState] = useState<SatState[]>([]);
   const onSats = useCallback((s: SatState[]) => setSatState(s), []);
@@ -35,11 +50,21 @@ export function GlobePage() {
   const w = data?.live.windows[win] as LiveWindowMeta | undefined;
   const total = w ? Object.values(w.totals).reduce((a, b) => a + b, 0) : 0;
   const top = useMemo(() => (w ? (w.cells as Cell[]).slice(0, 8) : []), [w]);
+  const table = useMemo(() => (w ? (w.cells as Cell[]).slice(0, 25) : []), [w]);
+  const fetchedMs = data ? parseUtc(data.live.fetched_utc)?.getTime() ?? null : null;
+  const ageH = fetchedMs != null && now != null ? (now - fetchedMs) / 3_600_000 : null;
+  const stale = ageH != null && ageH > STALE_AFTER_HOURS;
+  const windowLabel = w?.window_start_utc && w?.window_end_utc ? `${w.window_start_utc} – ${w.window_end_utc}` : w?.dates?.length ? `${w.dates[0]}${w.dates.length > 1 ? ` to ${w.dates[w.dates.length - 1]}` : ""} (UTC dates)` : "";
 
   return (
     <div>
       <PageHead eyebrow="Live · NASA FIRMS near-real-time" title="Recent satellite" italic="fire detections."
         lede={<>Raw active-fire detections from the near-real-time feeds over the last {win === "24h" ? "24 hours" : "7 days"} before the snapshot, and the satellites that made them. Uncorrected, and they include gas flares and volcanoes. Drag to spin, scroll to zoom, hover a spike.</>} />
+      {stale && ageH != null && (
+        <p role="status" className="-mt-4 mb-6 max-w-4xl rounded-2xl border border-[var(--ember)] bg-[var(--ember-soft)] p-4 text-sm text-[var(--text-primary)]">
+          <strong>Stale snapshot.</strong> These detections were fetched {ageH >= 48 ? `${fmtInt(ageH / 24)} days` : `${fmtInt(ageH)} hours`} ago ({data?.live.fetched_utc}), more than {STALE_AFTER_HOURS} h, so they no longer describe current fire activity. The globe and table show that snapshot as it was.
+        </p>
+      )}
       {data && (
         <dl className="-mt-6 mb-8 grid max-w-4xl gap-x-6 gap-y-2 rounded-2xl border border-[var(--hairline)] p-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
           <div><dt className="text-[var(--text-muted)]">Observation window</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{win === "24h" ? "last 24 h" : "last 7 days"} before the snapshot{w?.dates?.length ? `, acquisitions dated ${w.dates[0]}${w.dates.length > 1 ? ` to ${w.dates[w.dates.length - 1]}` : ""} (UTC)` : ""}</dd></div>
@@ -64,7 +89,7 @@ export function GlobePage() {
               <Chip on={orbits} onClick={() => setOrbits(!orbits)}>Orbits</Chip>
               <Chip on={spin} onClick={() => setSpin(!spin)}>Auto-spin</Chip>
               <div className="ml-auto flex items-center gap-2" role="group" aria-label="Simulated satellite time">
-              <button type="button" onClick={() => setPaused(!paused)} aria-pressed={paused} className="glass-thin min-h-[32px] px-3 text-xs font-medium">{paused ? "▶ Play" : "❚❚ Pause"}</button>
+              <button type="button" onClick={() => { setPaused(!paused); if (paused) setPlayed(true); }} aria-pressed={paused} className="glass-thin min-h-[32px] px-3 text-xs font-medium">{paused ? "▶ Play" : "❚❚ Pause"}</button>
               <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
                 Speed ×<span className="tabular w-8">{speed}</span>
                 <input type="range" min={1} max={600} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Simulated time speed" className="w-24 min-w-0 accent-[var(--ember)] sm:w-32" />
@@ -74,7 +99,7 @@ export function GlobePage() {
             <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
               <FireGlobe live={data?.live ?? null} tle={data?.tle.satellites ?? null} window={win} showFires={fires} showSats={sats}
                 showOrbits={orbits} speed={paused ? 0 : speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} satLabels
-                focus={picked ? { lat: picked[0], lng: picked[1] } : null} />
+                focus={picked ? { lat: picked[0], lng: picked[1] } : null} motionOverride={played} />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
               <span>Spike height = summed FRP in the window (Σ FRP, not instantaneous power) · width = number of detections · 0.5° cells</span>
@@ -126,6 +151,28 @@ export function GlobePage() {
           </Reveal>
         </div>
       </div>
+
+      <Reveal>
+        <section className="card mt-8 min-w-0 p-5 sm:p-6" aria-labelledby="hottest-table">
+          <h2 id="hottest-table" className="display text-3xl">Hottest cells, as a table</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">The same snapshot without the globe: the {table.length} 0.5° cells with the largest Σ FRP in the {win === "24h" ? "24-hour" : "7-day"} window. Σ FRP = {FRP_SUM_NOTE}.</p>
+          <div className="max-w-full overflow-x-auto" tabIndex={0} role="region" aria-label="Hottest cells table">
+          <table className="tabular mt-4 w-full min-w-[640px] text-sm">
+            <caption className="sr-only">Hottest 0.5° cells by summed FRP, {win} window, snapshot fetched {data?.live.fetched_utc}</caption>
+            <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th scope="col" className="py-2 font-normal">#</th><th scope="col" className="font-normal">Latitude, longitude (cell centre)</th><th scope="col" className="font-normal">Window</th><th scope="col" className="font-normal">Detections</th><th scope="col" className="font-normal">Platforms</th><th scope="col" className="font-normal">Σ FRP (MW)</th><th scope="col" className="font-normal">Peak FRP (MW)</th></tr></thead>
+            <tbody>
+              {table.map((c, i) => (
+                <tr key={i} className="border-t border-[var(--hairline)]">
+                  <td className="py-2">{i + 1}</td><td>{fmtNum(c[0], 2)}°, {fmtNum(c[1], 2)}°</td>
+                  <td className="text-xs text-[var(--text-secondary)]">{windowLabel}</td>
+                  <td>{fmtInt(c[2])}</td><td className="text-xs">{c[5].split("+").join(", ")}</td><td>{fmtInt(c[3])}</td><td>{fmtInt(c[4])}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        </section>
+      </Reveal>
 
       <Reveal>
         <section className="card mt-8 min-w-0 p-5 sm:p-6">
