@@ -973,7 +973,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Required verification · Failure states · effort M
 - **Evidence:** Static loaders may fail independently
 - **Acceptance:** Preserve input; actionable status; no wrong-data fallback
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Implemented (test), not passed: `scripts/qa/failure_matrix.cjs` blocks each data file per page on a local production build; results `docs/failure-matrix.md`. Reproduced defects: silent fallback to four-country params/calendars on 5 pages (fallback mixing), blank sections without message on `/` and `/method`, generic 'Failed to fetch' without retry on `/trends` and `/data`, no retry control anywhere, manifest unused. Map-tile failure not verified. Handed to UI session in STATUS.md. Left unticked.
 
 ### E49 — Add finer local geometry
 
