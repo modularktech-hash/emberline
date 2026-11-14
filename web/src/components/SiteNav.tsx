@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NAV } from "@/lib/nav";
@@ -53,10 +54,7 @@ export function SiteNav() {
       animate={{ y: hidden ? -96 : 0 }} transition={SPRING} onFocusCapture={() => setHidden(false)}>
       <div className={`glass glass-nav relative transition-[background-color,box-shadow] duration-300 ${solid ? "!bg-[rgba(251,248,241,0.82)]" : ""} mx-auto flex w-full max-w-6xl items-center justify-between gap-3 !rounded-full !overflow-visible py-2 pl-5 pr-2.5`}>
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Emberline home">
-          <span aria-hidden className="relative flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--ink)]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)] shadow-[0_0_10px_2px_rgba(217,67,26,0.6)]" />
-          </span>
-          <span className="text-[13px] font-medium uppercase tracking-[0.28em]">Emberline</span>
+          <Logo height={11} wordClass="text-[13px]" />
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">

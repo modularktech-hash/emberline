@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { NAV } from "@/lib/nav";
 import { FooterRecord } from "@/components/FooterRecord";
 
@@ -40,7 +41,7 @@ export function SiteFooter() {
 
         <div className="relative flex flex-wrap items-end justify-between gap-6 border-b border-white/10 px-6 pb-8 pt-12 sm:px-10">
           <div>
-            <p className="display text-4xl text-[#f7f3e8] sm:text-5xl">Emberline</p>
+            <p className="text-[#f7f3e8]"><Logo layout="stack" height={18} ink="#f7f3e8" wordClass="text-2xl tracking-[0.32em] sm:text-3xl" /></p>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[#b8b2a2]">
               Satellite fire detections, harmonized per country across the MODIS–VIIRS sensor break to reduce the discontinuity between records. Archive 2001–2025; harmonized record 2003–2025.
             </p>

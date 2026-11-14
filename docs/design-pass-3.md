@@ -19,10 +19,13 @@ readouts. Make it more disciplined and easier to use. Labels say
         on <= 4-CPU devices, so many phones get none; `?perf=high` forces it.
         Explorer's commit can be slow on software GL: the 2.5 s safety lift was
         seen once in the container.
-- [ ] L1 Logo "ember + line": rounded charcoal stroke, clear gap, one ember
+- [x] L1 Logo "ember + line": rounded charcoal stroke, clear gap, one ember
       dot slightly larger than the stroke; plain EMBERLINE wordmark. Variants:
       mark+wordmark (nav, footer, OG image), mark only (favicon/`icon.svg`,
       apple icon), single-colour. Must read at 16/24/32 px.
+      - Done: `components/Logo.tsx` (`LogoMark`, `Logo`, `mono` prop), `app/icon.svg`,
+        `app/favicon.ico` (16/24/32/48, rendered from icon.svg), `app/apple-icon.tsx`,
+        OG image. Gap widened in the favicon so the dot stays separate at 16 px.
 
 ### P1 — "First" priorities from the review
 - [ ] D1 Two page templates: story pages (Home, About) keep big heroes; working
