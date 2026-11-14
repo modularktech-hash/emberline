@@ -109,6 +109,47 @@ export interface Params {
 }
 
 /* ------------------------------------------------------------------ */
+/* coverage_status.json -- why each country has (or lacks) a fit       */
+/* (scripts/build_coverage_validation.py; docs/data-contract-additions) */
+/* ------------------------------------------------------------------ */
+
+export type CoverageStatus =
+  | "own_fit" | "borrowed_fit" | "insufficient_training_observations"
+  | "insufficient_reference_observations" | "insufficient_heldout_variation"
+  | "numerical_fit_failure" | "no_observations";
+
+export interface CoverageCounts {
+  n_train_viirs: number; n_train_aqua: number; n_train_viirs_frp_ge_100: number;
+  n_test_viirs: number; n_test_aqua: number;
+  n_train_cell_months: number; n_test_cell_months: number; n_test_cell_months_with_aqua: number;
+  n_test_cells: number; n_test_cells_with_aqua: number;
+  n_modis_2009_2011: number; n_any_2012_2014: number;
+}
+
+export interface CoverageEntry {
+  status: CoverageStatus;
+  fit_source: "own" | "pooled" | null;
+  kappa_source: "own" | "pooled" | null;
+  condition: string | null;
+  published_error?: string;
+  reproduced_on_rerun?: boolean;
+  counts: CoverageCounts;
+  has_raw_calendar: boolean;
+  has_harmonized_calendar: boolean;
+}
+
+export interface CoverageStatusFile {
+  fit_version: string;
+  statuses: CoverageStatus[];
+  summary: Record<CoverageStatus, number>;
+  n_countries: number;
+  thresholds: Record<string, string | number>;
+  count_definitions: Record<string, string>;
+  has_raw_calendar: string;
+  countries: Record<string, CoverageEntry>;
+}
+
+/* ------------------------------------------------------------------ */
 /* Calendar (calendar_raw.parquet, calendar_harmonized.parquet)       */
 /* ------------------------------------------------------------------ */
 

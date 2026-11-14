@@ -15,6 +15,7 @@ import type {
   CalendarRow,
   CalendarScope,
   CellDayRow,
+  CoverageStatusFile,
   Params,
   Sensor,
   Series,
@@ -55,6 +56,7 @@ export function setDataBaseUrl(url: string): void {
   rawTable = null;
   harmonizedTable = null;
   paramsPromise = null;
+  coveragePromise = null;
   cellDayParentsPromise = null;
 }
 
@@ -247,6 +249,28 @@ export function getParams(): Promise<Params> {
     });
   }
   return paramsPromise;
+}
+
+/* ------------------------------------------------------------------ */
+/* coverage_status.json                                                */
+/* ------------------------------------------------------------------ */
+
+let coveragePromise: Promise<CoverageStatusFile> | null = null;
+
+/**
+ * Reason-coded coverage for every FIRMS country (world fit only): own fit,
+ * borrowed fit, or the data-sufficiency reason it has no fit, with counts.
+ * There is no four-country fallback; callers treat a rejection as "reasons
+ * not available" and keep their generic wording.
+ */
+export function getCoverageStatus(): Promise<CoverageStatusFile> {
+  if (!coveragePromise) {
+    coveragePromise = fetchJson<CoverageStatusFile>("coverage_status.json");
+    coveragePromise.catch(() => {
+      coveragePromise = null;
+    });
+  }
+  return coveragePromise;
 }
 
 /* ------------------------------------------------------------------ */
@@ -466,7 +490,7 @@ export async function calendarDataset(): Promise<DataSet> {
   return (await loadRaw()).dataset;
 }
 
-/** Country keys (FIRMS spellings, underscores) with a raw calendar, sorted. Includes countries too sparse to fit. */
+/** Country keys (FIRMS spellings, underscores) with a raw calendar, sorted. Includes countries without a fit. */
 export async function listCountries(): Promise<string[]> {
   const raw = await loadRaw();
   return [...(raw.index.get("country")?.keys() ?? [])].sort();

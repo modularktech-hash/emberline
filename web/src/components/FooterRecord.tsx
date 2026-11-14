@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCountryTable, type CountriesFile } from "@/lib/data";
-import { getParams } from "@/lib/queries";
-import type { Params } from "@/lib/types";
+import { getCoverageStatus, getParams } from "@/lib/queries";
+import type { CoverageStatusFile, Params } from "@/lib/types";
+import { coverageSummary } from "@/lib/coverage";
 import { fmtCompact } from "@/lib/ember";
 import { fmtInt, span } from "@/lib/format";
 
@@ -15,7 +16,7 @@ import { fmtInt, span } from "@/lib/format";
  */
 export function FooterRecord() {
   const box = useRef<HTMLDivElement>(null);
-  const [d, setD] = useState<{ table: CountriesFile; params: Params } | null>(null);
+  const [d, setD] = useState<{ table: CountriesFile; params: Params; coverage: CoverageStatusFile | null } | null>(null);
   const [failed, setFailed] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
 
@@ -26,8 +27,8 @@ export function FooterRecord() {
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       io.disconnect();
-      Promise.all([getCountryTable(), getParams()])
-        .then(([table, params]) => { if (live) setD({ table, params }); })
+      Promise.all([getCountryTable(), getParams(), getCoverageStatus().catch(() => null)])
+        .then(([table, params, coverage]) => { if (live) setD({ table, params, coverage }); })
         .catch(() => { if (live) setFailed(true); });
     }, { rootMargin: "400px" });
     io.observe(el);
@@ -45,6 +46,7 @@ export function FooterRecord() {
   const max = Math.max(1, ...series.map((s) => s.v));
   const shown = series.find((s) => s.year === hover) ?? series[series.length - 1];
   const names = d?.table.countries.map((c) => c.country) ?? [];
+  const cs = d?.coverage ? coverageSummary(d.coverage) : null;
   const years = d ? d.table.countries.flatMap((c) => c.annual.map((a) => a.year)) : [];
 
   return (
@@ -68,7 +70,7 @@ export function FooterRecord() {
           </div>
           {series.length > 0 && <div className="tabular mt-1 flex justify-between text-[10px] text-[#8f887a]"><span>{series[0].year}</span><span>{series[series.length - 1].year}</span></div>}
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
-            <dt className="text-[#8f887a]">Countries</dt><dd className="text-[#e6dfcd]">{names.length ? <>{names.length} fitted, {d?.table.not_fitted?.length ?? 0} too sparse to fit (raw only) · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "…"}</dd>
+            <dt className="text-[#8f887a]">Countries</dt><dd className="text-[#e6dfcd]">{names.length ? <>{names.length} fitted, {cs ? <>{cs.rawOnly} raw calendar only (no fit), {cs.noCalendar} no calendar</> : <>{d?.table.not_fitted?.length ?? 0} without a fit (raw only where one exists)</>} · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "…"}</dd>
             <dt className="text-[#8f887a]">Years</dt><dd className="tabular text-[#e6dfcd]">{years.length ? <>archive {span(Math.min(...years), Math.max(...years))}; harmonized {span(2003, Math.max(...years))}</> : "…"}</dd>
             <dt className="text-[#8f887a]">Fit</dt><dd className="tabular text-[#e6dfcd]">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "…"}</dd>
           </dl>

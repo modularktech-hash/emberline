@@ -13,6 +13,8 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 import type { CountryFit } from "@/lib/types";
 import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
+import { CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { STATUS_LABEL } from "@/lib/coverage";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
 const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
@@ -45,6 +47,7 @@ export function Method() {
       const frp = 10 ** ((i / 79) * 3);
       return `${i ? "L" : "M"}${x(frp).toFixed(1)},${y(1 / (1 + Math.exp(-(b0 + b1 * Math.log(frp))))).toFixed(1)}`;
     }).join(" ");
+  const coverage = useCoverage();
   const C = (n: string) => p!.countries[n];
   const fitKey = (n: string) => (C(n).fit_source === "pooled" ? "pooled" : "own");
 
@@ -143,6 +146,14 @@ export function Method() {
               <details className="mt-4 text-sm text-[var(--text-secondary)]">
                 <summary className="cursor-pointer">Not enough data to fit: {failed.length} countries and territories (no harmonized record, no score)</summary>
                 <p className="mt-2 text-xs leading-relaxed">{failed.map(prettyName).join(", ")}. Their raw record, where one exists, is shown in the Explorer marked uncorrected.</p>
+                {coverage && (
+                  <>
+                    <p className="mt-2 text-xs leading-relaxed">Reason-coded (coverage_status.json): <CoverageSummaryText coverage={coverage} />. The fitter raised a TypeError for each of these; every one was traced to an empty or degenerate data window, not a numerical failure.</p>
+                    <ul className="mt-1 gap-x-6 text-xs leading-relaxed sm:columns-2 lg:columns-3">
+                      {failed.map((n) => coverage.countries[n] && <li key={n}>{prettyName(n)}: {STATUS_LABEL[coverage.countries[n].status]}{coverage.countries[n].has_raw_calendar ? "" : " · no calendar"}</li>)}
+                    </ul>
+                  </>
+                )}
               </details>
             )}
           </section></Reveal>

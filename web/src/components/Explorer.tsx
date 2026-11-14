@@ -7,6 +7,8 @@ import { CountUp, PageHead, Reveal } from "@/components/ui";
 import { Eyebrow } from "@/components/Figure";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
+import { CoverageNote, CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { STATUS_LABEL } from "@/lib/coverage";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
@@ -31,6 +33,7 @@ export function Explorer() {
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
   const { data, error, loading } = useAreaData(area);
+  const coverage = useCoverage();
   // The map (maplibre, ~1 MB of JS plus tiles) mounts only once the calendar has
   // its data and the map slot is near the viewport, so it never competes with it.
   const mapSlot = useRef<HTMLDivElement>(null);
@@ -75,13 +78,15 @@ export function Explorer() {
   };
 
   const cal = data ? (mode === "raw" ? data.raw : data.harmonized) : null;
-  // No harmonized series, but a raw one: a country too sparse to fit, or a box of such cells.
+  // No harmonized series, but a raw one: a country without a fit (reason in coverage_status.json), or a box of such cells.
   const rawOnly = !!(data && cal && cal.keys.length === 0 && cal.uncorrectedKeys.length > 0);
   const notProcessed = !!(data && cal && cal.keys.length === 0 && !rawOnly);
   const fit = data && area.kind === "country" ? data.params.countries[area.name] : undefined;
   const unfitted = !!(data && area.kind === "country" && !fit);
   const flags = fit ? fitFlags(fit) : [];
   const boxCells = area.kind === "box" ? area.parents.length : 0;
+  const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
+  const covLabel = cov && unfitted ? STATUS_LABEL[cov.status] : null;
 
   const exportCsv = () => {
     if (!data || !cal || !view) return;
@@ -125,7 +130,7 @@ export function Explorer() {
             {area.kind === "box" && <span className="rounded-full border border-[var(--ember)] bg-[var(--ember-soft)] px-3.5 py-1.5 text-sm">Custom area</span>}
             {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}
             {flags.length > 0 && <span title={`Flagged as suspicious (docs/results.md): ${flags.join("; ")}`} className="self-center rounded-full border border-[var(--ember)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">check this fit</span>}
-            {unfitted && <span className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected</span>}
+            {unfitted && <span title={covLabel ? `No fit: ${covLabel}` : undefined} className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected{covLabel && ` · ${covLabel}`}</span>}
           </div>
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
@@ -138,6 +143,7 @@ export function Explorer() {
         </div>
 
         {error && <p className="mt-8 text-sm text-[var(--text-secondary)]">Could not load the data files: {error.message}</p>}
+        {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -163,7 +169,7 @@ export function Explorer() {
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
             <p className="text-[var(--text-primary)]">No harmonized record here.</p>
             <p className="mt-1">
-              {area.kind === "country" ? <>{areaLabel(area)} has a raw FIRMS record but too few matched detections for a fit, so there is no corrected series.</> : <>Every cell this box touches has a raw FIRMS record but no harmonized one (a country too sparse to fit, or none of the Aqua/VIIRS detections the fit uses).</>}
+              {area.kind === "country" ? <>{areaLabel(area)} has a raw FIRMS record but no fit{covLabel ? ` (${covLabel}, see below)` : ""}, so there is no corrected series.</> : <>Every cell this box touches has a raw FIRMS record but no harmonized one (a country without a fit — reasons on the Data page — or none of the Aqua/VIIRS detections the fit uses).</>}
               {" "}<button type="button" onClick={() => setMode("raw")} className="link-ul text-[var(--text-primary)]">Show the raw record</button> — it is uncorrected and keeps the 2012 sensor step.
             </p>
           </div>
@@ -172,7 +178,7 @@ export function Explorer() {
           <p className="mt-6 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">
             This box touches {boxCells} grid cells; {cal.keys.length} {cal.keys.length === 1 ? "has" : "have"} {mode === "raw" ? "a raw record" : "a harmonized record"} and {cal.keys.length === 1 ? "is" : "are"} summed here.
             {cal.unknownKeys.length > 0 && <> {cal.unknownKeys.length} {cal.unknownKeys.length === 1 ? "has" : "have"} no processed data (no detections).</>}
-            {cal.uncorrectedKeys.length > 0 && <> {cal.uncorrectedKeys.length} {cal.uncorrectedKeys.length === 1 ? "has" : "have"} only a raw, uncorrected record (in a country too sparse to fit, or with none of the Aqua/VIIRS detections the fit uses) and {cal.uncorrectedKeys.length === 1 ? "is" : "are"} left out of the harmonized series.</>}
+            {cal.uncorrectedKeys.length > 0 && <> {cal.uncorrectedKeys.length} {cal.uncorrectedKeys.length === 1 ? "has" : "have"} only a raw, uncorrected record (in a country without a fit, or with none of the Aqua/VIIRS detections the fit uses) and {cal.uncorrectedKeys.length === 1 ? "is" : "are"} left out of the harmonized series.</>}
           </p>
         )}
 
@@ -213,7 +219,7 @@ export function Explorer() {
                   {mode === "raw"
                     ? "Raw record, uncorrected: MODIS counts to 2011, VIIRS counts from 2012 — what a naive download shows."
                     : "Harmonized: the detections a MODIS-class sensor (Aqua) would have made, every year."}
-                  {unfitted && " This country is too sparse to fit, so only the raw record exists."}
+                  {unfitted && ` This country has no fit${covLabel ? ` (${covLabel})` : ""}, so only the raw record exists.`}
                 </p>
               </div>
             </div>
@@ -309,10 +315,21 @@ export function Explorer() {
   );
 }
 
-/** Coverage, counted from params_global.json: own fit, pooled fit, too sparse to fit. */
+/**
+ * Coverage: reason-coded and counted from coverage_status.json when it loads;
+ * otherwise counted from params_global.json (own fit, pooled fit, no fit).
+ */
 function Coverage() {
   const { data: p } = useParquet(() => getParams(), "params");
+  const coverage = useCoverage();
   if (!p) return null;
+  if (coverage && p.dataset === "world") {
+    return (
+      <p data-testid="coverage-summary" className="-mt-4 mb-6 max-w-3xl text-sm text-[var(--text-secondary)]">
+        Coverage: <CoverageSummaryText coverage={coverage} /> · fit {p.fit_version}.
+      </p>
+    );
+  }
   const fits = Object.values(p.countries);
   const pooled = fits.filter((f) => f.fit_source === "pooled").length;
   const failed = Object.keys(p.failed ?? {}).length;
@@ -320,7 +337,7 @@ function Coverage() {
     <p className="-mt-4 mb-6 max-w-3xl text-sm text-[var(--text-secondary)]">
       Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
       <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
-      <span className="tabular text-[var(--text-primary)]">{failed}</span> too sparse to fit (raw record only, uncorrected) · fit {p.fit_version}.
+      <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected) · fit {p.fit_version}.
       {p.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );

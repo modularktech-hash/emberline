@@ -56,7 +56,7 @@ export function ComparePage() {
           <Segmented label="cmp-norm" value={norm} onChange={setNorm} options={[{ value: "idx", label: "Index (mean=100)" }, { value: "abs", label: "Absolute" }]} />
         </div>
       </div>
-      <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries too sparse to fit have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
+      <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries without a fit (reasons on the Data page) have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
       {error && <div className="mt-6"><Failed error={error} /></div>}
       {loading && <div className="mt-6"><Loading h={300} /></div>}
       {view && data && (

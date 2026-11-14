@@ -12,7 +12,7 @@ export const areaKey = (a: Area) => (a.kind === "country" ? `c:${a.name}` : `b:$
 export const areaLabel = (a: Area) =>
   a.kind === "country" ? prettyName(a.name) : `Custom area (${a.bbox.map((v) => v.toFixed(1)).join(", ")})`;
 
-/** Picker tags for every country: pooled fit, or raw only (too sparse to fit). */
+/** Picker tags for every country: pooled fit, or raw only (no fit; reason in coverage_status.json). */
 export function tagsFor(params: Params | null | undefined, names: string[]): Record<string, FitTag | null> {
   return Object.fromEntries(names.map((n) => [n, fitTag(params, n)]));
 }

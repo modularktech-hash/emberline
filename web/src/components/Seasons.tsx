@@ -8,6 +8,8 @@ import { FirePulse } from "@/components/FirePulse";
 import { CountryPicker } from "@/components/CountryPicker";
 import { PageHead, Reveal } from "@/components/ui";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { CoverageNote, useCoverage } from "@/components/CoverageNote";
+import { STATUS_LABEL } from "@/lib/coverage";
 
 const W = 720, H = 300, L = 46, R = 16, T = 18, B = 30;
 
@@ -16,6 +18,8 @@ export function Seasons() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
   const [year, setYear] = useState(2023);
   const { data, error, loading } = useAreaData(area);
+  const coverage = useCoverage();
+  const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
 
   const v = useMemo(() => {
     if (!data || data.harmonized.keys.length === 0) return null;
@@ -51,9 +55,10 @@ export function Seasons() {
         {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {data && !v && (
           <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">
-            {areaLabel(area)} has too few detections to fit, so it has no harmonized record. This page compares years in the harmonized unit only; the raw record (uncorrected) is in the Explorer.
+            {areaLabel(area)} has no fit{cov ? ` (${STATUS_LABEL[cov.status]})` : ""}, so it has no harmonized record. This page compares years in the harmonized unit only; the raw record (uncorrected) is in the Explorer.
           </p>
         )}
+        {data && !v && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-4" />}
         {v && (
           <div className="fade-in">
             <svg viewBox={`0 0 ${W} ${H}`} className="mt-6 w-full" role="img" aria-label={`Monthly detections in ${year} against the historical median`}>

@@ -8,6 +8,8 @@ import { getCountryTable, type CountryRow } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
+import { CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { STATUS_LABEL, coverageReason } from "@/lib/coverage";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
 type Key = keyof Pick<CountryRow, "country" | "harm_mean_2003_2025" | "harm_2025" | "raw_2025" | "step_raw" | "step_harm" | "r2_model" | "bias_pct" | "frp_p50" | "onset_trend_harm">;
@@ -26,8 +28,10 @@ const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint:
 
 const FILES = [
   ["calendar_harmonized_global.parquet", "Monthly Aqua-equivalent counts, per fitted country and per H3 res-2 cell (every FIRMS country)"],
-  ["calendar_raw_global.parquet", "Monthly raw counts by sensor (MODIS, VIIRS), same keys, including countries too sparse to fit (uncorrected)"],
+  ["calendar_raw_global.parquet", "Monthly raw counts by sensor (MODIS, VIIRS), same keys, including countries without a fit (uncorrected)"],
   ["params_global.json", "Every fitted coefficient and validation metric, per country; pooled fits and unfitted countries listed"],
+  ["coverage_status.json", "Every FIRMS country's coverage status: own fit, borrowed (pooled) fit, or the data-sufficiency reason it has no fit, with the counts behind it"],
+  ["validation_points.json", "Up to 300 sampled held-out 2019–2021 cell-month points (observed Aqua vs model) per fitted country, with metrics for a one-ratio baseline scored on the same held-out table"],
   ["countries.json", "This summary table, with yearly raw and harmonized totals"],
   ["season.json", "Season onset (10%), midpoint (50%) and end (90%) per country and year, raw and harmonized; daily or monthly resolution per country"],
   ["drift.json", "Mean local solar overpass time per satellite per year (countries with point detections)"],
@@ -43,6 +47,7 @@ export function DataPage() {
   const { data, error, loading } = useParquet(() => getCountryTable(), "table");
   const [focus, setFocus] = useState<string | null>(null);
   const [q2, setQ2] = useState("");
+  const coverage = useCoverage();
   const [lang, setLang] = useState<"py" | "js" | "sql">("py");
   const origin = typeof window === "undefined" ? "https://emberline-tan.vercel.app" : window.location.origin;
 
@@ -142,14 +147,15 @@ export function DataPage() {
                   <div>
                     <h2 className="display text-3xl">Not enough data to fit</h2>
                     <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">
-                      {data.not_fitted.length} FIRMS countries and territories have too few detections for the fit to run, so they have no harmonized record and no score.
+                      {data.not_fitted.length} FIRMS countries and territories lack the data the fit needs, so they have no harmonized record and no score.
                       Where a raw record exists, the Explorer shows it, marked uncorrected.
+                      {coverage && <> <span data-testid="coverage-summary"><CoverageSummaryText coverage={coverage} />.</span></>}
                     </p>
                   </div>
                   <input value={q2} onChange={(e) => setQ2(e.target.value)} placeholder="Search…" aria-label="Search countries not fitted" className="field w-full rounded-full px-4 py-2 text-sm sm:w-56" />
                 </div>
                 <ScrollBox h="16rem">
-                  <table className="tabular w-full min-w-[420px] text-sm">
+                  <table className="tabular w-full min-w-[640px] text-sm">
                     <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                       <th className="sticky top-0 bg-[var(--surface-page)] py-2.5 font-normal">Country</th>
                       <th className="sticky top-0 bg-[var(--surface-page)] px-3 font-normal">Raw detections, all years (uncorrected)</th>
@@ -160,7 +166,9 @@ export function DataPage() {
                         <tr key={n.country} className="border-t border-[var(--hairline)]">
                           <td className="py-2">{prettyName(n.country)}</td>
                           <td className="px-3 text-[var(--text-secondary)]">{n.has_raw_calendar ? fmt(n.detections_filtered) : "no raw record"}</td>
-                          <td className="px-3 text-xs text-[var(--text-muted)]">not enough data to fit</td>
+                          <td className="px-3 py-2 text-xs text-[var(--text-muted)]">{coverage?.countries[n.country]
+                            ? <><span className="text-[var(--text-primary)]">{STATUS_LABEL[coverage.countries[n.country].status]}</span>{n.has_raw_calendar ? "" : " · no calendar"} — {coverageReason(coverage.countries[n.country])}</>
+                            : "not enough data to fit"}</td>
                         </tr>
                       ))}
                     </tbody>
