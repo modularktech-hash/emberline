@@ -61,6 +61,7 @@ land in `docs/results.md`.
 
 ## Log (newest first)
 
+- 14 Nov ~15:30 UTC — Web performance + polish passes 1–2 live ("app build" session): native scroll, no custom cursor/progress bar/serif, cheap glass, globe rebuilt, Explorer 18.2 s → 8.1 s, home at-a-glance panel, overpass clocks, unified number style, interactive footer with Made by Modulark. All 11 routes checked live at phone + desktop: 200, no overflow, no console errors. Details: `docs/handoff-web-ui.md`. Next: switch the app to the global data.
 - 14 Nov evening — Data-host session released `web/` and wrote `docs/handoff-web-ui.md` (glass + dot-matrix UI, minimal globe home, `/data` route committed — it was gitignored). Its duplicate world download is stopped.
 
 - 14 Nov ~18:25 IST (12:55 UTC) — App-build cloud session published the global fit: `params_global.json`, `calendar_raw_global.parquet`, `calendar_harmonized_global.parquet` from 237 countries (171 fitted, fit `v1-20261114T1240`). The app does not read the `*_global` names yet (TODO §2). Codex and data-host sessions: stop duplicate downloads or compare against these.
