@@ -183,3 +183,12 @@ production branch `main`. No live URL yet.
 
 **Also:** the global data download was re-started in this session because the
 data-host session ran out of usage.
+
+### 14 Nov — live URL
+
+https://emberline-tan.vercel.app/ (Vercel project created by the owner; deploys
+`modularktech-hash/emberline` `main`, root `web`, on every push). Checked
+logged-out with Playwright, iPhone 13 emulation and 1280 px desktop: `/` shows
+the Portugal calendar with raw 2011 = 1,953 and 2012 = 4,128, `/method` renders
+its tables, `/data/calendar_raw.parquet` answers range requests with 206, no
+console errors, no horizontal overflow. Not yet checked on a physical phone.

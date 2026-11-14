@@ -48,13 +48,17 @@ what, `docs/submission.md` has the full submission rules.
 
 ## 4. Deployment
 
-- [ ] **Owner:** import the project in Vercel — repo `modularktech-hash/emberline`,
-      root directory `web`, framework Next.js, production branch `main`
-      (this session's Vercel connection got 403 on project creation)
-- [ ] Deployment protection off for production, so the URL opens logged-out
-- [ ] Live URL: `/` and `/method` load, Parquet range reads work, CSV downloads
-- [ ] Live URL checked logged-out at phone width
-- [ ] Live URL recorded in `STATUS.md`, `docs/session-notes.md` and the README
+Live: https://emberline-tan.vercel.app/ — deploys `modularktech-hash/emberline`
+`main` (root `web`) on every push.
+
+- [x] Owner imported the project in Vercel
+- [x] Production URL opens logged-out
+- [x] Live URL: `/` and `/method` load, Parquet range reads work (HTTP 206)
+- [x] Live URL checked logged-out at phone size (no overflow, no console errors)
+- [x] Live URL recorded in `STATUS.md` and `docs/session-notes.md`
+- [ ] Live URL in the README
+- [ ] Re-check the live site after the global data is published
+- [ ] Check on a real phone (only emulated so far)
 
 ## 5. Submission (Sunday, by 16:00 — see `docs/submission.md`)
 
