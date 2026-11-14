@@ -46,7 +46,8 @@ import numpy as np
 import polars as pl
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "data" / "public"
+import os
+DATA = Path(os.environ.get("EMBERLINE_DATA", ROOT / "data" / "public"))
 WEB = ROOT / "web" / "public" / "data"
 FIG = ROOT / "docs" / "figures"
 
@@ -56,6 +57,9 @@ FIT = (2012, 2021)
 DRIFT = (2022, 2025)
 FIT_VERSION = "v1-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M")
 RNG = np.random.default_rng(20261114)
+MIN_TRAIN_VIIRS = 5_000   # below this a country borrows the pooled curve
+MIN_TRAIN_AQUA = 500      # below this it also borrows the pooled kappa
+POOLED: dict = {}         # filled by main() before small countries are fitted
 N_BOOT = 200
 
 
@@ -145,22 +149,28 @@ def fit_country(country: str) -> tuple[dict, pl.DataFrame, pl.DataFrame, pl.Data
     # 2. logistic on TRAIN
     tr = years(v, TRAIN)
     x, y = np.log(np.clip(tr["frp_mw"].to_numpy(), 0.1, None)), tr["seen"].to_numpy().astype(float)
-    b0, b1 = fit_logistic(x, y)
+    pooled = len(x) < MIN_TRAIN_VIIRS and "b0" in POOLED
+    if pooled:
+        b0, b1 = POOLED["b0"], POOLED["b1"]
+    else:
+        b0, b1 = fit_logistic(x, y)
     frp50 = float(np.exp(-b0 / b1)) if b1 > 0 else None
 
     # bootstrap coefficient intervals (subsample for speed)
     n = len(x); m = min(n, 200_000)
     boots = []
-    for _ in range(N_BOOT // 4):
+    for _ in range(0 if pooled or n < 50 else N_BOOT // 4):
         i = RNG.integers(0, n, m)
         boots.append(fit_logistic(x[i], y[i]))
-    boots = np.array(boots)
+    boots = np.array(boots) if boots else np.array([[b0, b1], [b0, b1]])
     frp50_boot = np.exp(-boots[:, 0] / boots[:, 1])
 
     v = v.with_columns(pl.Series("p", prob(v["frp_mw"].to_numpy(), b0, b1)))
 
     # 3. kappa on TRAIN
-    kappa = years(aqua, TRAIN).height / float(years(v, TRAIN)["p"].sum())
+    sum_p = float(years(v, TRAIN)["p"].sum())
+    pooled_kappa = (years(aqua, TRAIN).height < MIN_TRAIN_AQUA or sum_p == 0) and "kappa" in POOLED
+    kappa = POOLED["kappa"] if pooled_kappa else years(aqua, TRAIN).height / sum_p
     v = v.with_columns((pl.col("p") * kappa).alias("aqua_eq"))
 
     # threshold baseline: T chosen on TRAIN to minimise cell-month RMSE vs Aqua
@@ -225,6 +235,8 @@ def fit_country(country: str) -> tuple[dict, pl.DataFrame, pl.DataFrame, pl.Data
              .with_columns((pl.col("aqua") / pl.col("aqua_eq")).alias("obs_over_pred")))
 
     params = {
+        "fit_source": "pooled" if pooled else "own",
+        "kappa_source": "pooled" if pooled_kappa else "own",
         "logistic": {"b0": b0, "b1": b1, "feature": "log(frp_mw)",
                      "b0_ci95": np.percentile(boots[:, 0], [2.5, 97.5]).tolist(),
                      "b1_ci95": np.percentile(boots[:, 1], [2.5, 97.5]).tolist()},
@@ -298,28 +310,52 @@ def plots(results: dict, annuals: dict) -> None:
     fig.tight_layout(); fig.savefig(FIG / "fit_detection_probability.png", dpi=130); plt.close(fig)
 
 
+def _fmt(x, f="{:.3f}"):
+    return "n/a" if x is None else f.format(x)
+
+
 def main() -> int:
     countries = sys.argv[1:] or ["Portugal", "Chile", "Australia", "Canada"]
-    results, annuals, cals = {}, {}, []
+    # Biggest first: their own fits define the pooled curve the small ones borrow.
+    countries.sort(key=lambda c: -(DATA / f"detections_{c}.parquet").stat().st_size)
+    results, annuals, cals, failed = {}, {}, [], {}
     for c in countries:
+        if not POOLED and len([r for r in results.values() if r["fit_source"] == "own"]) >= 3 \
+                and (DATA / f"detections_{c}.parquet").stat().st_size < 5_000_000:
+            own = [r for r in results.values() if r["fit_source"] == "own"]
+            w = np.array([r["n_train_viirs_detections"] for r in own], dtype=float)
+            POOLED.update(b0=float(np.average([r["logistic"]["b0"] for r in own], weights=w)),
+                          b1=float(np.average([r["logistic"]["b1"] for r in own], weights=w)),
+                          kappa=float(np.average([r["kappa"] for r in own], weights=w)),
+                          from_countries=sorted(k for k, r in results.items() if r["fit_source"] == "own"))
         print(f"fitting {c} ...", flush=True)
-        p, annual, v, aqua = fit_country(c)
+        try:
+            p, annual, v, aqua = fit_country(c)
+        except Exception as e:  # a country too sparse to evaluate is reported, not fatal
+            failed[c] = f"{type(e).__name__}: {e}"
+            print(f"  {c}: FAILED {failed[c]}", flush=True)
+            continue
         results[c] = p; annuals[c] = annual
         cals.append(calendar(c, v, aqua))
         t = p["validation_test"]
-        print(f"  {c}: test R2 model={t['model']['r2']:.3f} raw={t['raw_viirs']['r2']:.3f} "
-              f"thr={t['threshold']['r2']:.3f}  bias model={t['model']['bias_pct']:+.1f}%  "
-              f"P50={p['frp_at_p50_mw']:.1f} MW  kappa={p['kappa']:.3f}", flush=True)
+        print(f"  {c}: [{p['fit_source']}] test R2 model={_fmt(t['model']['r2'])} raw={_fmt(t['raw_viirs']['r2'])} "
+              f"bias={_fmt(t['model']['bias_pct'], '{:+.1f}%')} P50={_fmt(p['frp_at_p50_mw'], '{:.1f}')} MW "
+              f"kappa={p['kappa']:.3f}", flush=True)
     WEB.mkdir(parents=True, exist_ok=True)
     out = {"fit_version": FIT_VERSION, "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
            "train_years": list(TRAIN), "test_years": list(TEST), "drift_years": list(DRIFT),
            "match_rule": "same UTC date, H3 res-7 cell or its 6 neighbours",
-           "countries": results}
-    (WEB / "params.json").write_text(json.dumps(out, indent=2, default=float))
+           "pooled_model": POOLED or None,
+           "pooled_rule": f"countries with < {MIN_TRAIN_VIIRS} training VIIRS detections borrow the "
+                          f"detection-weighted mean curve of the own-fit countries; < {MIN_TRAIN_AQUA} Aqua "
+                          "training detections also borrow its kappa",
+           "failed": failed, "countries": results}
+    (WEB / os.environ.get("EMBERLINE_PARAMS", "params.json")).write_text(json.dumps(out, indent=2, default=float))
     pl.concat(cals).sort("scope", "key", "year", "month").write_parquet(
-        WEB / "calendar_harmonized.parquet", compression="zstd", statistics=True)
-    plots(results, annuals)
-    print("wrote", WEB / "params.json", "and", WEB / "calendar_harmonized.parquet")
+        WEB / os.environ.get("EMBERLINE_CAL", "calendar_harmonized.parquet"), compression="zstd", statistics=True)
+    if os.environ.get("EMBERLINE_PLOTS", "1") == "1":
+        plots(results, annuals)
+    print("done:", len(results), "fitted,", len(failed), "failed")
     return 0
 
 
