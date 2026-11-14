@@ -39,7 +39,7 @@ Vercel deploys from it.
 > and must not be used as a compliance strategy. Keep the git history accurate,
 > do not rewrite it, and describe pre-event preparation and event-time work
 > honestly in the README and the submission form under the applicable rules
-> (owner to confirm the wording: plan-combat E19).
+> (wording confirmed by the owner: plan-combat E19).
 
 Draft summary (field 2), matching what is implemented:
 
@@ -88,15 +88,9 @@ if your event has one. Keep both.
 AI tools are allowed and must be declared. Judges weigh originality, intent and
 execution; heavy declared use is fine. Draft:
 
-> We used Anthropic's Claude (Claude Code) as a coding and research assistant:
-> for literature research and planning before the event, for writing and
-> debugging the data pipeline and web application, and for drafting
-> documentation. All scientific decisions — the harmonization approach, the
-> 2012–2021 fitting window, the validation design — and every reported number
-> come from our own analysis of NASA FIRMS data, run and checked by the team.
-> No AI-generated images, video or audio are used.
+> Shishir Bhat and Ridan Teeli have worked on this problem for about a year. Every scientific choice — the method, what to fit, the validation design and how to interpret the results — was made by the team. We used Claude, by Anthropic, through Claude Code to build it under our direction: during the event it wrote the code, ran the data pipeline and the fit we specified, tested the results and drafted documentation; before the event it also assisted with literature research and planning. Before the event we prepared planning and research documents, verified data schemas, the FIRMS ingest package and download scripts, and an empty app scaffold; these were imported into this repository in its first commit at the start of the event. The harmonization, the fit, the validation and the web app were built during the event, 14–15 Nov, as the git history shows. No AI-generated images, video or audio are used.
 
-Edit to match what actually happened. Name the model versions you used.
+Facts confirmed by the owner (plan-combat E19). Same wording as the README and the About page.
 
 ## Which award to aim at — this changes the pitch
 
@@ -131,7 +125,7 @@ repo is MIT. Every third-party source must be credited (field 7).
 - [ ] Deployed app URL opens logged-out on a phone.
 - [ ] Public repo has all code, README with real numbers, MIT license.
 - [ ] Every number in the README / app / video comes from our own fit.
-- [ ] Pre-event work and event-time work described accurately in README and form; history not rewritten (E19).
+- [x] Pre-event work and event-time work described accurately in README and form; history not rewritten (E19).
 - [ ] No claim of orbit-drift correction, of comparing today with history, or of global value.
 - [ ] All 9 fields filled, in English.
 - [ ] Use of AI field filled honestly.

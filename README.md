@@ -121,24 +121,9 @@ The fixture covers ingestion and table building only; the harmonization fit need
   MODIS "thresholds of FRP detection", citing Roberts & Wooster (2008) and Schroeder et al. (2010).
   Literature values are sanity checks, never results.
 
-## Work before and during the event
+## Use of AI and work history
 
-Before the event (13 Nov and earlier) the team prepared planning documents, research
-notes, verified data schemas and download scripts, and an empty app scaffold
-(`docs/`, `scripts/stage_data.sh`, `packages/firms-ingest`). No harmonization, fit,
-validation number or app feature existed then. Everything else (the global download
-and build, the fit and validation, every number, the web app) was built during the
-event, 14–15 Nov; the git history shows it.
-
-## Use of AI
-
-We used Anthropic's Claude (Claude Code; Claude Opus models) as a coding and research
-assistant: for literature research and planning before the event, and during it for
-writing and debugging the data pipeline and this web application, and for drafting
-documentation. The scientific choices (the harmonization approach, the 2012–2021
-frozen-orbit window with training 2012–2018 and testing 2019–2021, the validation design)
-and every reported number come from our own analysis of NASA FIRMS data, run and checked
-by the team. No AI-generated images, video or audio are used.
+Shishir Bhat and Ridan Teeli have worked on this problem for about a year. Every scientific choice — the method, what to fit, the validation design and how to interpret the results — was made by the team. We used Claude, by Anthropic, through Claude Code to build it under our direction: during the event it wrote the code, ran the data pipeline and the fit we specified, tested the results and drafted documentation; before the event it also assisted with literature research and planning. Before the event we prepared planning and research documents, verified data schemas, the FIRMS ingest package and download scripts, and an empty app scaffold; these were imported into this repository in its first commit at the start of the event. The harmonization, the fit, the validation and the web app were built during the event, 14–15 Nov, as the git history shows. No AI-generated images, video or audio are used.
 
 ## Licence
 
