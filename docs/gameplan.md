@@ -83,15 +83,16 @@ The Integration role owns the deadline. That is the job.
 
 1. **Don't open with the map.** Open with the problem. Show the raw count chart.
    *"This tripled in 2012. It shouldn't have."*
-2. Click the toggle. The step vanishes.
-   *"Nothing changed on Earth. We corrected what changed in orbit."*
+2. Click the toggle. The step shrinks (Canada: raw ×6.60, harmonized ×1.68, Aqua alone ×1.43).
+   *"Most of that jump was the sensor, not the fire. We put both records on one scale."*
 3. Show `/method`: the two distributions sliding into each other, then R², bias,
    RMSE on held-out years.
 4. Show the drift table. *"And it's still changing — Terra and Aqua left their
-   frozen orbits in 2022. We measured it. MODIS switches off within months, and
-   every baseline built on it is drifting right now."*
-5. Pick an AOI, show the calendar, show this period against the historical
-   median, download the CSV.
+   frozen orbits in 2022. We measured the drift; we do not correct it, and we
+   never fitted on those years."*
+5. Pick an AOI, show the calendar, show one year against the 2003–2025
+   historical record, download the CSV. (The recent globe is a separate, raw
+   NOAA-20/21 view; do not present it as compared with history.)
 6. Stop. Let them ask.
 
 Do not narrate the architecture. If they ask how it's served, *then* say there's

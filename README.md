@@ -13,18 +13,23 @@ Satellites have mapped active fires since 2000, but the record is split across t
 sensor generations. Suomi-NPP VIIRS (375 m, record from 2012) detects small fires
 that MODIS (1 km) misses, so a naive hotspot count jumps in 2012. Much of that jump
 reflects improved detection sensitivity rather than an equivalent increase in fire
-activity. Emberline fits, per country, how VIIRS detections map onto what Aqua MODIS
-would have recorded, and rebuilds a harmonized record in one unit, Aqua-MODIS-equivalent
-daytime vegetation-fire detections. That reduces the discontinuity between the sensor records.
+activity. Emberline fits, country by country, how VIIRS detections map onto what Aqua MODIS
+would have recorded (130 countries with their own curve; 41 sparser countries borrow a pooled
+curve), and rebuilds a historical record in one unit, Aqua-MODIS-equivalent daytime
+vegetation-fire detections. That reduces, but does not remove, the discontinuity between the
+sensor records, and how well it does so varies by country (see the Method page).
 
 On top of it: a month × year calendar for any fitted country or a drawn box (CSV
 download), a "is this year unusual?" view, season-timing trends, a two-region
 comparison, the method and its validation, calculators for every coefficient, open
 data files, and a separate live layer of recent raw detections.
 
-Source archive 2001–2025; harmonized record 2003–2025 (Aqua launched in May 2002, so
-2001–2002 have no Aqua reference). The live layer is NOAA-20/21 VIIRS plus MODIS near-real-time
-data: raw, uncorrected, and not the Suomi-NPP record the history is built from.
+Source archive 2001–2025; the comparable historical record is 2003–2025 (Aqua launched in
+May 2002, so 2001–2002 have no Aqua reference). The recent globe is a separate view of
+NOAA-20/21 VIIRS plus MODIS near-real-time data: raw, uncorrected, not the Suomi-NPP record the
+history is built from, and not placed on the harmonized scale, so the app does not compare
+today's detections with the historical record. Terra/Aqua orbital drift since 2022 is measured
+and shown, not corrected: the 2022–2025 values use the frozen-orbit (2012–2018) fit unchanged.
 
 ## Headline results
 
@@ -36,16 +41,24 @@ reference observations, per H3 resolution-5 cell (~250 km²) and month. 2022–2
 - **237** FIRMS countries and territories processed; **267,159,561** filtered daytime
   vegetation-fire detections (MODIS + VIIRS, 2001–2025).
 - **171** countries fitted: **130** with their own curve, **41** on a pooled curve
-  (too few training matches of their own). **66** are too sparse to fit: raw record only,
-  shown as uncorrected.
+  (fewer than 5,000 training VIIRS detections of their own). **66** have no published fit and
+  are shown raw, flagged uncorrected: 23 insufficient training observations, 17 insufficient
+  reference observations, 18 insufficient held-out variation, 8 no observations
+  (`web/public/data/coverage_status.json`).
 - Median held-out R² across the 130 own-fit countries: **0.64**. The model beats raw VIIRS
   counts on held-out R² in **171 of 171** fitted countries; **35** still score below 0 and
-  are flagged in the Method page table.
+  are flagged in the Method page table. A best single FRP cut-off has higher held-out R² than
+  the model in **21 of 171**.
+- Against a stronger baseline, one training-era (2012–2018) Aqua ÷ Suomi-NPP ratio per country,
+  the model has higher held-out R² in only **84 of 171** countries and lower mean absolute error
+  in **141 of 171** (`docs/results.md`). Most of the gain over raw VIIRS comes from getting the
+  overall scale right, which the simple ratio also does.
 - Canada, the demo example: the raw record steps up **×6.60** from 2009–11 to 2012–14.
   Aqua alone shows **×1.43** over the same years; the harmonized record shows **×1.68**.
   Held-out R² **0.78** (raw VIIRS −31.9), bias −13.5%.
 
-These are regional, per-country fits. No global step correction is claimed.
+These are regional, per-country fits. No global step correction is claimed, and no claim that
+the model is the best choice in every country.
 
 ## The method in five lines
 

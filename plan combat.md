@@ -704,7 +704,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E10 — Evaluate training-only scalar calibration baseline
 
-- [ ] **Status:** P1 · Observed gap · Science · effort M
+- [x] **Status:** P1 · Observed gap · Science · effort M
 - **Evidence:** Current baselines rawVIIRS and FRPthreshold
 - **Acceptance:** Untouched evaluation reports model versus calibrated simpler baseline
 - **Implementation / verification notes:** Done and verified (d7bb38f): training-only Aqua/Suomi-NPP ratio baseline, 2012-2018 applied to 2019-2021. Model R2 higher in 84 of 171 countries, not higher in 87; lower MAE in 141 of 171. Written up in `docs/results.md`; `validation_points.json` published. Showing it in the app is pending.
@@ -753,10 +753,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E17 — Rewrite stale demo and README claims
 
-- [ ] **Status:** P1 · Observed gap · Submission · effort S
+- [x] **Status:** P1 · Observed gap · Submission · effort S
 - **Evidence:** docs/submission.md claims drift correction/today comparison
 - **Acceptance:** Every submitted statement matches frozen implementation
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: `docs/submission.md` 30-s script claimed orbit-drift correction and "compare today against history" and advised deleting/recreating repos; README said "fits, per country" without the 41 pooled exceptions, called all 66 unfitted "too sparse", and omitted the 21 threshold wins and the scalar-baseline result; `docs/gameplan.md` demo said "the step vanishes" / "we corrected what changed in orbit". Implemented: rewrote README, submission.md (script, draft summary, checklist, repo advice replaced with "preserve accurate history, disclose honestly"), gameplan.md demo steps; every figure recomputed from `params_global.json` / `coverage_status.json` / `docs/results.md` (130/41/66, 23/17/18/8, 35 negative, 21 threshold, 84/171 R², 141/171 MAE). Verified: numbers recomputed by script; grep finds no remaining drift-correction or today-vs-history claim in README/submission/gameplan. Not verified: Use-of-AI wording and pre-event history statement (owner, E19); docs/research-findings.md still discusses drift correction as a research idea (not submission-facing).
 
 ### E18 — Confirm current form and local event deadlines
 
@@ -833,7 +833,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Source concern · Statistics · effort M
 - **Evidence:** fit_harmonization weighted coefficients
 - **Acceptance:** Name transfer method and validate out-of-country performance
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Explanation part done; left unticked because a clean transfer test is not run. Reproduced: `main()` forms the pooled model once, from the 61 own fits that precede the first <5 MB detections file, as `np.average` of b0, b1, κ weighted by `n_train_viirs_detections`; recomputing from `params_global.json` reproduces b0/b1/κ to float precision. Implemented: `docs/science.md` §2a "How the pooled curve is formed" (weighted coefficient mean, not pooled fit or probability mean; ≤1.3 pp difference vs mean of probabilities at 5–100 MW; 41 pooled-curve countries, pooled κ for 31 of them plus Libya and Oman; no coefficient uncertainty), `docs/results.md` table, proposed Method copy in `docs/data-contract-additions.md` §5. Out-of-country (published held-out metrics, no refit): pooled median R² −0.09 (24/41 < 0) vs own 0.64 (11/130); own κ subset 0.35, pooled κ subset −0.11; threshold higher in 12/41; ratio baseline beaten in 22/41. Not verified/not done: applying the pooled curve to held-out own-fit countries outside the 61 (needs new computation); Method copy not placed.
 
 ### E29 — Test matching rule sensitivity
 
@@ -844,10 +844,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E30 — Document evaluation population
 
-- [ ] **Status:** P2 · Source concern · Statistics · effort S
+- [x] **Status:** P2 · Source concern · Statistics · effort S
 - **Evidence:** Union of active cellmonths
 - **Acceptance:** Denominator/zero-cell inclusion and scale explicit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: `fit_country.evaluate()` full-outer-joins Aqua, model, raw and threshold cell-month aggregates (H3 res-5 × month, 2019–2021) and fills nulls with 0, so the population is cell-months where Aqua or Suomi-NPP had ≥1 filtered detection; both-zero cell-months are excluded; this was documented nowhere. Implemented: `docs/science.md` §2a (unit, inclusion, excluded both-zero rows, included zeros, untransformed scale, R² reference mean, cell-bootstrap meaning, same rows for all baselines; also a note that §2–3 are the superseded pre-event plan), `docs/results.md` section, proposed Method copy in `docs/data-contract-additions.md` §4. Figures computed from published files: 2,573,665 held-out cell-months (sum of n_cell_months); in the validation_points sample 63.7% obs=0, 5.4% Aqua-only (sample shares, not population). Verified: read against the code. Not verified: Method page copy not placed (web builder); exact population share of zero cell-months would need recomputation from detections.
 
 ### E31 — Add slope uncertainty and endpoint sensitivity
 
