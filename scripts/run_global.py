@@ -93,7 +93,10 @@ def main() -> int:
         if det is None:
             print(f"  {c}: no detections", flush=True)
             continue
-        det.write_parquet(OUT / f"detections_{c}.parquet", compression="zstd")
+        # Only the columns the fit reads: the full schema costs ~3x the disk and
+        # the whole world does not fit next to the archive otherwise.
+        det.select("lat", "lon", "acq_ts", "platform", "frp_mw", "lst_hours").write_parquet(
+            OUT / f"detections_{c}.parquet", compression="zstd")
         raw_calendar(c, det).write_parquet(OUT / f"calendar_raw_{c}.parquet", compression="zstd")
         print(f"  {c}: {det.height:,} detections", flush=True)
     return 0
