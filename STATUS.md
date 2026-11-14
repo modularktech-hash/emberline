@@ -10,7 +10,11 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` is free (released 14 Nov, owner's instruction)
+## `web/` — CLAIMED by the "app build" cloud session (session_01RwRY…), 14 Nov 13:25 UTC, owner's instruction
+
+Performance + polish pass: scroll/globe/cursor lag on all pages, system (SF Pro) font, unified number styling, clearer home stats and satellite clocks, Explorer load time, interactive footer. **No other session edits `web/` until this is released.**
+
+### Earlier note (released 14 Nov by the data-host session)
 
 The cloud "data host" session has handed `web/` over. Read
 [`docs/handoff-web-ui.md`](docs/handoff-web-ui.md) first: what the site looks like
