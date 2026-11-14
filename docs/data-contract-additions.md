@@ -124,3 +124,19 @@ to each held-out cell-month's raw Suomi-NPP count.
 > scores show how well it transfers: median held-out R² −0.09 (24 of 41 below
 > zero) against 0.64 for countries with their own curve. Treat borrowed-curve
 > results as experimental.
+
+## 6. `season.json` — incomplete fire years (additive)
+
+```ts
+// per country, per entry of years[]
+partial?: ("raw" | "harm")[];   // series whose fire-year window is not fully inside the record
+// top level
+partial_note: string;
+```
+
+A fire year starts at the country's quietest month. Label: start month 1 → the calendar year;
+2–6 → the year it starts in; 7–12 → the year it ends in. A window that runs past 31 Dec 2025
+(start months 2–6, label 2025), or starts before a series has data (harmonized = Aqua from
+4 Jul 2002, so start month 7, label 2003), is listed in `partial`; that series' onset, peak, end,
+length and total are null and the year is excluded from the trend. The app should show such a
+year as "incomplete", not as a low or missing season. Checked by `scripts/check_seasons.py`.

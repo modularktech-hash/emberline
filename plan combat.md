@@ -725,10 +725,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E13 — Verify complete cross-year seasons
 
-- [ ] **Status:** P1 · Source concern · Seasons · effort M
+- [x] **Status:** P1 · Source concern · Seasons · effort M
 - **Evidence:** Calendar ends2025; fireyears may cross into2026
 - **Acceptance:** Incomplete terminal seasons excluded or explicitly partial
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: daily season builder labelled start-month 2–6 fire years by the start year, so fy2025 (e.g. Apr 2025–Mar 2026) was published with values from only part of its window in 60 countries; start-month 7 fy2003 harmonized began 1 Jul 2002 before Aqua data (4 Jul) in 13; both fed the trends. Monthly path already skipped incomplete windows. Implemented: `scripts/build_insights.py` marks such series `partial` with null values and excludes them from trends (`partial_note` at top level); monthly start-month ties now break to earliest month, and `EMBERLINE_KEEP_RESOLUTION` keeps the published resolution and start month for the 5 monthly countries (an unpinned rebuild would make all 171 daily, since 5 detection tables now match). Regenerated `season.json` and `countries.json` from /home/user/emberline/data/global_public. Diff: 73 countries, only rows (2025, raw+harm)×60 and (2003, harm)×13 changed, 0 complete rows changed; 71 trend dicts; countries.json only onset_trend_raw (58) / onset_trend_harm (68); drift.json byte-identical; monthly_vs_daily now median 0.99, max 9.55 d/decade over 166 (was 1.29 / 37.61 — the max came from incomplete years). Labelling documented (start 2–6 → start year; 7–12 → end year). Verified: new `scripts/check_seasons.py` fails on the old file (204 failures) and passes on the new one, incl. 109,572 day×start-month label/leap-day cases; split 166 daily / 5 monthly. Not done: web/src display of `partial` (TrendsPage filters null harm_onset years, so partial years are dropped silently, not labelled); monthly method ignores 29 Feb (Feb = 28 days, ≤1-day offset).
 
 ### E14 — Make coarse scope impossible to miss
 
@@ -900,17 +900,17 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E38 — Publish versioned manifest and schema
 
-- [ ] **Status:** P2 · Observed gap · Data · effort M
+- [x] **Status:** P2 · Observed gap · Data · effort M
 - **Evidence:** Static files available; distributed metadata
 - **Acceptance:** Hashes, units, coverage, versions and source products documented
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: no manifest; file metadata spread across files; fit versions differ between the world set (v1-20261114T1240) and the four-country fallback (params.json, calendar_harmonized.parquet: v1-20261114T0630). Implemented: `scripts/build_manifest.py` generates `web/public/data/manifest.json` (14 files: dataset world/fallback_four_country/live, purpose, source products, bytes, sha256, rows, columns+types+units, time span, fit version, fetched time for live files); `scripts/check_data_contract.py` now verifies every file is listed, sizes/hashes match, JSON fit_version matches, world files share one fit version and fallback is separately declared. Verified: check OK; appending one byte to tle.json makes it fail. Not done: app does not yet read the manifest (web/src); any data change must re-run build_manifest.py or the check fails.
 
 ### E39 — Distinguish country and grid rows
 
-- [ ] **Status:** P2 · Observed gap · Data · effort S
+- [x] **Status:** P2 · Observed gap · Data · effort S
 - **Evidence:** CalendarParquet has multiple scopes
 - **Acceptance:** Examples never double-count combined scopes
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: calendar_raw(_global) and calendar_harmonized(_global) parquets hold both `scope='country'` and `scope='h3_parent'` rows over the same detections. Implemented: manifest.json records scope_kind "both", rows/keys/sum per scope and a scope_note ("sum within one scope only"). Verified from the files: per-scope totals are identical (raw global 267,159,561 detections in each scope; harmonized global 63,889,036.875), proving summing both double-counts. Not done: Data page copy/examples (web/src, owned by the UI session).
 
 ### E40 — Add reproducible small fixture and setup
 
