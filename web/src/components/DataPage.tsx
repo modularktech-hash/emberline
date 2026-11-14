@@ -139,7 +139,7 @@ export function DataPage() {
                   {FILES.map(([f, d]) => (
                     <li key={f} className="flex items-start justify-between gap-4 py-3">
                       <div><p className="font-mono text-sm">{f}</p><p className="text-xs text-[var(--text-secondary)]">{d}</p></div>
-                      <a href={`/data/${f}`} download className="shrink-0 rounded-full border border-[var(--hairline)] px-3 py-1 text-xs hover:border-[var(--ember)]">Download</a>
+                      <a href={`/data/${f}`} download className="shrink-0 glass rounded-full px-3 py-1 text-xs">Download</a>
                     </li>
                   ))}
                 </ul>
@@ -152,7 +152,7 @@ export function DataPage() {
                   <Segmented label="lang" value={lang} onChange={setLang} options={[{ value: "py", label: "Python" }, { value: "js", label: "JavaScript" }, { value: "sql", label: "DuckDB" }]} />
                 </div>
                 <pre className="mt-4 overflow-x-auto rounded-xl bg-[var(--ink)] p-4 font-mono text-xs leading-relaxed text-[#efe9d9]"><code>{snippet}</code></pre>
-                <button type="button" onClick={() => navigator.clipboard?.writeText(snippet)} className="mt-3 rounded-full border border-[var(--hairline)] px-3 py-1 text-xs hover:border-[var(--ember)]">Copy</button>
+                <button type="button" onClick={() => navigator.clipboard?.writeText(snippet)} className="mt-3 glass rounded-full px-3 py-1 text-xs">Copy</button>
                 <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">The Parquet files support HTTP range requests, so readers fetch only the row groups they need. `cell_day.parquet` is sorted by H3 res-2 parent then date: filter on `h3_parent` for fast area queries.</p>
               </section>
             </Reveal>

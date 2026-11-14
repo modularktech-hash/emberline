@@ -26,14 +26,14 @@ export function CountryPicker({ value, options, onChange, inline = 8, label = "R
   return (
     <div ref={box} className="relative">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
-        className="flex min-w-[14rem] items-center justify-between gap-3 rounded-full border border-[var(--ember)] bg-[var(--ember-soft)] px-4 py-2 text-sm">
+        className="glass flex min-w-[14rem] items-center justify-between gap-3 rounded-full !border-[var(--ember)] px-4 py-2 text-sm">
         <span><span className="text-[var(--text-muted)]">{label}: </span>{pretty(value)}</span>
         <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="card absolute left-0 top-12 z-40 w-[18rem] !bg-[var(--surface-1)] p-2">
+            className="glass glass-thick absolute left-0 top-12 z-40 w-[18rem] rounded-[20px] p-2">
             <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${options.length} regions…`}
               className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--surface-2)] px-3 py-2 text-sm" />
             <ul className="mt-2 max-h-72 overflow-y-auto">

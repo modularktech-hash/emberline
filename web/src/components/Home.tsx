@@ -53,12 +53,12 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           </motion.span>
         </h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }}
-          className="mx-auto mt-8 max-w-xl rounded-2xl bg-[rgba(247,243,232,0.7)] px-3 text-lg leading-relaxed text-[var(--text-secondary)] backdrop-blur-sm">
+          className="glass mx-auto mt-8 max-w-xl rounded-[22px] px-5 py-3 text-lg leading-relaxed text-[var(--text-secondary)] backdrop-blur-sm">
           Satellites have watched Earth burn since 2000. In 2012 a sharper one launched, and the fire record jumped. The fires did not. Emberline rebuilds the record so the satellite no longer matters.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium shadow-[0_10px_24px_-10px_rgba(18,23,21,0.6)] transition-transform hover:-translate-y-0.5">Open the calendar &nbsp;→</Link>
-          <Link href="/globe" className="rounded-full border border-[var(--hairline)] bg-[var(--surface-1)] px-6 py-3 text-[15px] font-medium transition-transform hover:-translate-y-0.5">See today&apos;s fires live</Link>
+          <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar &nbsp;→</Link>
+          <Link href="/globe" className="glass rounded-full px-6 py-3 text-[15px] font-medium">See today&apos;s fires live</Link>
         </motion.div>
       </motion.div>
 
@@ -70,7 +70,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           { v: bestR2, l: "best held-out R², years the model never saw", s: "", dec: 2 },
         ].map((x, i) => (
           <Reveal key={i} delay={i * 0.06}>
-            <div className="card h-full p-4 sm:p-5">
+            <div className="glass h-full rounded-[22px] p-4 sm:p-5">
               <p className="display text-3xl sm:text-4xl">{d ? <CountUp to={x.v} decimals={x.dec ?? 0} /> : "—"}</p>
               <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-secondary)]">{x.l}</p>
             </div>

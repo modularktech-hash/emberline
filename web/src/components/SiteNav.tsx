@@ -21,7 +21,7 @@ export function SiteNav() {
 
   return (
     <header className="sticky top-3 z-50 px-3 sm:px-6" onMouseLeave={() => setOpen(null)}>
-      <div className="card relative mx-auto flex w-full max-w-6xl items-center justify-between gap-3 !rounded-[20px] px-4 py-2.5 sm:px-5">
+      <div className="glass relative mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-[22px] !overflow-visible px-4 py-2.5 sm:px-5">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Emberline home">
           <span aria-hidden className="relative flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--ink)]">
             <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)] shadow-[0_0_10px_2px_rgba(217,67,26,0.6)]" />
@@ -43,7 +43,7 @@ export function SiteNav() {
                 <AnimatePresence>
                   {open === g.label && (
                     <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                      transition={{ duration: 0.18 }} className="card absolute left-1/2 top-11 w-[22rem] -translate-x-1/2 !bg-[var(--surface-1)] p-2">
+                      transition={{ duration: 0.18 }} className="glass glass-thick absolute left-1/2 top-12 w-[22rem] -translate-x-1/2 rounded-[22px] p-2">
                       {g.items.map((i) => (
                         <Link key={i.href} href={i.href} className={`block rounded-[14px] px-3.5 py-3 transition-colors hover:bg-[var(--surface-2)] ${active(i.href) ? "bg-[var(--ember-soft)]" : ""}`}>
                           <span className="text-sm font-medium">{i.label}</span>
@@ -60,8 +60,8 @@ export function SiteNav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/explorer" className="hidden rounded-full border border-[var(--ink)] bg-[#d6e2cf] px-4 py-1.5 text-sm font-medium transition-transform hover:-translate-y-0.5 sm:inline-block">Open the calendar</Link>
-          <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--hairline)] lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
+          <Link href="/explorer" className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">Open the calendar</Link>
+          <button type="button" className="glass flex h-9 w-9 items-center justify-center rounded-full lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
             <svg width="16" height="12" viewBox="0 0 16 12"><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.6" fill="none" /></svg>
           </button>
         </div>
@@ -70,7 +70,7 @@ export function SiteNav() {
       <AnimatePresence>
         {mobile && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            className="card mx-auto mt-2 max-h-[80vh] max-w-6xl overflow-y-auto !bg-[var(--surface-1)] p-3 lg:hidden">
+            className="glass glass-thick mx-auto mt-2 max-h-[80vh] max-w-6xl !overflow-y-auto rounded-[22px] p-3 lg:hidden">
             {NAV.map((g) => (
               <div key={g.label} className="mb-2">
                 <p className="eyebrow px-3 pb-1 pt-2">{g.label}</p>

@@ -54,11 +54,11 @@ export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; ti
 
 export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: Array<{ value: T; label: string }>; onChange: (v: T) => void; label: string }) {
   return (
-    <div className="relative flex rounded-full border border-[var(--hairline)] bg-[var(--surface-1)] p-1" role="group" aria-label={label}>
+    <div className="glass flex rounded-full p-1" role="group" aria-label={label}>
       {options.map((o) => (
         <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={value === o.value}
           className={`relative z-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${value === o.value ? "text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
-          {value === o.value && <motion.span layoutId={`seg-${label}`} className="absolute inset-0 -z-10 rounded-full bg-[var(--ink)]" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+          {value === o.value && <motion.span layoutId={`seg-${label}`} className="glass-dark absolute inset-0 -z-10" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
           {o.label}
         </button>
       ))}
@@ -69,7 +69,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
 export function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={on}
-      className={`rounded-full border px-3.5 py-1.5 text-sm transition-all ${on ? "border-[var(--ember)] bg-[var(--ember-soft)] text-[var(--text-primary)]" : "border-[var(--hairline)] text-[var(--text-secondary)] hover:-translate-y-0.5 hover:text-[var(--text-primary)]"}`}>
+      className={`glass rounded-full px-3.5 py-1.5 text-sm ${on ? "!border-[var(--ember)] text-[var(--text-primary)] shadow-[0_0_0_3px_rgba(217,67,26,0.14)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
       {children}
     </button>
   );

@@ -160,7 +160,7 @@ export function Explorer() {
                       {years.map((y) => <option key={y}>{y}</option>)}
                     </select>
                   </label>
-                  <button type="button" onClick={exportCsv} className="rounded-lg border border-[var(--hairline)] px-3 py-1 font-medium text-[var(--text-primary)] hover:border-[var(--ember)]">
+                  <button type="button" onClick={exportCsv} className="glass rounded-full px-3.5 py-1 font-medium text-[var(--text-primary)]">
                     Download CSV
                   </button>
                 </div>
