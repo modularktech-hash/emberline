@@ -28,14 +28,14 @@ sed -n '1,100p' 'plan combat.md'
 
 ### Progress ledger — update at every stopping point
 
-- Current task: trust-critical batch E01-E05 plus E10. Data side finished; web side in progress in a builder subagent (web/ claimed in STATUS.md).
-- Implementation status: E10 done. E03/E04/E05 data published, UI wiring pending. E01/E02 not yet confirmed done.
-- Last completed action: d7bb38f on main (merged to shishir/admiring-pascal-8ymvmc as cfd6542) - coverage_status.json, validation_points.json, coef_ci_estimated flag, scalar baseline in docs/results.md.
-- Current branch / HEAD: shishir/admiring-pascal-8ymvmc @ cfd6542 (= origin/main).
-- Files changed in current task: scripts/build_coverage_validation.py, scripts/check_data_contract.py, web/public/data/{params_global,coverage_status,validation_points}.json, docs/{results,session-notes,data-contract-additions}.md. Uncommitted: web/src/lib/queries.ts (web builder's, do not discard).
-- Checks run / results: `next build` passes; `scripts/check_data_contract.py` OK; recomputed held-out R2 matches published to 1.8e-15 for all 171.
-- Remaining uncertainty / blocker: model does not beat the scalar ratio baseline on R2 in 87 of 171 countries - copy must say so (E06, E11). Nothing on the website is to be deleted (owner instruction).
-- Next action: take the web builder's hand-back; verify E01 (reject lat outside +/-90, blank fields) and E02 (complete cell enumeration) in the browser; then wire coverage_status.json and coef_ci_estimated into Lab/Method/Data (E03-E05 UI), then E06.
+- Current task: trust-critical batch E01-E05 plus E10. E01 and E02 done and browser-verified; E03-E05 UI wiring next.
+- Implementation status: E10 done. E01 done (f339b28). E02 done (cd3641f). E03/E04/E05 data published, UI wiring pending.
+- Last completed action: cd3641f on main - complete H3 res-2 enumeration for boxes (E02), after f339b28 coordinate validation (E01).
+- Current branch / HEAD: shishir/admiring-pascal-8ymvmc = origin/main (see `git log -1`).
+- Files changed in current task: web/src/lib/aoi.ts, web/src/components/Explorer.tsx, web/src/components/AoiMap.tsx, web/src/lib/queries.ts (Set bookkeeping only), web/scripts/check-aoi-coverage.ts (new). Nothing uncommitted.
+- Checks run / results: `npx tsc --noEmit` + `npm run build` pass; Playwright (Chromium, `next start`) E01 matrix 8/8 pass; `node --experimental-strip-types web/scripts/check-aoi-coverage.ts` 14/14 boxes agree with brute-force reference (0 missing, 0 extra); Canada/Portugal country results on screen identical to the live site.
+- Remaining uncertainty / blocker: model does not beat the scalar ratio baseline on R2 in 87 of 171 countries - copy must say so (E06, E11). Res-2 cells are still coarse for local use (review section 6, not in E02 scope). Nothing on the website is to be deleted (owner instruction).
+- Next action: wire coverage_status.json and coef_ci_estimated into Lab/Method/Data (E03-E05 UI), then E06.
 
 ### Recommended work sequence
 
@@ -633,17 +633,25 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E01 — Reject impossible and empty coordinates
 
-- [ ] **Status:** P0 · Confirmed · Geography · effort S
+- [x] **Status:** P0 · Confirmed · Geography · effort S — **Done, verified 14 Nov (f339b28)**
 - **Evidence:** 10,100,20,110 accepted and returns data
 - **Acceptance:** Inline error; no query for invalid latitude/longitude or blank fields
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:**
+  - *Reproduced before the fix* (Playwright, Chromium, `next start` of a12080e code): 10,100,20,110 issued a query (2 parquet requests, "Custom area" result); blank south ran as latitude 0 (7 requests); east 200 ran (5 requests); blank/south>north/text were silently ignored with no message; an antimeridian box W 170 / E -170 was silently ignored.
+  - *Implemented:* `validateBoxInput` in `web/src/lib/aoi.ts` (strict decimal parse — blank, text, `Infinity`, hex rejected; lat within ±90; lon within ±180; south < north; west != east). `web/src/components/Explorer.tsx`: no `setArea` (so no query) on invalid input; user's entry preserved; per-field `aria-invalid` + `aria-describedby` message; summary in a `role="alert"` `aria-live` region; help text states the rules. Antimeridian policy documented in `aoi.ts`: west > east = box crossing 180° (matches packages/firms-ingest); drawn boxes are wrapped into [-180, 180] (`normalizeDrawnBbox`); `AoiMap.tsx` draws and fits such boxes across the Pacific.
+  - *Verified:* Playwright matrix 8/8 PASS — lat 100-110, all blank, south blank, lon 200, south>north, text: each shows the error, marks the field(s) aria-invalid, 0 new parquet requests; Portugal box (-9.5, 37, -6.2, 42.2) queries (6 of 6 cells with data) and W170/E-170 queries. Canada/Portugal country results (busiest month/year, held-out R², raw and harmonized) identical to the live site. tsc + build pass.
+  - *Not verified:* screen-reader announcement with a real AT (only the ARIA attributes were checked).
 
 ### E02 — Replace fixed lattice with complete cell coverage
 
-- [ ] **Status:** P0 · Confirmed · Geography · effort M
+- [x] **Status:** P0 · Confirmed · Geography · effort M — **Done, verified 14 Nov (cd3641f)**
 - **Evidence:** aoi-sampling.json; latest bboxToParents still samples225 positions
 - **Acceptance:** Reference geometry agrees for tiny/narrow/continental/polar/wrapped boxes
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:**
+  - *Reproduced:* `bboxToParents` in `web/src/lib/aoi.ts` still sampled a 15x15 lattice (225 points) at res 2.
+  - *Implemented:* `bboxToParents` now returns every res-2 cell meeting the closed box (semantics: any point of the box maps to the cell under `latLngToCell`). Lattice seeds, then flood fill over `gridDisk(1)` neighbours with an exact cell/rectangle test (geodesic cell edges densified, longitudes unwrapped, polar cells closed through the pole, antimeridian boxes split in two). No cap: res 2 has 5,882 cells, near-global box ~120 ms in Node. Range reads unchanged (still filtered on `h3_parent` via `queries.ts`); `getCalendar` key bookkeeping moved to Sets for thousands of keys. `cellsExtent` reports antimeridian extents as west > east. Explorer note adds that every touched cell is included.
+  - *Verified:* `node --experimental-strip-types web/scripts/check-aoi-coverage.ts` (dense-lattice + 10x denser edge-walk reference): 14/14 PASS, 0 missing and 0 extra in every case — tiny 0.05° (1 cell), tiny 0.01° (1), tiny on a cell vertex (3), narrow 60x0.2° (26), narrow 0.1x70° (34), India (134), Australia (218), Africa -20,-35,55,38 (781; old lattice 225, 556 missing), north cap (57), polar sector (40), south polar (55), W170/E-170 (45), W150/E-120 (227), near-global (5,872; old 215). Browser (Playwright): Africa box 781 touched / 482 with data in ~3 s, near-global 5,872 / 2,118 in ~3.6 s, no page errors; Portugal box unchanged (6 of 6); Canada/Portugal country results identical to the live site.
+  - *Not verified / out of scope:* the reference is dense sampling (a lower bound), not an analytic oracle; agreement is exact at the steps used. Res-2 cells remain coarse for local work (review §6) — finer cells or point queries are a separate item.
 
 ### E03 — Remove false zero-width pooled confidence intervals
 
