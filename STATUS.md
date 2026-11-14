@@ -57,6 +57,8 @@ land in `docs/results.md`.
 
 ## Log (newest first)
 
+- 14 Nov ~18:20 IST (12:50 UTC) — Cloud "app build" session (session_01RwRY…): world download COMPLETE here — 237 countries, all 9,243 country-source-years settled (8,174 .csv.gz = 6.5 GB, 1,069 absent per FIRMS, 0 failures). All 237 countries built into `data/global_public/` (212.8M filtered detections). Raw calendars of Portugal/Chile/Australia/Canada match `calendar_raw.parquet` exactly. Global fit running now in this session; will publish the three `*_global` files only if main does not already have them. Other sessions: you can stop duplicate downloads.
+
 - 14 Nov ~15:10 IST — Local Codex took over data only. Durable download service and five-minute build timer installed on the laptop; raw files from the old cloud session were not available. Recovery fixes and five regression tests added; full Python suite: 89 passed. Published data unchanged; global fit and four-country validation still pending.
 
 - 14 Nov — Live: https://emberline-tan.vercel.app/ — checked logged-out at phone and desktop size: `/` renders the calendar (Portugal raw 2011 = 1,953, 2012 = 4,128), `/method` renders, Parquet range requests return 206, no console errors, no horizontal overflow.
