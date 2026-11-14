@@ -14,8 +14,8 @@ what, `docs/submission.md` has the full submission rules.
 
 ## 1. Global data (running in the "app build" cloud session)
 
-- [ ] Rebuild the FIRMS country list (`scripts/countries_global.txt`)
-- [ ] Download the country archive for every country (resumable, 3 jobs max)
+- [x] Rebuild the FIRMS country list (`scripts/countries_global.txt`, 237 names, `5ae02bd`)
+- [ ] Download the country archive for every country (resumable, 3 jobs max) — in progress
 - [ ] Build slim tables and raw calendars (`scripts/run_global.py`)
 - [ ] Fit every country (`scripts/fit_harmonization.py`), pooled curve for sparse ones
 - [ ] Regression check: Portugal, Chile, Australia, Canada reproduce `params.json`

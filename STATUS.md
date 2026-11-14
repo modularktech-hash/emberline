@@ -11,8 +11,7 @@ it, commit and push. Times are IST.
 | Task | Who | State | Output |
 |---|---|---|---|
 | A1 — raw pipeline (Portugal, Chile) | Person A's session | **DONE** | `scripts/build_tables.py`, `web/public/data/{cell_day,calendar_raw}.parquet`, `docs/figures/raw_counts_*.png`, notes in `docs/session-notes.md` |
-| Global data download + build | Cloud session (Claude, "data host") | **RUNNING** (unattended) | `data/global/*.csv.gz` (~190 countries) → `scripts/run_global.py` → `data/global_public/`. Cloud session only — never committed |
-| Global fit | Cloud session | **queued** after the build | `web/public/data/params_global.json`, `calendar_*_global.parquet` — published only after checking |
+| Global data download + build + fit | Cloud session "app build" (session_01RwRY…) — **took over**: the data-host session ran out of usage and its `data/global/` is gone | **RUNNING** — download re-started here ~13:20 (237 FIRMS country names from the archive index; 3,400+ country-year files staged so far), build running per finished country, fit after | `scripts/countries_global.txt`, `data/global/` and `data/global_public/` (this session only, never committed) → `web/public/data/params_global.json`, `calendar_*_global.parquet`, published only after the four-country regression check |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
 | App build — B1+B2 | Cloud session "app build" (session_01RwRY…, not the data host). **Other sessions: do not edit `web/` — pull first, and coordinate here** | **Steps 1–5 DONE on `main`** (data layer, calendar, area selection, CSV export, `/method`). Step 6 deploy **BLOCKED**: Vercel project creation returned 403 for this session — owner must import `modularktech-hash/emberline`, root `web`, Next.js, branch `main`. No live URL yet. Global download + fit now also running in this session (data host out of usage) | `web/`; details in `docs/session-notes.md`; deployed URL when live |
 
@@ -46,6 +45,7 @@ land in `docs/results.md`.
 
 ## Log (newest first)
 
+- 14 Nov — Global download/build/fit now owned by the "app build" cloud session; app switch-over to the global files being prepared in parallel (reads `*_global` when present, falls back to the four-country files).
 - 14 Nov — `TODO.md` added: the full list of what is left until submission. Vercel project created by the owner (URL to be recorded here once confirmed).
 - 14 Nov — App build: steps 1–5 done on `main` (area selection 51b6a9f, CSV 7b4904f, `/method` 40a9646, basemap verified). Deploy blocked on Vercel project creation (403) — owner action. Global download + fit now running in the app-build session (data-host session ran out of usage).
 - 14 Nov — App build: data layer (hyparquet, Supabase removed) and the calendar home page (raw vs harmonized) are on `main`. Same session continues with area selection, CSV export, `/method`, deploy.
