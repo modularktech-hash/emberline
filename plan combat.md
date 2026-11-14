@@ -686,7 +686,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P1 · Observed gap · Challenge · effort L
 - **Evidence:** Historical calendar ends2025; live platform mix differs
 - **Acceptance:** Validated bridge, same elapsed period, filtering and completeness disclosed
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Scoped, not ticked (no validated bridge). 14 Nov: same-platform prototype -- NOAA-20 NRT 8-13 Nov 2026 vs NOAA-20 archive (`viirs-jpss1`) same days 2018-2025, identical day/confidence/FRP filters, no type filter (NRT lacks it), not harmonized, not month-to-date (keyless NRT = 7 days). `scripts/build_current_month.py` -> `web/public/data/current_month.json`; decision, gaps and UI card spec in `docs/current-month.md`.
 
 ### E08 — Persist area mode dates and baseline in URL
 
@@ -749,7 +749,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P1 · Source concern · Release · effort M
 - **Evidence:** Independent fallback loaders and metadata sources
 - **Acceptance:** Manifest validates version/schema and fallback consistency
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced (by code reading): `queries.ts` `getParams()` and `openTable()` fall back per file independently, so world calendars can pair with the four-country fit; `Explorer.tsx:289` labels from raw only; `season/countries/drift.json` are world-only without fallback. Implemented (data side): `build_manifest.py` writes manifest v2 with named datasets (members + sha256 + one fit version + consistency, harmonized country set == params fitted set) and a mixing rule; `check_data_contract.py` fails on any member version/hash mismatch. Verified: check prints OK; a tampered dataset fit version makes it fail (rc 1). Not verified: the UI half (single-dataset resolution, refuse mismatch, visible banner, blocked-file test) — handed to the UI session, `docs/data-contract-additions.md` §7. Fallback files kept.
 
 ### E17 — Rewrite stale demo and README claims
 
@@ -854,14 +854,14 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Observed gap · Trends · effort M
 - **Evidence:** Point slopes with caveat
 - **Acceptance:** CI/usable years/sensitivity shown or descriptive-only label
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: season.json/countries.json carried only point slopes. Implemented: `build_insights.py` `trend_stats()` adds per country and per raw/harm onset/peak/end the OLS SE, 95% t-CI, usable years and first/last year, and slope after dropping the first or last 3 usable years (null if <8 remain) with the min–max range; `trend_note` says descriptive. Verified: rebuilt with the same EMBERLINE_KEEP_RESOLUTION pinning; stripping the new keys gives JSON equal to the published files (season, countries; drift.json byte-unchanged); slopes asserted equal to `trend_days_per_decade`; check_seasons.py and check_data_contract.py OK. Not verified: on-screen display (UI hand-off, `docs/data-contract-additions.md` §8).
 
 ### E32 — Respect monthly estimate precision
 
 - [ ] **Status:** P2 · Source concern · Trends · effort S
 - **Evidence:** 5 monthly countries; maximum trend discrepancy37.61
 - **Acceptance:** Approximate dates and method differences remain visible
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: 5 monthly countries had no per-estimate precision flag. Implemented: `trend_approximate` per season country and `onset_trend_approximate` in countries.json (true for Barbados, Estonia, Mauritius, Slovenia, Solomon_Islands); monthly-vs-daily discrepancy metadata kept. Verified: flags match `resolution == "monthly"`; added-fields-only diff check passed. Not verified: ≈ display in UI (hand-off §8).
 
 ### E33 — Add absolute anomaly and zero-median handling
 
@@ -914,10 +914,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E40 — Add reproducible small fixture and setup
 
-- [ ] **Status:** P2 · Observed gap · Docs · effort M
+- [x] **Status:** P2 · Observed gap · Docs · effort M
 - **Evidence:** README lacks complete new-reviewer pathway
 - **Acceptance:** Fresh environment reproduces one known output
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: README had no small runnable path or expected output. Implemented: `tests/fixtures/portugal_feb_dec/` (every FIRMS archive row for Portugal, Feb+Dec 2019–2021; 997 rows, 104 KB, NASA open data, cut by `scripts/make_fixture.py`), `scripts/repro_fixture.sh` (venv + pinned deps) → `scripts/repro_fixture.py`: firms-ingest pytest, build detections/cell-day/calendar with build_tables.py functions, compare to `tests/fixtures/portugal_feb_dec_expected.json`, cross-check counts against published `calendar_raw_global.parquet`; README "Reproduce in 5 minutes". Verified: fresh `git clone` into scratchpad → 84 passed, 672 filtered detections, expected file matched, 12/12 counts equal the published calendar, `REPRO OK` (Python 3.13). Not verified: the fit and web build are not in the fixture path; other Python versions.
 
 ### E41 — Add challenge project and team links
 

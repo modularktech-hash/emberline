@@ -1,12 +1,54 @@
 {
- "manifest_version": 1,
+ "manifest_version": 2,
  "fit_version": "v1-20261114T1240",
  "fallback_fit_version": "v1-20261114T0630",
  "datasets": {
-  "world": "the published world fit; what the app reads first",
-  "fallback_four_country": "older four-country files, read only if a world file fails to load",
-  "live": "recent raw feeds; never harmonized, never mixed with the historical record"
+  "world": {
+   "role": "primary",
+   "description": "the published world fit; what the app reads first",
+   "fit_version": "v1-20261114T1240",
+   "params_file": "params_global.json",
+   "files": {
+    "calendar_harmonized_global.parquet": "62b545bd7170fee0399576493a556848bd27338091af9d2a6200e9672f8e2d63",
+    "calendar_raw_global.parquet": "8123debe2f6dbc3d853ae2bf266081fb8ca68f7e64e459670185d7da2335fb0e",
+    "countries.json": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
+    "coverage_status.json": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
+    "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
+    "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
+    "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
+    "validation_points.json": "a8dbfaaecdcac14b45eed5cbb93f62dafe864ea693adc1270c24458b3905b6ab"
+   },
+   "consistent": true,
+   "problems": []
+  },
+  "fallback_four_country": {
+   "role": "fallback",
+   "description": "older four-country files (Australia, Canada, Chile, Portugal), a complete set of their own; read only as a whole set",
+   "fit_version": "v1-20261114T0630",
+   "params_file": "params.json",
+   "files": {
+    "calendar_harmonized.parquet": "e0d94f1fc68129e03dcbee667b9def21b87c44730858cbdfc92c1c3b90836281",
+    "calendar_raw.parquet": "4582bc6c26c4aadd0afd9ad0eb026c9367bfbf9a42cbd9aa576c47eeeca5801c",
+    "cell_day.parquet": "8ecc5f843228a76ada258d68e08b1cb6b3c260651756dacf3b686556c87d6ba7",
+    "params.json": "88f98487739b7ef192caae1151cef03bde9095dd29b5ae82fb4b4b705aebeb82"
+   },
+   "consistent": true,
+   "problems": []
+  },
+  "live": {
+   "role": "separate",
+   "description": "recent raw feeds; never harmonized, never mixed with the historical record",
+   "fit_version": null,
+   "params_file": null,
+   "files": {
+    "live.json": "1b0bc4f14e88bb795e61a95f7dcc700d83d56523a6b0b9b2b2d516e2f3d1f034",
+    "tle.json": "c26a8153ebc3b57e61ea3a2474fdf8262e40b29ef09812572edd91d78e534533"
+   },
+   "consistent": true,
+   "problems": []
+  }
  },
+ "mixing_rule": "A view may combine files only from ONE dataset (plus 'live', which is never harmonized). Never combine params, calendars or summaries from 'world' with any file from 'fallback_four_country'. If any world file needed by a view fails, either load the whole fallback set (params.json + calendar_raw.parquet + calendar_harmonized.parquet) and say so on screen, or show the view as unavailable. World-only summaries (countries.json, season.json, drift.json, coverage_status.json, validation_points.json) have no fallback equivalent.",
  "generated_by": "scripts/build_manifest.py",
  "files": [
   {
@@ -350,8 +392,8 @@
    "dataset": "world",
    "purpose": "One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)",
    "source": "derived from the world calendars and params_global.json",
-   "bytes": 263435,
-   "sha256": "daa551574fd1a1ee5f829ff9d8f4f79d9a3917032ca54aab96d9a7d7389a3cb3",
+   "bytes": 307339,
+   "sha256": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
    "format": "json",
    "top_level_keys": [
     "fit_version",
@@ -530,8 +572,8 @@
    "dataset": "world",
    "purpose": "Per fire year: day by which 10/50/90% of detections occurred, raw and harmonized; daily or monthly resolution per country",
    "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
-   "bytes": 767611,
-   "sha256": "943552cd5c2ff4adb9be5101aace974bbac94b6eb4f8d6c16cef9d944509408e",
+   "bytes": 1085351,
+   "sha256": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
    "format": "json",
    "top_level_keys": [
     "fit_version",
@@ -539,6 +581,7 @@
     "train_years",
     "test_years",
     "partial_note",
+    "trend_note",
     "resolution_note",
     "monthly_vs_daily",
     "countries"

@@ -140,3 +140,96 @@ A fire year starts at the country's quietest month. Label: start month 1 → the
 4 Jul 2002, so start month 7, label 2003), is listed in `partial`; that series' onset, peak, end,
 length and total are null and the year is excluded from the trend. The app should show such a
 year as "incomplete", not as a low or missing season. Checked by `scripts/check_seasons.py`.
+
+## 7. `manifest.json` v2 — named, versioned datasets (E16)
+
+`manifest.json` now has `manifest_version: 2` and a `datasets` object. Each
+dataset (`world`, `fallback_four_country`, `live`) lists its member files with
+their sha256, its single `fit_version`, its `params_file`, and `consistent` /
+`problems`. `mixing_rule` states the rule in words.
+`scripts/check_data_contract.py` fails if any member's fit version differs
+from its dataset's, if a member hash differs from its file entry, or if a
+dataset's harmonized calendar country set differs from its params file's
+fitted countries. The fallback files are kept.
+
+**Which files may be combined** (read from `web/src/lib/queries.ts`, `data.ts`):
+
+| Set | Files | Fit |
+|---|---|---|
+| world | `params_global.json`, `calendar_raw_global.parquet`, `calendar_harmonized_global.parquet`, `countries.json`, `season.json`, `drift.json`, `coverage_status.json`, `validation_points.json` | v1-20261114T1240 |
+| fallback_four_country | `params.json`, `calendar_raw.parquet`, `calendar_harmonized.parquet`, `cell_day.parquet` | v1-20261114T0630 |
+| live | `live.json`, `tle.json` | none (raw) |
+
+**Mixing paths found in the current code (reproduced by reading, not in a browser):**
+
+1. `queries.ts` `getParams()` (≈l.234–252) and `openTable()` (≈l.341–352,
+   used by `loadRaw` and `loadHarmonized`) each walk `FILESETS` **independently**.
+   If `params_global.json` fails but the calendars load, the world calendars
+   are shown with the four-country fit (and vice versa); if only
+   `calendar_harmonized_global.parquet` fails, raw is world and harmonized is
+   four-country.
+2. `Explorer.tsx:289` labels the files from `data.raw.dataset` only, so case 1
+   is labelled "world" while params/harmonized came from the fallback.
+3. `data.ts` `getSeason`, `getCountryTable`, `getDrift` (l.70–72) are world-only
+   with no fallback; when params/calendars have fallen back, these still show
+   world v1-20261114T1240 values beside four-country v1-20261114T0630 values.
+
+**Hand-off to the UI session (web/src, not edited here):**
+
+- `queries.ts`: resolve the dataset **once**. Add `let datasetPromise: Promise<DataSet>`
+  and `resolveDataset()`: try all three world files (`params_global.json` +
+  the two `_global` parquet footers); if any fails, use `"four"` for all three.
+  Make `getParams()` and `openTable(kind)` take the file name from
+  `FILESETS[kind][dataset === "world" ? 0 : 1]` instead of looping. After load,
+  assert `params.fit_version` equals the fit version for that dataset in
+  `manifest.json` (`datasets[<world|fallback_four_country>].fit_version`);
+  on mismatch throw (refuse) rather than render.
+- Export `currentDataset(): Promise<{ dataset: DataSet; fitVersion: string }>`
+  and use it for `Explorer.tsx:289` and `:367` instead of `data.raw.dataset` / `p.dataset`.
+- `data.ts`: `getSeason`, `getCountryTable`, `getDrift` and the coverage /
+  validation readers must refuse (show "unavailable with the fallback data")
+  when `currentDataset()` is `"four"`, and must check their own `fit_version`
+  equals the world dataset's.
+- Show the fallback status visibly in a site-wide banner (not only Explorer's
+  footnote): "World data failed to load — showing the four-country fallback
+  (fit v1-20261114T0630)". Verify by blocking `params_global.json` in DevTools
+  (Network → Block request URL): every page must show the banner, and no page
+  may show world summaries.
+
+## 8. Trend uncertainty and monthly precision (E31, E32) — additive
+
+Built by `scripts/build_insights.py` (rebuilt with
+`EMBERLINE_DETECTIONS=data/public:data/global_public EMBERLINE_KEEP_RESOLUTION=<copy of published season.json>`;
+every pre-existing field is byte-for-byte unchanged, checked by stripping the new keys and comparing).
+
+`season.json`, top level: `trend_note` (the definition below, in words).
+
+`season.json`, per country:
+
+- `trend_stats.{raw,harm}_{onset,peak,end}` (peak = 50% midpoint):
+  - `n_years`, `first_year`, `last_year` — usable fire years (non-null, not partial).
+  - `slope_per_decade` — identical to `trend_days_per_decade[...]` (asserted).
+  - `se_per_decade` — OLS slope standard error × 10.
+  - `ci95` — `[slope − t·se, slope + t·se]`, t = Student-t 0.975 quantile with n−2 df.
+  - `drop_first3`, `drop_last3` — slope after dropping the first / last 3 **usable**
+    years; null if fewer than 8 usable years remain.
+  - `sensitivity_range` — `[min, max]` of full, drop_first3, drop_last3.
+  - All null except `n_years` when fewer than 8 usable years (no trend published).
+- `trend_approximate` — true for the five monthly-resolution countries
+  (Barbados, Estonia, Mauritius, Slovenia, Solomon_Islands): their dates are
+  interpolated within months, not observed.
+
+`countries.json`, per row: `onset_trend_raw_ci95`, `onset_trend_harm_ci95`,
+`onset_trend_harm_n_years`, `onset_trend_harm_sensitivity`, `onset_trend_approximate`.
+
+**These are descriptive.** The CI assumes independent, homoscedastic residuals
+and a linear trend; none is tested. Wording to use: "descriptive least-squares
+trend; 95% interval assumes independent years". A CI that spans zero, or a
+sensitivity range that changes sign, must not be read as a shift.
+
+**Hand-off to the UI session:** `TrendsPage.tsx` (trend cells, country table)
+— show `ci95` and `n_years` beside each slope, and the sensitivity range on
+hover/detail; label the column "descriptive"; for `trend_approximate` prefix
+dates with "≈" and say "monthly estimate". Types to add in `lib/data.ts`:
+`trend_stats?: Record<string, TrendStats>`, `trend_approximate?: boolean` on the
+season country, and the five `onset_trend_*` fields on `CountryRow`.

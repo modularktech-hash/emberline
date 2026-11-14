@@ -20,7 +20,9 @@ For each country:
   (MODIS to 2011, VIIRS from 2012) and the harmonized one (Aqua, then VIIRS
   weighted by the fitted detection probability). The fire year starts at the
   country's quietest month, so a southern-hemisphere season is not cut in two.
-  Each series gets a least-squares trend in days per decade, 2003-2025.
+  Each series gets a least-squares trend in days per decade, 2003-2025, with
+  its OLS standard error, 95% CI, usable years and endpoint sensitivity
+  ("trend_stats"; descriptive, see TREND_NOTE).
   Fire-year label: with a start month of 2-6 the label is the calendar year
   the fire year starts in; with 7-12 it is the year it ends in (the year
   holding most of its months; July splits 6/6 and takes the end year).
@@ -89,6 +91,56 @@ def trend(years: list[int], values: list[float | None]) -> float | None:
         return None
     x = np.array([p[0] for p in pts], float); y = np.array([p[1] for p in pts], float)
     return float(np.polyfit(x, y, 1)[0] * 10)
+
+
+# Two-sided 95% Student-t quantiles by degrees of freedom (standard table values; no scipy here).
+T975 = {6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228, 11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145,
+        15: 2.131, 16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086, 21: 2.080, 22: 2.074, 23: 2.069,
+        24: 2.064, 25: 2.060}
+DROP = 3
+TREND_NOTE = (
+    "Descriptive OLS of the day (onset 10%, midpoint 50%, end 90%) on fire year over usable years "
+    "(non-null, not partial), in days/decade. se_per_decade is the usual OLS slope standard error; ci95 is "
+    "slope +/- t(0.975, n-2) * se. These assume independent, homoscedastic residuals and a linear trend, "
+    "none of which has been tested: treat them as descriptive. Endpoint sensitivity: the slope recomputed "
+    "after dropping the first 3 usable years (drop_first3) and, separately, the last 3 usable years "
+    "(drop_last3), each only if at least 8 usable years remain (else null); sensitivity_range is the min and "
+    "max of the full, drop_first3 and drop_last3 slopes. approximate = true for countries at monthly "
+    "resolution, whose days are interpolated within months, not observed.")
+
+
+def trend_stats(years: list[int], values: list[float | None]) -> dict:
+    """Slope (identical to trend()), its OLS standard error and 95% CI, usable years, endpoint sensitivity."""
+    pts = [(y, v) for y, v in zip(years, values) if v is not None]
+    n = len(pts)
+    out: dict = {"n_years": n, "first_year": pts[0][0] if pts else None, "last_year": pts[-1][0] if pts else None,
+                 "slope_per_decade": None, "se_per_decade": None, "ci95": None,
+                 "drop_first3": None, "drop_last3": None, "sensitivity_range": None}
+    if n < 8:
+        return out
+    x = np.array([p[0] for p in pts], float); y = np.array([p[1] for p in pts], float)
+    b, a = np.polyfit(x, y, 1)
+    resid = y - (a + b * x)
+    se = math.sqrt(float(resid @ resid) / (n - 2) / float(((x - x.mean()) ** 2).sum()))
+    t = T975[n - 2]
+    slope = trend(years, values)
+    out.update(slope_per_decade=slope, se_per_decade=se * 10, ci95=[slope - t * se * 10, slope + t * se * 10])
+    ys, vs = [p[0] for p in pts], [p[1] for p in pts]
+    out["drop_first3"] = trend(ys[DROP:], vs[DROP:])
+    out["drop_last3"] = trend(ys[:-DROP], vs[:-DROP])
+    cand = [v for v in (slope, out["drop_first3"], out["drop_last3"]) if v is not None]
+    out["sensitivity_range"] = [min(cand), max(cand)]
+    return out
+
+
+def add_trend_stats(season: dict) -> dict:
+    yrs = [r["year"] for r in season["years"]]
+    season["trend_stats"] = {f"{k}_{m}": trend_stats(yrs, [r.get(f"{k}_{m}") for r in season["years"]])
+                             for k in ("raw", "harm") for m in ("onset", "peak", "end")}
+    for k, v in season["trend_stats"].items():
+        assert v["slope_per_decade"] == season["trend_days_per_decade"][k], k
+    season["trend_approximate"] = season["resolution"] == "monthly"
+    return season
 
 
 def quantile_days(day_counts: np.ndarray) -> tuple[int | None, int | None, int | None]:
@@ -327,8 +379,14 @@ def main() -> int:
                 why = f"detection table differs from the published calendar in {len(mismatch)} years"
         if resolution == "monthly":
             season[name] = monthly_season(m, forced_monthly.get(name))
+        add_trend_stats(season[name])
         tr = season[name]["trend_days_per_decade"]
-        row.update({"season_resolution": resolution, "onset_trend_raw": tr["raw_onset"], "onset_trend_harm": tr["harm_onset"]})
+        ts = season[name]["trend_stats"]
+        row.update({"season_resolution": resolution, "onset_trend_raw": tr["raw_onset"], "onset_trend_harm": tr["harm_onset"],
+                    "onset_trend_raw_ci95": ts["raw_onset"]["ci95"], "onset_trend_harm_ci95": ts["harm_onset"]["ci95"],
+                    "onset_trend_harm_n_years": ts["harm_onset"]["n_years"],
+                    "onset_trend_harm_sensitivity": ts["harm_onset"]["sensitivity_range"],
+                    "onset_trend_approximate": season[name]["trend_approximate"]})
         table.append(row)
         checks[name] = why
         print(f"{name}: {resolution} ({why}); onset trend raw {tr['raw_onset']} harm {tr['harm_onset']} d/decade", flush=True)
@@ -343,7 +401,7 @@ def main() -> int:
             "train_years": params["train_years"], "test_years": params["test_years"]}
     n_daily = sum(1 for v in season.values() if v["resolution"] == "daily")
     diffs = [abs(v) for c in checks_mvd for k, v in c.items() if k != "country" and v is not None]
-    seasons_meta = {**meta, "partial_note": PARTIAL_NOTE, "resolution_note": (
+    seasons_meta = {**meta, "partial_note": PARTIAL_NOTE, "trend_note": TREND_NOTE, "resolution_note": (
         "daily: from point detections; monthly: from the monthly calendars, assuming detections spread evenly "
         "within each month (an estimate at monthly resolution)"),
         "monthly_vs_daily": {"countries": len(checks_mvd), "trend_abs_diff_median": float(np.median(diffs)) if diffs else None,
