@@ -10,9 +10,11 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by the "app build" cloud session (session_01RwRY…), 14 Nov 13:25 UTC, owner's instruction
+## `web/` — CLAIMED by the "data host" cloud session (session_012Vv…), 14 Nov ~15:10 UTC, owner's instruction
 
-Performance + polish pass: scroll/globe/cursor lag on all pages, system (SF Pro) font, unified number styling, clearer home stats and satellite clocks, Explorer load time, interactive footer. **No other session edits `web/` until this is released.**
+Owner said "begin with everything": switch the app to the world data (TODO §2), then testing (TODO §3), README and submission prep. The app-build session's performance and polish passes are live (`06df191`). **No other session edits `web/` until this is released.**
+
+**Owner decision (14 Nov):** the public submission repo is `modularktech-hash/emberline`.
 
 ### Earlier note (released 14 Nov by the data-host session)
 

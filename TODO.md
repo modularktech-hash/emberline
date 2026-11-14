@@ -78,5 +78,4 @@ Live: https://emberline-tan.vercel.app/ — deploys `modularktech-hash/emberline
 
 - [ ] `CLAUDE.md` says "fit on 2012–2021"; the fit trains 2012–2018 and tests
       2019–2021. Keep (and reword `CLAUDE.md`) or refit?
-- [ ] `CLAUDE.md` names the repo `shishirbhat/emberline`; the working repo is
-      `modularktech-hash/emberline`. Which is the public submission repo?
+- [x] Public submission repo: `modularktech-hash/emberline` (owner, 14 Nov)
