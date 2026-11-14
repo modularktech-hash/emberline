@@ -171,7 +171,7 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
             <h2 id="glance" className="display t-d3 mt-2">One day of fire, and the long record it joins.</h2>
           </div>
           <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year from 2003 to 2025 converted to one unit (Aqua MODIS-equivalent), so a fire season in 2005 and one in 2025 can be compared on the same footing. Aqua launched in May 2002, so 2001–2002 have no Aqua reference.
+            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year from 2003 to 2025 converted to one unit (Aqua MODIS-equivalent), so a fire season in 2005 and one in 2025 can be compared on the same footing. 2001–2002 are not complete Aqua reference years (Aqua launched in 2002).
           </p>
         </div>
       </Reveal>
@@ -419,7 +419,7 @@ export function Home() {
             </Reveal>
           ))}
         </div>
-        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d?.params); return a ? <>Across all {a.fitted} fitted countries, each fitted separately, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
+        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d?.params); return a ? <>Across all {a.fitted} fitted countries, {a.own} with their own curve and {a.fitted - a.own} on a borrowed (pooled) curve, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
       </section>
 
       <section className="py-16">

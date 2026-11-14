@@ -84,7 +84,7 @@ export function Method() {
   return (
     <div>
       <PageHead compact eyebrow="Science · method & validation" title="How we know the correction" italic="is real."
-        lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Every country is fitted separately: these are regional results, not a global correction." />
+        lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Countries with enough data get their own fitted curve; smaller ones borrow a shared (pooled) curve, counted and marked below. These are regional results, not a global correction." />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
           ["01 · Match", "On the same day and place (within ~3.5 km), did the old sensor, Aqua MODIS, also see the fire that VIIRS saw? Both pass overhead in the early afternoon."],

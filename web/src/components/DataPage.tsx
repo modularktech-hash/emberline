@@ -78,7 +78,7 @@ export function DataPage() {
           <Reveal>
             <section className="card overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] p-4">
-                <div><h2 className="display text-3xl">Fitted countries</h2><p className="text-xs text-[var(--text-muted)]">{data.countries.length} fitted ({data.countries.filter((c) => c.fit_source === "pooled").length} on the pooled curve, marked) · fit {data.fit_version} · each country fitted separately, no global correction · choose a country name for its yearly table</p></div>
+                <div><h2 className="display text-3xl">Fitted countries</h2><p className="text-xs text-[var(--text-muted)]">{data.countries.length} fitted ({data.countries.filter((c) => c.fit_source === "pooled").length} on the pooled curve, marked) · fit {data.fit_version} · own curve or borrowed (pooled) curve per country, no global correction · choose a country name for its yearly table</p></div>
                 <div className="flex flex-wrap items-center gap-2">
                   <TableSearch q={tbl.q} setQ={tbl.setQ} shown={rows.length} total={data.countries.length} />
                   <button type="button" onClick={() => downloadCsv("emberline_regions.csv", { source: "Emberline countries.json", fit_version: data.fit_version, unit: data.unit }, COLS.map((c) => c.key), rows.map((r) => COLS.map((c) => String(r[c.key] ?? ""))))}

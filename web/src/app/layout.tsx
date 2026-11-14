@@ -7,6 +7,7 @@ import { RouteTransition } from "@/components/RouteTransition";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
+import { fitCounts, fitCountsPhrase } from "@/lib/fitCounts";
 
 // UI and headings use the system stack (real San Francisco on Apple devices; see --font-ui
 // in globals.css). Inter (variable, self-hosted by next/font) is the named fallback so Windows,
@@ -14,10 +15,14 @@ import "./globals.css";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
 const mono = Geist_Mono({ variable: "--font-mono-fallback", subsets: ["latin"], display: "swap" });
 
+// Title, description and social cards share the visible headline: 23 years, 2003–2025 (E43).
+const TITLE = "Emberline — 23 years of fire detections (2003–2025), harmonized across the sensor change";
+const DESCRIPTION = `A harmonized MODIS + VIIRS record of satellite fire detections, 2003–2025: ${fitCountsPhrase()}, as a calendar for every fitted country or a drawn area.`;
 export const metadata: Metadata = {
-  title: { default: "Emberline — fire detections, harmonized across the sensor change", template: "%s" },
-  description:
-    "A per-country harmonized MODIS + VIIRS record of satellite fire detections, 2003–2025, as a calendar for every fitted country or a drawn area.",
+  title: { default: TITLE, template: "%s" },
+  description: DESCRIPTION,
+  openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Emberline", type: "website" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 export const viewport = { themeColor: "#f7f3e8" };
 
@@ -30,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Interactions />
         <SiteNav />
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
-        <SiteFooter />
+        <SiteFooter counts={fitCounts()} />
         <RouteTransition />
       </body>
     </html>

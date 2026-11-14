@@ -928,24 +928,24 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E42 — Reconcile pooled wording in summaries
 
-- [ ] **Status:** P2 · Confirmed · Copy · effort S
+- [x] **Status:** P2 · Confirmed · Copy · effort S
 - **Evidence:** Method intro everycountry separately;41pooled
 - **Acceptance:** All summaries distinguish fitted and borrowed curves
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Method lede "Every country is fitted separately", Home/Data "each fitted separately", footer/About/metadata gave no own/borrowed split. Implemented: `web/src/lib/fitCounts.ts` reads own_fit/borrowed_fit from coverage_status.json at build; metadata description, footer and About say "130 countries with their own fitted curve and 41 on a borrowed (pooled) curve"; Method intro, Home accuracy line and Data header distinguish own and borrowed curves; Method notes carry the 130/41 heading (E28). Verified: strings present on /, /about, /method, /data at 390/1440, 0 console errors, no overflow.
 
 ### E43 — Align titles with current23-year headline
 
-- [ ] **Status:** P2 · Confirmed · Copy · effort S
+- [x] **Status:** P2 · Confirmed · Copy · effort S
 - **Evidence:** Old25-year default title remains in captures
 - **Acceptance:** Metadata headline/social preview agree
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: default title had no year span while the OG card says "23 years of detections". Implemented: title, description, openGraph and twitter metadata share "23 years of fire detections (2003–2025)". Verified: document.title, og:title, twitter:title equal on /.
 
 ### E44 — Clarify partial Aqua2002 reference
 
-- [ ] **Status:** P2 · Confirmed · Copy · effort S
+- [x] **Status:** P2 · Confirmed · Copy · effort S
 - **Evidence:** Home says2001–2002 noAqua reference
 - **Acceptance:** First full reference year explanation without denying2002 observations
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Home said "2001–2002 have no Aqua reference". Implemented: "2001–2002 are not complete Aqua reference years (Aqua launched in 2002)". About copyedit: capital "Much" after the dash lowercased. Verified on /, /about.
 
 ### E45 — Run analyst task sessions
 
