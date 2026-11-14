@@ -57,9 +57,17 @@ export function intParam(q: URLSearchParams, k: string, lo: number, hi: number):
   return v >= lo && v <= hi ? v : null;
 }
 
-/** Area as query params: `country=Canada`, or `box=west,south,east,north` (west > east crosses the antimeridian). */
+/** Area as query params: `country=Canada`, or `box=west,south,east,north` at full precision, so a link rebuilds the exact cell set (west > east crosses the antimeridian). */
 export function areaToQuery(a: Area): Record<string, string | null> {
-  return a.kind === "country" ? { country: a.name, box: null } : { country: null, box: a.bbox.map((v) => +v.toFixed(4)).join(",") };
+  return a.kind === "country" ? { country: a.name, box: null } : { country: null, box: a.bbox.map((v) => String(v)).join(",") };
+}
+
+/** Absolute URL that reproduces a view: current origin and path plus the given query (E15). */
+export function reproducingUrl(query: Record<string, string | number | null | undefined>): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) if (v != null && v !== "") q.set(k, String(v));
+  const s = q.toString();
+  return `${window.location.origin}${window.location.pathname}${s ? `?${s}` : ""}`;
 }
 
 export type AreaFromQuery =

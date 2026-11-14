@@ -739,10 +739,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E15 — Include exact geometry and cell IDs in export
 
-- [ ] **Status:** P1 · Observed gap · Reproducibility · effort S
+- [x] **Status:** P1 · Observed gap · Reproducibility · effort S
 - **Evidence:** CurrentCSV has rounded label and cellcount
 - **Acceptance:** Re-running export metadata returns same set and totals
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: custom-area CSV header carried only the 1-dp area label and "N with data of M touched"; the URL rounded bounds to 4 dp. Implemented: `scopeCsvHeader` (`web/src/lib/scope.ts`) adds exact unrounded requested_bounds_wsen, crosses_antimeridian, selection rule (every H3 res-2 cell touched by the box, summed whole), h3_resolution, effective bounds, counts touched/summed/with raw record/without data/raw-only excluded, full cell-ID lists, fit_origins (stated as not listable: published calendars do not map res-2 cells to countries), and `reproduce` URL (`reproducingUrl` in `lib/urlState.ts`); box query param now carries full-precision bounds. Verified: Playwright downloads at 390/1440 (0 console errors, 0 overflow) for box -9.512345,37.0001,-6.2,42.23456 harmonized (6 cells, total 52,863) and antimeridian box 170,-20,-170,0 raw (87 touched, 15 with data, total 29,579); opening each header's reproduce URL and downloading again gave the same touched and summed cell sets and identical data rows (277 lines).
 
 ### E16 — Prevent mixed versions and fallback datasets
 

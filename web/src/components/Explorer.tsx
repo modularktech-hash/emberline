@@ -18,13 +18,13 @@ import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
 import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
-import { areaFromQuery, areaToQuery, intParam, useUrlState } from "@/lib/urlState";
+import { areaFromQuery, areaToQuery, intParam, reproducingUrl, useUrlState } from "@/lib/urlState";
 import { CopyLink } from "@/components/CopyLink";
 import { prettyName } from "@/lib/names";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
-import { boxScope } from "@/lib/scope";
+import { boxScope, scopeCsvHeader } from "@/lib/scope";
 import { ScopePanel } from "@/components/ScopePanel";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
@@ -42,6 +42,7 @@ export function Explorer() {
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
+  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to });
   useUrlState((q) => {
     const a = areaFromQuery(q);
     if (a?.ok) {
@@ -53,7 +54,7 @@ export function Explorer() {
     setMode(m === "harmonized" ? "harmonized" : "raw");
     const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
     if (f <= t) { setFrom(f); setTo(t); } else { setFrom(FIRST); setTo(2025); }
-  }, () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to }), [areaKey(area), mode, from, to]);
+  }, () => viewQuery(), [areaKey(area), mode, from, to]);
   const { data, error, loading, retry } = useAreaData(area);
   const ds = useDataset();
   const coverageState = useCoverageState();
@@ -128,9 +129,11 @@ export function Explorer() {
         ...(unfitted && cov ? { fit_status: `no fit: ${STATUS_LABEL[cov.status]}` } : {}),
         ...(mode === "harmonized" && flags.length ? { fit_flags: `suspicious (docs/results.md): ${flags.join("; ")}` } : {}),
         ...(area.kind === "box" ? { h3_res2_cells: `${cal.keys.length} with data of ${boxCells} touched` } : {}),
+        ...(scope ? scopeCsvHeader(scope) : {}),
         ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
         source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
         downloaded: new Date().toISOString(),
+        reproduce: reproducingUrl(viewQuery()),
       },
       ["year", "month", "detections", "basis"],
       cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi).map((r) => [r.year, r.month, r.value == null ? "" : Math.round(r.value * 100) / 100, r.basis]),
