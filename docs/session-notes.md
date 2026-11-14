@@ -118,3 +118,37 @@ both countries): MODIS 2001-01-11 to 2025-12-31; VIIRS 2012-01-20 to
 
   Versions used: polars 2.1.0, h3 4.5.0, duckdb 2.0.0, pyarrow 26.0.1,
   matplotlib 3.11.2.
+
+## 2026-11-14, session "app build" (web app, B1+B2)
+
+**Done (on `main`)**
+
+- **Data layer** (`df5d25d`). Supabase removed. `web/src/lib/queries.ts` is the
+  only file that imports hyparquet (`hyparquet` + `hyparquet-compressors`,
+  because the Parquet files are ZSTD). Exports `getParams`, `listCountries`,
+  `listParentCells`, `listCellDayParents`, `getCalendar({scope, keys, mode})`,
+  `getCellDay({parents, dateFrom, dateTo})`. Hook: `web/src/lib/useParquet.ts`.
+- **Calendar home page** (`f5c4c25`). Month x year SVG grid, country selector
+  from `listCountries()`, raw vs harmonized toggle (the only Framer Motion use),
+  Magma ramp on a square-root scale shared by both modes, light and dark mode,
+  annual totals, table view. Shared state in `components/AreaProvider.tsx`
+  (`useArea()`), matrix in `lib/calendarMatrix.ts`.
+- Checked against the files: Portugal raw annual totals 2011 = 1953,
+  2012 = 4128; harmonized 2012 = 1162.7 (same values from polars).
+
+**Things the data does that the UI has to respect**
+
+- Raw before 2012 is MODIS Terra+Aqua; harmonized is Aqua-equivalent, so the
+  toggle lowers pre-2012 levels as well as removing the 2012 jump.
+- Harmonized starts July 2002; earlier months are drawn as "no data", not 0.
+- Harmonized omits zero months; inside its coverage an absent month is 0.
+- `cell_day.parquet` has 4 large row groups, so a one-parent read fetches
+  about 1 MB. Smaller row groups in `build_tables.py` would help.
+
+**Not done yet:** area selection (map box, typed bounds, date range), CSV
+export, `/method` page, Vercel deploy. No Vercel project exists yet (team
+"Modulark Tech" has none named emberline). No live URL yet.
+
+**Exact next step:** step 3, area selection in `web/src/components/` using
+`setArea({scope: "h3_parent", keys, label})`; `AoiMap.tsx` and `lib/aoi.ts`
+are leftovers kept for it.
