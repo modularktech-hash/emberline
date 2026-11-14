@@ -28,14 +28,14 @@ sed -n '1,100p' 'plan combat.md'
 
 ### Progress ledger — update at every stopping point
 
-- Current task: trust-critical batch E01-E05 plus E10. E01 and E02 done and browser-verified; E03-E05 UI wiring next.
-- Implementation status: E10 done. E01 done (f339b28). E02 done (cd3641f). E03/E04/E05 data published, UI wiring pending.
-- Last completed action: cd3641f on main - complete H3 res-2 enumeration for boxes (E02), after f339b28 coordinate validation (E01).
+- Current task: trust-critical batch done through E06. E01–E06 and E10 implemented and browser-verified.
+- Implementation status: E10 done. E01 (f339b28), E02 (cd3641f), E03 UI (aeb18fd), E04+E05 UI (4b4b1af), E06 (ff6d72b) done on main.
+- Last completed action: ff6d72b - fit-quality card/label (E06), merged to main.
 - Current branch / HEAD: shishir/admiring-pascal-8ymvmc = origin/main (see `git log -1`).
-- Files changed in current task: web/src/lib/aoi.ts, web/src/components/Explorer.tsx, web/src/components/AoiMap.tsx, web/src/lib/queries.ts (Set bookkeeping only), web/scripts/check-aoi-coverage.ts (new). Nothing uncommitted.
-- Checks run / results: `npx tsc --noEmit` + `npm run build` pass; Playwright (Chromium, `next start`) E01 matrix 8/8 pass; `node --experimental-strip-types web/scripts/check-aoi-coverage.ts` 14/14 boxes agree with brute-force reference (0 missing, 0 extra); Canada/Portugal country results on screen identical to the live site.
-- Remaining uncertainty / blocker: model does not beat the scalar ratio baseline on R2 in 87 of 171 countries - copy must say so (E06, E11). Res-2 cells are still coarse for local use (review section 6, not in E02 scope). Nothing on the website is to be deleted (owner instruction).
-- Next action: wire coverage_status.json and coef_ci_estimated into Lab/Method/Data (E03-E05 UI), then E06.
+- Files changed in current task: web/src/lib/{fitFlags,types,queries,coverage,quality,names,useArea}.ts, web/src/components/{LabPage,Method,Explorer,DataPage,ComparePage,Seasons,FooterRecord,CoverageNote,FitQuality}.tsx. Nothing uncommitted.
+- Checks run / results: `npx tsc --noEmit` + `npm run build` pass; Playwright (Chromium, `next start`, 390 and 1440 px): Korea no X–X interval (Lab, Method); Iceland specific reason; coverage summary 61 / 5; Spain and China experimental label in Explorer/Compare/Seasons/CSV; Canada same card fields; 0 console errors; scripts/check_data_contract.py OK.
+- Remaining uncertainty / blocker: quality label does not yet travel in shared URLs (E08). Model does not beat the scalar ratio baseline on R2 in 87 of 171 countries - copy must say so (E11/E12). Res-2 cells still coarse (review section 6). Nothing on the website is to be deleted (owner instruction).
+- Next action: E08 URL state (country/mode/years/box in the URL, quality label follows), then E12 wording, then E14–E15 exact spatial provenance.
 
 ### Recommended work sequence
 
@@ -655,31 +655,31 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E03 — Remove false zero-width pooled confidence intervals
 
-- [ ] **Status:** P0 · Confirmed · Science · effort S
+- [x] **Status:** P0 · Confirmed · Science · effort S
 - **Evidence:** 41/41 pooled coefficient intervals identical; pooled-lab.txt
 - **Acceptance:** Unavailable uncertainty null and labeled; valid intervals computed separately
-- **Implementation / verification notes:** Data part done and verified (d7bb38f): `params_global.json` carries `coef_ci_estimated` (false for the 41 pooled fits, true for 130 own fits). UI part (Lab/Method must not draw a zero-width interval) not yet verified.
+- **Implementation / verification notes:** Data part done (d7bb38f). Reproduced in the app before the fix: Method showed "Republic of Korea: 50% at 15.4 MW (15.4–15.4)"; Lab rendered "CI 15.4–15.4 MW". Implemented (aeb18fd): `fitFlags.coefCiEstimated()` reads `coef_ci_estimated`; Lab and Method show the point value with "interval not estimated — curve borrowed from the pooled fit"; own fits keep bootstrap intervals (Canada 2.7–2.9 MW); held-out score intervals unchanged. Data/Explorer/CSV exports never showed a coefficient interval (checked). Verified: Playwright (Chromium) against `next start` at 390 and 1440 px, no console errors; `npx tsc --noEmit` + `npm run build` pass; `scripts/check_data_contract.py` OK. Republic of Korea: no X–X interval on Lab or Method. Not done: longer-term resampling of the pooled curve (science, review 5.2).
 
 ### E04 — Separate fit exceptions from scientific insufficiency
 
-- [ ] **Status:** P1 · Confirmed · Data · effort M
+- [x] **Status:** P1 · Confirmed · Data · effort M
 - **Evidence:** 66 TypeError entries in params failed dictionary
 - **Acceptance:** Reason-coded outcome and data counts for each unavailable fit
-- **Implementation / verification notes:** Data part done and verified (d7bb38f): `web/public/data/coverage_status.json` classifies all 237 countries; the 66 TypeErrors traced to three lines in `fit_harmonization.py` (31 threshold-loop, 9 null-control, 26 bootstrap) and are all data insufficiency, 0 numerical failures. UI wiring pending.
+- **Implementation / verification notes:** Data part done (d7bb38f). Reproduced: Explorer said "66 too sparse to fit", Iceland "too sparse to fit", Data/Method "not enough data to fit" for all. Implemented (4b4b1af): `getCoverageStatus()` in queries.ts, `lib/coverage.ts`, `components/CoverageNote.tsx`; reason-coded per-country card with counts in Explorer and Seasons (Iceland: "too little held-out variation — Aqua's 484 detections in 2019–2021 fall in 3 of 9 held-out grid cells"), status + reason per row on Data, reason list in Method, picker hint and Compare note corrected; "not a processing failure" stated, nothing hidden. Verified: Playwright (Chromium) against `next start` at 390 and 1440 px, no console errors; `npx tsc --noEmit` + `npm run build` pass; `scripts/check_data_contract.py` OK.
 
 ### E05 — Correct raw-only availability count
 
-- [ ] **Status:** P1 · Confirmed · Coverage · effort S
+- [x] **Status:** P1 · Confirmed · Coverage · effort S
 - **Evidence:** 61/66 unavailable fits have raw calendars
 - **Acceptance:** Coverage summary distinguishes raw-only from no calendar
-- **Implementation / verification notes:** Data part done and verified (d7bb38f): 232 countries have raw calendar rows; of the 66 unfitted, 61 have raw calendars and 5 have none (American Samoa, Antarctica, Maldives, Marshall Islands, South Georgia). UI count pending.
+- **Implementation / verification notes:** Data part done (d7bb38f). Reproduced: Explorer and footer showed "66 too sparse to fit (raw only)". Implemented (4b4b1af): summary derived from coverage_status.json entries (`coverageSummary`) on Explorer, Data, Method and footer: "66 without a fit: 61 with a raw calendar only (uncorrected) and 5 with no calendar at all" plus per-reason counts 23/17/18/8. Verified: Playwright (Chromium) against `next start` at 390 and 1440 px, no console errors; `npx tsc --noEmit` + `npm run build` pass; `scripts/check_data_contract.py` OK. Antarctica (no calendar) is listed on Data with "no observations · no calendar"; it is not selectable in the Explorer (no calendar to show).
 
 ### E06 — Show selected-region quality interpretation
 
-- [ ] **Status:** P1 · Observed gap · Science · effort M
+- [x] **Status:** P1 · Observed gap · Science · effort M
 - **Evidence:** 35 negative R2; metrics visible but no strong interpretation
 - **Acceptance:** Weak country clearly labeled across analytical pages and exports
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Explorer showed R²/bias and a "check this fit" pill but no interpretation card; Compare/Seasons carried no quality label. Implemented (ff6d72b): `lib/quality.ts` (categories from the existing fitFlags rules only: R² negative/undefined → "Experimental correction — poor agreement at cell-month scale"; other flags → "Check this fit"; none → "No suspicious-result flags") and `components/FitQuality.tsx`. Explorer card: origin, held-out 2019–2021 H3 res-5 cell × month vs Aqua (from fit_harmonization.py step 4 / results.md), R² and bias with CIs, RMSE, n cell-months, single cut-off R², plain reading incl. "negative R² is not negative accuracy". Label in Compare, Seasons, Data annual table; Explorer and Data annual CSV headers carry fit_quality/fit_origin/fit_evaluation. Verified: Playwright (Chromium) against `next start` at 390 and 1440 px, no console errors; `npx tsc --noEmit` + `npm run build` pass; `scripts/check_data_contract.py` OK. Spain and China show the experimental label in Explorer, Compare (Spain) and Seasons (China) without visiting Method; Explorer CSV header checked by Playwright download (Spain, Canada); Data annual CSV header compiles but was not download-tested; Canada shows the same fields ("No suspicious-result flags"). Not done: label in shared URLs (needs E08 URL state); Trends/Lab carry no label.
 
 ### E07 — Design compatible current month-to-date comparison
 

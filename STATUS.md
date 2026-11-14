@@ -10,7 +10,7 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by builder subagent (session_01RwRY…) for plan-combat E03–E06 UI (pooled intervals, reason-coded coverage, quality card), 14 Nov
+## `web/` — RELEASED by builder subagent (session_01RwRY…) after plan-combat E03 (aeb18fd), E04+E05 (4b4b1af), E06 (ff6d72b), 14 Nov
 
 ### Previous: RELEASED by builder subagent after plan-combat E01 (f339b28) + E02 (cd3641f), 14 Nov
 
