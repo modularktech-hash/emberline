@@ -1,6 +1,7 @@
 "use client";
 
 import { fmtPct, fmtR2, fmtRatio } from "@/lib/format";
+import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow, Stat } from "@/components/Figure";
 
 import { motion } from "motion/react";
@@ -28,6 +29,7 @@ export function ComparePage() {
   const [b, setB] = useState("Australia");
   const [mode, setMode] = useState<Series>("harmonized");
   const [norm, setNorm] = useState<"abs" | "idx">("idx");
+  const { ref: chartRef, fs, narrow } = useChartScale(760);
   const { data, error, loading } = useParquet(async () => Promise.all([a, b].map((k) => getCalendar({ scope: "country", keys: [k], mode }))), `${a}|${b}|${mode}`);
 
   const view = useMemo(() => {
@@ -47,17 +49,33 @@ export function ComparePage() {
     <div>
       <PageHead compact eyebrow="Explore · compare" title="Two regions." italic="One unit."
         lede="Because the harmonized record is in the same unit every year, two regions can be compared directly — their seasons, their extremes, and how each responded to the 2012 sensor change." />
-      <div className="card flex flex-wrap items-center gap-4 p-4">
-        {[["A", a, setA], ["B", b, setB]].map(([l, v, set], i) => (
-          <div key={l as string} className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 h-3 w-3 rounded-full" style={{ background: COLORS[i] }} />
-            <CountryPicker value={v as string} options={names.length ? names : [v as string]} tags={tags} onChange={set as (s: string) => void} label={`Region ${l}`} />
-          </div>
-        ))}
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Segmented label="cmp-mode" value={mode} onChange={setMode} options={[{ value: "raw", label: "Raw" }, { value: "harmonized", label: "Harmonized" }]} />
-          <Segmented label="cmp-norm" value={norm} onChange={setNorm} options={[{ value: "idx", label: "Index (mean=100)" }, { value: "abs", label: "Absolute" }]} />
+      <div className="card flex flex-wrap items-end gap-x-5 gap-y-4 p-4">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Regions">
+          {[["A", a, setA], ["B", b, setB]].map(([l, v, set], i) => (
+            <div key={l as string} className="flex items-center gap-1.5">
+              <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ background: COLORS[i] }} />
+              <CountryPicker value={v as string} options={names.length ? names : [v as string]} tags={tags} onChange={set as (s: string) => void} label={`Region ${l}`} />
+            </div>
+          ))}
+          <button type="button" onClick={() => { setA(b); setB(a); }} aria-label="Swap region A and region B"
+            className="glass-thin min-h-[36px] px-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">⇄ Swap</button>
         </div>
+        <div className="ml-auto flex flex-wrap items-end gap-4">
+          <div>
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Record</p>
+            <Segmented label="cmp-mode" value={mode} onChange={setMode} options={[{ value: "raw", label: "Raw" }, { value: "harmonized", label: "Harmonized" }]} />
+          </div>
+          <div>
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Scale</p>
+            <Segmented label="cmp-norm" value={norm} onChange={setNorm} options={[{ value: "idx", label: "Index, mean = 100" }, { value: "abs", label: "Absolute" }]} />
+          </div>
+        </div>
+        <p className="w-full text-xs leading-relaxed text-[var(--text-secondary)]">
+          {norm === "idx"
+            ? "Index, mean = 100: each region's yearly detections divided by its own 2003–2025 average, ×100. 150 means half again as many detections as that region's usual year, so a small and a large region share one axis."
+            : "Absolute: yearly detection counts. The larger region dominates the axis."}
+          {" "}The two calendars below share one colour scale.
+        </p>
       </div>
       <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries without a fit (reasons on the Data page) have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
       {error && <div className="mt-6"><Failed error={error} /></div>}
@@ -67,9 +85,9 @@ export function ComparePage() {
           <Reveal>
             <section className="window mt-6 p-4 sm:p-6">
               <Eyebrow>Yearly detections · {norm === "idx" ? "indexed, each region's 2003–2025 mean = 100" : "absolute"}</Eyebrow>
-              <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full">
-                {[0.25, 0.5, 0.75, 1].map((f) => <g key={f}><line x1={L} x2={W - R} y1={T + (1 - f) * (H - T - B)} y2={T + (1 - f) * (H - T - B)} stroke="var(--gridline)" /><text x={L - 8} y={T + (1 - f) * (H - T - B) + 3.5} textAnchor="end" fontSize="10" fill="var(--text-muted)">{fmtCompact(f * view.max)}</text></g>)}
-                {Array.from({ length: 23 }, (_, i) => 2003 + i).filter((y) => y % 4 === 3).map((y) => <text key={y} x={x(y - 2003)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--text-muted)">{y}</text>)}
+              <svg ref={chartRef} viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full overflow-visible">
+                {[0.25, 0.5, 0.75, 1].map((f) => <g key={f}><line x1={L} x2={W - R} y1={T + (1 - f) * (H - T - B)} y2={T + (1 - f) * (H - T - B)} stroke="var(--gridline)" /><text x={L - 8} y={T + (1 - f) * (H - T - B) + 3.5} textAnchor="end" fontSize={fs(10)} fill="var(--text-muted)">{fmtCompact(f * view.max)}</text></g>)}
+                {Array.from({ length: 23 }, (_, i) => 2003 + i).filter((y) => (narrow ? y % 8 === 3 : y % 4 === 3)).map((y) => <text key={y} x={x(y - 2003)} y={H - 8} textAnchor="middle" fontSize={fs(10)} fill="var(--text-muted)">{y}</text>)}
                 <line x1={x(8.5)} x2={x(8.5)} y1={T} y2={H - B} stroke="var(--text-muted)" strokeDasharray="3 4" />
                 {view.scaled.map((s, k) => (
                   <motion.path key={`${k}-${mode}-${norm}-${a}-${b}`} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2 }}
@@ -80,7 +98,7 @@ export function ComparePage() {
                   const ys = view.scaled.map((q) => T + (1 - q[q.length - 1] / view.max) * (H - T - B));
                   let yy = ys[k] - 8;
                   if (k === 1 && Math.abs(ys[1] - ys[0]) < 14) yy = ys[0] + (ys[1] >= ys[0] ? 16 : -22);
-                  return <text key={`lab-${k}`} x={x(s.length - 1)} y={Math.max(T + 10, yy)} textAnchor="end" fontSize="12" fontWeight="600" fill={COLORS[k]}>{k === 0 ? "A" : "B"} · {prettyName(k === 0 ? a : b)}</text>;
+                  return <text key={`lab-${k}`} x={x(s.length - 1)} y={Math.max(T + 10, yy)} textAnchor="end" fontSize={fs(12)} fontWeight="600" fill={COLORS[k]}>{k === 0 ? "A" : "B"} · {prettyName(k === 0 ? a : b)}</text>;
                 })}
               </svg>
             </section>

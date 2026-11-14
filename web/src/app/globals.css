@@ -92,6 +92,7 @@ html[data-perf=low] .backdrop-cream::after { display: none; }
 .display .italic, .accent { font-style: normal; font-weight: var(--display-weight); }
 .t-hero { font-size: var(--display-hero); line-height: 0.98; }
 .t-d1 { font-size: var(--display-1); line-height: 1.02; }
+.t-tool { font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.6rem); line-height: 1.06; }
 .t-d2 { font-size: var(--display-2); line-height: 1.05; }
 .t-d3 { font-size: var(--display-3); line-height: 1.12; letter-spacing: -0.028em; }
 .tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
@@ -316,3 +317,24 @@ html[data-perf=low] .dot-wipe { animation: none; }
 .cal-wipe { animation: wipe-down 900ms var(--ease-out) both; }
 html[data-perf=low] .cal-wipe { animation: fade-in 400ms ease both; }
 html[data-perf=low] .fade-in { animation-duration: 300ms; }
+
+/* Long tables (TableTools ScrollBox): first column pinned while scrolling sideways. */
+.sticky-first table th:first-child, .sticky-first table td:first-child { position: sticky; left: 0; background: var(--surface-page); }
+.sticky-first table td:first-child { z-index: 1; }
+.sticky-first table th:first-child { z-index: 20; }
+
+/* Touch targets (~44 px) on phones for toolbar buttons, segmented controls, selects and fields. */
+@media (max-width: 640px) {
+  [role="group"] > button, [role="toolbar"] button, select.field, input.field,
+  button.pill-dark, a.pill-dark, button[aria-haspopup="listbox"], [role="option"] { min-height: 44px; }
+  [role="option"] { display: flex; align-items: center; }
+}
+
+/* Home name ticker: slower and quieter than the default marquee, and pausable. */
+.marquee-quiet > div { animation-duration: 90s; opacity: 0.7; }
+.marquee-paused > div { animation-play-state: paused; }
+
+/* Design pass 3 (D14): calmer surfaces on working pages and quieter small controls. */
+html[data-page=tool] .backdrop-cream { background: radial-gradient(60vw 40vw at 10% 0%, rgba(255,140,90,0.14), transparent 70%), radial-gradient(50vw 35vw at 95% 5%, rgba(255,120,170,0.08), transparent 70%), #f7f3e8; }
+html[data-page=tool] .backdrop-cream::after { opacity: 0.4; }
+.glass-thin { box-shadow: inset 2px 2px 1px rgba(255,255,255,0.85), inset -1px -1px 1px rgba(255,255,255,0.4), 0 3px 8px -6px rgba(60, 20, 10, 0.28); }

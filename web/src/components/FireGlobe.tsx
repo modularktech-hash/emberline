@@ -64,6 +64,8 @@ interface Props {
   maxPoints?: number;
   onPick?: (c: Cell) => void;
   onSats?: (s: SatState[]) => void;
+  /** Turn the globe to this point (e.g. a row of the hottest-cells list). */
+  focus?: { lat: number; lng: number } | null;
 }
 
 /** A static stand-in: shown while three.js loads, and instead of the canvas when WebGL is unavailable or lost. */
@@ -97,7 +99,7 @@ export default function FireGlobe(props: Props) {
 
 function GlobeInner({
   live, tle, window: win = "24h", showFires = true, showSats = true, showOrbits = true, speed = 60,
-  autoRotate = true, height = 560, interactive = true, allowZoom, satLabels = false, maxPoints = 12000, onPick, onSats, onLost,
+  autoRotate = true, height = 560, interactive = true, allowZoom, satLabels = false, maxPoints = 12000, onPick, onSats, onLost, focus,
 }: Props & { onLost: () => void }) {
   const ref = useRef<GlobeMethods | undefined>(undefined);
   const wrap = useRef<HTMLDivElement>(null);
@@ -274,6 +276,13 @@ function GlobeInner({
     c.autoRotateSpeed = 0.45;
     c.enableZoom = allowZoom ?? interactive;
   }, [ready, autoRotate, interactive, allowZoom, low]);
+
+  useEffect(() => {
+    const g = ref.current;
+    if (!ready || !g || !focus) return;
+    (g.controls() as { autoRotate: boolean }).autoRotate = false; // stay on the chosen cell
+    g.pointOfView({ lat: focus.lat, lng: focus.lng, altitude: 1.5 }, low ? 0 : 900);
+  }, [ready, focus, low]);
 
   // Pixel ratio: 1.5 at most (1 in low-power mode). Rendering a retina canvas costs 2-4x the fill rate.
   useEffect(() => {

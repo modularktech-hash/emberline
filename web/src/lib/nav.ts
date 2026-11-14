@@ -8,12 +8,12 @@ export const NAV: NavGroup[] = [
     { href: "/compare", label: "Compare", blurb: "Two regions side by side, same unit, same scale" },
   ]},
   { label: "Insights", items: [
-    { href: "/seasons", label: "Seasons", blurb: "Is this year normal? Each month against its history" },
+    { href: "/seasons", label: "Seasonal anomalies", blurb: "Is this year normal? Each month against its history" },
     { href: "/trends", label: "Season shift", blurb: "Is the fire season starting earlier — or is that the sensor?" },
     { href: "/satellites", label: "Satellites", blurb: "The five fire satellites, their orbits, and the drift" },
   ]},
   { label: "Science", items: [
-    { href: "/method", label: "Method & proof", blurb: "How the correction works and how we know it holds" },
+    { href: "/method", label: "Method & validation", blurb: "How the correction works and how we know it holds" },
     { href: "/lab", label: "Lab", blurb: "Calculators for detection probability, conversion, drift" },
     { href: "/data", label: "Data", blurb: "Every table, every download, query it yourself" },
   ]},

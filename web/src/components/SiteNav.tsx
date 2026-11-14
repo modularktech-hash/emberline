@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { NAV } from "@/lib/nav";
@@ -53,10 +54,7 @@ export function SiteNav() {
       animate={{ y: hidden ? -96 : 0 }} transition={SPRING} onFocusCapture={() => setHidden(false)}>
       <div className={`glass glass-nav relative transition-[background-color,box-shadow] duration-300 ${solid ? "!bg-[rgba(251,248,241,0.82)]" : ""} mx-auto flex w-full max-w-6xl items-center justify-between gap-3 !rounded-full !overflow-visible py-2 pl-5 pr-2.5`}>
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Emberline home">
-          <span aria-hidden className="relative flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--ink)]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)] shadow-[0_0_10px_2px_rgba(217,67,26,0.6)]" />
-          </span>
-          <span className="text-[13px] font-medium uppercase tracking-[0.28em]">Emberline</span>
+          <Logo height={11} wordClass="text-[13px]" />
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
@@ -76,8 +74,8 @@ export function SiteNav() {
                     <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.98 }}
                       transition={{ duration: 0.18 }} className="glass-thick glass-menu absolute left-1/2 top-12 w-[22rem] -translate-x-1/2 p-2">
                       {g.items.map((i) => (
-                        <Link key={i.href} href={i.href} className={`block rounded-[14px] px-3.5 py-3 transition-colors hover:bg-white/60 ${active(i.href) ? "bg-[var(--ember-soft)]" : ""}`}>
-                          <span className="text-sm font-medium">{i.label}</span>
+                        <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined} className={`block rounded-[14px] px-3.5 py-3 transition-colors hover:bg-white/60 ${active(i.href) ? "bg-[var(--ember-soft)] ring-1 ring-[rgba(217,67,26,0.35)]" : ""}`}>
+                          <span className="flex items-center gap-2 text-sm font-medium">{i.label}{active(i.href) && <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">you are here</span>}</span>
                           <span className="mt-0.5 block text-xs leading-relaxed text-[var(--text-secondary)]">{i.blurb}</span>
                         </Link>
                       ))}
@@ -91,7 +89,11 @@ export function SiteNav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/explorer" className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">Open the calendar</Link>
+          {(() => {
+            // Contextual call to action: never a link to the page you are on.
+            const cta = pathname === "/explorer" ? { href: "/method", label: "How it is corrected" } : pathname === "/method" ? { href: "/explorer", label: "Try it on a country" } : { href: "/explorer", label: "Open the calendar" };
+            return <Link href={cta.href} className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">{cta.label}</Link>;
+          })()}
           <button ref={toggle} type="button" className="glass-thin flex h-9 w-9 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
             <svg width="16" height="12" viewBox="0 0 16 12"><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.6" fill="none" /></svg>
           </button>
@@ -106,8 +108,8 @@ export function SiteNav() {
               <div key={g.label} className="mb-2">
                 <p className="eyebrow px-3 pb-1 pt-2">{g.label}</p>
                 {g.items.map((i) => (
-                  <Link key={i.href} href={i.href} className={`block rounded-xl px-3 py-2.5 ${active(i.href) ? "bg-[var(--ember-soft)]" : ""}`}>
-                    <span className="text-[15px] font-medium">{i.label}</span>
+                  <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined} className={`block rounded-xl px-3 py-2.5 ${active(i.href) ? "bg-[var(--ember-soft)]" : ""}`}>
+                    <span className="flex items-center gap-2 text-[15px] font-medium">{i.label}{active(i.href) && <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">you are here</span>}</span>
                     <span className="block text-xs text-[var(--text-secondary)]">{i.blurb}</span>
                   </Link>
                 ))}

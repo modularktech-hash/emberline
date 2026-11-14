@@ -1,4 +1,9 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { NAV } from "@/lib/nav";
 import { FooterRecord } from "@/components/FooterRecord";
 
@@ -32,15 +37,22 @@ function Links({ items }: { items: (typeof GROUPS)[number]["items"] }) {
  * provenance with a small static chart of the harmonized record, back to top
  * (a plain #top anchor: native scrolling, no script) and the maker's credit.
  */
+/** Working pages get a compact footer: site map and credits, no story block or record chart. */
+const TOOL_PAGES = new Set(["/explorer", "/compare", "/seasons", "/trends", "/lab", "/data", "/method"]);
+
 export function SiteFooter() {
+  const compact = TOOL_PAGES.has(usePathname());
+  // Working pages also get a calmer backdrop behind their dense content (globals.css, html[data-page=tool]).
+  useEffect(() => { document.documentElement.dataset.page = compact ? "tool" : "story"; }, [compact]);
   return (
-    <footer className="relative mt-32 px-3 pb-3 text-[#efe9d9] sm:px-6 sm:pb-6">
+    <footer className={`relative px-3 pb-3 text-[#efe9d9] sm:px-6 sm:pb-6 ${compact ? "mt-16" : "mt-32"}`}>
       <div className="glass-dark mx-auto max-w-6xl !rounded-[32px]">
         <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[60rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(217,67,26,0.35),transparent)]" />
 
+        {!compact && (
         <div className="relative flex flex-wrap items-end justify-between gap-6 border-b border-white/10 px-6 pb-8 pt-12 sm:px-10">
           <div>
-            <p className="display text-4xl text-[#f7f3e8] sm:text-5xl">Emberline</p>
+            <p className="text-[#f7f3e8]"><Logo layout="stack" height={18} ink="#f7f3e8" wordClass="text-2xl tracking-[0.32em] sm:text-3xl" /></p>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[#b8b2a2]">
               Satellite fire detections, harmonized per country across the MODIS–VIIRS sensor break to reduce the discontinuity between records. Archive 2001–2025; harmonized record 2003–2025.
             </p>
@@ -51,8 +63,9 @@ export function SiteFooter() {
           </a>
         </div>
 
-        <div className="relative grid gap-10 px-6 py-10 sm:px-10 lg:grid-cols-[1.25fr_2fr]">
-          <FooterRecord />
+        )}
+        <div className={`relative grid gap-10 px-6 sm:px-10 ${compact ? "py-7" : "py-10 lg:grid-cols-[1.25fr_2fr]"}`}>
+          {compact ? <a href="#top" className="foot-link inline-flex w-max items-center gap-3 rounded-md"><Logo height={12} ink="#f7f3e8" wordClass="text-sm text-[#f7f3e8]" /><span className="text-xs text-[#b5ab9c]">· back to top ↑</span></a> : <FooterRecord />}
 
           <nav aria-label="Site map">
             {/* Phones: each group collapses. */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { fmtInt, fmtSigned } from "@/lib/format";
+import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow } from "@/components/Figure";
 import { DotStat } from "@/components/DotMatrix";
 
@@ -15,6 +16,14 @@ import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTool
 type Metric = "onset" | "peak" | "end" | "length";
 const LABEL: Record<Metric, string> = { onset: "Season onset (10% of the year's detections)", peak: "Season midpoint (50% of the year's detections)", end: "Season end (90%)", length: "Season length (onset → end, days)" };
 const SHORT: Record<Metric, string> = { onset: "onset", peak: "midpoint", end: "end", length: "length" };
+const DEF: Record<Metric, string> = {
+  onset: "Day of the fire year by which 10% of that year's detections had happened.",
+  peak: "Day by which 50% of the year's detections had happened (the season midpoint).",
+  end: "Day by which 90% of the year's detections had happened.",
+  length: "Days from onset (10%) to end (90%).",
+};
+/** Sensor share = 1 − harmonized trend ÷ raw trend. Outside 0–100% the ratio is unstable (opposite signs, or a small raw trend). */
+const shareUnstable = (v: number | null) => v != null && (v < 0 || v > 1);
 const fmt = (v: number | null | undefined) => fmtSigned(v);
 
 export function TrendsPage() {
@@ -25,6 +34,7 @@ export function TrendsPage() {
   const names = data ? Object.keys(data.countries).sort() : [];
   const [country, setCountry] = useState("Chile");
   const [metric, setMetric] = useState<Metric>("onset");
+  const { ref: chartRef, fs, narrow } = useChartScale(760);
   const c = data?.countries[country];
   const monthly = c?.resolution === "monthly";
   const nDaily = names.filter((n) => data?.countries[n].resolution !== "monthly").length;
@@ -81,6 +91,7 @@ export function TrendsPage() {
                       <div><p className="display tabular text-4xl"><DotStat text={String(fmt(harm))} dot={6} /></p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
                       <div><p className="display tabular text-2xl text-[var(--seq-5)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
                     </div>
+                    <p className="mt-3 text-[11px] leading-snug text-[var(--text-muted)]">{DEF[m]} Trend 2003–2025, negative = earlier / shorter.</p>
                   </button>
                 </Reveal>
               );
@@ -96,13 +107,13 @@ export function TrendsPage() {
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-4)] align-middle opacity-60" />raw</span>
                 </div>
               </div>
-              <svg viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full" role="img" aria-label={`Fire season timing in ${prettyName(country)}`}>
-                {months.map((m) => <g key={m.day}><line x1={dx(m.day)} x2={dx(m.day)} y1={T} y2={H - B} stroke="var(--gridline)" /><text x={dx(m.day) + 3} y={H - 10} fontSize="10" fill="var(--text-muted)">{m.label}</text></g>)}
+              <svg ref={chartRef} viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full overflow-visible" role="img" aria-label={`Fire season timing in ${prettyName(country)}`}>
+                {months.map((m, mi) => <g key={m.day}><line x1={dx(m.day)} x2={dx(m.day)} y1={T} y2={H - B} stroke="var(--gridline)" /><text x={dx(m.day) + 3} y={H - 10} fontSize={fs(10)} fill="var(--text-muted)">{narrow && mi % 2 === 1 ? "" : m.label}</text></g>)}
                 {years.map((y) => {
                   const cy = yx(y.year);
                   return (
                     <g key={y.year}>
-                      <text x={L - 8} y={cy + 3.5} textAnchor="end" fontSize="10" fill={y.year === 2012 ? "var(--ember)" : "var(--text-muted)"}>{y.year}</text>
+                      {(!narrow || (y.year - 2012) % 3 === 0) && <text x={L - 8} y={cy + 3.5} textAnchor="end" fontSize={fs(10)} fill={y.year === 2012 ? "var(--ember)" : "var(--text-muted)"}>{y.year}</text>}
                       {y.raw_onset != null && y.raw_end != null && (
                         <rect x={dx(y.raw_onset)} y={cy - 6} width={dx(y.raw_end) - dx(y.raw_onset)} height="5" rx="2.5" fill="var(--seq-4)" opacity="0.55" />
                       )}
@@ -157,7 +168,7 @@ export function TrendsPage() {
                   <SortTh k="name" {...tbl}>Country</SortTh><SortTh k="res" {...tbl}>Resolution</SortTh>
                   <SortTh k="raw_onset" {...tbl}>Onset raw</SortTh><SortTh k="harm_onset" {...tbl}>Onset harmonized</SortTh>
                   <SortTh k="raw_length" {...tbl}>Length raw</SortTh><SortTh k="harm_length" {...tbl}>Length harmonized</SortTh>
-                  <SortTh k="share" {...tbl}>Sensor share of onset shift</SortTh>
+                  <SortTh k="share" {...tbl} title="1 − (harmonized onset trend ÷ raw onset trend): the part of the raw trend that disappears after harmonizing">Sensor share of onset shift</SortTh>
                 </tr></thead>
                 <tbody>
                   {tbl.shown.map((n) => {
@@ -170,14 +181,14 @@ export function TrendsPage() {
                         <td className="px-3 text-xs text-[var(--text-muted)]">{mon ? "monthly" : "daily"}</td>
                         <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_onset)}</td><td className="px-3">{fmt(t.harm_onset)}</td>
                         <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_length)}</td><td className="px-3">{fmt(t.harm_length)}</td>
-                        <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : `${Math.round(share * 100)}%`}</td>
+                        <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : shareUnstable(share) ? <span title="Outside 0–100%: the raw and harmonized trends have opposite signs or the raw trend is small, so the ratio is not meaningful">{Math.round(share * 100)}% <span className="font-mono text-[10px] uppercase text-[var(--ember)]">unstable</span></span> : `${Math.round(share * 100)}%`}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
               </ScrollBox>
-              <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">&quot;Sensor share&quot; = the part of the raw onset trend that disappears after harmonizing. A trend over 23 years is fragile, especially where the fire year is short; read these as indications, with the year-by-year table above.</p>
+              <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">&quot;Sensor share&quot; = 1 − (harmonized onset trend ÷ raw onset trend): the part of the raw onset trend that disappears after harmonizing. It is only computed where the raw trend exceeds 0.5 days per decade, and is marked unstable when it falls outside 0–100% (the two trends have opposite signs, or harmonizing makes the trend larger). A trend over 23 years is fragile, especially where the fire year is short; read these as indications, with the year-by-year table above.</p>
             </section>
           </Reveal>
         </>

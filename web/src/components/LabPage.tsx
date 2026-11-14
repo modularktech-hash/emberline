@@ -20,14 +20,17 @@ const DIURNAL: Record<string, { s: number; h: number }> = {
 };
 const share = (t: number, d: { s: number; h: number }) => Math.exp(-((t - d.h) ** 2) / (2 * d.s ** 2));
 
+/** The six tools, for the section navigator. Each follows the same layout: question, inputs, outputs, formula. */
+const TOOLS: Array<[string, string]> = [["01", "Detection probability"], ["02", "Converter"], ["03", "Step ratio"], ["04", "Overpass sampling"], ["05", "Trend"], ["06", "Anomaly"]];
+
 function Tool({ n, title, intro, children, formula }: { n: string; title: string; intro: string; children: ReactNode; formula?: string }) {
   return (
     <Reveal>
-      <section className="card p-5 sm:p-7">
+      <section id={`tool-${n}`} aria-labelledby={`tool-${n}-h`} className="card scroll-mt-44 p-5 sm:p-7">
         <div className="flex items-start gap-4">
           <span className="eyebrow pt-2"><span className="eyebrow-n">{n}</span></span>
           <div className="min-w-0 flex-1">
-            <h2 className="display text-3xl">{title}</h2>
+            <h2 id={`tool-${n}-h`} className="display text-3xl">{title}</h2>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">{intro}</p>
             <div className="mt-5">{children}</div>
             {formula && <pre tabIndex={0} role="region" aria-label={`Formula: ${title}`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{formula}</pre>}
@@ -121,6 +124,13 @@ export function LabPage() {
       <div className="card sticky top-24 z-20 flex flex-wrap items-center gap-3 p-3">
         <Eyebrow as="span" className="pl-2">Region</Eyebrow>
         <CountryPicker value={region} options={names.length ? names : [region]} tags={Object.fromEntries(names.map((n) => [n, fitTag(data?.params, n)]))} onChange={setRegion} />
+        <nav aria-label="Lab tools" className="order-last flex w-full gap-1 overflow-x-auto pb-0.5 text-xs">
+          {TOOLS.map(([n, t]) => (
+            <a key={n} href={`#tool-${n}`} className="shrink-0 rounded-full border border-[var(--hairline)] px-2.5 py-1 text-[var(--text-secondary)] hover:border-[var(--ember)] hover:text-[var(--text-primary)]">
+              <span className="font-mono text-[var(--ember)]">{n}</span> {t}
+            </a>
+          ))}
+        </nav>
         {fit && <span className="tabular ml-auto pr-2 text-xs text-[var(--text-muted)]">b₀ {fmtNum(fit.logistic.b0, 3)} · b₁ {fmtNum(fit.logistic.b1, 3)} · κ {fmtNum(fit.kappa, 3)}{fit.fit_source === "pooled" && " · pooled curve"}{fit.kappa_source === "pooled" && " · pooled κ"}</span>}
       </div>
 
@@ -200,7 +210,8 @@ export function LabPage() {
           </div>
         </Tool>
 
-        <Tool n="06" title="Anomaly calculator" intro="Where does one month sit against the same month in every other year, on the harmonized record?">
+        <Tool n="06" title="Anomaly calculator" intro="Where does one month sit against the same month in every other year, on the harmonized record?"
+          formula={anomaly ? `percentile = share of the other years' ${MONTHS[am - 1]} values below ${MONTHS[am - 1]} ${ay} = ${Math.round(anomaly.rank * 100)}%   × median = ${anomaly.med ? (anomaly.v / anomaly.med).toFixed(2) : "—"}` : "no harmonized value for this month"}>
           <div className="flex flex-wrap items-center gap-3 text-sm">
             Year <Num v={ay} set={setAy} min={2003} max={2025} w="w-20" label="Anomaly year" />
             Month <select aria-label="Anomaly month" value={am} onChange={(e) => setAm(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>

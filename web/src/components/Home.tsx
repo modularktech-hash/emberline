@@ -71,7 +71,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
           className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
           <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
-          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> active-fire detections from orbit in the last 24 h</span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
+          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> near-real-time, raw detections in the 24 h to <span className="tabular">{fmtUtc(parseUtc(d.live.fetched_utc))}</span></span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
         </motion.div>
         <h1 className="display t-hero mt-8">
           <span className="block"><Words text="23 years of fire." delay={0.1} /></span>
@@ -85,6 +85,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
           <Link href="/globe" className="glass rounded-full px-6 py-3 text-[15px] font-medium">Live globe &nbsp;→</Link>
         </motion.div>
+        <a href="#tools" className="link-ul mt-5 inline-block text-sm text-[var(--text-secondary)]">Skip the story: go to the tools ↓</a>
       </motion.div>
 
       {/* No scroll parallax on the globe: moving a live WebGL canvas every scrolled frame was a source of judder. */}
@@ -96,6 +97,18 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
       </motion.div>
 
       <Widgets d={d} />
+      <nav aria-label="Start here" className="mx-auto mt-6 grid max-w-5xl gap-3 sm:grid-cols-3">
+        {[
+          ["/explorer", "Explore a country", "Its month-by-month detections, raw or harmonized, as a calendar you can download."],
+          ["/compare", "Compare two regions", "Two countries side by side, in one unit, on one scale."],
+          ["/method", "Understand the correction", "How VIIRS detections become Aqua-equivalent, and how it was tested."],
+        ].map(([href, t, d2]) => (
+          <Link key={href} href={href} className="card group block p-5">
+            <p className="text-[15px] font-medium">{t} <span aria-hidden className="inline-block text-[var(--ember)] transition-transform group-hover:translate-x-1">→</span></p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{d2}</p>
+          </Link>
+        ))}
+      </nav>
       {d && <Ticker names={[...[...d.table.countries].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24).map((c) => prettyName(c.country)), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]}
         label={`The ${Math.min(24, d.table.countries.length)} fitted countries with the most fire, and the satellites`} />}
     </section>
@@ -104,15 +117,20 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
 
 /* ------------------------------------------- ticker of existing names */
 function Ticker({ names, label }: { names: string[]; label: string }) {
+  const [paused, setPaused] = useState(false);
   const row = names.map((n) => (
     <span key={n} className="flex items-center gap-6 pr-6 font-mono text-[12px] uppercase tracking-[0.24em] text-[var(--text-muted)]">
       {n}<span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--ember)] opacity-70" />
     </span>
   ));
   return (
-    <div className="marquee mx-auto mt-14 max-w-5xl py-2">
-      <p className="sr-only">{label}: {names.join(", ")}</p>
-      <div aria-hidden>{row}{row.map((r, i) => <span key={i}>{r}</span>)}</div>
+    <div className="mx-auto mt-14 flex max-w-5xl items-center gap-3">
+      <div className={`marquee marquee-quiet flex-1 py-2 ${paused ? "marquee-paused" : ""}`}>
+        <p className="sr-only">{label}: {names.join(", ")}</p>
+        <div aria-hidden>{row}{row.map((r, i) => <span key={i}>{r}</span>)}</div>
+      </div>
+      <button type="button" onClick={() => setPaused(!paused)} aria-pressed={paused} aria-label={paused ? "Play the name ticker" : "Pause the name ticker"}
+        className="glass-thin flex h-8 w-8 shrink-0 items-center justify-center text-[11px] text-[var(--text-secondary)]">{paused ? "▶" : "❚❚"}</button>
     </div>
   );
 }
@@ -162,11 +180,11 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <Reveal className="md:col-span-2">
           <div className={`${tile} ${dark}`}>
             <div className="flex items-start justify-between gap-4">
-              <Eyebrow className="!text-white/60">Live · last 24 hours · worldwide</Eyebrow>
+              <Eyebrow className="!text-white/60">Near-real-time · raw detections · last 24 hours</Eyebrow>
               <span className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-[var(--ember)]" aria-hidden />
             </div>
             <div className="mt-5">
-              {live24 != null ? <DotText text={fmtInt(live24)} dot={9} gap={3} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <p className="display text-4xl text-white/70">{d ? NA : "…"}</p>}
+              {live24 != null ? <DotText text={fmtInt(live24)} dot={9} gap={3} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <p className="display text-4xl text-white/70">{d ? NA : "loading"}</p>}
             </div>
             <p className="mt-3 text-[15px] leading-snug">
               <span className="font-medium">active-fire detections</span> <span className="text-white/70">— each one a satellite pixel flagged as burning, seen from orbit in the 24 hours before the snapshot.</span>
@@ -202,7 +220,7 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           <div className={`glass ${tile} flex flex-col items-center text-center text-[var(--ink)]`}>
             <Eyebrow className="self-start">Time now · UTC</Eyebrow>
             <DotClock size={128} />
-            <p className="tabular display mt-1 text-2xl">{now ? fmtClock(now.getUTCHours() + now.getUTCMinutes() / 60) : "…"} <span className="text-sm font-medium text-[var(--text-muted)]">UTC</span></p>
+            <p className="tabular display mt-1 text-2xl">{now ? fmtClock(now.getUTCHours() + now.getUTCMinutes() / 60) : "loading"} <span className="text-sm font-medium text-[var(--text-muted)]">UTC</span></p>
             <p className="text-sm text-[var(--text-secondary)]">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : ""}</p>
             <p className="mt-3 text-[12px] leading-relaxed text-[var(--text-muted)]">Satellite fire records are stamped in UTC. Emberline converts each detection to local solar time (UTC + longitude ÷ 15) before any time-of-day analysis.</p>
           </div>
@@ -210,22 +228,22 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
 
         <Reveal>
           <div className={`glass ${tile}`}>
-            <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d ? NA : "…"}
+            <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d ? NA : "loading"}
               unit="detections"
-              note={<>Daytime vegetation-fire detections, raw, {years.length ? span(Math.min(...years), Math.max(...years)) : "…"}, in {withRecord || "…"} FIRMS countries and territories; {countries.length || "…"} of them have enough data to fit. Exact total {fmtInt(detections)}.</>}
+              note={<>Daytime vegetation-fire detections, raw, {years.length ? span(Math.min(...years), Math.max(...years)) : "loading"}, in {withRecord || "loading"} FIRMS countries and territories; {countries.length || "loading"} of them have enough data to fit. Exact total {fmtInt(detections)}.</>}
               source={<>Source: NASA FIRMS archive (MODIS C6.1, VIIRS Suomi-NPP) · countries.json</>} />
           </div>
         </Reveal>
         <Reveal delay={0.05}>
           <div className={`${tile} bg-[var(--ember)] text-white shadow-[0_24px_44px_-26px_rgba(217,67,26,0.8)]`}>
-            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d ? NA : "…"} unit="R²"
+            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d ? NA : "loading"} unit="R²"
               note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against Aqua reference observations in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
               source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
           </div>
         </Reveal>
         <Reveal delay={0.1}>
           <Link href="/satellites" className={`${tile} ${dark} group flex flex-col transition-transform hover:-translate-y-1`}>
-            <Stat dot tone="dark" label="The fleet" value={sats.length ? String(sats.length) : d ? NA : "…"} unit="satellites"
+            <Stat dot tone="dark" label="The fleet" value={sats.length ? String(sats.length) : d ? NA : "loading"} unit="satellites"
               note={<>
                 In the harmonized record: {sats.filter((s) => s.name !== "NOAA-20" && s.name !== "NOAA-21").map((s) => `${s.name} (${s.instrument})`).join(", ")}.
                 {" "}Live layer only: {sats.filter((s) => s.name === "NOAA-20" || s.name === "NOAA-21").map((s) => s.name).join(", ")} (VIIRS).
@@ -382,6 +400,7 @@ export function Home() {
       <Hero d={d} />
       <OrbitChapter />
       <JumpChapter row={canada} />
+      <DriftChapter drift={d?.drift} />
 
       <section className="mt-8 py-12">
         <Reveal><Eyebrow>07 · How we know</Eyebrow></Reveal>
@@ -402,8 +421,6 @@ export function Home() {
         </div>
         <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d?.params); return a ? <>Across all {a.fitted} fitted countries, each fitted separately, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
       </section>
-
-      <DriftChapter drift={d?.drift} />
 
       <section className="py-16">
         <Reveal><Eyebrow>08 · What it changes</Eyebrow></Reveal>
@@ -428,7 +445,7 @@ export function Home() {
         </div>
       </section>
 
-      <section className="py-16">
+      <section id="tools" className="scroll-mt-24 py-16">
         <Reveal><Eyebrow>09 · Everything inside</Eyebrow></Reveal>
         <Reveal delay={0.05}><h2 className="display mt-3 t-d2">One record. <span className="italic text-[var(--ember)]">Nine ways in.</span></h2></Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
