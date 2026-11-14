@@ -210,3 +210,14 @@ console errors, no horizontal overflow. Not yet checked on a physical phone.
   the published R² to 1.8e-15. Model beats the scalar baseline on held-out R² in 84 of 171; does not
   in 87 (see `docs/results.md`). Lower MAE in 141 of 171.
 - Contract for the web builder: `docs/data-contract-additions.md`. Check: `scripts/check_data_contract.py`.
+
+## 14 Nov ~18:20 UTC — "app build" session: regression QA after the world-data switch
+
+- **Done.** Perf/polish rules from `docs/handoff-web-ui.md` re-checked in `web/src` after `7a1b6ce..a1cd9ea`: no Lenis, custom cursor, progress bar or serif; one `backdrop-filter` (nav pill, inside `@supports`); scroll-linked code uses motion values or a rAF-throttled flag (SiteNav); `data-perf="low"` and reduced-motion rules intact; footer "Made by Modulark" → modularktech.com; hyparquet only in `queries.ts`. All held, nothing to fix.
+- Routes (`/`, `/explorer`, `/seasons`, `/trends`, `/compare`, `/lab`, `/method`, `/satellites`, `/globe`, `/data`, `/about`, 404) at 390×844 and 1440×900, local build and live: correct status, 0 console errors, no sideways scroll, no NaN/undefined/null text.
+- Explorer: Canada (own), Afghanistan (pooled, "pooled fit" pill), Spain and Egypt (flagged), Iceland (failed: "raw only · uncorrected" pill, harmonized view shows "No harmonized record here", no calendar). CSV header block present; CSV year sums equal the on-screen busiest-year values (e.g. Canada raw 2023 685,341; harmonized 100,295).
+- **Defect fixed:** the 47 suspicious fits (`docs/results.md`) were shown with no warning. `web/src/lib/fitFlags.ts` ports the rules of `scripts/report_global.py`; Explorer shows a "check this fit" pill and the reasons; the harmonized CSV header gets `fit_flags` (`074b6ae`).
+- **Defect fixed:** Explorer first calendar was 11.7 s on the world files (baseline 8.1 s on the four-country files; same harness, Fast-3G-like + 4x CPU, cold cache, median of 3). `queries.ts` now prefetches only the column chunks it decodes (raw `frp_sum_mw` skipped) and reads a 40 KB tail: 9.3 s (+15% vs baseline) (`7e2ff24`).
+- Home headline numbers checked against `params_global.json` with a script: median own-fit R² 0.64 over 130, best Montenegro 0.93 (raw −10.1), beats raw VIIRS 171/171, four-country R²/raw values and Canada step ratios — all match.
+- Light/dark: site is light-only (`color-scheme: light`); with dark OS preference it renders identically, readable.
+- **Not done / next step:** the Explorer load is still bound by `params_global.json` (147 KB transferred) and the 349 KB harmonized country row groups; a further cut would need smaller country row groups in the published parquet (a data-file change, not done here). Live URL: https://emberline-tan.vercel.app/

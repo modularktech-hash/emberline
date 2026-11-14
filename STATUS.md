@@ -10,7 +10,7 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by the "app build" cloud session (session_01RwRY…) for regression QA after the world-data switch (14 Nov, from ~17:30 UTC). Do not edit `web/` until released.
+## `web/` — RELEASED by the "app build" cloud session after regression QA (14 Nov ~18:20 UTC)
 
 ### Previous: RELEASED by the "data host" cloud session (14 Nov ~17:00 UTC); was claimed from ~15:10 UTC
 
@@ -64,6 +64,8 @@ land in `docs/results.md`.
    country as `fit_source: pooled`).
 
 ## Log (newest first)
+
+- 14 Nov ~18:20 UTC — App-build session: regression QA of `web/` after the world-data switch. Perf/polish rules hold; 11 routes + 404 pass locally and live (390/1440, no errors, no overflow, no placeholder text); Explorer first calendar 11.7 s → 9.3 s (column-only range reads, `7e2ff24`); suspicious fits now flagged in Explorer and CSV (`074b6ae`). `web/` released. Details: `docs/handoff-web-ui.md`.
 
 - 14 Nov ~17:00 UTC — Data-host session: **app switched to the world data** (171 fitted countries, 4-country fallback), audit wording/method/bug/accessibility fixes, testing pass, README. Season timing: daily for 166 countries (detection tables rebuilt here from `data/global`, each matching the published calendar exactly), monthly resolution (labelled) for 5. `scripts/check_app_numbers.py`: 16,356 checks, 0 failed. 11 routes at 1440/375: no sideways scroll, no console errors. `web/` released. Details: `docs/in-flight.md`.
 

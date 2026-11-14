@@ -198,3 +198,10 @@ The owner's second polish request. The look is kept and no UI was removed; the p
 - About's "Built in 48 hours, for the people who fight fires."
 
 About's "1.5× to 6.6×" is hard-coded text, but it matches `countries.json` `step_raw` (1.50–6.60).
+
+## Regression QA after the world-data switch (14 Nov ~18:20 UTC, "app build" session)
+
+- Performance-pass and pass-2 rules re-checked in `web/src`: all still hold.
+- Explorer load-to-first-calendar (scratchpad `perf/explorer-load.js`, Fast-3G-like, 4x CPU, cold cache, median of 3): four-country files 8.1 s → world files 11.7 s → **9.3 s** after `queries.ts` stopped downloading unread column chunks (raw `frp_sum_mw`, ~2/3 of each row group) and cut the tail read to 40 KB. Remaining bytes: params_global.json 147 KB, raw country columns ~165 KB, harmonized country row groups ~349 KB.
+- New: `lib/fitFlags.ts` (the `report_global.py` suspicious-fit rules). Explorer: "check this fit" pill + reasons under the held-out R²; harmonized CSV header line `fit_flags`.
+- Checked: 11 routes + 404 at 390/1440, local and live, 0 failures; Explorer picker with own, pooled, flagged and failed countries; CSV totals equal the screen; light and dark OS preference on `/` and `/method`.

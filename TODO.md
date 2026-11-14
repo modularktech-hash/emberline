@@ -43,7 +43,7 @@ what, `docs/submission.md` has the full submission rules.
 - [x] CSV export matches the on-screen matrix, raw and harmonized
 - [x] Box selection: inside coverage, partly outside, fully outside, invalid input
 - [x] Phone width 390: no overflow on `/` and `/method`, map usable by touch
-- [ ] Light and dark mode, both pages
+- [x] Light and dark mode, both pages — the site is light-only by design (`color-scheme: light`); with the OS in dark mode `/` and `/method` render identically, 0 text elements under 3:1 contrast in either (14 Nov, app-build QA)
 - [x] No console errors; page still works when the basemap host is unreachable
 - [x] Hard-constraint review: no placeholder numbers, raw labelled uncorrected,
       9–11 MW cited correctly, no NASA logos, no global claims
@@ -59,7 +59,7 @@ Live: https://emberline-tan.vercel.app/ — deploys `modularktech-hash/emberline
 - [x] Live URL checked logged-out at phone size (no overflow, no console errors)
 - [x] Live URL recorded in `STATUS.md` and `docs/session-notes.md`
 - [x] Live URL in the README
-- [ ] Re-check the live site after the global data is published
+- [x] Re-check the live site after the global data is published — 11 routes + 404 at 390 and 1440 px on the live URL: 200, no console errors, no sideways scroll, no NaN/undefined text (14 Nov, after `074b6ae`)
 - [ ] Check on a real phone (only emulated so far)
 
 ## 5. Submission (Sunday, by 16:00 — see `docs/submission.md`)
