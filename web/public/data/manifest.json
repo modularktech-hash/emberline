@@ -16,6 +16,7 @@
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
     "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
     "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
+    "transfer_validation.json": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
     "validation_points.json": "a8dbfaaecdcac14b45eed5cbb93f62dafe864ea693adc1270c24458b3905b6ab"
    },
    "consistent": true,
@@ -619,6 +620,27 @@
    ],
    "fetched_utc": "2026-11-14T11:10Z",
    "fit_version": null
+  },
+  {
+   "name": "transfer_validation.json",
+   "dataset": "world",
+   "purpose": "E28 analysis: leave-one-country-out held-out (2019-2021) scores of the pooled curve vs own fits; not a published fit",
+   "source": "derived from params_global.json and the FIRMS archive (scripts/transfer_validation.py)",
+   "bytes": 2564,
+   "sha256": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
+   "format": "json",
+   "top_level_keys": [
+    "analysis",
+    "fit_version",
+    "method",
+    "n_countries",
+    "errors",
+    "own_fit_reproduction_max_abs_r2_diff",
+    "all_own_fit_countries",
+    "pool_sources_left_out",
+    "not_pool_sources"
+   ],
+   "fit_version": "v1-20261114T1240"
   },
   {
    "name": "validation_points.json",

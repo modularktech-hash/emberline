@@ -49,6 +49,9 @@ FILES = {
     "validation_points.json": dict(
         dataset="world", fit="self", source=FIRMS_ARCHIVE,
         purpose="Held-out (2019-2021) cell-month sample per fitted country and the training-only ratio baseline"),
+    "transfer_validation.json": dict(
+        dataset="world", fit="self", source="derived from params_global.json and the FIRMS archive (scripts/transfer_validation.py)",
+        purpose="E28 analysis: leave-one-country-out held-out (2019-2021) scores of the pooled curve vs own fits; not a published fit"),
     "countries.json": dict(
         dataset="world", fit="self", source="derived from the world calendars and params_global.json",
         purpose="One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)"),
