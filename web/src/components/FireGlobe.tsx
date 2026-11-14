@@ -50,13 +50,15 @@ interface Props {
   autoRotate?: boolean;
   height?: number;
   interactive?: boolean;
+  /** Wheel zoom; off on the home page so scrolling never gets captured. */
+  allowZoom?: boolean;
   onPick?: (c: Cell) => void;
   onSats?: (s: SatState[]) => void;
 }
 
 export default function FireGlobe({
   live, tle, window: win = "24h", showFires = true, showSats = true, showOrbits = true, speed = 60,
-  autoRotate = true, height = 560, interactive = true, onPick, onSats,
+  autoRotate = true, height = 560, interactive = true, allowZoom, onPick, onSats,
 }: Props) {
   const ref = useRef<GlobeMethods | undefined>(undefined);
   const wrap = useRef<HTMLDivElement>(null);
@@ -105,8 +107,8 @@ export default function FireGlobe({
     const c = g.controls() as { autoRotate: boolean; autoRotateSpeed: number; enableZoom: boolean };
     c.autoRotate = autoRotate;
     c.autoRotateSpeed = 0.45;
-    c.enableZoom = interactive;
-  }, [Globe, autoRotate, interactive]);
+    c.enableZoom = allowZoom ?? interactive;
+  }, [Globe, autoRotate, interactive, allowZoom]);
   useEffect(() => { ref.current?.pointOfView({ lat: 12, lng: 18, altitude: 2.3 }, 0); }, [Globe]);
 
   const material = useMemo(() => new THREE.MeshPhongMaterial({ color: "#f3ecdc", emissive: "#efe4cb", emissiveIntensity: 0.35, shininess: 4 }), []);

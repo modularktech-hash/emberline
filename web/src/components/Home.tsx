@@ -33,46 +33,49 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
   const bestR2 = d ? Math.max(...d.table.countries.map((c) => c.r2_model)) : 0;
 
   return (
-    <section ref={ref} className="relative -mx-4 overflow-hidden px-4 pb-8 pt-10 sm:-mx-6 sm:px-6 sm:pt-16">
-      <motion.div style={{ y: globeY, scale: globeScale }} className="pointer-events-none absolute inset-x-0 top-[330px] mx-auto max-w-[900px] opacity-90 sm:top-[360px]">
-        <FireGlobe live={d?.live ?? null} tle={d?.tle.satellites ?? null} interactive={false} showOrbits height={720} speed={90} />
-      </motion.div>
-      <motion.div style={{ y: textY, opacity: fade }} className="relative z-10 mx-auto max-w-4xl text-center">
-        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }} className="eyebrow">
-          Emberline · NASA FIRMS · MODIS + VIIRS · 2001–2025
-        </motion.p>
-        <h1 className="display mt-6 text-[3.5rem] leading-[0.95] sm:text-[7.6rem]">
-          {"25 years of fire.".split(" ").map((w, i) => (
-            <motion.span key={i} className="inline-block" initial={{ opacity: 0, y: 40, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.9, ease: EASE, delay: 0.1 + i * 0.08 }}>
-              {w}&nbsp;
-            </motion.span>
-          ))}
-          <br />
-          <motion.span className="inline-block whitespace-nowrap text-[2.7rem] italic text-[var(--ember)] sm:text-[6.6rem]" initial={{ opacity: 0, y: 40, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1, ease: EASE, delay: 0.45 }}>
+    <section ref={ref} className="relative pb-10 pt-14 sm:pt-24">
+      <motion.div style={{ y: textY, opacity: fade }} className="relative z-10 mx-auto max-w-3xl text-center">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
+          className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
+          <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
+          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{live24.toLocaleString()}</span> fires seen from orbit in the last 24 hours</span> : "NASA FIRMS · MODIS + VIIRS · 2001–2025"}
+        </motion.div>
+        <h1 className="display mt-8 text-[3.1rem] leading-[0.98] sm:text-[5.6rem]">
+          <motion.span className="block" initial={{ opacity: 0, y: 24, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.9, ease: EASE, delay: 0.1 }}>
+            25 years of fire.
+          </motion.span>
+          <motion.span className="block whitespace-nowrap text-[2.6rem] italic text-[var(--ember)] sm:text-[5.6rem]" initial={{ opacity: 0, y: 24, filter: "blur(6px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1, ease: EASE, delay: 0.3 }}>
             One unbroken line.
           </motion.span>
         </h1>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }}
-          className="glass mx-auto mt-8 max-w-xl rounded-[22px] px-5 py-3 text-lg leading-relaxed text-[var(--text-secondary)] backdrop-blur-sm">
-          Satellites have watched Earth burn since 2000. In 2012 a sharper one launched, and the fire record jumped. The fires did not. Emberline rebuilds the record so the satellite no longer matters.
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }}
+          className="mx-auto mt-7 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">
+          Two generations of NASA satellites, harmonized into a single fire record you can trust from 2001 to today.
         </motion.p>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar &nbsp;→</Link>
-          <Link href="/globe" className="glass rounded-full px-6 py-3 text-[15px] font-medium">See today&apos;s fires live</Link>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
+          <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
+          <Link href="/globe" className="glass rounded-full px-6 py-3 text-[15px] font-medium">Live globe &nbsp;→</Link>
         </motion.div>
       </motion.div>
 
-      <div className="relative z-10 mx-auto mt-[23rem] grid max-w-5xl grid-cols-2 gap-3 sm:mt-[25rem] md:grid-cols-4">
+      <motion.div style={{ y: globeY, scale: globeScale }} initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 1.4, ease: EASE }}
+        className="relative mx-auto -mt-2 max-w-[760px] cursor-grab active:cursor-grabbing">
+        <div aria-hidden className="pointer-events-none absolute inset-[12%] rounded-full bg-[radial-gradient(circle,rgba(255,140,80,0.28),transparent_68%)] blur-2xl" />
+        <FireGlobe live={d?.live ?? null} tle={d?.tle.satellites ?? null} interactive allowZoom={false} showOrbits height={640} speed={60} />
+        <p className="pointer-events-none -mt-6 text-center text-xs tracking-wide text-[var(--text-muted)]">Drag to spin · hover a fire for details</p>
+      </motion.div>
+
+      <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-y-8 md:grid-cols-4">
         {[
-          { v: live24, l: "fires seen from orbit in the last 24 h", s: "" },
-          { v: detections, l: "filtered detections in the harmonized record", s: "" },
-          { v: 5, l: "fire satellites tracked, live orbits", s: "" },
-          { v: bestR2, l: "best held-out R², years the model never saw", s: "", dec: 2 },
+          { v: detections, l: "detections in the harmonized record" },
+          { v: 25, l: "years, 2001 to 2025" },
+          { v: 5, l: "satellites tracked live" },
+          { v: bestR2, l: "best held-out R²", dec: 2 },
         ].map((x, i) => (
           <Reveal key={i} delay={i * 0.06}>
-            <div className="glass h-full rounded-[22px] p-4 sm:p-5">
-              <p className="display text-3xl sm:text-4xl">{d ? <CountUp to={x.v} decimals={x.dec ?? 0} /> : "—"}</p>
-              <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-secondary)]">{x.l}</p>
+            <div className={`px-5 text-center ${i ? "md:border-l md:border-[var(--hairline)]" : ""}`}>
+              <p className="display tabular text-4xl">{d ? <CountUp to={x.v} decimals={x.dec ?? 0} /> : "—"}</p>
+              <p className="mt-1.5 text-xs text-[var(--text-muted)]">{x.l}</p>
             </div>
           </Reveal>
         ))}
