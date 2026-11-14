@@ -30,6 +30,21 @@ now, where everything lives, and what is open. Its duplicate world download was
 stopped (the app-build session's global fit is the one to use). Claim `web/`
 here before editing and pull first.
 
+## Split of work (owner decision, 14 Nov ~22:45 UTC)
+
+- **UI session owns `web/src/**`.** **Technical session (app build, session_01RwRY…) owns data, science, scripts, `web/public/data/*` and submission docs.** Neither edits the other's area; ask here.
+- **Plan Combat items handed to the UI session** (details in `plan combat.md`, `grep -n '^### E' 'plan combat.md'`):
+  - E08 shareable URL state (area, mode, years, baseline; restore on refresh/back)
+  - E09 evidence brief download (chart + metadata + quality + sources, numbers identical to screen)
+  - E14 requested vs effective bounds, res-2 cell IDs, whole-cell warning in the UI
+  - E15 exact geometry, cell IDs and reproducing URL in the custom-area CSV header
+  - E12 remainder: rename "sensor share" to "change in estimated trend after harmonization", show both slopes
+  - E20–E22, E25 accessibility (Data scroll region, keyboard row actions, calendar arrow keys/table, JS reduced motion)
+  - E33–E37 Seasons absolute anomaly and zero median, Compare quality and index period, Globe FRP-sum label and fallbacks
+  - When the technical session lands E13: handle `season.json` `partial` fire years (null values) on Seasons/Trends
+- **Technical session, in order:** E13, E38/E39 manifest (running) → E16 mixed-version check → E07 current-month feasibility → E31/E32 → E40 fixture.
+- **Owner:** E18 form/deadline, E19 disclosure, E41 team links.
+
 ## Who is doing what right now
 
 | Task | Who | State | Output |
