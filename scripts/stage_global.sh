@@ -33,15 +33,24 @@ classify() {
 fetch() {
   local source="$1" year="$2" country="$3"
   local name="${source}_${year}_${country}.csv"
-  local dest="$OUT/$name.gz" tmp="$OUT/$name.part" delay=3
+  local dest="$OUT/$name.gz" tmp="$OUT/$name.part" delay=1
   [ -s "$dest" ] && return 0
-  for attempt in 1 2 3 4 5 6; do
-    curl -sS -m 900 -o "$tmp" "$BASE/$source/$year/$name" 2>/dev/null
-    case "$(classify "$tmp")" in
+  # The host intermittently resets connections during the TLS handshake; a
+  # healthy handshake takes well under a second, so a short connect timeout
+  # and many quick retries beat a few long ones. A reset is never "absent".
+  for attempt in $(seq 1 15); do
+    # A transfer cut off mid-body still starts with the CSV header, so a
+    # failed curl must never be classified as ok.
+    if curl -sS --connect-timeout 5 -m 900 -o "$tmp" "$BASE/$source/$year/$name" 2>/dev/null; then
+      state="$(classify "$tmp")"
+    else
+      state=retry
+    fi
+    case "$state" in
       ok)    gzip -c "$tmp" > "$dest.tmp" && mv -f "$dest.tmp" "$dest"; rm -f "$tmp"
              echo "got    $name"; return 0 ;;
       error) rm -f "$tmp"; : > "$OUT/$name.absent"; echo "absent $name"; return 0 ;;
-      *)     rm -f "$tmp"; sleep "$delay"; delay=$((delay * 2)) ;;
+      *)     rm -f "$tmp"; sleep "$delay"; delay=$((delay < 20 ? delay + 2 : 20)) ;;
     esac
   done
   echo "FAIL   $name"
