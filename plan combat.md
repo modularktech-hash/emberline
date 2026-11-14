@@ -718,10 +718,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E12 — Rename causal sensor-share wording
 
-- [ ] **Status:** P1 · Source concern · Science · effort S
+- [x] **Status:** P1 · Source concern · Science · effort S
 - **Evidence:** Trends sensor share ratio
 - **Acceptance:** Descriptive difference and denominator safeguards, no causal claim
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Season Shift table column "Sensor share of onset shift" and Home Chile card "X% of the apparent shift disappears once VIIRS…" (causal). Implemented: column renamed "Change in estimated onset trend after harmonization (d/decade)" = harmonized − raw, plus "Relative change" = (h − r)/|r| keeping the 0.5 d/decade denominator guard and "unstable" flag; raw/harmonized slope headers carry units; footnote says it compares two descriptive estimates, not a measured sensor effect; Home card shows the difference with both slopes in days/decade. Verified: Playwright / and /trends at 390/1440, 0 errors, 0 overflow, no "Sensor share" text left, 82 unstable flags rendered.
 
 ### E13 — Verify complete cross-year seasons
 

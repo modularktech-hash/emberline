@@ -451,7 +451,7 @@ export function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier.{chile?.raw_onset != null && chile?.harm_onset != null && chile.raw_onset !== 0 ? ` ${Math.round((1 - chile.harm_onset / chile.raw_onset) * 100)}% of the apparent shift disappears once VIIRS's extra small early-season detections are weighted to the MODIS scale.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
+              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Descriptive least-squares trends.{chile?.raw_onset != null && chile?.harm_onset != null ? ` Change in estimated trend after harmonization: ${fmtSigned(chile.harm_onset - chile.raw_onset)} days/decade (raw ${fmtSigned(chile.raw_onset)}, harmonized ${fmtSigned(chile.harm_onset)} days/decade). This is a difference between two estimates, not a measured sensor effect.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
             </div>
           </Reveal>
         </div>

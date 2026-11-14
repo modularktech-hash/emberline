@@ -22,7 +22,7 @@ const DEF: Record<Metric, string> = {
   end: "Day by which 90% of the year's detections had happened.",
   length: "Days from onset (10%) to end (90%).",
 };
-/** Sensor share = 1 − harmonized trend ÷ raw trend. Outside 0–100% the ratio is unstable (opposite signs, or a small raw trend). */
+/** Relative change in the estimated onset trend after harmonization, (harmonized − raw) ÷ raw. Only where |raw| > 0.5 d/decade; unstable when the trends have opposite signs or harmonizing enlarges the trend (share outside 0–100%). */
 const shareUnstable = (v: number | null) => v != null && (v < 0 || v > 1);
 const fmt = (v: number | null | undefined) => fmtSigned(v);
 /** E31: "95% −41.1 to −0.2 · n 22" from season.json trend_stats (descriptive). */
@@ -48,7 +48,7 @@ export function TrendsPage() {
   const dayLabel = (v: number | null | undefined) => (v == null ? "—" : `${approx ? "≈" : ""}${fireDayLabel(v, c!.fire_year_start_month)}`);
   const nDaily = names.filter((n) => data?.countries[n].resolution !== "monthly").length;
   const mvd = data?.monthly_vs_daily;
-  type Col = "name" | "res" | "raw_onset" | "harm_onset" | "raw_length" | "harm_length" | "share";
+  type Col = "name" | "res" | "raw_onset" | "harm_onset" | "raw_length" | "harm_length" | "share" | "delta";
   const shareOf = (n: string) => {
     const t = data!.countries[n].trend_days_per_decade;
     return t.raw_onset != null && t.harm_onset != null && Math.abs(t.raw_onset) > 0.5 ? 1 - t.harm_onset / t.raw_onset : null;
@@ -57,6 +57,7 @@ export function TrendsPage() {
     if (k === "name") return prettyName(n);
     if (k === "res") return data!.countries[n].resolution ?? "daily";
     if (k === "share") return shareOf(n);
+    if (k === "delta") { const t = data!.countries[n].trend_days_per_decade; return t.raw_onset != null && t.harm_onset != null ? t.harm_onset - t.raw_onset : null; }
     return data!.countries[n].trend_days_per_decade[k];
   }, { k: "name", dir: 1 });
 
@@ -204,9 +205,10 @@ export function TrendsPage() {
               <table className="tabular w-full min-w-[720px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                   <SortTh k="name" {...tbl}>Country</SortTh><SortTh k="res" {...tbl}>Resolution</SortTh>
-                  <SortTh k="raw_onset" {...tbl}>Onset raw</SortTh><SortTh k="harm_onset" {...tbl}>Onset harmonized</SortTh>
-                  <SortTh k="raw_length" {...tbl}>Length raw</SortTh><SortTh k="harm_length" {...tbl}>Length harmonized</SortTh>
-                  <SortTh k="share" {...tbl} title="1 − (harmonized onset trend ÷ raw onset trend): the part of the raw trend that disappears after harmonizing">Sensor share of onset shift</SortTh>
+                  <SortTh k="raw_onset" {...tbl}>Onset raw (d/decade)</SortTh><SortTh k="harm_onset" {...tbl}>Onset harmonized (d/decade)</SortTh>
+                  <SortTh k="raw_length" {...tbl}>Length raw (d/decade)</SortTh><SortTh k="harm_length" {...tbl}>Length harmonized (d/decade)</SortTh>
+                  <SortTh k="delta" {...tbl} title="Harmonized onset trend minus raw onset trend, days per decade. A difference between two descriptive estimates, not a measured sensor effect.">Change in estimated onset trend after harmonization (d/decade)</SortTh>
+                  <SortTh k="share" {...tbl} title="(harmonized − raw) ÷ |raw|, only where |raw| > 0.5 d/decade">Relative change</SortTh>
                 </tr></thead>
                 <tbody>
                   {tbl.shown.map((n) => {
@@ -220,14 +222,15 @@ export function TrendsPage() {
                         <td className="px-3 text-[var(--seq-5)]" title={sensText(data!.countries[n].trend_stats?.raw_onset)}>{fmt(t.raw_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.raw_onset)}</span></td>
                         <td className="px-3" title={sensText(data!.countries[n].trend_stats?.harm_onset)}>{fmt(t.harm_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.harm_onset)}</span></td>
                         <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_length)}</td><td className="px-3">{fmt(t.harm_length)}</td>
-                        <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : shareUnstable(share) ? <span title="Outside 0–100%: the raw and harmonized trends have opposite signs or the raw trend is small, so the ratio is not meaningful">{Math.round(share * 100)}% <span className="font-mono text-[10px] uppercase text-[var(--ember)]">unstable</span></span> : `${Math.round(share * 100)}%`}</td>
+                        <td className="px-3">{t.raw_onset != null && t.harm_onset != null ? fmtSigned(t.harm_onset - t.raw_onset) : "—"}</td>
+                        <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : shareUnstable(share) ? <span title="The raw and harmonized trends have opposite signs, or harmonizing makes the trend larger, so the ratio is not meaningful">{fmtSigned(-share * 100, 0)}% <span className="font-mono text-[10px] uppercase text-[var(--ember)]">unstable</span></span> : `${fmtSigned(-share * 100, 0)}%`}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
               </ScrollBox>
-              <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">&quot;Sensor share&quot; = 1 − (harmonized onset trend ÷ raw onset trend): the part of the raw onset trend that disappears after harmonizing. It is only computed where the raw trend exceeds 0.5 days per decade, and is marked unstable when it falls outside 0–100% (the two trends have opposite signs, or harmonizing makes the trend larger). A trend over 23 years is fragile, especially where the fire year is short; read these as indications, with the year-by-year table above.</p>
+              <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">&quot;Change in estimated onset trend after harmonization&quot; = harmonized onset trend − raw onset trend, in days per decade; &quot;relative change&quot; divides it by the size of the raw trend. Both compare two descriptive estimates and do not measure how much of a shift the sensor caused. The relative change is only computed where the raw trend exceeds 0.5 days per decade, and is marked unstable when the two trends have opposite signs or harmonizing makes the trend larger. A trend over 23 years is fragile, especially where the fire year is short; read these as indications, with the year-by-year table above.</p>
             </section>
           </Reveal>
         </>
