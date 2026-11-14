@@ -398,3 +398,62 @@ country (from `params_global.json`, nothing refitted):
 Pooled countries are small (median 314 held-out cell-months), so the gap mixes transfer error
 with small-sample noise. Reading: the borrowed curve with a borrowed κ is not reliable at
 cell-month scale; these countries should be read as experimental.
+
+## Where the single FRP cut-off scores higher than the model (21 of 171) — descriptive
+
+From `params_global.json` and `validation_points.json` (fit `v1-20261114T1240`, nothing refitted).
+The threshold baseline counts Suomi-NPP detections at or above one FRP cut-off T, chosen per country
+on the **training** years (lowest training cell-month RMSE). This section only describes where it
+scores higher on held-out R²; no model or cut-off is selected per country on 2019–2021.
+
+| Country | Fit | Held-out cell-months | Model R² | Cut-off R² (T) | Model bias | Cut-off bias | Ratio-baseline R² |
+|---|---|---:|---:|---:|---:|---:|---:|
+| United States | own | 129,680 | 0.38 | 0.69 (50 MW) | +11.9% | −64.3% | 0.62 |
+| China | own | 129,659 | −0.10 | −0.03 (12 MW) | +10.7% | −45.5% | 0.08 |
+| Iran | own | 10,937 | −0.32 | −0.08 (40 MW) | +27.4% | −82.1% | −0.11 |
+| Spain | own | 5,373 | −7.19 | −0.51 (100 MW) | +30.8% | −79.5% | −1.55 |
+| Saudi Arabia | own | 3,269 | −0.27 | −0.02 (100 MW) | +39.4% | −91.9% | −0.38 |
+| Germany | own | 2,962 | −1.14 | −0.23 (30 MW) | +12.2% | −95.4% | −0.74 |
+| Japan | own | 2,896 | −3.84 | −0.13 (40 MW) | +22.1% | −97.2% | −1.15 |
+| United Kingdom | own | 2,215 | −0.21 | −0.19 (25 MW) | +14.0% | −77.1% | 0.11 |
+| Morocco | own | 1,410 | −1.80 | −1.12 (75 MW) | +13.7% | −70.1% | 0.04 |
+| Republic of Korea | pooled curve, own κ | 1,362 | −0.36 | −0.07 (30 MW) | +3.7% | −93.7% | −0.32 |
+| Taiwan | pooled curve, own κ | 702 | −0.50 | −0.24 (20 MW) | +58.8% | −76.6% | −0.42 |
+| Netherlands | pooled curve, own κ | 558 | −1.50 | −0.23 (50 MW) | +80.3% | −82.1% | −1.16 |
+| Yemen | pooled | 405 | −11.93 | −0.40 (20 MW) | +465.9% | −26.7% | −0.65 |
+| United Arab Emirates | pooled | 351 | −3.66 | 0.06 (75 MW) | +347.5% | −91.7% | −0.25 |
+| Trinidad and Tobago | pooled | 289 | −0.78 | −0.16 (20 MW) | +138.2% | −79.1% | 0.41 |
+| Puerto Rico | pooled | 239 | −0.09 | 0.01 (30 MW) | +45.5% | −82.2% | 0.14 |
+| Solomon Islands | pooled | 213 | −0.66 | −0.05 (12 MW) | +133.3% | −54.5% | −0.13 |
+| Cyprus | pooled | 135 | 0.37 | 0.50 (50 MW) | −4.5% | −70.7% | 0.37 |
+| Brunei Darussalam | pooled | 97 | −0.42 | 0.01 (30 MW) | +71.4% | −75.9% | −0.53 |
+| Comoros | pooled | 83 | −3.20 | −1.23 (20 MW) | +217.8% | −4.2% | −0.13 |
+| Barbados | pooled | 48 | −0.81 | −0.33 (100 MW) | +43.1% | −100.0% | −0.47 |
+
+What these 21 have in common, compared with the other 150 fitted countries:
+
+- **Mostly "less bad", not "good".** The cut-off R² is above 0.1 only in the United States (0.69)
+  and Cyprus (0.50). In 19 of the 21 the model's held-out R² is negative. A high cut-off that
+  predicts almost no detections (cut-off bias −4% to −100%, median −79%; below −45% in 19 of 21) scores near R² = 0 by
+  predicting close to zero everywhere; the model scores worse because it over-predicts.
+- **The model over-predicts.** Model held-out bias is positive in 20 of 21 (median |bias| 39%),
+  against 95 positive of 150 elsewhere (median |bias| 7%); 14 of the 21 exceed 20%.
+- **Small or borrowed samples.** 12 of the 21 use the pooled curve (12 of the 41 pooled fits); median
+  held-out size 702 cell-months versus 3,471 for the rest.
+- **Low co-detection rate.** Median training match rate (share of Suomi-NPP detections with an Aqua
+  co-detection) 0.17, against 0.27 for the rest.
+- **Not a test-year artefact.** In the **training** years the cut-off already has higher R² than the
+  model in 15 of the 21 (5 of the other 150), so the weakness is visible without looking at the
+  held-out years.
+- **The ratio baseline also beats the model** in 18 of the 21.
+- **Regions (by country, descriptive):** arid Middle East and North Africa (Iran, Saudi Arabia,
+  Yemen, United Arab Emirates, Morocco); temperate, largely agricultural or industrial countries in
+  North America, Europe and East Asia (United States, China, Spain, Germany, Japan, United Kingdom,
+  Republic of Korea, Taiwan, Netherlands); small islands (Trinidad and Tobago, Puerto Rico, Solomon
+  Islands, Cyprus, Brunei Darussalam, Comoros, Barbados). None is a large tropical savanna or forest
+  fire country.
+
+Not available from published files: the FRP distribution of each country's detections (only the
+fitted 50%-detection FRP and the cut-off are published). Testing a different model for these
+countries would need a validation split separate from 2019–2021; it has not been done, and the
+published results stand as they are.
