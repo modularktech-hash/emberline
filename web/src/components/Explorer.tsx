@@ -11,6 +11,7 @@ import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { bboxToParents, cellsExtent, type Bbox } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
+import { fitFlags } from "@/lib/fitFlags";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
 import { prettyName } from "@/lib/names";
 import { getParams } from "@/lib/queries";
@@ -71,6 +72,7 @@ export function Explorer() {
   const notProcessed = !!(data && cal && cal.keys.length === 0 && !rawOnly);
   const fit = data && area.kind === "country" ? data.params.countries[area.name] : undefined;
   const unfitted = !!(data && area.kind === "country" && !fit);
+  const flags = fit ? fitFlags(fit) : [];
   const boxCells = area.kind === "box" ? area.parents.length : 0;
 
   const exportCsv = () => {
@@ -84,6 +86,7 @@ export function Explorer() {
         series: mode,
         unit: cal.unit,
         fit_version: mode === "harmonized" ? data.params.fit_version : "n/a (raw record, uncorrected)",
+        ...(mode === "harmonized" && flags.length ? { fit_flags: `suspicious (docs/results.md): ${flags.join("; ")}` } : {}),
         ...(area.kind === "box" ? { h3_res2_cells: `${cal.keys.length} with data of ${boxCells} touched` } : {}),
         ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
         source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
@@ -113,6 +116,7 @@ export function Explorer() {
             <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind === "box" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => setArea({ kind: "country", name: c })} />
             {area.kind === "box" && <span className="rounded-full border border-[var(--ember)] bg-[var(--ember-soft)] px-3.5 py-1.5 text-sm">Custom area</span>}
             {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}
+            {flags.length > 0 && <span title={`Flagged as suspicious (docs/results.md): ${flags.join("; ")}`} className="self-center rounded-full border border-[var(--ember)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">check this fit</span>}
             {unfitted && <span className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected</span>}
           </div>
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
@@ -193,6 +197,7 @@ export function Explorer() {
                       Against observed Aqua, {data.params.test_years[0]}–{data.params.test_years[1]}, years the model never saw.
                       Raw VIIRS scores {fmtR2(fit.validation_test.raw_viirs.r2)}. Bias {fmtPct(fit.validation_test.model.bias_pct)}, RMSE {fmtNum(fit.validation_test.model.rmse, 1)} detections per cell-month. R² is not a percentage accuracy.
                       {fit.fit_source === "pooled" && " Pooled curve: this country had too few training matches for its own."}
+                      {flags.length > 0 && <> <span className="text-[var(--ember)]">Flagged as suspicious ({flags.join("; ")}): the fit is shown, not hidden, but treat this harmonized record with caution.</span></>}
                     </p>
                   </div>
                 )}
