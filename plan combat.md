@@ -732,10 +732,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E14 — Make coarse scope impossible to miss
 
-- [ ] **Status:** P1 · Observed gap · Geography · effort M
+- [x] **Status:** P1 · Observed gap · Geography · effort M
 - **Evidence:** Whole H3res2 cells summed; actual outlines now implemented
 - **Acceptance:** Requested and effective bounds, cellIDs and resolution in UI/export
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: for a custom box the only scope information was a small grey note in the side card under the map (requested bounds to 2 dp, cell count); nothing beside the result, no cell IDs, no resolution in the result area. Implemented: `web/src/lib/scope.ts` (`boxScope`) and `web/src/components/ScopePanel.tsx`, shown above the calendar for every box: requested bounds (4 dp, antimeridian flag), effective bounds of the summed cells (`cellsExtent`), H3 resolution 2 (~300 km cells), touched / with data / summed counts, the warning that whole cells are summed so activity outside the box (possibly across borders) is included, and an expandable cell-ID list with each cell's status. Existing side-card note kept. Verified: Playwright 390/1440, 0 console errors, 0 overflow; Spain box -9.5,37,-6.2,42.2 → 6 touched, 6 with data, effective -12.48, 35.12, -2.42, 44.05; antimeridian box 170,-20,-170,0 harmonized → 87 touched, 15 with data, 5 summed, flagged as crossing 180°.
 
 ### E15 — Include exact geometry and cell IDs in export
 

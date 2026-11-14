@@ -24,6 +24,8 @@ import { prettyName } from "@/lib/names";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
+import { boxScope } from "@/lib/scope";
+import { ScopePanel } from "@/components/ScopePanel";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -109,6 +111,7 @@ export function Explorer() {
   const boxCells = area.kind === "box" ? area.parents.length : 0;
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
   const covLabel = cov && unfitted ? STATUS_LABEL[cov.status] : null;
+  const scope = useMemo(() => (area.kind === "box" && data && cal ? boxScope(area.bbox, area.parents, data.raw, cal) : null), [area, data, cal]);
 
   const exportCsv = () => {
     if (!data || !cal || !view) return;
@@ -233,6 +236,7 @@ export function Explorer() {
           </p>
         )}
 
+        {scope && <ScopePanel scope={scope} mode={mode} />}
         {data && cal && view && !notProcessed && !rawOnly && (
           <div className="fade-in">
             <div className="mt-6">
