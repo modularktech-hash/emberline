@@ -8,6 +8,7 @@ import { getLive, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { Chip, PageHead, Reveal, Segmented } from "@/components/ui";
 import { DotStat } from "@/components/DotMatrix";
+import { RecentActivityCard } from "@/components/RecentActivityCard";
 import type { Cell, SatState } from "@/components/FireGlobe";
 import type { LiveWindow } from "@/lib/data";
 
@@ -173,6 +174,8 @@ export function GlobePage() {
           </div>
         </section>
       </Reveal>
+
+      <RecentActivityCard />
 
       <Reveal>
         <section className="card mt-8 min-w-0 p-5 sm:p-6">
