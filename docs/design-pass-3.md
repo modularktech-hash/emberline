@@ -47,15 +47,19 @@ readouts. Make it more disciplined and easier to use. Labels say
       - Done: `lib/useChartScale.ts` keeps SVG chart labels at ~11 px on phones and thins ticks (Explorer annual, Seasons, Compare, Trends); ScrollBox pins the first column and shows a "scroll sideways" cue + edge fade; toolbar/segmented/select/field controls are 44 px on phones.
 
 ### P2 — "Next"
-- [ ] D5 Nav: show the active page inside open dropdowns; page labels
+- [x] D5 Nav: show the active page inside open dropdowns; page labels
       "Seasonal anomalies" (Seasons) and "Method & validation"; replace the
       Explorer's own "Open the calendar" CTA with a contextual one.
-- [ ] D6 Compare: swap button; controls grouped Record / Scale; explain
+      - Done: Active page marked "you are here" (aria-current) in dropdowns and the mobile menu; "Seasonal anomalies", "Method & validation"; nav CTA is contextual (Explorer → "How it is corrected", Method → "Try it on a country").
+- [x] D6 Compare: swap button; controls grouped Record / Scale; explain
       "Index, mean = 100" inline; stacked calendars on mobile, shared scale.
-- [ ] D7 Seasons: takeaway sentence above the plot (computed); labels Below /
+      - Done: Swap button; controls grouped Record / Scale; "Index, mean = 100" explained inline; calendars stack below lg and share one colour scale (as before).
+- [x] D7 Seasons: takeaway sentence above the plot (computed); labels Below /
       Within / Above typical range / Above 90th percentile, with markers.
-- [ ] D8 Trends: definitions at each metric label; define "sensor share" and
+      - Done: Computed takeaway above the plot (e.g. Canada 2023: 100,295 harmonized detections, ×6.84 the median year, checked against the parquet); Below / Within / Above typical range / Above 90th percentile with ▽ ○ △ ▲ markers in table and plot.
+- [x] D8 Trends: definitions at each metric label; define "sensor share" and
       flag when the ratio is unstable (<0 or >100%).
+      - Done: Definition under each metric card; sensor share defined (1 − harmonized ÷ raw trend) and marked "unstable" outside 0–100%.
 - [ ] D9 Globe: "Satellite positions — simulated" with source timestamp; speed
       control beside Pause; hottest-cell row focuses the globe.
 - [ ] D10 Method: short evidence summary (train/test years, reference sensor,

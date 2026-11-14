@@ -15,6 +15,23 @@ import { STATUS_LABEL } from "@/lib/coverage";
 
 const W = 720, H = 300, L = 46, R = 16, T = 18, B = 30;
 
+type Band = "none" | "below" | "within" | "above" | "p90";
+const BAND: Record<Band, { label: string; mark: string }> = {
+  none: { label: "No data", mark: "·" },
+  below: { label: "Below typical range", mark: "▽" },
+  within: { label: "Within typical range", mark: "○" },
+  above: { label: "Above typical range", mark: "△" },
+  p90: { label: "Above 90th percentile", mark: "▲" },
+};
+/** Typical range = the middle 50% of the other years (25th–75th percentile). */
+function bandOf(m: { own: number | null; q1: number | null; q3: number | null; p90: number | null }): Band {
+  if (m.own === null) return "none";
+  if (m.p90 !== null && m.own > m.p90) return "p90";
+  if (m.q3 !== null && m.own > m.q3) return "above";
+  if (m.q1 !== null && m.own < m.q1) return "below";
+  return "within";
+}
+
 /** A chosen year against the historical median and middle 50% for each month. */
 export function Seasons() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
@@ -34,7 +51,13 @@ export function Seasons() {
       return { med: median(others), q1: quantile(others, 0.25), q3: quantile(others, 0.75), p90: quantile(others, 0.9), own };
     });
     const max = Math.max(1, ...months.flatMap((m) => [m.q3 ?? 0, m.own ?? 0, m.p90 ?? 0])) * 1.08;
-    return { years, months, max };
+    // Takeaway, computed: the year's total against the median yearly total of the other years.
+    const totals = years.filter((yy) => yy !== year).map((yy) => rows.filter((r) => r.year === yy).reduce((t, r) => t + (r.value as number), 0));
+    const ownRows = rows.filter((r) => r.year === year);
+    const ownTotal = ownRows.length ? ownRows.reduce((t, r) => t + (r.value as number), 0) : null;
+    const medTotal = median(totals);
+    const bands = months.map(bandOf);
+    return { years, months, max, bands, ownTotal, medTotal, nMonths: ownRows.length };
   }, [data, year]);
 
   const x = (i: number) => L + (i / 11) * (W - L - R);
@@ -64,6 +87,21 @@ export function Seasons() {
         {data && !v && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-4" />}
         {v && (
           <div className="fade-in">
+            {(() => {
+              const hi = v.bands.map((b, i) => (b === "p90" ? MONTHS[i] : null)).filter(Boolean);
+              const ab = v.bands.filter((b) => b === "above").length, be = v.bands.filter((b) => b === "below").length;
+              return (
+                <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-[var(--text-primary)]" data-testid="seasons-takeaway">
+                  {v.ownTotal == null ? <>No harmonized data for {year}.</> : <>
+                    {areaLabel(area)}, {year}: {fmt(v.ownTotal)} harmonized detections{v.nMonths < 12 ? ` in ${v.nMonths} months with data` : ""}
+                    {v.medTotal ? <>, {fmtRatio(v.ownTotal / v.medTotal)} the median year</> : null}.{" "}
+                    {hi.length ? <>{hi.length} {hi.length === 1 ? "month" : "months"} above the historical 90th percentile ({hi.join(", ")}); </> : <>No month above the historical 90th percentile; </>}
+                    {ab} other {ab === 1 ? "month" : "months"} above and {be} below the typical range (middle 50% of other years).
+                  </>}
+                  <span className="text-[var(--text-muted)]"> Historical statement, not a forecast.</span>
+                </p>
+              );
+            })()}
             <svg ref={chartRef} viewBox={`0 0 ${W} ${H}`} className="mt-6 w-full overflow-visible" role="img" aria-label={`Monthly detections in ${year} against the historical median`}>
               {[0, 0.25, 0.5, 0.75, 1].map((f) => (
                 <g key={f}>
@@ -79,15 +117,20 @@ export function Seasons() {
               <path fill="none" stroke="var(--ember)" strokeWidth="2.4" strokeLinejoin="round"
                 d={v.months.filter((m) => m.own !== null).map((m, i) => `${i ? "L" : "M"}${x(v.months.indexOf(m))},${y(m.own as number, v.max)}`).join(" ")} />
               {v.months.map((m, i) => m.own !== null && (
-                <circle key={i} cx={x(i)} cy={y(m.own, v.max)} r={m.p90 !== null && m.own > m.p90 ? 5 : 3}
-                  fill={m.p90 !== null && m.own > m.p90 ? "var(--seq-7)" : "var(--ember)"} stroke="var(--surface-page)" strokeWidth="1.5" />
+                <g key={i}>
+                  <circle cx={x(i)} cy={y(m.own, v.max)} r={v.bands[i] === "p90" ? 5 : 3}
+                    fill={v.bands[i] === "p90" ? "var(--seq-7)" : "var(--ember)"} stroke="var(--surface-page)" strokeWidth="1.5" />
+                  {(v.bands[i] === "p90" || v.bands[i] === "above" || v.bands[i] === "below") && (
+                    <text x={x(i)} y={y(m.own, v.max) + (v.bands[i] === "below" ? 16 * (fs(10) / 10) : -9)} textAnchor="middle" fontSize={fs(10)} fill={v.bands[i] === "below" ? "var(--cool)" : "var(--seq-7)"}>{BAND[v.bands[i]].mark}</text>
+                  )}
+                </g>
               ))}
             </svg>
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[var(--text-secondary)]">
               <span><span className="mr-1.5 inline-block h-0.5 w-5 bg-[var(--ember)] align-middle" />{year}</span>
               <span><span className="mr-1.5 inline-block w-5 border-t border-dashed border-[var(--cool)] align-middle" />median of other years</span>
               <span><span className="mr-1.5 inline-block h-2.5 w-5 bg-[var(--cool)] align-middle opacity-30" />middle 50% of years</span>
-              <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[var(--seq-7)] align-middle" />above the historical 90th percentile</span>
+              <span>▲ above the historical 90th percentile · △ above the typical range (75th percentile) · ▽ below it (25th)</span>
             </div>
             <p className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
               {area.kind === "country" && data?.params.countries[area.name] && <span className="mb-1 block"><FitQualityTag fit={data.params.countries[area.name]} /></span>}
@@ -101,14 +144,14 @@ export function Seasons() {
                 <tbody>
                   {v.months.map((m, i) => {
                     const ratio = m.own !== null && m.med ? m.own / m.med : null;
-                    const high = m.own !== null && m.p90 !== null && m.own > m.p90;
-                    const above = m.own !== null && m.q3 !== null && m.own > m.q3;
+                    const band = v.bands[i];
+                    const high = band === "p90";
                     return (
                       <tr key={i} className="border-t border-[var(--hairline)]">
                         <td className="py-2 text-[var(--text-secondary)]">{MONTHS[i]}</td>
                         <td>{fmt(m.own)}</td><td className="text-[var(--text-secondary)]">{fmt(m.med)}</td>
                         <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : fmtRatio(ratio)}</td>
-                        <td className="text-xs text-[var(--text-secondary)]">{m.own === null ? "no data" : high ? "Unusually high: above the historical 90th percentile" : above ? "Above the usual range" : "Within or below the usual range"}</td>
+                        <td className={`text-xs ${high ? "font-medium text-[var(--ember)]" : "text-[var(--text-secondary)]"}`}><span aria-hidden className="mr-1.5">{BAND[band].mark}</span>{BAND[band].label}</td>
                       </tr>
                     );
                   })}

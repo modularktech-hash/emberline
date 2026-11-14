@@ -49,17 +49,33 @@ export function ComparePage() {
     <div>
       <PageHead compact eyebrow="Explore · compare" title="Two regions." italic="One unit."
         lede="Because the harmonized record is in the same unit every year, two regions can be compared directly — their seasons, their extremes, and how each responded to the 2012 sensor change." />
-      <div className="card flex flex-wrap items-center gap-4 p-4">
-        {[["A", a, setA], ["B", b, setB]].map(([l, v, set], i) => (
-          <div key={l as string} className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 h-3 w-3 rounded-full" style={{ background: COLORS[i] }} />
-            <CountryPicker value={v as string} options={names.length ? names : [v as string]} tags={tags} onChange={set as (s: string) => void} label={`Region ${l}`} />
-          </div>
-        ))}
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Segmented label="cmp-mode" value={mode} onChange={setMode} options={[{ value: "raw", label: "Raw" }, { value: "harmonized", label: "Harmonized" }]} />
-          <Segmented label="cmp-norm" value={norm} onChange={setNorm} options={[{ value: "idx", label: "Index (mean=100)" }, { value: "abs", label: "Absolute" }]} />
+      <div className="card flex flex-wrap items-end gap-x-5 gap-y-4 p-4">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Regions">
+          {[["A", a, setA], ["B", b, setB]].map(([l, v, set], i) => (
+            <div key={l as string} className="flex items-center gap-1.5">
+              <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ background: COLORS[i] }} />
+              <CountryPicker value={v as string} options={names.length ? names : [v as string]} tags={tags} onChange={set as (s: string) => void} label={`Region ${l}`} />
+            </div>
+          ))}
+          <button type="button" onClick={() => { setA(b); setB(a); }} aria-label="Swap region A and region B"
+            className="glass-thin min-h-[36px] px-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">⇄ Swap</button>
         </div>
+        <div className="ml-auto flex flex-wrap items-end gap-4">
+          <div>
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Record</p>
+            <Segmented label="cmp-mode" value={mode} onChange={setMode} options={[{ value: "raw", label: "Raw" }, { value: "harmonized", label: "Harmonized" }]} />
+          </div>
+          <div>
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Scale</p>
+            <Segmented label="cmp-norm" value={norm} onChange={setNorm} options={[{ value: "idx", label: "Index, mean = 100" }, { value: "abs", label: "Absolute" }]} />
+          </div>
+        </div>
+        <p className="w-full text-xs leading-relaxed text-[var(--text-secondary)]">
+          {norm === "idx"
+            ? "Index, mean = 100: each region's yearly detections divided by its own 2003–2025 average, ×100. 150 means half again as many detections as that region's usual year, so a small and a large region share one axis."
+            : "Absolute: yearly detection counts. The larger region dominates the axis."}
+          {" "}The two calendars below share one colour scale.
+        </p>
       </div>
       <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries without a fit (reasons on the Data page) have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
       {error && <div className="mt-6"><Failed error={error} /></div>}
