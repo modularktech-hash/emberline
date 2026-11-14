@@ -5,6 +5,7 @@ import type { GeoJSONSource, Map as MapLibreMap, StyleSpecification } from "mapl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { bboxToFeature, cellsToFeatureCollection, type Bbox } from "@/lib/aoi";
 import type { Theme } from "@/lib/colorScale";
+import { readTheme } from "@/lib/theme";
 
 /**
  * Area picker map: processed H3 res-2 cells as a faint coverage layer, the
@@ -24,8 +25,6 @@ const BASEMAP: Record<Theme, string> = {
   light: "https://tiles.openfreemap.org/styles/positron",
   dark: "https://tiles.openfreemap.org/styles/dark",
 };
-const BASEMAP_ATTRIBUTION =
-  '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 const STYLE_TIMEOUT_MS = 5000;
 
 const COLORS: Record<Theme, { bg: string; grid: string; accent: string; box: string; unprocessed: string }> = {
@@ -108,6 +107,9 @@ export function AoiMap({ theme, coverage, selected, unprocessed, bbox, onDraw }:
   // Create the map (again on a theme change, so the basemap matches).
   useEffect(() => {
     if (!containerRef.current) return;
+    // Hydration renders with the server's "light" snapshot before the real
+    // theme is read; skip that pass so a dark page builds its map only once.
+    if (theme !== readTheme()) return;
     let cancelled = false;
     let map: MapLibreMap | null = null;
 
@@ -126,12 +128,10 @@ export function AoiMap({ theme, coverage, selected, unprocessed, bbox, onDraw }:
           zoom: 0.3,
           renderWorldCopies: false,
           cooperativeGestures: true,
-          attributionControl: {
-            compact: true,
-            customAttribution: remote
-              ? `${BASEMAP_ATTRIBUTION} · Cells: H3`
-              : "Cells: H3",
-          },
+          // The OpenFreeMap style carries its own source attribution; adding
+          // it again here printed it twice. Compact (an "i" button) only on
+          // narrow maps, where the full line would cover the cells.
+          attributionControl: { customAttribution: "Cells: H3" },
         });
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
         // Tile and style errors are reported here instead of thrown; a missing
@@ -150,6 +150,10 @@ export function AoiMap({ theme, coverage, selected, unprocessed, bbox, onDraw }:
           map.addLayer({ id: "selected-fill", type: "fill", source: "selected", paint: { "fill-color": c.accent, "fill-opacity": 0.4 } });
           map.addLayer({ id: "selected-line", type: "line", source: "selected", paint: { "line-color": c.accent, "line-width": 1.5 } });
           map.addLayer({ id: "box-line", type: "line", source: "box", paint: { "line-color": c.box, "line-width": 2, "line-dasharray": [3, 2] } });
+          // MapLibre opens a compact attribution on load; start it folded.
+          containerRef.current
+            ?.querySelector(".maplibregl-ctrl-attrib.maplibregl-compact-show")
+            ?.classList.remove("maplibregl-compact-show");
           setReady(true);
         });
         mapRef.current = map;
@@ -183,10 +187,10 @@ export function AoiMap({ theme, coverage, selected, unprocessed, bbox, onDraw }:
           w = Math.min(w, lng); e = Math.max(e, lng); s = Math.min(s, lat); n = Math.max(n, lat);
         }
       }
-      // Web Mercator cannot show -55° and the high Arctic in one short map;
-      // cap the latitude so the populated cells are what fills the view.
+      // Web Mercator stretches the poles; cap at 75°N / 60°S so the
+      // populated cells (Arctic Canada and Siberia included) fill the view.
       map.resize();
-      map.fitBounds([[w, Math.max(s, -60)], [Math.min(e, 180), Math.min(n, 66)]], { padding: 16, duration: 0 });
+      map.fitBounds([[w, Math.max(s, -60)], [Math.min(e, 180), Math.min(n, 75)]], { padding: 16, duration: 0 });
     }
   }, [ready, coverageData]);
 

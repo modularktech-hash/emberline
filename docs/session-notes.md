@@ -152,3 +152,34 @@ export, `/method` page, Vercel deploy. No Vercel project exists yet (team
 **Exact next step:** step 3, area selection in `web/src/components/` using
 `setArea({scope: "h3_parent", keys, label})`; `AoiMap.tsx` and `lib/aoi.ts`
 are leftovers kept for it.
+
+### Update, 2026-11-14 (later): steps 3–5 done
+
+- **Area selection** (`51b6a9f`). Country selector, a box drawn on the MapLibre
+  map or typed as S/W/N/E bounds; a box resolves to every
+  H3 res-2 parent it touches and the calendar reports which are unprocessed.
+  Verified in a headless browser: typed and drawn boxes update the inputs, the
+  map and the calendar.
+- **CSV export** (`7b4904f`). "Download CSV" writes the calendar on screen
+  (area, series, date range) with a commented provenance header. Verified by
+  downloading Portugal harmonized and reading the file.
+- **`/method`** (`40a9646`). Plain-language method, held-out validation, the
+  2012 step and the drift era, with the four annual fit figures and the
+  detection-probability figure. Verified: page renders, all 5 images load.
+  Literature box now says our P=0.5 points sit in the same order of magnitude
+  as the 9–11 MW thresholds, a sanity check, not a target (as `docs/results.md`).
+- MapLibre 6 looks for its worker next to its module; `web/scripts/copy-maplibre-worker.mjs`
+  (run by `predev`/`prebuild`) copies it to `web/public/vendor/`.
+- Polish pass: OpenFreeMap basemap now verified (positron + dark styles both
+  200, tiles render, fallback notice only when the host is blocked), map no
+  longer built twice in dark mode, initial view capped at 75°N so Arctic
+  Canada shows, attribution no longer duplicated. Smoke: Portugal raw 2011 =
+  1953, 2012 = 4128; CSV downloads; `next build` and lint pass.
+
+**Not done:** Vercel deploy. Project creation returned 403 for this session's
+Vercel connector, so the owner must create/import the project: repo
+`modularktech-hash/emberline`, root directory `web`, framework Next.js,
+production branch `main`. No live URL yet.
+
+**Also:** the global data download was re-started in this session because the
+data-host session ran out of usage.

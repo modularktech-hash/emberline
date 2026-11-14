@@ -392,9 +392,9 @@ function MethodContent({ params, figures }: { params: LooseParams; figures: Map<
             <span className="font-medium text-[var(--text-primary)]">Sanity check from the literature.</span>{" "}
             MODIS &ldquo;thresholds of FRP detection&rdquo; are reported at 9–11 MW (Laurent et
             al. 2019, citing Roberts &amp; Wooster 2008 and Schroeder et al. 2010). This is not the
-            same quantity as ours and is not a target: ours is the FRP of a VIIRS detection at
-            which Aqua also detects that fire. It is useful only to see that the fitted values
-            are physically plausible.
+            same quantity as ours: ours is the FRP of a VIIRS detection at
+            which Aqua also detects that fire. Our fitted P&nbsp;=&nbsp;0.5 points sit in
+            the same order of magnitude; close agreement is a sanity check, not a target.
           </p>
         </div>
         <Note>Match rule used in training: {matchRule}.</Note>

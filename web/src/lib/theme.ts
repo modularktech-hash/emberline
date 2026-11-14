@@ -25,6 +25,11 @@ function subscribe(onChange: () => void): () => void {
 }
 
 function getSnapshot(): Theme {
+  return readTheme();
+}
+
+/** The theme the document resolves to right now (client only). */
+export function readTheme(): Theme {
   const forced = document.documentElement.dataset.theme;
   if (forced === "light" || forced === "dark") return forced;
   return window.matchMedia(QUERY).matches ? "dark" : "light";

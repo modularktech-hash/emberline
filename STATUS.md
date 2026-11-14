@@ -12,7 +12,7 @@ it, commit and push. Times are IST.
 | Global data download + build | Cloud session (Claude, "data host") | **RUNNING** (unattended) | `data/global/*.csv.gz` (~190 countries) → `scripts/run_global.py` → `data/global_public/`. Cloud session only — never committed |
 | Global fit | Cloud session | **queued** after the build | `web/public/data/params_global.json`, `calendar_*_global.parquet` — published only after checking |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
-| App build — B1+B2 | Cloud session "app build" (session_01RwRY…, not the data host). **Other sessions: do not edit `web/` — pull first, and coordinate here** | **IN PROGRESS on `main`** — steps 1–2 done (data layer, calendar page); steps 3–6 in progress (area selection, CSV export, `/method`, Vercel) | `web/`; details in `docs/session-notes.md`; deployed URL when live |
+| App build — B1+B2 | Cloud session "app build" (session_01RwRY…, not the data host). **Other sessions: do not edit `web/` — pull first, and coordinate here** | **Steps 1–5 DONE on `main`** (data layer, calendar, area selection, CSV export, `/method`). Step 6 deploy **BLOCKED**: Vercel project creation returned 403 for this session — owner must import `modularktech-hash/emberline`, root `web`, Next.js, branch `main`. No live URL yet. Global download + fit now also running in this session (data host out of usage) | `web/`; details in `docs/session-notes.md`; deployed URL when live |
 
 **A2 v1 is done — do not re-run it elsewhere.** Headline numbers are in `docs/results.md`. Next science step (cloud session): run on the global data when it lands.
 Person A: you are free. Good uses of your time: help B1, write the README and
@@ -44,6 +44,7 @@ land in `docs/results.md`.
 
 ## Log (newest first)
 
+- 14 Nov — App build: steps 1–5 done on `main` (area selection 51b6a9f, CSV 7b4904f, `/method` 40a9646, basemap verified). Deploy blocked on Vercel project creation (403) — owner action. Global download + fit now running in the app-build session (data-host session ran out of usage).
 - 14 Nov — App build: data layer (hyparquet, Supabase removed) and the calendar home page (raw vs harmonized) are on `main`. Same session continues with area selection, CSV export, `/method`, deploy.
 - 14 Nov ~12:20 — App build taken over by the cloud session on `main`; Desktop session's hyparquet data layer merged in. Do not edit `web/` from another session.
 
