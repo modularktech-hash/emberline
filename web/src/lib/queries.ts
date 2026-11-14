@@ -89,8 +89,12 @@ const files = new Map<string, Promise<OpenFile>>();
  */
 const WHOLE_FILES = new Set(["calendar_raw.parquet", "calendar_harmonized.parquet"]);
 
-/** Bytes read from the end of a world file in its first request: covers the footer. */
-export const TAIL_BYTES = 65536;
+/**
+ * Bytes read from the end of a world file in its first request: covers the
+ * footer (33 KB raw, 10 KB harmonized for fit v1-20261114T1240). A larger
+ * footer still works, at the cost of one more range read.
+ */
+export const TAIL_BYTES = 40960;
 
 /**
  * A download already started by the page's inline prefetch script
@@ -255,6 +259,8 @@ interface GroupInfo {
   rowEnd: number;
   byteStart: number;
   byteEnd: number;
+  /** Byte range of each column chunk, by column name. */
+  colBytes: Map<string, [number, number]>;
   scopeMin?: string;
   scopeMax?: string;
   keyMin?: string;
@@ -278,17 +284,20 @@ function groupInfo(metadata: FileMetaData): GroupInfo[] {
   let row = 0;
   return metadata.row_groups.map((rg) => {
     let byteStart = Infinity, byteEnd = 0;
+    const colBytes = new Map<string, [number, number]>();
     for (const c of rg.columns) {
       const m = c.meta_data;
       if (!m) continue;
       const s = Number(m.dictionary_page_offset ?? m.data_page_offset);
+      const e = s + Number(m.total_compressed_size);
+      colBytes.set(m.path_in_schema.join("."), [s, e]);
       byteStart = Math.min(byteStart, s);
-      byteEnd = Math.max(byteEnd, s + Number(m.total_compressed_size));
+      byteEnd = Math.max(byteEnd, e);
     }
     const stat = (i: number) => (i >= 0 ? rg.columns[i].meta_data?.statistics : undefined);
     const s = stat(si), k = stat(ki);
     const info: GroupInfo = {
-      rowStart: row, rowEnd: row + Number(rg.num_rows), byteStart, byteEnd,
+      rowStart: row, rowEnd: row + Number(rg.num_rows), byteStart, byteEnd, colBytes,
       scopeMin: str(s?.min_value ?? s?.min), scopeMax: str(s?.max_value ?? s?.max),
       keyMin: str(k?.min_value ?? k?.min), keyMax: str(k?.max_value ?? k?.max),
     };
@@ -342,7 +351,23 @@ async function ensureRows<V>(t: Table<V>, scope: CalendarScope, keys: string[] |
   for (const run of runs) {
     const first = t.groups[run[0]], last = t.groups[run[run.length - 1]];
     const file = t.open.file as AsyncBuffer & { prefetch?: (s: number, e: number) => void };
-    if (Number.isFinite(first.byteStart)) file.prefetch?.(first.byteStart, last.byteEnd);
+    // Prefetch only the column chunks this read decodes (the raw file's
+    // frp_sum_mw is ~2/3 of each row group and never shown here), as one range
+    // per stretch of near-adjacent chunks; hyparquet's own slices then hit them.
+    if (file.prefetch && Number.isFinite(first.byteStart)) {
+      const spans: Array<[number, number]> = [];
+      for (const i of run) {
+        for (const c of columns) {
+          const r = t.groups[i].colBytes.get(c);
+          if (!r) continue;
+          const prev = spans[spans.length - 1];
+          // Chunks sit a few bytes apart (page indexes); bridge gaps under 4 KB.
+          if (prev && r[0] <= prev[1] + 4096) prev[1] = Math.max(prev[1], r[1]);
+          else spans.push([r[0], r[1]]);
+        }
+      }
+      for (const [s0, e0] of spans) file.prefetch(s0, e0);
+    }
     const p = parquetReadObjects({
       file, metadata: t.open.metadata, compressors, columns,
       rowStart: first.rowStart, rowEnd: last.rowEnd,
