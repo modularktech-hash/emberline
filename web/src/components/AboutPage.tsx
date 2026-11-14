@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fitCountsPhrase } from "@/lib/fitCounts";
 import { PageHead, Reveal } from "@/components/ui";
 import { median } from "@/lib/ember";
 import { fmtRatio } from "@/lib/format";
@@ -37,8 +38,8 @@ export function AboutPage() {
         lede="Emberline answers the challenge “MODIS and VIIRS hot spots”: harmonize the satellite fire record to reduce the discontinuity between the MODIS and VIIRS records, and turn it into a burning activity calendar for any fitted country or drawn area." />
       <div className="grid gap-6 lg:grid-cols-3">
         {[
-          ["The problem", `From 2012 a sharper satellite sensor began detecting small fires the old one could not. Raw fire records jumped${step.median != null ? ` — by a median ${fmtRatio(step.median)} (2012–14 over 2009–11) across the ${step.n} countries with their own fit —` : ""} Much of the apparent increase reflects improved detection sensitivity rather than an equivalent increase in fire activity.`],
-          ["What we built", "A detection-probability model, fitted per country on 2012–2018 and tested on 2019–2021, that converts every VIIRS detection into what MODIS would have seen. Regional fits, no global step correction. Then a calendar, insights, a live globe and open data on top."],
+          ["The problem", `From 2012 a sharper satellite sensor began detecting small fires the old one could not. Raw fire records jumped${step.median != null ? ` — by a median ${fmtRatio(step.median)} (2012–14 over 2009–11) across the ${step.n} countries with their own fit —` : ""} much of the apparent increase reflects improved detection sensitivity rather than an equivalent increase in fire activity.`],
+          ["What we built", `A detection-probability model, fitted per country on 2012–2018 and tested on 2019–2021, that converts every VIIRS detection into what MODIS would have seen. Regional fits, no global step correction: ${fitCountsPhrase()}. Then a calendar, insights, a live globe and open data on top.`],
           ["Who it is for", "A regional analyst checks whether a past season was unusually active, compares its timing with earlier years, and exports comparable evidence as CSV. Historical analysis, not an operational fire alert."],
         ].map(([t, d], i) => (
           <Reveal key={t} delay={i * 0.06}><div className="card h-full p-6"><p className="display text-3xl">{t}</p><p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">{d}</p></div></Reveal>

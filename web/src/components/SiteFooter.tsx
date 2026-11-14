@@ -40,7 +40,7 @@ function Links({ items }: { items: (typeof GROUPS)[number]["items"] }) {
 /** Working pages get a compact footer: site map and credits, no story block or record chart. */
 const TOOL_PAGES = new Set(["/explorer", "/compare", "/seasons", "/trends", "/lab", "/data", "/method"]);
 
-export function SiteFooter() {
+export function SiteFooter({ counts = null }: { counts?: { own: number; borrowed: number } | null }) {
   const compact = TOOL_PAGES.has(usePathname());
   // Working pages also get a calmer backdrop behind their dense content (globals.css, html[data-page=tool]).
   useEffect(() => { document.documentElement.dataset.page = compact ? "tool" : "story"; }, [compact]);
@@ -54,7 +54,7 @@ export function SiteFooter() {
           <div>
             <p className="text-[#f7f3e8]"><Logo layout="stack" height={18} ink="#f7f3e8" wordClass="text-2xl tracking-[0.32em] sm:text-3xl" /></p>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[#b8b2a2]">
-              Satellite fire detections, harmonized per country across the MODIS–VIIRS sensor break to reduce the discontinuity between records. Archive 2001–2025; harmonized record 2003–2025.
+              Satellite fire detections, harmonized across the MODIS–VIIRS sensor break to reduce the discontinuity between records{counts ? `: ${counts.own} countries with their own fitted curve, ${counts.borrowed} on a borrowed (pooled) curve` : ""}. Archive 2001–2025; harmonized record 2003–2025.
             </p>
           </div>
           <a href="#top" className="foot-top group inline-flex items-center gap-3 rounded-full border border-white/15 px-5 py-2.5 text-sm text-[#f7f3e8]">

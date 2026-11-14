@@ -60,21 +60,36 @@ interface Props {
   allowZoom?: boolean;
   /** Hover labels on satellites. Costs a raycast per pointer move, so only pages about satellites turn it on. */
   satLabels?: boolean;
-  /** Cap on fire cells drawn (largest radiated power first). */
+  /** Cap on fire cells drawn (largest summed FRP first). */
   maxPoints?: number;
   onPick?: (c: Cell) => void;
   onSats?: (s: SatState[]) => void;
   /** Turn the globe to this point (e.g. a row of the hottest-cells list). */
   focus?: { lat: number; lng: number } | null;
+  /** The viewer explicitly asked for satellite motion (pressed Play), so run the clock even under reduced motion. */
+  motionOverride?: boolean;
+}
+
+/** Live prefers-reduced-motion state (E25): JS-driven globe motion must follow it, not only CSS. */
+export function useReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setReduce(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return reduce;
 }
 
 /** A static stand-in: shown while three.js loads, and instead of the canvas when WebGL is unavailable or lost. */
 export function GlobePoster({ height, note }: { height: number; note?: string }) {
   const d = Math.round(height * 0.72);
   return (
-    <div className="flex h-full flex-col items-center justify-center" style={{ height }}>
+    <div className="flex h-full max-w-full flex-col items-center justify-center overflow-hidden" style={{ height }}>
       <div aria-hidden className="rounded-full shadow-[0_0_60px_10px_rgba(242,165,107,0.35)]"
-        style={{ width: d, height: d, background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(60,30,15,0.18) 72%), url(${LAND_TEXTURE}) 22% 50% / 200% 100% #f3ecdc`, backgroundBlendMode: "normal, normal, multiply" }} />
+        style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(60,30,15,0.18) 72%), url(${LAND_TEXTURE}) 22% 50% / 200% 100% #f3ecdc`, backgroundBlendMode: "normal, normal, multiply" }} />
       {note && <p className="mt-4 max-w-xs text-center text-xs text-[var(--text-muted)]">{note}</p>}
     </div>
   );
@@ -87,23 +102,47 @@ class GlobeBoundary extends Component<{ fallback: ReactNode; children: ReactNode
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-const webglAvailable = () => typeof window !== "undefined" && ("WebGL2RenderingContext" in window || "WebGLRenderingContext" in window);
+/**
+ * Real WebGL probe (E37). The constructor test alone passes when WebGL is disabled by flag or
+ * policy (the classes still exist, getContext returns null), and three.js then logs errors.
+ */
+let webglOk: boolean | null = null;
+export function webglAvailable() {
+  if (typeof window === "undefined") return false;
+  if (webglOk != null) return webglOk;
+  try {
+    const c = document.createElement("canvas");
+    const gl = (c.getContext("webgl2") || c.getContext("webgl")) as WebGLRenderingContext | null;
+    webglOk = !!gl;
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch { webglOk = false; }
+  return webglOk;
+}
 
 export default function FireGlobe(props: Props) {
   const height = props.height ?? 560;
   const [lost, setLost] = useState(false);
+  const [canGl, setCanGl] = useState<boolean | null>(null);
+  useEffect(() => { setCanGl(webglAvailable()); }, []);
+  if (canGl == null) return <GlobePoster height={height} />;
   const fallback = <GlobePoster height={height} note="The 3D globe needs WebGL, which this browser has turned off. Everything else on the page works." />;
-  if (lost || !webglAvailable()) return fallback;
+  if (lost || !canGl) return fallback;
   return <GlobeBoundary fallback={fallback}><GlobeInner {...props} height={height} onLost={() => setLost(true)} /></GlobeBoundary>;
 }
 
 function GlobeInner({
   live, tle, window: win = "24h", showFires = true, showSats = true, showOrbits = true, speed = 60,
-  autoRotate = true, height = 560, interactive = true, allowZoom, satLabels = false, maxPoints = 12000, onPick, onSats, onLost, focus,
+  autoRotate = true, height = 560, interactive = true, allowZoom, satLabels = false, maxPoints = 12000, onPick, onSats, onLost, focus, motionOverride = false,
 }: Props & { onLost: () => void }) {
+  const reduce = useReducedMotion();
   const ref = useRef<GlobeMethods | undefined>(undefined);
   const wrap = useRef<HTMLDivElement>(null);
-  const low = usePerfLow();
+  const perfLow = usePerfLow();
+  // Reduced motion: no auto-spin, ring pulses, dash animation or camera flights; the simulated
+  // satellite clock is frozen unless the viewer pressed Play. Data stays fully visible.
+  const low = perfLow;
+  const still = low || reduce;
+  if (reduce && !motionOverride) speed = 0;
   const [width, setWidth] = useState(0);
   const [Globe, setGlobe] = useState<null | typeof import("react-globe.gl").default>(null);
   const [ready, setReady] = useState(false);
@@ -208,10 +247,10 @@ function GlobeInner({
     return () => cancelAnimationFrame(raf);
   }, [ready, visible, showSats, recs, low, simNow]);
 
-  // Fires: one merged mesh (a single draw call), largest radiated power first.
+  // Fires: one merged mesh (a single draw call), largest summed FRP first.
   const cells = useMemo(() => (showFires && live ? (live.windows[win].cells as Cell[]).slice(0, low ? Math.min(maxPoints, 4000) : maxPoints) : []), [live, win, showFires, low, maxPoints]);
   const maxFrp = useMemo(() => Math.max(1, ...cells.slice(0, 50).map((c) => c[3])), [cells]);
-  const rings = useMemo(() => (low ? [] : cells.slice(0, 10)), [cells, low]);
+  const rings = useMemo(() => (still ? [] : cells.slice(0, 10)), [cells, still]);
   const pointAltitude = useCallback((d: object) => Math.min(0.32, 0.006 + Math.sqrt((d as Cell)[3] / maxFrp) * 0.2), [maxFrp]);
   const pointRadius = useCallback((d: object) => Math.min(0.55, 0.18 + Math.log10(1 + (d as Cell)[2]) * 0.12), []);
   const pointColor = useCallback((d: object) => fireColor((d as Cell)[3], maxFrp), [maxFrp]);
@@ -271,18 +310,17 @@ function GlobeInner({
     const g = ref.current;
     if (!g || !ready) return;
     const c = g.controls() as { autoRotate: boolean; autoRotateSpeed: number; enableZoom: boolean };
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    c.autoRotate = autoRotate && !low && !reduce;
+    c.autoRotate = autoRotate && !still;
     c.autoRotateSpeed = 0.45;
     c.enableZoom = allowZoom ?? interactive;
-  }, [ready, autoRotate, interactive, allowZoom, low]);
+  }, [ready, autoRotate, interactive, allowZoom, still]);
 
   useEffect(() => {
     const g = ref.current;
     if (!ready || !g || !focus) return;
     (g.controls() as { autoRotate: boolean }).autoRotate = false; // stay on the chosen cell
-    g.pointOfView({ lat: focus.lat, lng: focus.lng, altitude: 1.5 }, low ? 0 : 900);
-  }, [ready, focus, low]);
+    g.pointOfView({ lat: focus.lat, lng: focus.lng, altitude: 1.5 }, still ? 0 : 900);
+  }, [ready, focus, still]);
 
   // Pixel ratio: 1.5 at most (1 in low-power mode). Rendering a retina canvas costs 2-4x the fill rate.
   useEffect(() => {
@@ -368,7 +406,7 @@ function GlobeInner({
           pathStroke={1.4}
           pathDashLength={0.25}
           pathDashGap={0.008}
-          pathDashAnimateTime={low ? 0 : 9000}
+          pathDashAnimateTime={still ? 0 : 9000}
           pathTransitionDuration={0}
         />
       ) : (
@@ -377,7 +415,8 @@ function GlobeInner({
       {interactive && hover && (
         <div className="tabular pointer-events-none absolute left-4 top-4 rounded-xl bg-[var(--ink)] px-3.5 py-2.5 text-xs leading-relaxed text-[#f7f3e8] shadow-xl">
           <p className="font-medium">{hover[0].toFixed(1)}°, {hover[1].toFixed(1)}°</p>
-          <p>{hover[2].toLocaleString()} detections · {Math.round(hover[3]).toLocaleString()} MW total</p>
+          <p>{hover[2].toLocaleString()} detections · {Math.round(hover[3]).toLocaleString()} MW Σ FRP</p>
+          <p className="text-[#b8b2a2]">summed over detections in the window, not instantaneous power</p>
           <p className="text-[#b8b2a2]">peak {Math.round(hover[4])} MW · {hover[5]}</p>
         </div>
       )}

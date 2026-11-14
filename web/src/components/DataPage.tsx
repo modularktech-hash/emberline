@@ -30,6 +30,7 @@ const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint:
 ];
 
 const FILES = [
+  ["manifest.json", "Index of every file here: dataset, purpose, source products, size, SHA-256, rows, columns with types and units, time span and fit version"],
   ["calendar_harmonized_global.parquet", "Monthly Aqua-equivalent counts, per fitted country and per H3 res-2 cell (every FIRMS country)"],
   ["calendar_raw_global.parquet", "Monthly raw counts by sensor (MODIS, VIIRS), same keys, including countries without a fit (uncorrected)"],
   ["params_global.json", "Every fitted coefficient and validation metric, per country; pooled fits and unfitted countries listed"],
@@ -63,7 +64,7 @@ export function DataPage() {
 
   const snippet = {
     py: `import polars as pl\nurl = "${origin}/data/calendar_harmonized_global.parquet"\ncal = pl.read_parquet(url)\nprint(cal.filter((pl.col("scope") == "country") & (pl.col("key") == "Canada")))`,
-    js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized_global.parquet" });\nconst rows = await parquetReadObjects({ file });\nconsole.log(rows.filter(r => r.key === "Canada"));`,
+    js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized_global.parquet" });\nconst rows = await parquetReadObjects({ file });\nconsole.log(rows.filter(r => r.scope === "country" && r.key === "Canada"));`,
     sql: `-- DuckDB\nSELECT year, SUM(n_harmonized) AS detections\nFROM '${origin}/data/calendar_harmonized_global.parquet'\nWHERE scope = 'country' AND key = 'Canada'\nGROUP BY year ORDER BY year;`,
   }[lang];
 
@@ -79,7 +80,7 @@ export function DataPage() {
           <Reveal>
             <section className="card overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] p-4">
-                <div><h2 className="display text-3xl">Fitted countries</h2><p className="text-xs text-[var(--text-muted)]">{data.countries.length} fitted ({data.countries.filter((c) => c.fit_source === "pooled").length} on the pooled curve, marked) · fit {data.fit_version} · each country fitted separately, no global correction · click a row for its yearly table</p></div>
+                <div><h2 className="display text-3xl">Fitted countries</h2><p className="text-xs text-[var(--text-muted)]">{data.countries.length} fitted ({data.countries.filter((c) => c.fit_source === "pooled").length} on the pooled curve, marked) · fit {data.fit_version} · own curve or borrowed (pooled) curve per country, no global correction · choose a country name for its yearly table</p></div>
                 <div className="flex flex-wrap items-center gap-2">
                   <TableSearch q={tbl.q} setQ={tbl.setQ} shown={rows.length} total={data.countries.length} />
                   <button type="button" onClick={() => downloadCsv("emberline_regions.csv", { source: "Emberline countries.json", fit_version: data.fit_version, unit: data.unit }, COLS.map((c) => c.key), rows.map((r) => COLS.map((c) => String(r[c.key] ?? ""))))}
@@ -87,7 +88,7 @@ export function DataPage() {
                 </div>
               </div>
               <div className="px-4 pb-4">
-              <ScrollBox h="32rem">
+              <ScrollBox h="32rem" label="Fitted countries table">
                 <table className="tabular w-full min-w-[1040px] text-sm">
                   <thead>
                     <tr className="text-left text-xs text-[var(--text-secondary)]">
@@ -99,7 +100,10 @@ export function DataPage() {
                       <tr key={r.country} onClick={() => setFocus(r.country)} className={`cursor-pointer border-t border-[var(--hairline)] transition-colors hover:bg-[var(--ember-soft)] ${sel?.country === r.country ? "bg-[var(--ember-soft)]" : ""}`}>
                         {COLS.map((c) => (
                           <td key={c.key} className={`px-3 py-2.5 first:pl-0 ${c.key === "country" ? "font-medium" : ""} ${c.key === "step_raw" ? "text-[var(--seq-5)]" : ""}`}>
-                            {c.f(r)}
+                            {c.key === "country"
+                              ? <button type="button" data-row-select onClick={(e) => { e.stopPropagation(); setFocus(r.country); }} aria-pressed={sel?.country === r.country} aria-label={`Show ${prettyName(r.country)} year by year`}
+                                  className="rounded text-left underline decoration-[var(--hairline)] underline-offset-2 hover:decoration-[var(--ember)]">{c.f(r)}</button>
+                              : c.f(r)}
                             {c.key === "country" && r.fit_source === "pooled" && <span title="Too few training matches for its own curve: uses the pooled curve" className="ml-1.5 font-mono text-[10px] font-normal uppercase text-[var(--ember)]">pooled</span>}
                             {c.key === "onset_trend_harm" && (r.onset_trend_approximate || r.season_resolution === "monthly") && r.onset_trend_harm != null && <span title="Monthly estimate: dates interpolated within months, approximate" className="ml-1 text-[10px] text-[var(--text-muted)]">≈ monthly estimate</span>}
                             {c.key === "onset_trend_harm" && r.onset_trend_harm_ci95 && <span title={r.onset_trend_harm_sensitivity ? `Endpoint sensitivity ${fmtSigned(r.onset_trend_harm_sensitivity[0])} to ${fmtSigned(r.onset_trend_harm_sensitivity[1])} d/dec` : undefined} className="block text-[10px] text-[var(--text-muted)]">95% {fmtSigned(r.onset_trend_harm_ci95[0])} to {fmtSigned(r.onset_trend_harm_ci95[1])} · {r.onset_trend_harm_n_years} yrs · descriptive</span>}
@@ -125,7 +129,7 @@ export function DataPage() {
                     <button type="button" onClick={() => downloadCsv(`emberline_${sel.country}_annual.csv`, { region: sel.country, unit: data.unit, fit_version: data.fit_version, ...(params?.countries[sel.country] ? qualityCsvHeader(params.countries[sel.country], params) : {}) }, ["year", "raw", "harmonized"], sel.annual.map((a) => [a.year, a.raw, a.harm]))} className="pill-dark px-4 py-1.5 text-sm">CSV</button>
                   </div>
                 </div>
-                <div className="max-w-full overflow-x-auto">
+                <div className="max-w-full overflow-x-auto" tabIndex={0} role="region" aria-label={`${prettyName(sel.country)} yearly table`}>
                   <table className="tabular w-full min-w-[640px] text-sm">
                     <thead><tr className="bg-[var(--surface-2)] text-left text-xs text-[var(--text-secondary)]"><th className="px-4 py-2.5 font-medium">Year</th><th className="font-medium">Raw detections</th><th className="font-medium">Sensor (raw)</th><th className="font-medium">Harmonized</th><th className="font-medium">Raw ÷ harmonized</th><th className="w-1/3 font-medium">Harmonized, relative</th></tr></thead>
                     <tbody>
@@ -161,7 +165,7 @@ export function DataPage() {
                   </div>
                   <input value={q2} onChange={(e) => setQ2(e.target.value)} placeholder="Search…" aria-label="Search countries not fitted" className="field w-full rounded-full px-4 py-2 text-sm sm:w-56" />
                 </div>
-                <ScrollBox h="16rem">
+                <ScrollBox h="16rem" label="Countries not fitted table">
                   <table className="tabular w-full min-w-[640px] text-sm">
                     <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                       <th className="sticky top-0 bg-[var(--surface-page)] py-2.5 font-normal">Country</th>
@@ -189,6 +193,10 @@ export function DataPage() {
             <Reveal className="min-w-0">
               <section className="card h-full p-5 sm:p-6">
                 <h2 className="display text-3xl">Files</h2>
+                <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  Start from <a href="/data/manifest.json" className="underline underline-offset-2">manifest.json</a> for sizes, hashes, units and versions.
+                  <strong className="font-medium text-[var(--text-primary)]"> Scope note:</strong> the calendar Parquet files hold both <code className="font-mono">scope = &apos;country&apos;</code> rows and <code className="font-mono">scope = &apos;h3_parent&apos;</code> grid rows over the same detections. Filter to one scope before summing; summing both double-counts.
+                </p>
                 <ul className="mt-4 divide-y divide-[var(--hairline)]">
                   {FILES.map(([f, d]) => (
                     <li key={f} className="flex items-start justify-between gap-4 py-3">

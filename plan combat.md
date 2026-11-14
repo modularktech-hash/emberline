@@ -686,7 +686,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P1 · Observed gap · Challenge · effort L
 - **Evidence:** Historical calendar ends2025; live platform mix differs
 - **Acceptance:** Validated bridge, same elapsed period, filtering and completeness disclosed
-- **Implementation / verification notes:** Scoped, not ticked (no validated bridge). 14 Nov: same-platform prototype -- NOAA-20 NRT 8-13 Nov 2026 vs NOAA-20 archive (`viirs-jpss1`) same days 2018-2025, identical day/confidence/FRP filters, no type filter (NRT lacks it), not harmonized, not month-to-date (keyless NRT = 7 days). `scripts/build_current_month.py` -> `web/public/data/current_month.json`; decision, gaps and UI card spec in `docs/current-month.md`.
+- **Implementation / verification notes:** Scoped, not ticked (no validated bridge). 14 Nov: same-platform prototype -- NOAA-20 NRT 8-13 Nov 2026 vs NOAA-20 archive (`viirs-jpss1`) same days 2018-2025, identical day/confidence/FRP filters, no type filter (NRT lacks it), not harmonized, not month-to-date (keyless NRT = 7 days). `scripts/build_current_month.py` -> `web/public/data/current_month.json`; decision, gaps and UI card spec in `docs/current-month.md`. **UI (14 Nov):** `web/src/components/RecentActivityCard.tsx` on the Globe page (separate section before "The fleet, live"), built from the docs/current-month.md card spec and reading only `current_month.json`: badge "Provisional · not harmonized", country selector (the 4 published countries), exact UTC window, elapsed days, acquisition cutoff, platform, filters, membership, reference years 2018–2025 with median/IQR/n, difference, ratio (hidden when null), percentile of n years, per-year table, completeness and not-month-to-date note, polygon-capture warning below 0.95 (shows for Portugal 0.837), required footer; own neutral styling, never the calendar colour ramp. Verified (Playwright, `next start`, 390 and 1440): card renders Canada and Portugal values matching the JSON, warning on Portugal only, axe 0 violations, 0 console errors, no overflow. Still not ticked: no validated bridge to the harmonized record.
 
 ### E08 — Persist area mode dates and baseline in URL
 
@@ -774,24 +774,24 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E20 — Make Data scroll region focusable
 
-- [ ] **Status:** P2 · Confirmed · Accessibility · effort S
+- [x] **Status:** P2 · Confirmed · Accessibility · effort S
 - **Evidence:** axe-data.json one scrollable-region-focusable violation
 - **Acceptance:** Keyboard can reach and scroll region; axe regression passes
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: axe-core on /data (390 px) found `scrollable-region-focusable` (the selected country's yearly table scroller) and `landmark-unique` (two scroll regions both named "Scrollable table"). Implemented: yearly scroller has tabIndex=0, role=region and a per-country aria-label; `ScrollBox` takes a unique `label` (Data uses "Fitted countries table" / "Countries not fitted table"; default unchanged for other pages). Verified: axe-core (wcag2a/aa + best-practice) on /data at 390 and 1440: no violations; build + tsc OK; 0 console errors, no overflow.
 
 ### E21 — Make table row actions keyboard operable
 
-- [ ] **Status:** P2 · Source concern · Accessibility · effort S
+- [x] **Status:** P2 · Source concern · Accessibility · effort S
 - **Evidence:** Trends/Data clickable rows
 - **Acceptance:** Named links/buttons usable by keyboard with focus indication
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Data page only (Trends is another builder's file). Reproduced: Data's fitted-countries rows were selectable only by clicking the `<tr>`. Implemented: the country name in each row is a real `<button data-row-select>` ("Show X year by year", aria-pressed), focus ring from the global :focus-visible style; header sort is a button with aria-sort (already present, verified); Data also links manifest.json and adds the scope note (calendar Parquets hold country and h3_parent rows over the same detections; summing both double-counts) and the JS snippet filters scope. Verified: Playwright Tab + focus on a row button: BUTTON, :focus-visible true, box-shadow ring rgb(217,67,26) 4px; th aria-sort="descending" on the sorted column; axe clean. Not done: Trends rows (other builder).
 
 ### E22 — Add efficient calendar navigation and table view
 
-- [ ] **Status:** P2 · Observed gap · Accessibility · effort M
+- [x] **Status:** P2 · Observed gap · Accessibility · effort M
 - **Evidence:** Hundreds of button Tab stops
 - **Acceptance:** Roving focus/arrow keys or equally capable table; easy exit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: 276 month buttons, each a Tab stop. Implemented in `web/src/components/MonthYearCalendar.tsx` (Explorer and Compare both use it; Explorer.tsx untouched): role=grid with row/columnheader/rowheader/gridcell, one roving tabindex; Left/Right month (wraps year), Up/Down year, Home/End within year, Ctrl+Home/End corners, Enter/Space select (aria-selected), Escape returns focus to the scroll region. Each cell name: month, year, value, unit (raw uncorrected / harmonized Aqua-equivalent detections), basis. In-component "Show as table" toggle renders a captioned table (predicted-from-VIIRS cells marked *); no Explorer prop needed. Verified (Playwright, `next start`, 390 and 1440): 1 of 276 cells tabbable, Tab enters grid once, arrows/End move focus, Enter selects, next Tab leaves, Escape leaves; axe 0 violations on grid and table; 0 console errors; no horizontal overflow. Not verified: real screen reader (E23).
 
 ### E23 — Screen-reader end-to-end review
 
@@ -812,42 +812,42 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [x] **Status:** P2 · Required verification · Motion · effort S
 - **Evidence:** CSS and globe reduction exist; JS charts animate
 - **Acceptance:** All nonessential movement paused/reduced; data still visible
-- **Implementation / verification notes:** MotionPrefs.tsx in layout covers CSS/JS motion (cafcd28). Home: the three scroll-linked effects (hero fade, sticky story steps/orbit chapter, raw→harmonized morph) now read a fixed final progress under `useReducedMotion()`. Verified: Playwright with reducedMotion "reduce", hero opacity stays 1 after scrolling, 0 page errors. Not verified: manual screen-reader/OS setting check.
+- **Implementation / verification notes:** Reproduced: CSS and globe honoured reduced motion; Motion (JS) animations did not globally (template page fade, Home hero words, SiteNav pills/menus, Satellites springs/path draw; ui.tsx Reveal/counter and Interactions already checked). Implemented: `web/src/components/MotionPrefs.tsx` wraps the layout; under `prefers-reduced-motion: reduce` it sets `MotionGlobalConfig.skipAnimations` (every Motion animation jumps to its final values) plus `MotionConfig reducedMotion="user"`, live-updated on setting change. Verified (Playwright `reducedMotion: reduce`, 390 and 1440, 11 routes, `next start`): `document.getAnimations()` has 0 running animations after load on every route except `/`; in-view reveals show final state instantly when reached; no overflow; no failed requests. Not done: Home (`/`) keeps 3 scroll-scrubbed ViewTimeline opacity/transform effects (hero fade, story steps, raw→harmonized morph) that move only with the user's scroll; — now guarded with `useReducedMotion()` (see next note). Home follow-up: MotionPrefs.tsx in layout covers CSS/JS motion (cafcd28). Home: the three scroll-linked effects (hero fade, sticky story steps/orbit chapter, raw→harmonized morph) now read a fixed final progress under `useReducedMotion()`. Verified: Playwright with reducedMotion "reduce", hero opacity stays 1 after scrolling, 0 page errors. Not verified: manual screen-reader/OS setting check.
 
 ### E26 — Show observed versus predicted and residuals
 
-- [ ] **Status:** P2 · Observed gap · Charts · effort M
+- [x] **Status:** P2 · Observed gap · Charts · effort M
 - **Evidence:** Validation table extensive; difficult quick interpretation
 - **Acceptance:** Readable validation plots with units/split and weak examples
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:**  Reproduced: Method had only tables. Implemented: `web/src/components/ValidationPlot.tsx` on Method, before the long validation table: observed vs predicted held-out 2019–2021 cell-months from validation_points.json, square-root axes labelled "(√ scale)", 1:1 line, strong/weak example chosen from the data (own-fit countries with ≥1,000 held-out cell-months, highest/lowest R²: currently Bangladesh / Spain) plus any country; metrics vs one-ratio baseline and residual over/under counts. Residual-by-month not shown: published points carry no month. Verified: 300 dots render, plot precedes #val-table, axe clean, 0 console errors, no overflow at 390/1440.
 
 ### E27 — Propagate appropriate uncertainty
 
 - [x] **Status:** P2 · Source concern · Statistics · effort L
 - **Evidence:** Coefficient/score intervals not monthly intervals
 - **Acceptance:** Output uncertainty accurately labeled and separately computed
-- **Implementation / verification notes:** Reproduced: no bootstrap draws were saved, only marginal b0/b1 CIs. Draws show b0/b1 correlated (about -0.8 to -0.95), so the marginals cannot be resampled independently. Implemented: `scripts/output_uncertainty.py` reruns an H3 res-5 cluster bootstrap (B=200) of the 2012-2018 training coefficients. Kappa is re-derived per draw by the published rule; its own sampling uncertainty is not included. Output: `web/public/data/harmonized_uncertainty.json` (country x year and month, `covers` field; 41 pooled = not estimated). Verified: refit reproduces published b0/b1 (max diff 4.7e-14) and calendar point totals (4.0e-14). Relative width median 0.25%, p90 2.2%, max 14.7% (country-years >=100). Documented in `docs/science.md` §2a. UI display handed off (§10). Not verified: UI.
+- **Implementation / verification notes:** Reproduced: no bootstrap draws were saved, only marginal b0/b1 CIs. Draws show b0/b1 correlated (about -0.8 to -0.95), so the marginals cannot be resampled independently. Implemented: `scripts/output_uncertainty.py` reruns an H3 res-5 cluster bootstrap (B=200) of the 2012-2018 training coefficients. Kappa is re-derived per draw by the published rule; its own sampling uncertainty is not included. Output: `web/public/data/harmonized_uncertainty.json` (country x year and month, `covers` field; 41 pooled = not estimated). Verified: refit reproduces published b0/b1 (max diff 4.7e-14) and calendar point totals (4.0e-14). Relative width median 0.25%, p90 2.2%, max 14.7% (country-years >=100). Documented in `docs/science.md` §2a. UI display handed off (§10). Not verified: UI. **Update (Method copy):** Method explains harmonized_uncertainty.json with the required §10 label, widths read from its summary, the not-included list and "uncertainty not estimated" for borrowed curves. Explorer display still open (other builder).
 
 ### E28 — Explain weighted-coefficient pooling
 
 - [x] **Status:** P2 · Source concern · Statistics · effort M
 - **Evidence:** fit_harmonization weighted coefficients
 - **Acceptance:** Name transfer method and validate out-of-country performance
-- **Implementation / verification notes:** Explanation part done; left unticked because a clean transfer test is not run. Reproduced: `main()` forms the pooled model once, from the 61 own fits that precede the first <5 MB detections file, as `np.average` of b0, b1, κ weighted by `n_train_viirs_detections`; recomputing from `params_global.json` reproduces b0/b1/κ to float precision. Implemented: `docs/science.md` §2a "How the pooled curve is formed" (weighted coefficient mean, not pooled fit or probability mean; ≤1.3 pp difference vs mean of probabilities at 5–100 MW; 41 pooled-curve countries, pooled κ for 31 of them plus Libya and Oman; no coefficient uncertainty), `docs/results.md` table, proposed Method copy in `docs/data-contract-additions.md` §5. Out-of-country (published held-out metrics, no refit): pooled median R² −0.09 (24/41 < 0) vs own 0.64 (11/130); own κ subset 0.35, pooled κ subset −0.11; threshold higher in 12/41; ratio baseline beaten in 22/41. Not verified/not done: applying the pooled curve to held-out own-fit countries outside the 61 (needs new computation); Method copy not placed. **Update (E28 transfer test) — implemented and verified:** `scripts/transfer_validation.py` rebuilds the pooled curve leave-one-country-out for all 130 own-fit countries and scores it on 2019–2021 cell-months with the fit script's `metrics` (own-fit re-score reproduces published R² to 8.9e-16). Borrowed curve + own κ: median R² 0.642 vs own 0.640 (left-out sources 0.745 vs 0.739); borrowed curve + pooled κ: 0.581, median |bias| 18.0% vs 5.8%. Curve shape transfers; pooled κ is the weak part. Not tested: transfer to the small countries that actually borrow (all scored countries have ≥5,000 training detections). Results `docs/results.md` (after `global:end`), `web/public/data/transfer_validation.json`.
+- **Implementation / verification notes:** Explanation part done; left unticked because a clean transfer test is not run. Reproduced: `main()` forms the pooled model once, from the 61 own fits that precede the first <5 MB detections file, as `np.average` of b0, b1, κ weighted by `n_train_viirs_detections`; recomputing from `params_global.json` reproduces b0/b1/κ to float precision. Implemented: `docs/science.md` §2a "How the pooled curve is formed" (weighted coefficient mean, not pooled fit or probability mean; ≤1.3 pp difference vs mean of probabilities at 5–100 MW; 41 pooled-curve countries, pooled κ for 31 of them plus Libya and Oman; no coefficient uncertainty), `docs/results.md` table, proposed Method copy in `docs/data-contract-additions.md` §5. Out-of-country (published held-out metrics, no refit): pooled median R² −0.09 (24/41 < 0) vs own 0.64 (11/130); own κ subset 0.35, pooled κ subset −0.11; threshold higher in 12/41; ratio baseline beaten in 22/41. Not verified/not done: applying the pooled curve to held-out own-fit countries outside the 61 (needs new computation); Method copy not placed. **Update (E28 transfer test) — implemented and verified:** `scripts/transfer_validation.py` rebuilds the pooled curve leave-one-country-out for all 130 own-fit countries and scores it on 2019–2021 cell-months with the fit script's `metrics` (own-fit re-score reproduces published R² to 8.9e-16). Borrowed curve + own κ: median R² 0.642 vs own 0.640 (left-out sources 0.745 vs 0.739); borrowed curve + pooled κ: 0.581, median |bias| 18.0% vs 5.8%. Curve shape transfers; pooled κ is the weak part. Not tested: transfer to the small countries that actually borrow (all scored countries have ≥5,000 training detections). Results `docs/results.md` (after `global:end`), `web/public/data/transfer_validation.json`. **Update (Method copy) — placed:** §5 copy on Method with pooled median R² / below-zero count computed live from validation_points.json, plus the transfer-test result read from transfer_validation.json ("curve shape works; shared κ is the weak part"). Verified on page at 390/1440.
 
 ### E29 — Test matching rule sensitivity
 
 - [x] **Status:** P2 · Source concern · Statistics · effort L
 - **Evidence:** SameUTCdate and neighboringres7 cells
 - **Acceptance:** Distance/time sensitivity and examples reported
-- **Implementation / verification notes:** Implemented and verified: `scripts/matching_sensitivity.py` refits Canada, Brazil, Australia, Portugal, India and Republic of Korea (pooled-fit country, diagnostic own refit) under same-cell / k-ring 1 (published) / k-ring 2 / ±1 day with the fit script's functions on 2012–2018, scored on 2019–2021. Published-rule refit reproduces published b0/b1 exactly. FRP50 moves 2–7× with the rule (e.g. Canada 19.3 → 2.8 → 1.5 → 0.8 MW) but held-out R² moves ≤0.03 and bias ≤1.2 pp because κ rescales. Table and matched/unmatched examples in `docs/results.md`. Not done: km-distance rule, land-cover/season strata, cloud masks. Not published as the model.
+- **Implementation / verification notes:** Implemented and verified: `scripts/matching_sensitivity.py` refits Canada, Brazil, Australia, Portugal, India and Republic of Korea (pooled-fit country, diagnostic own refit) under same-cell / k-ring 1 (published) / k-ring 2 / ±1 day with the fit script's functions on 2012–2018, scored on 2019–2021. Published-rule refit reproduces published b0/b1 exactly. FRP50 moves 2–7× with the rule (e.g. Canada 19.3 → 2.8 → 1.5 → 0.8 MW) but held-out R² moves ≤0.03 and bias ≤1.2 pp because κ rescales. Table and matched/unmatched examples in `docs/results.md`. Not done: km-distance rule, land-cover/season strata, cloud masks. Not published as the model. **Update (Method copy):** Method notes FRP50 depends on the matching rule and is not a physical threshold; no numbers shown because none are in a published file.
 
 ### E30 — Document evaluation population
 
 - [x] **Status:** P2 · Source concern · Statistics · effort S
 - **Evidence:** Union of active cellmonths
 - **Acceptance:** Denominator/zero-cell inclusion and scale explicit
-- **Implementation / verification notes:** Reproduced: `fit_country.evaluate()` full-outer-joins Aqua, model, raw and threshold cell-month aggregates (H3 res-5 × month, 2019–2021) and fills nulls with 0, so the population is cell-months where Aqua or Suomi-NPP had ≥1 filtered detection; both-zero cell-months are excluded; this was documented nowhere. Implemented: `docs/science.md` §2a (unit, inclusion, excluded both-zero rows, included zeros, untransformed scale, R² reference mean, cell-bootstrap meaning, same rows for all baselines; also a note that §2–3 are the superseded pre-event plan), `docs/results.md` section, proposed Method copy in `docs/data-contract-additions.md` §4. Figures computed from published files: 2,573,665 held-out cell-months (sum of n_cell_months); in the validation_points sample 63.7% obs=0, 5.4% Aqua-only (sample shares, not population). Verified: read against the code. Not verified: Method page copy not placed (web builder); exact population share of zero cell-months would need recomputation from detections.
+- **Implementation / verification notes:** Reproduced: `fit_country.evaluate()` full-outer-joins Aqua, model, raw and threshold cell-month aggregates (H3 res-5 × month, 2019–2021) and fills nulls with 0, so the population is cell-months where Aqua or Suomi-NPP had ≥1 filtered detection; both-zero cell-months are excluded; this was documented nowhere. Implemented: `docs/science.md` §2a (unit, inclusion, excluded both-zero rows, included zeros, untransformed scale, R² reference mean, cell-bootstrap meaning, same rows for all baselines; also a note that §2–3 are the superseded pre-event plan), `docs/results.md` section, proposed Method copy in `docs/data-contract-additions.md` §4. Figures computed from published files: 2,573,665 held-out cell-months (sum of n_cell_months); in the validation_points sample 63.7% obs=0, 5.4% Aqua-only (sample shares, not population). Verified: read against the code. Not verified: Method page copy not placed (web builder); exact population share of zero cell-months would need recomputation from detections. **Update (Method copy) — placed:** §4 copy on Method ("What the scores are computed on"). Verified on page.
 
 ### E31 — Add slope uncertainty and endpoint sensitivity
 
@@ -886,17 +886,17 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E36 — Label summed FRP correctly
 
-- [ ] **Status:** P2 · Source concern · Globe · effort S
+- [x] **Status:** P2 · Source concern · Globe · effort S
 - **Evidence:** build_live sums observations over time
 - **Acceptance:** No instantaneous power/energy interpretation of window sum
-- **Implementation / verification notes:** Reproduced: `build_live.py` sums `frp` over every detection from every platform/overpass in the 24 h / 7 d window per 0.5° cell (`frp_sum_mw`) and ranks hottest cells by it. Implemented (data side): additive `field_definitions`, `hottest_cells_rank_by`, per-window `platforms`, `detections_total`, `frp_sum_definition`, `window_start_utc/end_utc`; existing snapshot annotated via `--annotate-only` without refetch (cells/totals verified byte-identical; window span null until next refresh). Hand-off wording in `docs/data-contract-additions.md` §9 and STATUS. Not verified: UI label (UI session).
+- **Implementation / verification notes:** Reproduced: `build_live.py` sums `frp` over every detection from every platform/overpass in the 24 h / 7 d window per 0.5° cell (`frp_sum_mw`) and ranks hottest cells by it. Implemented (data side): additive `field_definitions`, `hottest_cells_rank_by`, per-window `platforms`, `detections_total`, `frp_sum_definition`, `window_start_utc/end_utc`; existing snapshot annotated via `--annotate-only` without refetch (cells/totals verified byte-identical; window span null until next refresh). Hand-off wording in `docs/data-contract-additions.md` §9 and STATUS. Not verified: UI label (UI session). **Update (UI) — implemented and verified:** Globe page (`GlobePage.tsx`, `FireGlobe.tsx` tooltip) labels the value "Σ FRP" with the note "sum of reported FRP across detections in this window — not instantaneous power or energy" in the info panel, hottest-cells list, selected cell and tooltip; shows platforms, detections_total and window start–end UTC, or "window times from next refresh" while null; spike legend no longer says "radiated power". Verified: build + tsc OK; Playwright at 390/1440 finds all strings, 0 console errors, no overflow.
 
 ### E37 — Test stale snapshot and WebGL fallback
 
-- [ ] **Status:** P2 · Required verification · Globe · effort M
+- [x] **Status:** P2 · Required verification · Globe · effort M
 - **Evidence:** Recentfeed timestamp shown; graphics environment dependent
 - **Acceptance:** Stale/fallback state and table remain usable
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Chromium with `--disable-webgl --disable-3d-apis` showed the poster but logged 4 THREE.WebGLRenderer console errors (the probe only checked that the WebGL classes exist); no stale state; no non-globe table; JS motion (ring pulses, dash animation, camera flights, satellite clock) ignored reduced motion except auto-spin. Implemented: real `getContext` probe in `FireGlobe.tsx` (poster with note, no three.js init); poster fits narrow screens; stale banner on Globe when the live snapshot is older than **24 h** (`STALE_AFTER_HOURS` in `GlobePage.tsx`: past that, even the 24 h window no longer overlaps today), with age and fetch time; "Hottest cells, as a table" (top 25: coordinates, window, detections, platforms, Σ FRP, peak; focusable scroll region); E25 for the globe: `useReducedMotion` hook disables rings, dash animation, camera flight and auto-spin and freezes the satellite clock until the viewer presses Play (Globe starts paused). Verified: build + tsc OK; Playwright 390/1440 on /, /globe, /satellites with and without WebGL: 0 console errors, no overflow; no-WebGL /globe has 0 canvases, the fallback note and 25 table rows; with the clock set to 2026-11-16 the stale banner reads "fetched 2 days ago"; at 2026-11-14T15:00Z none; under reduced motion the sim button starts at Play. Not verified: real devices / GPU-blocklisted browsers; WebGL context loss mid-session.
 
 ### E38 — Publish versioned manifest and schema
 
@@ -928,24 +928,24 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E42 — Reconcile pooled wording in summaries
 
-- [ ] **Status:** P2 · Confirmed · Copy · effort S
+- [x] **Status:** P2 · Confirmed · Copy · effort S
 - **Evidence:** Method intro everycountry separately;41pooled
 - **Acceptance:** All summaries distinguish fitted and borrowed curves
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Method lede "Every country is fitted separately", Home/Data "each fitted separately", footer/About/metadata gave no own/borrowed split. Implemented: `web/src/lib/fitCounts.ts` reads own_fit/borrowed_fit from coverage_status.json at build; metadata description, footer and About say "130 countries with their own fitted curve and 41 on a borrowed (pooled) curve"; Method intro, Home accuracy line and Data header distinguish own and borrowed curves; Method notes carry the 130/41 heading (E28). Verified: strings present on /, /about, /method, /data at 390/1440, 0 console errors, no overflow.
 
 ### E43 — Align titles with current23-year headline
 
-- [ ] **Status:** P2 · Confirmed · Copy · effort S
+- [x] **Status:** P2 · Confirmed · Copy · effort S
 - **Evidence:** Old25-year default title remains in captures
 - **Acceptance:** Metadata headline/social preview agree
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: default title had no year span while the OG card says "23 years of detections". Implemented: title, description, openGraph and twitter metadata share "23 years of fire detections (2003–2025)". Verified: document.title, og:title, twitter:title equal on /.
 
 ### E44 — Clarify partial Aqua2002 reference
 
-- [ ] **Status:** P2 · Confirmed · Copy · effort S
+- [x] **Status:** P2 · Confirmed · Copy · effort S
 - **Evidence:** Home says2001–2002 noAqua reference
 - **Acceptance:** First full reference year explanation without denying2002 observations
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Home said "2001–2002 have no Aqua reference". Implemented: "2001–2002 are not complete Aqua reference years (Aqua launched in 2002)". About copyedit: capital "Much" after the dash lowercased. Verified on /, /about.
 
 ### E45 — Run analyst task sessions
 
@@ -963,10 +963,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E47 — Measure cold mobile time-to-analysis
 
-- [ ] **Status:** P2 · Required verification · Performance · effort M
+- [x] **Status:** P2 · Required verification · Performance · effort M
 - **Evidence:** Diagnostic transfer not realuser metric
 - **Acceptance:** Repeatable budget and lowend/slowconnection measurements
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Implemented and measured: `scripts/qa/cold_mobile.cjs` (Playwright/CDP, 4x CPU, Slow 4G 1.6 Mbps/150 ms, cold cache, median of 3). Live: Home FCP 0.91 s, LCP 4.62 s, 454 KB; Explorer calendar usable 7.84 s, 1.33 MB. Local `next start`: 7.43 s, 1.29 MB. Budget and offenders in `docs/performance-budget.md`, handed to UI in STATUS. Not verified: real devices (lab emulation only).
 
 ### E48 — Test data failure and retry
 

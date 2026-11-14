@@ -55,7 +55,7 @@ export function TableSearch({ q, setQ, shown, total, label = "Search countriesâ€
  * scrolls sideways; headers stay on top and the first column stays pinned.
  * When columns are hidden to the right, a cue says so and the edge fades.
  */
-export function ScrollBox({ children, h = "34rem", className = "" }: { children: ReactNode; h?: string; className?: string }) {
+export function ScrollBox({ children, h = "34rem", className = "", label = "Scrollable table" }: { children: ReactNode; h?: string; className?: string; /** Unique accessible name for the scroll region (axe landmark-unique). */ label?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [more, setMore] = useState(false);
   useEffect(() => {
@@ -71,7 +71,7 @@ export function ScrollBox({ children, h = "34rem", className = "" }: { children:
   return (
     <div className="relative mt-4">
       {more && <p className="mb-1 text-right text-[11px] text-[var(--text-muted)]" aria-hidden>Scroll sideways for more columns â†’</p>}
-      <div ref={box} tabIndex={0} role="region" aria-label="Scrollable table"
+      <div ref={box} tabIndex={0} role="region" aria-label={label}
         className={`sticky-first max-w-full overflow-auto overscroll-x-contain rounded-xl border border-[var(--hairline)] px-3 ${className}`} style={{ maxHeight: h }}>{children}</div>
       {more && <div aria-hidden className="pointer-events-none absolute bottom-0 right-0 top-5 w-10 rounded-r-xl bg-[linear-gradient(to_right,transparent,var(--surface-page))]" />}
     </div>

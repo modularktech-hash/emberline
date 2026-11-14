@@ -15,6 +15,7 @@ import type { CountryFit } from "@/lib/types";
 import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
+import { MethodNotes, ValidationPlot } from "@/components/ValidationPlot";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
 const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
@@ -84,7 +85,7 @@ export function Method() {
   return (
     <div>
       <PageHead compact eyebrow="Science · method & validation" title="How we know the correction" italic="is real."
-        lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Every country is fitted separately: these are regional results, not a global correction." />
+        lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Countries with enough data get their own fitted curve; smaller ones borrow a shared (pooled) curve, counted and marked below. These are regional results, not a global correction." />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
           ["01 · Match", "On the same day and place (within ~3.5 km), did the old sensor, Aqua MODIS, also see the fire that VIIRS saw? Both pass overhead in the early afternoon."],
@@ -122,6 +123,7 @@ export function Method() {
                 Show the weakest fits first
               </button>
             </p>
+            <ValidationPlot />
             <h2 id="val-table" className="display mt-8 scroll-mt-24 text-2xl">Tested on years the model never saw</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               Fitted on {p.train_years[0]}–{p.train_years[1]}, scored on {p.test_years[0]}–{p.test_years[1]} against Aqua reference observations,
@@ -136,7 +138,7 @@ export function Method() {
               This validation cell is far smaller than the ~300 km grid cells (H3 resolution 2) that a drawn box in the Explorer resolves to; those coarse cells only decide which data is summed, not how it is scored.
             </p>
             <div className="mt-4"><TableSearch q={val.q} setQ={val.setQ} shown={val.shown.length} total={names.length} /></div>
-            <ScrollBox>
+            <ScrollBox label="Held-out validation table">
               <table className="tabular w-full min-w-[840px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                   <SortTh k="name" sort={val.sort} toggle={val.toggle}>Country</SortTh>
@@ -181,6 +183,8 @@ export function Method() {
             )}
           </section></Reveal>
 
+          <Reveal><MethodNotes /></Reveal>
+
           <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6">
             <h2 className="display text-2xl">The control: a sensor that did not change</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -188,7 +192,7 @@ export function Method() {
               A correct record should sit near Aqua, not near the raw splice. Sort by &ldquo;gap&rdquo; to see where it does not.
             </p>
             <div className="mt-4"><TableSearch q={step.q} setQ={step.setQ} shown={step.shown.length} total={names.length} /></div>
-            <ScrollBox>
+            <ScrollBox label="Null-control step table">
               <table className="tabular w-full min-w-[620px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                   <SortTh k="name" sort={step.sort} toggle={step.toggle}>Country</SortTh>
@@ -257,7 +261,7 @@ export function Method() {
               which has not drifted, so it is not exposed to this. In {p.train_years[0]}–2021 the ratio simply scatters year to year; read the drift years against that.
             </p>
             <div className="mt-4"><TableSearch q={drift.q} setQ={drift.setQ} shown={drift.shown.length} total={names.length} /></div>
-            <ScrollBox>
+            <ScrollBox label="Drift-era table">
               <table className="tabular w-full min-w-[720px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                   <SortTh k="name" sort={drift.sort} toggle={drift.toggle}>Country</SortTh>
