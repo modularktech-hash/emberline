@@ -837,10 +837,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E29 — Test matching rule sensitivity
 
-- [ ] **Status:** P2 · Source concern · Statistics · effort L
+- [x] **Status:** P2 · Source concern · Statistics · effort L
 - **Evidence:** SameUTCdate and neighboringres7 cells
 - **Acceptance:** Distance/time sensitivity and examples reported
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Implemented and verified: `scripts/matching_sensitivity.py` refits Canada, Brazil, Australia, Portugal, India and Republic of Korea (pooled-fit country, diagnostic own refit) under same-cell / k-ring 1 (published) / k-ring 2 / ±1 day with the fit script's functions on 2012–2018, scored on 2019–2021. Published-rule refit reproduces published b0/b1 exactly. FRP50 moves 2–7× with the rule (e.g. Canada 19.3 → 2.8 → 1.5 → 0.8 MW) but held-out R² moves ≤0.03 and bias ≤1.2 pp because κ rescales. Table and matched/unmatched examples in `docs/results.md`. Not done: km-distance rule, land-cover/season strata, cloud masks. Not published as the model.
 
 ### E30 — Document evaluation population
 
