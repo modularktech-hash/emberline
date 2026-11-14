@@ -865,10 +865,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E33 — Add absolute anomaly and zero-median handling
 
-- [ ] **Status:** P2 · Observed gap · Seasons · effort M
+- [x] **Status:** P2 · Observed gap · Seasons · effort M
 - **Evidence:** Ratio interpretation fragile nearzero
 - **Acceptance:** Difference, ratio where defined, baseline n and years
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: table showed only the ratio, "—" when median 0, no baseline years. Seasons.tsx now adds a Difference column (count − median) and the year-total difference in the takeaway; median exactly 0 → "no historical activity in this month — ratio undefined"; under the chart, baseline n, range and every year listed, selected year excluded (leave-one-year-out, unchanged). Verified Playwright 390/1440: 0 console errors, 0 overflow; Canada 2023 "n = 22 years … 2023 excluded", May +12,757 ×13.22; Barbados 2023 Jan/Jun show the undefined state. Median is fractional, so a median rounding to "0" can still carry a ratio (Barbados Feb).
 
 ### E34 — Carry both model-quality states
 

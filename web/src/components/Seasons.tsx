@@ -65,7 +65,8 @@ export function Seasons() {
     const ownTotal = ownRows.length ? ownRows.reduce((t, r) => t + (r.value as number), 0) : null;
     const medTotal = median(totals);
     const bands = months.map(bandOf);
-    return { years, months, max, bands, ownTotal, medTotal, nMonths: ownRows.length };
+    const baseYears = years.filter((yy) => yy !== year);
+    return { years, months, max, bands, ownTotal, medTotal, nMonths: ownRows.length, baseYears };
   }, [data, year]);
 
   const x = (i: number) => L + (i / 11) * (W - L - R);
@@ -104,7 +105,8 @@ export function Seasons() {
                 <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-[var(--text-primary)]" data-testid="seasons-takeaway">
                   {v.ownTotal == null ? <>No harmonized data for {year}.</> : <>
                     {areaLabel(area)}, {year}: {fmt(v.ownTotal)} harmonized detections{v.nMonths < 12 ? ` in ${v.nMonths} months with data` : ""}
-                    {v.medTotal ? <>, {fmtRatio(v.ownTotal / v.medTotal)} the median year</> : null}.{" "}
+                    {v.medTotal != null ? <>, {v.ownTotal - v.medTotal >= 0 ? "+" : "−"}{fmt(Math.abs(v.ownTotal - v.medTotal))} vs the median year</> : null}
+                    {v.medTotal ? <> ({fmtRatio(v.ownTotal / v.medTotal)} the median year)</> : null}.{" "}
                     {hi.length ? <>{hi.length} {hi.length === 1 ? "month" : "months"} above the historical 90th percentile ({hi.join(", ")}); </> : <>No month above the historical 90th percentile; </>}
                     {ab} other {ab === 1 ? "month" : "months"} above and {be} below the typical range (middle 50% of other years).
                   </>}
@@ -136,6 +138,9 @@ export function Seasons() {
                 </g>
               ))}
             </svg>
+            <p className="mt-2 text-xs text-[var(--text-secondary)]" data-testid="seasons-baseline">
+              Baseline: n = {v.baseYears.length} years ({v.baseYears.length ? `${v.baseYears[0]}–${v.baseYears[v.baseYears.length - 1]}` : "none"}, {year} excluded — leave-one-year-out). Years: {v.baseYears.join(", ")}. Months whose median is 0 have no ratio; the difference is shown instead.
+            </p>
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[var(--text-secondary)]">
               <span><span className="mr-1.5 inline-block h-0.5 w-5 bg-[var(--ember)] align-middle" />{year}</span>
               <span><span className="mr-1.5 inline-block w-5 border-t border-dashed border-[var(--cool)] align-middle" />median of other years</span>
@@ -150,7 +155,7 @@ export function Seasons() {
 
             <div className="mt-6 overflow-x-auto">
               <table className="tabular w-full min-w-[560px] text-sm">
-                <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Month</th><th className="font-normal">{year}</th><th className="font-normal">Median</th><th className="font-normal">vs median</th><th className="font-normal">Reading</th></tr></thead>
+                <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Month</th><th className="font-normal">{year}</th><th className="font-normal">Median</th><th className="font-normal">Difference</th><th className="font-normal">vs median</th><th className="font-normal">Reading</th></tr></thead>
                 <tbody>
                   {v.months.map((m, i) => {
                     const ratio = m.own !== null && m.med ? m.own / m.med : null;
@@ -160,7 +165,8 @@ export function Seasons() {
                       <tr key={i} className="border-t border-[var(--hairline)]">
                         <td className="py-2 text-[var(--text-secondary)]">{MONTHS[i]}</td>
                         <td>{fmt(m.own)}</td><td className="text-[var(--text-secondary)]">{fmt(m.med)}</td>
-                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : fmtRatio(ratio)}</td>
+                        <td data-testid="seasons-diff">{m.own !== null && m.med !== null ? `${m.own - m.med >= 0 ? "+" : "−"}${fmt(Math.abs(m.own - m.med))}` : "—"}</td>
+                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{m.own !== null && m.med === 0 ? <span className="text-xs text-[var(--text-secondary)]" data-testid="seasons-undefined">no historical activity in this month — ratio undefined</span> : ratio === null ? "—" : fmtRatio(ratio)}</td>
                         <td className={`text-xs ${high ? "font-medium text-[var(--ember)]" : "text-[var(--text-secondary)]"}`}><span aria-hidden className="mr-1.5">{BAND[band].mark}</span>{BAND[band].label}</td>
                       </tr>
                     );
