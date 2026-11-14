@@ -60,7 +60,7 @@ interface Props {
   allowZoom?: boolean;
   /** Hover labels on satellites. Costs a raycast per pointer move, so only pages about satellites turn it on. */
   satLabels?: boolean;
-  /** Cap on fire cells drawn (largest radiated power first). */
+  /** Cap on fire cells drawn (largest summed FRP first). */
   maxPoints?: number;
   onPick?: (c: Cell) => void;
   onSats?: (s: SatState[]) => void;
@@ -208,7 +208,7 @@ function GlobeInner({
     return () => cancelAnimationFrame(raf);
   }, [ready, visible, showSats, recs, low, simNow]);
 
-  // Fires: one merged mesh (a single draw call), largest radiated power first.
+  // Fires: one merged mesh (a single draw call), largest summed FRP first.
   const cells = useMemo(() => (showFires && live ? (live.windows[win].cells as Cell[]).slice(0, low ? Math.min(maxPoints, 4000) : maxPoints) : []), [live, win, showFires, low, maxPoints]);
   const maxFrp = useMemo(() => Math.max(1, ...cells.slice(0, 50).map((c) => c[3])), [cells]);
   const rings = useMemo(() => (low ? [] : cells.slice(0, 10)), [cells, low]);
@@ -377,7 +377,8 @@ function GlobeInner({
       {interactive && hover && (
         <div className="tabular pointer-events-none absolute left-4 top-4 rounded-xl bg-[var(--ink)] px-3.5 py-2.5 text-xs leading-relaxed text-[#f7f3e8] shadow-xl">
           <p className="font-medium">{hover[0].toFixed(1)}°, {hover[1].toFixed(1)}°</p>
-          <p>{hover[2].toLocaleString()} detections · {Math.round(hover[3]).toLocaleString()} MW total</p>
+          <p>{hover[2].toLocaleString()} detections · {Math.round(hover[3]).toLocaleString()} MW Σ FRP</p>
+          <p className="text-[#b8b2a2]">summed over detections in the window, not instantaneous power</p>
           <p className="text-[#b8b2a2]">peak {Math.round(hover[4])} MW · {hover[5]}</p>
         </div>
       )}

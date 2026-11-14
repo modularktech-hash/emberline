@@ -886,10 +886,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E36 — Label summed FRP correctly
 
-- [ ] **Status:** P2 · Source concern · Globe · effort S
+- [x] **Status:** P2 · Source concern · Globe · effort S
 - **Evidence:** build_live sums observations over time
 - **Acceptance:** No instantaneous power/energy interpretation of window sum
-- **Implementation / verification notes:** Reproduced: `build_live.py` sums `frp` over every detection from every platform/overpass in the 24 h / 7 d window per 0.5° cell (`frp_sum_mw`) and ranks hottest cells by it. Implemented (data side): additive `field_definitions`, `hottest_cells_rank_by`, per-window `platforms`, `detections_total`, `frp_sum_definition`, `window_start_utc/end_utc`; existing snapshot annotated via `--annotate-only` without refetch (cells/totals verified byte-identical; window span null until next refresh). Hand-off wording in `docs/data-contract-additions.md` §9 and STATUS. Not verified: UI label (UI session).
+- **Implementation / verification notes:** Reproduced: `build_live.py` sums `frp` over every detection from every platform/overpass in the 24 h / 7 d window per 0.5° cell (`frp_sum_mw`) and ranks hottest cells by it. Implemented (data side): additive `field_definitions`, `hottest_cells_rank_by`, per-window `platforms`, `detections_total`, `frp_sum_definition`, `window_start_utc/end_utc`; existing snapshot annotated via `--annotate-only` without refetch (cells/totals verified byte-identical; window span null until next refresh). Hand-off wording in `docs/data-contract-additions.md` §9 and STATUS. Not verified: UI label (UI session). **Update (UI) — implemented and verified:** Globe page (`GlobePage.tsx`, `FireGlobe.tsx` tooltip) labels the value "Σ FRP" with the note "sum of reported FRP across detections in this window — not instantaneous power or energy" in the info panel, hottest-cells list, selected cell and tooltip; shows platforms, detections_total and window start–end UTC, or "window times from next refresh" while null; spike legend no longer says "radiated power". Verified: build + tsc OK; Playwright at 390/1440 finds all strings, 0 console errors, no overflow.
 
 ### E37 — Test stale snapshot and WebGL fallback
 

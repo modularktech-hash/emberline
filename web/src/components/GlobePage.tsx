@@ -9,6 +9,12 @@ import { useParquet } from "@/lib/useParquet";
 import { Chip, PageHead, Reveal, Segmented } from "@/components/ui";
 import { DotStat } from "@/components/DotMatrix";
 import type { Cell, SatState } from "@/components/FireGlobe";
+import type { LiveWindow } from "@/lib/data";
+
+/** Additive E36 metadata in live.json (docs/data-contract-additions.md §9); every field may be absent in older snapshots. */
+type LiveWindowMeta = LiveWindow & { platforms?: string[]; detections_total?: number; frp_sum_definition?: string; window_start_utc?: string | null; window_end_utc?: string | null; window_span_note?: string };
+
+export const FRP_SUM_NOTE = "sum of reported FRP across detections in this window — not instantaneous power or energy";
 import { SAT_COLORS } from "@/lib/sats";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
@@ -26,7 +32,7 @@ export function GlobePage() {
   const [satState, setSatState] = useState<SatState[]>([]);
   const onSats = useCallback((s: SatState[]) => setSatState(s), []);
 
-  const w = data?.live.windows[win];
+  const w = data?.live.windows[win] as LiveWindowMeta | undefined;
   const total = w ? Object.values(w.totals).reduce((a, b) => a + b, 0) : 0;
   const top = useMemo(() => (w ? (w.cells as Cell[]).slice(0, 8) : []), [w]);
 
@@ -40,6 +46,10 @@ export function GlobePage() {
           <div><dt className="text-[var(--text-muted)]">Fire data last fetched</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{fmtUtc(parseUtc(data.live.fetched_utc))}</dd></div>
           <div><dt className="text-[var(--text-muted)]">Orbit elements (TLE) fetched</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{fmtUtc(parseUtc(data.tle.fetched))}</dd></div>
           <div><dt className="text-[var(--text-muted)]">Satellite motion</dt><dd className="mt-0.5 text-[var(--text-primary)]">simulated from the TLEs at ×{speed} speed; not the satellites&apos; live positions</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Window start – end (UTC)</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{w?.window_start_utc && w?.window_end_utc ? `${w.window_start_utc} – ${w.window_end_utc}` : "window times from next refresh"}</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Platforms in this window</dt><dd className="mt-0.5 text-[var(--text-primary)]">{w?.platforms?.length ? w.platforms.join(", ") : Object.keys(w?.totals ?? {}).join(", ")}</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Detections in this window</dt><dd className="tabular mt-0.5 text-[var(--text-primary)]">{fmtInt(w?.detections_total ?? total)}</dd></div>
+          <div><dt className="text-[var(--text-muted)]">Summed FRP (Σ FRP, MW)</dt><dd className="mt-0.5 text-[var(--text-primary)]">{FRP_SUM_NOTE}</dd></div>
           <div className="sm:col-span-2 lg:col-span-4"><dt className="sr-only">Caveat</dt><dd className="font-medium text-[var(--ember)]">Raw and uncorrected · NOAA-20/21 VIIRS and MODIS, not the Suomi-NPP record Emberline harmonizes · includes gas flares and volcanoes</dd></div>
         </dl>
       )}
@@ -67,7 +77,7 @@ export function GlobePage() {
                 focus={picked ? { lat: picked[0], lng: picked[1] } : null} />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
-              <span>Spike height = radiated power · width = number of detections · 0.5° cells</span>
+              <span>Spike height = summed FRP in the window (Σ FRP, not instantaneous power) · width = number of detections · 0.5° cells</span>
               <span className="font-medium text-[var(--text-primary)]">Satellite positions — simulated from TLEs{data ? ` fetched ${fmtUtc(parseUtc(data.tle.fetched))}` : ""}{paused ? " · paused" : ` · ×${speed}`}</span>
               {data && <span className="tabular ml-auto text-[var(--text-muted)]">Fires fetched {data.live.fetched_utc} · orbits {data.tle.fetched}</span>}
             </div>
@@ -93,19 +103,21 @@ export function GlobePage() {
             <div className="card border-[var(--ember)] p-5">
               <Eyebrow>Selected cell</Eyebrow>
               <p className="tabular mt-2 text-lg">{fmtNum(picked[0], 2)}°, {fmtNum(picked[1], 2)}°</p>
-              <p className="tabular text-sm text-[var(--text-secondary)]">{fmtInt(picked[2])} detections · {fmtInt(picked[3])} MW · peak {fmtInt(picked[4])} MW</p>
+              <p className="tabular text-sm text-[var(--text-secondary)]">{fmtInt(picked[2])} detections · Σ FRP {fmtInt(picked[3])} MW · peak {fmtInt(picked[4])} MW</p>
               <p className="text-xs text-[var(--text-muted)]">Seen by {picked[5]}</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Σ FRP = {FRP_SUM_NOTE}.</p>
             </div>
           )}
           <Reveal delay={0.1}>
             <div className="card p-5">
-              <Eyebrow>Hottest cells · click to show on the globe</Eyebrow>
+              <Eyebrow>Hottest cells by Σ FRP · click to show on the globe</Eyebrow>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Σ FRP = {FRP_SUM_NOTE}.</p>
               <ol className="mt-3 space-y-2 text-sm">
                 {top.map((c, i) => (
                   <li key={i}>
                     <button type="button" onClick={() => setPicked(c)} aria-label={`Show cell ${i + 1} on the globe`} aria-pressed={picked === c} className={`tabular flex min-h-[32px] w-full items-center justify-between rounded-lg px-1 text-left hover:bg-[var(--surface-2)] ${picked === c ? "bg-[var(--ember-soft)]" : ""}`}>
                       <span className="text-[var(--text-secondary)]">{i + 1}. {fmtNum(c[0], 1)}°, {fmtNum(c[1], 1)}°</span>
-                      <span>{fmtInt(c[3])} MW</span>
+                      <span>Σ {fmtInt(c[3])} MW</span>
                     </button>
                   </li>
                 ))}
