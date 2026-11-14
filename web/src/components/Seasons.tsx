@@ -9,6 +9,7 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { PageHead, Reveal } from "@/components/ui";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
 import { CoverageNote, useCoverage } from "@/components/CoverageNote";
+import { FitQualityTag } from "@/components/FitQuality";
 import { STATUS_LABEL } from "@/lib/coverage";
 
 const W = 720, H = 300, L = 46, R = 16, T = 18, B = 30;
@@ -87,6 +88,7 @@ export function Seasons() {
               <span><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[var(--seq-7)] align-middle" />above the historical 90th percentile</span>
             </div>
             <p className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+              {area.kind === "country" && data?.params.countries[area.name] && <span className="mb-1 block"><FitQualityTag fit={data.params.countries[area.name]} /></span>}
               Historical statements, not forecasts.
               {(() => { const f = area.kind === "country" ? data?.params.countries[area.name] : undefined; return f ? <> {areaLabel(area)}&apos;s own fit: held-out R² {fmtR2(f.validation_test.model.r2)}, bias {fmtPct(f.validation_test.model.bias_pct)} ({data!.params.test_years[0]}–{data!.params.test_years[1]}){f.fit_source === "pooled" ? ", pooled curve" : ""}.</> : null; })()}
             </p>

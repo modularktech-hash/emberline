@@ -9,6 +9,8 @@ import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
 import { CoverageNote, CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
+import { FitQualityCard } from "@/components/FitQuality";
+import { qualityCsvHeader } from "@/lib/quality";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
@@ -99,6 +101,8 @@ export function Explorer() {
         series: mode,
         unit: cal.unit,
         fit_version: mode === "harmonized" ? data.params.fit_version : "n/a (raw record, uncorrected)",
+        ...(fit ? { ...qualityCsvHeader(fit, data.params), ...(mode === "raw" ? { fit_quality_note: "applies to the harmonized series; this file is the raw record" } : {}) } : {}),
+        ...(unfitted && cov ? { fit_status: `no fit: ${STATUS_LABEL[cov.status]}` } : {}),
         ...(mode === "harmonized" && flags.length ? { fit_flags: `suspicious (docs/results.md): ${flags.join("; ")}` } : {}),
         ...(area.kind === "box" ? { h3_res2_cells: `${cal.keys.length} with data of ${boxCells} touched` } : {}),
         ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
@@ -144,6 +148,7 @@ export function Explorer() {
 
         {error && <p className="mt-8 text-sm text-[var(--text-secondary)]">Could not load the data files: {error.message}</p>}
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
+        {fit && data && <FitQualityCard fit={fit} params={data.params} className="mt-6" />}
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">

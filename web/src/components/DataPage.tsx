@@ -5,6 +5,9 @@ import { useState } from "react";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
 import { downloadCsv, fmt } from "@/lib/ember";
 import { getCountryTable, type CountryRow } from "@/lib/data";
+import { getParams } from "@/lib/queries";
+import { qualityCsvHeader } from "@/lib/quality";
+import { FitQualityTag } from "@/components/FitQuality";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
@@ -48,6 +51,7 @@ export function DataPage() {
   const [focus, setFocus] = useState<string | null>(null);
   const [q2, setQ2] = useState("");
   const coverage = useCoverage();
+  const { data: params } = useParquet(() => getParams(), "params");
   const [lang, setLang] = useState<"py" | "js" | "sql">("py");
   const origin = typeof window === "undefined" ? "https://emberline-tan.vercel.app" : window.location.origin;
 
@@ -111,11 +115,11 @@ export function DataPage() {
             <Reveal>
               <section className="card mt-6 overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] p-4">
-                  <h2 className="display text-3xl">{prettyName(sel.country)}, year by year</h2>
+                  <div><h2 className="display text-3xl">{prettyName(sel.country)}, year by year</h2>{params?.countries[sel.country] && <FitQualityTag fit={params.countries[sel.country]} className="mt-1" />}</div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <CountryPicker value={sel.country} options={data.countries.map((c) => c.country)} onChange={setFocus} label="Country"
                       tags={Object.fromEntries(data.countries.map((c) => [c.country, c.fit_source === "pooled" ? ("pooled" as const) : null]))} />
-                    <button type="button" onClick={() => downloadCsv(`emberline_${sel.country}_annual.csv`, { region: sel.country, unit: data.unit, fit_version: data.fit_version }, ["year", "raw", "harmonized"], sel.annual.map((a) => [a.year, a.raw, a.harm]))} className="pill-dark px-4 py-1.5 text-sm">CSV</button>
+                    <button type="button" onClick={() => downloadCsv(`emberline_${sel.country}_annual.csv`, { region: sel.country, unit: data.unit, fit_version: data.fit_version, ...(params?.countries[sel.country] ? qualityCsvHeader(params.countries[sel.country], params) : {}) }, ["year", "raw", "harmonized"], sel.annual.map((a) => [a.year, a.raw, a.harm]))} className="pill-dark px-4 py-1.5 text-sm">CSV</button>
                   </div>
                 </div>
                 <div className="max-w-full overflow-x-auto">

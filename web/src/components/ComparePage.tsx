@@ -10,7 +10,9 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
 import { annualTotals, fmt, fmtCompact, stepRatio } from "@/lib/ember";
 import { getCountryTable } from "@/lib/data";
-import { getCalendar } from "@/lib/queries";
+import { getCalendar, getParams } from "@/lib/queries";
+import { FitQualityTag } from "@/components/FitQuality";
+import { fitQuality } from "@/lib/quality";
 import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
 import { prettyName } from "@/lib/names";
@@ -19,6 +21,7 @@ const COLORS = ["#d9431a", "#3f7f96"];
 
 export function ComparePage() {
   const { data: table } = useParquet(() => getCountryTable(), "table");
+  const { data: params } = useParquet(() => getParams(), "params");
   const names = table?.countries.map((c) => c.country) ?? [];
   const tags = Object.fromEntries((table?.countries ?? []).map((c) => [c.country, c.fit_source === "pooled" ? ("pooled" as const) : null]));
   const [a, setA] = useState("Canada");
@@ -91,6 +94,12 @@ export function ComparePage() {
                 <Reveal key={n} delay={k * 0.08} className="min-w-0">
                   <section className="card p-5">
                     <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full" style={{ background: COLORS[k] }} /><h2 className="display text-3xl">{prettyName(n)}</h2>{row?.fit_source === "pooled" && <span className="rounded-full bg-[var(--ember-soft)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}</div>
+                    {params?.countries[n] && (
+                      <div className="mt-2">
+                        <FitQualityTag fit={params.countries[n]} />
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{fitQuality(params.countries[n]).interpretation} Held-out {params.test_years[0]}–{params.test_years[1]}, cell × month.</p>
+                      </div>
+                    )}
                     <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                       <Stat size="sm" label="2012 step" value={fmtRatio(stepRatio(annualTotals(data[k], 2009, 2014)))} />
                       <Stat size="sm" label="Busiest year" value={String(best?.year ?? "—")} note={<span className="tabular">{fmt(best?.value)}</span>} />
