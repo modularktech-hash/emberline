@@ -833,7 +833,7 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Source concern · Statistics · effort M
 - **Evidence:** fit_harmonization weighted coefficients
 - **Acceptance:** Name transfer method and validate out-of-country performance
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Explanation part done; left unticked because a clean transfer test is not run. Reproduced: `main()` forms the pooled model once, from the 61 own fits that precede the first <5 MB detections file, as `np.average` of b0, b1, κ weighted by `n_train_viirs_detections`; recomputing from `params_global.json` reproduces b0/b1/κ to float precision. Implemented: `docs/science.md` §2a "How the pooled curve is formed" (weighted coefficient mean, not pooled fit or probability mean; ≤1.3 pp difference vs mean of probabilities at 5–100 MW; 41 pooled-curve countries, pooled κ for 31 of them plus Libya and Oman; no coefficient uncertainty), `docs/results.md` table, proposed Method copy in `docs/data-contract-additions.md` §5. Out-of-country (published held-out metrics, no refit): pooled median R² −0.09 (24/41 < 0) vs own 0.64 (11/130); own κ subset 0.35, pooled κ subset −0.11; threshold higher in 12/41; ratio baseline beaten in 22/41. Not verified/not done: applying the pooled curve to held-out own-fit countries outside the 61 (needs new computation); Method copy not placed.
 
 ### E29 — Test matching rule sensitivity
 

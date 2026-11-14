@@ -377,3 +377,24 @@ held-out cell-months in all (sum of `n_cell_months`). Scores are on untransforme
 relative to the mean of this table. Adding the both-zero cell-months would change every score, so
 the numbers describe agreement where at least one record saw fire. Full definition:
 `docs/science.md` §2a.
+
+## Pooled ("borrowed") curves — how they are formed and how they do out of country
+
+The pooled curve is a weighted mean of the fitted b0, b1 and κ of the 61 own-fit countries
+fitted before it was formed, weight = training Suomi-NPP detections; recomputed from
+`params_global.json` it matches the published values to floating-point precision. It is not a
+logistic model fitted to pooled detections. Details: `docs/science.md` §2a.
+
+No pooled country is one of the 61 sources, so their held-out scores test the curve out of
+country (from `params_global.json`, nothing refitted):
+
+| Group | Countries | Median held-out R² | R² < 0 | Median abs. bias | Threshold R² higher | Beats ratio baseline (R²) |
+|---|---:|---:|---:|---:|---:|---:|
+| Own curve | 130 | 0.64 | 11 | 5.8% | 9 | 62 |
+| Pooled curve, own κ | 10 | 0.35 | 3 | 13.4% | 3 | 7 |
+| Pooled curve, pooled κ | 31 | −0.11 | 21 | 43.1% | 9 | 15 |
+| Pooled curve, all | 41 | −0.09 | 24 | 29.8% | 12 | 22 |
+
+Pooled countries are small (median 314 held-out cell-months), so the gap mixes transfer error
+with small-sample noise. Reading: the borrowed curve with a borrowed κ is not reliable at
+cell-month scale; these countries should be read as experimental.

@@ -164,6 +164,51 @@ computed on one table per country, built in `fit_country.evaluate()`:
   scored on the identical rows. Note that the threshold and ratio baselines,
   like the model, predict zero exactly where Suomi-NPP saw nothing.
 
+### How the pooled ("borrowed") curve is formed
+
+`main()` fits countries in descending order of detections-file size. Just
+before the first country whose detections file is under 5 MB (once at least
+three own fits exist), it forms the pooled model **once** from the own-fit
+countries fitted so far — 61 countries in fit `v1-20261114T1240`
+(`pooled_model.from_countries`):
+
+- b0, b1 and κ are each a **weighted arithmetic mean of the source countries'
+  fitted values**, weight = that country's number of training (2012–2018)
+  Suomi-NPP detections (`n_train_viirs_detections`). Recomputing this from
+  `params_global.json` reproduces the published b0 −1.758, b1 0.642,
+  κ 0.558 to floating-point precision. The largest weights are DR Congo 12.3%,
+  Angola 8.1%, Brazil 6.5%, Australia 5.5%, Zambia 5.3%.
+- It is **not** one logistic model fitted to the pooled detections, and it is
+  not an average of predicted probabilities. Averaging logistic coefficients is
+  not in general equivalent to either. Over the published sources the two
+  averages differ by at most 1.3 percentage points of P between 5 and 100 MW
+  (e.g. at 50 MW: mean of the 61 curves 0.670, curve of the mean coefficients
+  0.680) — a prototype choice, named here as such.
+- The 69 own-fit countries fitted after the pool was formed do not contribute.
+- A country uses the pooled **curve** when it has fewer than 5,000 training
+  Suomi-NPP detections (41 countries); it uses the pooled **κ** when it has
+  fewer than 500 training Aqua detections or ΣP = 0 (31 of those 41, plus
+  Libya and Oman, which have their own curve). The other 10 pooled-curve
+  countries get κ = Aqua ÷ ΣP from their own training data.
+- No uncertainty is propagated for a borrowed curve: coefficient resampling is
+  skipped, and the published coefficient interval of a pooled fit is not an
+  estimate (shown as "not estimated" since E03). Held-out score intervals are
+  still computed normally.
+
+**Out-of-country performance.** No pooled-curve country is among the 61
+sources, so each pooled fit's held-out (2019–2021) score is an out-of-country
+test of the transferred curve. From `params_global.json`: median held-out R²
+−0.09 for the 41 pooled fits (24 below 0) versus 0.64 for the 130 own fits
+(11 below 0); median |bias| 29.8% versus 5.8%; the FRP threshold baseline has
+higher R² in 12 of the 41; the model beats raw VIIRS in 41 of 41 and the
+training-only ratio baseline in 22 of 41. Pooled fits with their own κ do
+better (10 countries: median R² 0.35, median |bias| 13.4%) than those that also
+borrow κ (31: median R² −0.11, median |bias| 43.1%). Pooled countries are
+small (median 314 held-out cell-months, range 19–1,362), so this is not a
+like-for-like comparison with own fits; a cleaner transfer test (applying the
+pooled curve to held-out own-fit countries outside the 61) needs a new
+computation on the detection tables and has not been run.
+
 ## 3. Things that will go wrong
 
 - **Fitting on individual detections instead of aggregated cells.** Detection-level

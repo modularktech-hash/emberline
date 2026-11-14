@@ -111,3 +111,16 @@ to each held-out cell-month's raw Suomi-NPP count.
 > resample whole cells and describe the uncertainty of the score, not of any
 > single month's count. Raw VIIRS, the FRP cut-off and the single-ratio baseline
 > are scored on exactly the same cell-months.
+
+## 5. Proposed Method-page copy — borrowed curves (for the web builder to place)
+
+> **Borrowed curves.** 41 countries have too few training detections (under
+> 5,000 Suomi-NPP detections in 2012–2018) for a curve of their own. They borrow
+> one shared curve whose two coefficients, and κ, are the averages of 61 larger
+> countries' fitted values, each weighted by how many training detections that
+> country had. This is an average of coefficients, not a model fitted to all
+> those detections at once. No uncertainty is estimated for a borrowed curve.
+> Because none of these 41 countries helped build the curve, their 2019–2021
+> scores show how well it transfers: median held-out R² −0.09 (24 of 41 below
+> zero) against 0.64 for countries with their own curve. Treat borrowed-curve
+> results as experimental.
