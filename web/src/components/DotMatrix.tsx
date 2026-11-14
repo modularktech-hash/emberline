@@ -30,7 +30,41 @@ const G: Record<string, string[]> = {
   ":": ["0", "0", "1", "0", "1", "0", "0"],
   "%": ["11001", "11010", "00010", "00100", "01000", "01011", "10011"],
   " ": ["00", "00", "00", "00", "00", "00", "00"],
+  "-": ["000", "000", "000", "111", "000", "000", "000"],
+  "+": ["000", "000", "010", "111", "010", "000", "000"],
+  ",": ["0", "0", "0", "0", "0", "1", "1"],
+  "×": ["00000", "00000", "10001", "01010", "00100", "01010", "10001"],
 };
+G["−"] = G["-"]; G["—"] = ["0000", "0000", "0000", "1111", "0000", "0000", "0000"];
+
+/** True when every character has a dot-matrix glyph. */
+export const dotable = (t: string) => [...t.toUpperCase()].every((c) => c in G);
+
+/**
+ * A key stat in dot-matrix numerals, falling back to the plain text when a
+ * character has no glyph. Same dot rhythm as the home widgets (gap ≈ dot/3).
+ */
+export function DotStat({ text, dot = 6, className = "" }: { text: string; dot?: number; className?: string }) {
+  if (!dotable(text)) return <span className={className}>{text}</span>;
+  return <DotText text={text} dot={dot} gap={dot / 3} className={className} />;
+}
+
+/** A dotted divider: a row of dim dots with an ember one leading. */
+export function DotRule({ className = "" }: { className?: string }) {
+  return (
+    <div aria-hidden className={`dot-rule ${className}`} />
+  );
+}
+
+/** Dot-matrix loading state: a 3x3 grid of dots lighting in a ripple. */
+export function DotLoader({ label = "Loading" }: { label?: string }) {
+  return (
+    <span role="status" className="inline-flex flex-col items-center gap-3">
+      <span className="dot-loader" aria-hidden>{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ animationDelay: `${((i % 3) + Math.floor(i / 3)) * 90}ms` }} />)}</span>
+      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">{label}</span>
+    </span>
+  );
+}
 
 /** Text drawn as a dot-matrix display; dots light up in sequence on first view. */
 export function DotText({ text, dot = 7, gap = 2.4, lit = "currentColor", dim = "rgba(127,127,127,0.12)", className = "" }:

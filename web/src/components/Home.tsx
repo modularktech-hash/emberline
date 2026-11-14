@@ -91,7 +91,8 @@ function Ticker({ names }: { names: string[] }) {
     </span>
   ));
   return (
-    <div className="marquee mx-auto mt-14 max-w-5xl py-2" aria-label={`Regions and satellites: ${names.join(", ")}`}>
+    <div className="marquee mx-auto mt-14 max-w-5xl py-2">
+      <p className="sr-only">Regions and satellites: {names.join(", ")}</p>
       <div aria-hidden>{row}{row.map((r, i) => <span key={i}>{r}</span>)}</div>
     </div>
   );
@@ -159,7 +160,7 @@ function Widgets({ d, live24, detections, bestR2 }: { d: ReturnType<typeof useHo
 function StoryStep({ i, n, p, children }: { i: number; n: number; p: MotionValue<number>; children: React.ReactNode }) {
   const a = i / n, b = (i + 1) / n;
   const a0 = Math.max(0, a - 0.08), a1 = Math.max(0.01, a);
-  const opacity = useTransform(p, [a0, a1, b - 0.06, b], [i === 0 ? 1 : 0.18, 1, 1, i === n - 1 ? 1 : 0.18]);
+  const opacity = useTransform(p, [a0, a1, b - 0.06, b], [i === 0 ? 1 : 0.3, 1, 1, i === n - 1 ? 1 : 0.3]);
   const x = useTransform(p, [a0, a1], [i === 0 ? 0 : -10, 0]);
   return <motion.div style={{ opacity, x }} className="flex min-h-[60vh] flex-col justify-center py-6">{children}</motion.div>;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { DotStat } from "@/components/DotMatrix";
+
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
@@ -80,8 +82,8 @@ export function ComparePage() {
                     <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full" style={{ background: COLORS[k] }} /><h2 className="display text-3xl">{n}</h2></div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                       <div><p className="text-xs text-[var(--text-muted)]">2012 step</p><p className="display tabular text-2xl">×{(stepRatio(annualTotals(data[k], 2009, 2014)) ?? NaN).toFixed(2)}</p></div>
-                      <div><p className="text-xs text-[var(--text-muted)]">Busiest year</p><p className="display tabular text-2xl">{best?.year}</p><p className="tabular text-xs text-[var(--text-secondary)]">{fmt(best?.value)}</p></div>
-                      <div><p className="text-xs text-[var(--text-muted)]">Held-out R²</p><p className="display tabular text-2xl">{row?.r2_model.toFixed(2)}</p></div>
+                      <div><p className="text-xs text-[var(--text-muted)]">Busiest year</p><p className="display tabular mt-1 text-2xl"><DotStat text={String(best?.year ?? "—")} dot={4} /></p><p className="tabular text-xs text-[var(--text-secondary)]">{fmt(best?.value)}</p></div>
+                      <div><p className="text-xs text-[var(--text-muted)]">Held-out R²</p><p className="display tabular mt-1 text-2xl"><DotStat text={row ? row.r2_model.toFixed(2) : "—"} dot={4} /></p></div>
                     </div>
                     <div className="mt-5"><MonthYearCalendar cal={data[k]} from={2003} to={2025} max={view.maxCell} /></div>
                   </section>

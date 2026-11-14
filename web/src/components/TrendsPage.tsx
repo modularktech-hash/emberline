@@ -1,5 +1,7 @@
 "use client";
 
+import { DotStat } from "@/components/DotMatrix";
+
 import { motion } from "motion/react";
 import { useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
@@ -46,7 +48,7 @@ export function TrendsPage() {
                   <button type="button" onClick={() => setMetric(m)} className={`card w-full p-5 text-left transition-transform hover:-translate-y-0.5 ${metric === m ? "!border-[var(--ember)]" : ""}`}>
                     <p className="eyebrow">{m} · days per decade</p>
                     <div className="mt-3 flex items-end gap-4">
-                      <div><p className="display tabular text-4xl">{fmt(harm)}</p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
+                      <div><p className="display tabular text-4xl"><DotStat text={String(fmt(harm))} dot={6} /></p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
                       <div><p className="display tabular text-2xl text-[var(--seq-5)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
                     </div>
                   </button>

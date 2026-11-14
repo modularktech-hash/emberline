@@ -11,7 +11,7 @@ export default function NotFound() {
         <div className="flex items-center justify-between gap-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
           <span>Signal lost</span><span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)]" />
         </div>
-        <div className="mt-6" role="img" aria-label="404">
+        <div className="mt-6">
           <DotText text="404" dot={13} gap={4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" />
         </div>
       </div>

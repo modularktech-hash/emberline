@@ -7,6 +7,7 @@ import { PageHead } from "@/components/ui";
 import { CountryPicker } from "@/components/CountryPicker";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { bboxToParents, type Bbox } from "@/lib/aoi";
+import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
 import type { Series } from "@/lib/types";
@@ -117,8 +118,8 @@ export function Explorer() {
               <div className="flex flex-col justify-center gap-5 border-t border-[var(--hairline)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                 <div>
                   <p className="eyebrow">The 2012 step</p>
-                  <p className="display tabular mt-1 text-6xl text-[var(--ember)]">
-                    ×{((mode === "raw" ? view.stepRaw : view.stepHarm) ?? NaN).toFixed(2)}
+                  <p className="display tabular mt-3 text-6xl text-[var(--ember)]">
+                    <DotStat text={`×${((mode === "raw" ? view.stepRaw : view.stepHarm) ?? NaN).toFixed(2)}`} dot={8} />
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                     Mean yearly count 2012–14 over 2009–11.{" "}

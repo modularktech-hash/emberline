@@ -4,6 +4,7 @@ import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransf
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { EASE, SPRING, SPRING_BOUNCY } from "@/lib/motion";
+import { DotLoader, DotRule, DotStat } from "@/components/DotMatrix";
 
 /** Fades, lifts and un-blurs its children into view once, as they scroll in. */
 export function Reveal({ children, delay = 0, y = 24, className }: { children: ReactNode; delay?: number; y?: number; className?: string }) {
@@ -50,6 +51,7 @@ export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; ti
         </h1>
       </Reveal>
       <Reveal delay={0.12}><p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-primary)]/80">{lede}</p></Reveal>
+      <Reveal delay={0.18}><DotRule className="mt-10" /></Reveal>
     </header>
   );
 }
@@ -84,14 +86,14 @@ export function Stat({ label, value, note }: { label: string; value: ReactNode; 
   return (
     <div className="card p-5">
       <p className="eyebrow">{label}</p>
-      <p className="display tabular mt-2 text-4xl">{value}</p>
+      <p className="display tabular mt-2 text-4xl">{typeof value === "string" || typeof value === "number" ? <DotStat text={String(value)} dot={6} /> : value}</p>
       {note && <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">{note}</p>}
     </div>
   );
 }
 
 export function Loading({ h = 320 }: { h?: number }) {
-  return <div className="animate-pulse rounded-[28px] bg-white/40" style={{ height: h }} />;
+  return <div className="flex items-center justify-center rounded-[28px] bg-white/35" style={{ height: h }}><DotLoader /></div>;
 }
 export function Failed({ error }: { error: Error }) {
   return <p className="glass p-5 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>;
