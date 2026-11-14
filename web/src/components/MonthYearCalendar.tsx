@@ -21,14 +21,16 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
   const breaks = rampBreaks(max);
   return (
     <div>
-      <div className="cal-wipe grid gap-[3px]" style={{ gridTemplateColumns: "2.6rem repeat(12, minmax(0, 1fr))" }} onMouseLeave={() => setHover(null)}>
+      {/* On phones the matrix keeps readable cells (>= 28 px) and scrolls sideways inside this box, year labels pinned. */}
+      <div className="max-w-full overflow-x-auto overscroll-x-contain" tabIndex={0} role="region" aria-label="Burning activity calendar, months by year (scrolls sideways on small screens)">
+      <div className="cal-wipe grid min-w-[26.5rem] gap-[3px] sm:min-w-0" style={{ gridTemplateColumns: "2.6rem repeat(12, minmax(28px, 1fr))" }} onMouseLeave={() => setHover(null)}>
         <div />
         {MONTHS.map((m) => (
           <div key={m} className="pb-1 text-center text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{m}</div>
         ))}
         {years.map((y, yi) => (
           <div key={y} className="contents">
-            <div className={`tabular flex items-center text-[11px] ${y === 2012 ? "text-[var(--ember)]" : "text-[var(--text-muted)]"}`}>{y}</div>
+            <div className={`tabular sticky left-0 z-[1] flex items-center bg-[var(--surface-page)] text-[11px] ${y === 2012 ? "text-[var(--ember)]" : "text-[var(--text-muted)]"}`}>{y}</div>
             {MONTHS.map((_, mi) => {
               const row = at(y, mi + 1);
               const idx = rampIndex(row?.value ?? null, max);
@@ -39,7 +41,7 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
                   onMouseEnter={() => setHover({ year: y, month: mi + 1 })}
                   onFocus={() => setHover({ year: y, month: mi + 1 })}
                   aria-label={`${MONTHS[mi]} ${y}: ${row?.value == null ? "no data" : fmt(row.value)}`}
-                  className="h-[18px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-1 sm:h-[22px]"
+                  className="h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-1 sm:h-[22px]"
                   style={{
                     background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, rgba(18,23,21,0.1) 3px 4px)" : RAMP[idx],
                     transition: `background-color 600ms cubic-bezier(0.22,1,0.36,1) ${yi * 14}ms`,
@@ -49,6 +51,7 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
             })}
           </div>
         ))}
+      </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-[var(--text-secondary)]">
         <div className="tabular min-h-[1.25rem]">

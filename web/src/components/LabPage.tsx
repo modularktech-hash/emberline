@@ -29,7 +29,7 @@ function Tool({ n, title, intro, children, formula }: { n: string; title: string
             <h2 className="display text-3xl">{title}</h2>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">{intro}</p>
             <div className="mt-5">{children}</div>
-            {formula && <pre className="mt-5 overflow-x-auto rounded-xl bg-[var(--surface-2)] px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{formula}</pre>}
+            {formula && <pre tabIndex={0} role="region" aria-label={`Formula: ${title}`} className="mt-5 max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] px-4 py-3 font-mono text-xs text-[var(--text-secondary)]">{formula}</pre>}
           </div>
         </div>
       </section>
@@ -44,8 +44,8 @@ function Out({ label, value, big }: { label: string; value: ReactNode; big?: boo
     </div>
   );
 }
-const Num = ({ v, set, step = 1, min, max, w = "w-24" }: { v: number; set: (n: number) => void; step?: number; min?: number; max?: number; w?: string }) => (
-  <input type="number" value={v} step={step} min={min} max={max} onChange={(e) => set(Number(e.target.value))}
+const Num = ({ v, set, step = 1, min, max, w = "w-24", label }: { v: number; set: (n: number) => void; step?: number; min?: number; max?: number; w?: string; label: string }) => (
+  <input type="number" aria-label={label} value={v} step={step} min={min} max={max} onChange={(e) => set(Number(e.target.value))}
     className={`tabular ${w} field rounded-xl px-2.5 py-1.5 text-sm`} />
 );
 
@@ -76,7 +76,9 @@ export function LabPage() {
   const { data: cal } = useParquet(() => getCalendar({ scope: "country", keys: [region], mode: "harmonized" }), `lab-cal-${region}`);
 
   const annual = useMemo(() => data?.table.countries.find((c) => c.country === region)?.annual ?? [], [data, region]);
-  const values = list.split(/[\s,;]+/).map(Number).filter((v) => Number.isFinite(v) && v > 0);
+  const entries = list.split(/[\s,;]+/).filter((t) => t !== "");
+  const values = entries.map(Number).filter((v) => Number.isFinite(v) && v > 0);
+  const rejected = entries.filter((t) => !(Number.isFinite(Number(t)) && Number(t) > 0));
   const sumP = fit ? values.reduce((s, v) => s + P(v, fit.logistic.b0, fit.logistic.b1), 0) : 0;
 
   const mean = (lo: number, hi: number) => {
@@ -112,7 +114,7 @@ export function LabPage() {
 
   return (
     <div>
-      <PageHead eyebrow="Science · lab" title="The model," italic="in your hands."
+      <PageHead compact eyebrow="Science · lab" title="The model," italic="in your hands."
         lede="Every coefficient Emberline uses, exposed as a calculator. Pick a region, move the numbers, and see exactly how a VIIRS detection becomes a MODIS-equivalent count." />
 
       <div className="card sticky top-24 z-20 flex flex-wrap items-center gap-3 p-3">
@@ -126,7 +128,7 @@ export function LabPage() {
           formula={`P(MODIS detects) = 1 / (1 + exp(−(b₀ + b₁ · ln FRP)))\n                = 1 / (1 + exp(−(${fit?.logistic.b0.toFixed(3)} + ${fit?.logistic.b1.toFixed(3)} · ln ${frp})))`}>
           <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
             <div>
-              <label className="flex items-center gap-3 text-sm">FRP <input type="range" min={-0.3} max={3} step={0.01} value={Math.log10(frp)} onChange={(e) => setFrp(Math.round(10 ** Number(e.target.value) * 10) / 10)} className="flex-1 accent-[var(--ember)]" /><Num v={frp} set={setFrp} step={0.1} min={0.5} /> MW</label>
+              <label className="flex items-center gap-3 text-sm">FRP <input type="range" aria-label="Fire radiative power (log scale)" min={-0.3} max={3} step={0.01} value={Math.log10(frp)} onChange={(e) => setFrp(Math.round(10 ** Number(e.target.value) * 10) / 10)} className="flex-1 accent-[var(--ember)]" /><Num v={frp} set={setFrp} step={0.1} min={0.5} label="Fire radiative power, MW" /> MW</label>
               <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full">
                 <rect x={lx(9)} width={lx(11) - lx(9)} y={10} height={H - 36} fill="var(--ink)" opacity="0.06" />
                 {[1, 10, 100, 1000].map((f) => <text key={f} x={lx(f)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--text-muted)">{f} MW</text>)}
@@ -144,7 +146,10 @@ export function LabPage() {
 
         <Tool n="02" title="VIIRS → MODIS-equivalent converter" intro="Paste the FRP of any set of VIIRS detections (MW, comma- or space-separated). Emberline weights each by its detection probability and scales by κ."
           formula={`Aqua-equivalent count = κ · Σ P(FRPᵢ) = ${fit?.kappa.toFixed(3)} × ${sumP.toFixed(3)} = ${fit ? (fit.kappa * sumP).toFixed(3) : "—"}`}>
-          <textarea value={list} onChange={(e) => setList(e.target.value)} rows={3} className="tabular w-full field rounded-2xl p-3 font-mono text-sm" />
+          <textarea value={list} onChange={(e) => setList(e.target.value)} rows={3} aria-label="FRP values of VIIRS detections, MW" aria-describedby="frp-status" className="tabular w-full field rounded-2xl p-3 font-mono text-sm" />
+          <p id="frp-status" role="status" className={`mt-2 text-xs ${rejected.length ? "text-[var(--ember)]" : "text-[var(--text-muted)]"}`}>
+            {values.length} valid value{values.length === 1 ? "" : "s"}{rejected.length ? <>; {rejected.length} excluded ({rejected.slice(0, 8).map((r) => `“${r}”`).join(", ")}{rejected.length > 8 ? ", …" : ""}). FRP must be a positive number.</> : "."}
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out label="VIIRS detections" value={values.length} />
             <Out label="Σ P (expected MODIS sightings)" value={fmtNum(sumP, 2)} />
@@ -157,8 +162,8 @@ export function LabPage() {
           formula={`ratio = mean(${mode}, ${rb[0]}–${rb[1]}) / mean(${mode}, ${ra[0]}–${ra[1]}) = ${after != null ? fmt(after) : "—"} / ${before != null ? fmt(before) : "—"}`}>
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <Segmented label="step-mode" value={mode} onChange={setMode} options={[{ value: "raw", label: "Raw" }, { value: "harm", label: "Harmonized" }]} />
-            <span>Before</span><Num v={ra[0]} set={(n) => setRa([n, ra[1]])} min={2001} max={2025} w="w-20" />–<Num v={ra[1]} set={(n) => setRa([ra[0], n])} min={2001} max={2025} w="w-20" />
-            <span>After</span><Num v={rb[0]} set={(n) => setRb([n, rb[1]])} min={2001} max={2025} w="w-20" />–<Num v={rb[1]} set={(n) => setRb([rb[0], n])} min={2001} max={2025} w="w-20" />
+            <span>Before</span><Num v={ra[0]} set={(n) => setRa([n, ra[1]])} min={2001} max={2025} w="w-20" label="Before period start year" />–<Num v={ra[1]} set={(n) => setRa([ra[0], n])} min={2001} max={2025} w="w-20" label="Before period end year" />
+            <span>After</span><Num v={rb[0]} set={(n) => setRb([n, rb[1]])} min={2001} max={2025} w="w-20" label="After period start year" />–<Num v={rb[1]} set={(n) => setRb([rb[0], n])} min={2001} max={2025} w="w-20" label="After period end year" />
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <Out label="Mean before" value={fmt(before)} /><Out label="Mean after" value={fmt(after)} />
@@ -170,8 +175,8 @@ export function LabPage() {
           formula={`share(t) = exp(−(t − h_peak)² / 2σ²)   h_peak = ${DIURNAL[cover].h} h, σ = ${DIURNAL[cover].s} h  (baseline ignored)`}>
           <div className="flex flex-wrap gap-1.5">{Object.keys(DIURNAL).map((c) => <Chip key={c} on={c === cover} onClick={() => setCover(c)}>{c}</Chip>)}</div>
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-            <label className="flex items-center gap-2">Overpass A <Num v={tA} set={setTA} step={0.05} min={6} max={20} /> h</label>
-            <label className="flex items-center gap-2">Overpass B <Num v={tB} set={setTB} step={0.05} min={6} max={20} /> h</label>
+            <label className="flex items-center gap-2">Overpass A <Num v={tA} set={setTA} step={0.05} min={6} max={20} label="Overpass A, local solar hour" /> h</label>
+            <label className="flex items-center gap-2">Overpass B <Num v={tB} set={setTB} step={0.05} min={6} max={20} label="Overpass B, local solar hour" /> h</label>
             <span className="text-xs text-[var(--text-muted)]">Try 13.5 (Suomi-NPP) vs 14.9 (Aqua over Australia, 2025)</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -183,7 +188,7 @@ export function LabPage() {
 
         <Tool n="05" title="Trend calculator" intro="Ordinary least squares on the harmonized yearly totals for any range of years."
           formula={trend ? `slope = ${trend.slope.toFixed(1)} detections/yr  (${trend.pct.toFixed(2)}% of mean per yr)   R² = ${trend.r2.toFixed(3)}   t = ${trend.t.toFixed(2)}, n = ${trend.n}` : "need ≥ 3 years"}>
-          <div className="flex flex-wrap items-center gap-3 text-sm">From <Num v={t0} set={setT0} min={2001} max={2025} w="w-20" /> to <Num v={t1} set={setT1} min={2001} max={2025} w="w-20" /></div>
+          <div className="flex flex-wrap items-center gap-3 text-sm">From <Num v={t0} set={setT0} min={2001} max={2025} w="w-20" label="Trend start year" /> to <Num v={t1} set={setT1} min={2001} max={2025} w="w-20" label="Trend end year" /></div>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out big label="Change per year" value={trend ? fmtPct(trend.pct) : "—"} />
             <Out label="Slope (detections / yr)" value={trend ? fmt(trend.slope) : "—"} />
@@ -194,8 +199,8 @@ export function LabPage() {
 
         <Tool n="06" title="Anomaly calculator" intro="Where does one month sit against the same month in every other year, on the harmonized record?">
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            Year <Num v={ay} set={setAy} min={2003} max={2025} w="w-20" />
-            Month <select value={am} onChange={(e) => setAm(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
+            Year <Num v={ay} set={setAy} min={2003} max={2025} w="w-20" label="Anomaly year" />
+            Month <select aria-label="Anomaly month" value={am} onChange={(e) => setAm(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5">{MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Out label={`${MONTHS[am - 1]} ${ay}`} value={fmt(anomaly?.v)} />
@@ -203,7 +208,7 @@ export function LabPage() {
             <Out label="× median" value={anomaly?.med ? fmtRatio(anomaly.v / anomaly.med) : "—"} />
             <Out big label="Percentile" value={anomaly ? `${Math.round(anomaly.rank * 100)}th` : "—"} />
           </div>
-          {anomaly && anomaly.q90 != null && anomaly.v > anomaly.q90 && <p className="mt-3 text-sm font-medium text-[var(--ember)]">Critical period: above the 90th percentile for {MONTHS[am - 1]}.</p>}
+          {anomaly && anomaly.q90 != null && anomaly.v > anomaly.q90 && <p className="mt-3 text-sm font-medium text-[var(--ember)]">Unusually high: above the historical 90th percentile for {MONTHS[am - 1]}.</p>}
         </Tool>
       </div>
     </div>

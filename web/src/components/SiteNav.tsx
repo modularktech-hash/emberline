@@ -13,8 +13,15 @@ export function SiteNav() {
   const [mobile, setMobile] = useState(false);
   const [path, setPath] = useState(pathname);
   if (path !== pathname) { setPath(pathname); setOpen(null); setMobile(false); }
+  const toggle = useRef<HTMLButtonElement>(null);
+  const mobileRef = useRef(false);
+  useEffect(() => { mobileRef.current = mobile; }, [mobile]);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && (setOpen(null), setMobile(false));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(null);
+      if (mobileRef.current) { setMobile(false); toggle.current?.focus(); } // focus back on the menu button
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -85,7 +92,7 @@ export function SiteNav() {
 
         <div className="flex items-center gap-2">
           <Link href="/explorer" className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">Open the calendar</Link>
-          <button type="button" className="glass-thin flex h-9 w-9 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
+          <button ref={toggle} type="button" className="glass-thin flex h-9 w-9 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
             <svg width="16" height="12" viewBox="0 0 16 12"><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.6" fill="none" /></svg>
           </button>
         </div>

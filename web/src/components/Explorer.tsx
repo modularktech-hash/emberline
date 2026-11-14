@@ -5,14 +5,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnualLine } from "@/components/AnnualLine";
 import { CountUp, PageHead, Reveal } from "@/components/ui";
 import { Eyebrow } from "@/components/Figure";
-import { fmtR2, fmtRatio } from "@/lib/format";
+import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
-import { bboxToParents, type Bbox } from "@/lib/aoi";
+import { bboxToParents, cellsExtent, type Bbox } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
 import { prettyName } from "@/lib/names";
+import { getParams } from "@/lib/queries";
+import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
@@ -96,8 +98,9 @@ export function Explorer() {
 
   return (
     <div>
-      <PageHead eyebrow="Explorer · burning activity calendar" title="Any area. Every month." italic="Since 2001."
-        lede="Pick a region or draw your own, flip between the raw and harmonized record, choose the years, and download exactly what you see." />
+      <PageHead compact eyebrow="Explorer · burning activity calendar" title="Every fitted country. Every month." italic="2003–2025."
+        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Source archive from 2001; harmonized record 2003–2025; the calendar ends in 2025 (the live globe is separate)." />
+      <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
         <div className="flex items-center gap-3 bg-white/30 px-4 py-2.5">
@@ -184,11 +187,11 @@ export function Explorer() {
                 </div>
                 {fit && (
                   <div>
-                    <Eyebrow>Held-out accuracy</Eyebrow>
+                    <Eyebrow>This country&apos;s held-out R²</Eyebrow>
                     <p className="display tabular mt-2 text-3xl"><CountUp to={fit.validation_test.model.r2} decimals={Math.abs(fit.validation_test.model.r2) >= 1 ? 1 : 2} /> <span className="stat-unit text-[var(--text-secondary)]">R²</span></p>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                       Against observed Aqua, {data.params.test_years[0]}–{data.params.test_years[1]}, years the model never saw.
-                      Raw VIIRS scores {fmtR2(fit.validation_test.raw_viirs.r2)}.
+                      Raw VIIRS scores {fmtR2(fit.validation_test.raw_viirs.r2)}. Bias {fmtPct(fit.validation_test.model.bias_pct)}, RMSE {fmtNum(fit.validation_test.model.rmse, 1)} detections per cell-month. R² is not a percentage accuracy.
                       {fit.fit_source === "pooled" && " Pooled curve: this country had too few training matches for its own."}
                     </p>
                   </div>
@@ -243,7 +246,7 @@ export function Explorer() {
       <Reveal>
       <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div ref={mapSlot}>
-          {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} onSelect={selectBox} className="h-[340px]" />
+          {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} cells={area.kind === "box" ? data?.raw.keys : undefined} onSelect={selectBox} className="h-[340px]" />
             : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" aria-label="Map loading" />}
         </div>
         <div className="card p-5">
@@ -262,11 +265,33 @@ export function Explorer() {
           </div>
           <button type="button" onClick={applyTyped} className="mt-3 w-full rounded-lg pill-dark px-3 py-2.5 text-sm font-medium">Show this area</button>
           <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
+            {area.kind === "box" && data && (() => { const ex = cellsExtent(data.raw.keys); return (
+              <span className="mb-2 block rounded-lg bg-[var(--surface-2)] p-2 text-[var(--text-secondary)]">
+                <span className="block">Requested: {area.bbox.map((v) => v.toFixed(2)).join(", ")} (W, S, E, N)</span>
+                <span className="block">Effective coverage: {data.raw.keys.length} of {area.parents.length} touched cells have data{ex ? <>, spanning {ex.map((v) => v.toFixed(1)).join(", ")}</> : ""} — dashed blue on the map.</span>
+              </span>); })()}
             Areas resolve to the ~300 km grid cells (H3 resolution 2) they touch, anywhere in the processed FIRMS record, so a small box reports its surrounding cell. A cell is summed whole: it can straddle a border.
           </p>
         </div>
       </section>
       </Reveal>
     </div>
+  );
+}
+
+/** Coverage, counted from params_global.json: own fit, pooled fit, too sparse to fit. */
+function Coverage() {
+  const { data: p } = useParquet(() => getParams(), "params");
+  if (!p) return null;
+  const fits = Object.values(p.countries);
+  const pooled = fits.filter((f) => f.fit_source === "pooled").length;
+  const failed = Object.keys(p.failed ?? {}).length;
+  return (
+    <p className="-mt-4 mb-6 max-w-3xl text-sm text-[var(--text-secondary)]">
+      Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
+      <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
+      <span className="tabular text-[var(--text-primary)]">{failed}</span> too sparse to fit (raw record only, uncorrected) · fit {p.fit_version}.
+      {p.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
+    </p>
   );
 }

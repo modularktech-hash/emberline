@@ -1,4 +1,4 @@
-import { cellToLatLng, latLngToCell, polygonToCells } from "h3-js";
+import { cellToBoundary, cellToLatLng, latLngToCell, polygonToCells } from "h3-js";
 
 /**
  * Area-of-interest helpers.
@@ -75,4 +75,14 @@ export function bboxToParents(bbox: Bbox, samples = 14): string[] {
     }
   }
   return [...out];
+}
+
+/** Bounding extent [west, south, east, north] of a set of H3 cells (the effective coverage of a box). */
+export function cellsExtent(cells: string[]): Bbox | null {
+  if (!cells.length) return null;
+  let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
+  for (const c of cells) for (const [lat, lng] of cellToBoundary(c)) {
+    w = Math.min(w, lng); e = Math.max(e, lng); s = Math.min(s, lat); n = Math.max(n, lat);
+  }
+  return [w, s, e, n];
 }

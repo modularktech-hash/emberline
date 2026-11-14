@@ -58,17 +58,18 @@ export function CountUp({ to, decimals = 0, prefix = "", suffix = "", className 
   return <motion.span ref={ref} className={`tabular ${className ?? ""}`} aria-label={fmtV(to)}>{text}</motion.span>;
 }
 
-export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; title: string; italic?: string; lede: ReactNode }) {
+export function PageHead({ eyebrow, title, italic, lede, compact = false }: { eyebrow: string; title: string; italic?: string; lede: ReactNode; compact?: boolean }) {
+  // compact: tool pages, so the tool itself is reachable quickly on a phone.
   return (
-    <header className="pb-12 pt-20 sm:pb-16 sm:pt-28">
+    <header className={compact ? "pb-8 pt-8 sm:pb-10 sm:pt-14" : "pb-12 pt-20 sm:pb-16 sm:pt-28"}>
       <Reveal><Eyebrow>{eyebrow}</Eyebrow></Reveal>
       <Reveal delay={0.06}>
-        <h1 className="display t-d1 mt-4 max-w-4xl">
+        <h1 className={`display ${compact ? "t-d2" : "t-d1"} mt-3 max-w-4xl`}>
           {title}{italic && <> <span className="italic text-[var(--ember)]">{italic}</span></>}
         </h1>
       </Reveal>
-      <Reveal delay={0.12}><p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--text-primary)]/80">{lede}</p></Reveal>
-      <Reveal delay={0.18}><DotRule className="mt-10" /></Reveal>
+      <Reveal delay={0.12}><p className={`${compact ? "mt-3 text-base" : "mt-6 text-lg"} max-w-2xl leading-relaxed text-[var(--text-primary)]/80`}>{lede}</p></Reveal>
+      {!compact && <Reveal delay={0.18}><DotRule className="mt-10" /></Reveal>}
     </header>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { fmtR2, fmtRatio } from "@/lib/format";
+import { fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { Eyebrow, Stat } from "@/components/Figure";
 
 import { motion } from "motion/react";
@@ -42,7 +42,7 @@ export function ComparePage() {
 
   return (
     <div>
-      <PageHead eyebrow="Explore · compare" title="Two regions." italic="One unit."
+      <PageHead compact eyebrow="Explore · compare" title="Two regions." italic="One unit."
         lede="Because the harmonized record is in the same unit every year, two regions can be compared directly — their seasons, their extremes, and how each responded to the 2012 sensor change." />
       <div className="card flex flex-wrap items-center gap-4 p-4">
         {[["A", a, setA], ["B", b, setB]].map(([l, v, set], i) => (
@@ -72,6 +72,13 @@ export function ComparePage() {
                   <motion.path key={`${k}-${mode}-${norm}-${a}-${b}`} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2 }}
                     d={s.map((v, i) => `${i ? "L" : "M"}${x(i)},${T + (1 - v / view.max) * (H - T - B)}`).join(" ")} fill="none" stroke={COLORS[k]} strokeWidth="2.6" />
                 ))}
+                {view.scaled.map((s, k) => {
+                  // Direct labels at the line ends, nudged apart if they would overlap.
+                  const ys = view.scaled.map((q) => T + (1 - q[q.length - 1] / view.max) * (H - T - B));
+                  let yy = ys[k] - 8;
+                  if (k === 1 && Math.abs(ys[1] - ys[0]) < 14) yy = ys[0] + (ys[1] >= ys[0] ? 16 : -22);
+                  return <text key={`lab-${k}`} x={x(s.length - 1)} y={Math.max(T + 10, yy)} textAnchor="end" fontSize="12" fontWeight="600" fill={COLORS[k]}>{k === 0 ? "A" : "B"} · {prettyName(k === 0 ? a : b)}</text>;
+                })}
               </svg>
             </section>
           </Reveal>
@@ -81,13 +88,13 @@ export function ComparePage() {
               const s = view.series[k];
               const best = [...s].sort((p, q) => (q.value ?? 0) - (p.value ?? 0))[0];
               return (
-                <Reveal key={n} delay={k * 0.08}>
+                <Reveal key={n} delay={k * 0.08} className="min-w-0">
                   <section className="card p-5">
                     <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full" style={{ background: COLORS[k] }} /><h2 className="display text-3xl">{prettyName(n)}</h2>{row?.fit_source === "pooled" && <span className="rounded-full bg-[var(--ember-soft)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}</div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                       <Stat size="sm" label="2012 step" value={fmtRatio(stepRatio(annualTotals(data[k], 2009, 2014)))} />
                       <Stat size="sm" label="Busiest year" value={String(best?.year ?? "—")} note={<span className="tabular">{fmt(best?.value)}</span>} />
-                      <Stat size="sm" label="Held-out R²" value={row ? fmtR2(row.r2_model) : "—"} note={mode === "raw" ? <span>raw record, uncorrected</span> : undefined} />
+                      <Stat size="sm" label="Held-out R²" value={row ? fmtR2(row.r2_model) : "—"} note={<span>bias {row ? fmtPct(row.bias_pct) : "—"}{mode === "raw" ? " · showing raw, uncorrected" : ""}</span>} />
                     </div>
                     <div className="mt-5"><MonthYearCalendar cal={data[k]} from={2003} to={2025} max={view.maxCell} /></div>
                   </section>

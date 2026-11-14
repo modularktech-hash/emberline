@@ -29,7 +29,7 @@ const FILES = [
   ["calendar_raw_global.parquet", "Monthly raw counts by sensor (MODIS, VIIRS), same keys, including countries too sparse to fit (uncorrected)"],
   ["params_global.json", "Every fitted coefficient and validation metric, per country; pooled fits and unfitted countries listed"],
   ["countries.json", "This summary table, with yearly raw and harmonized totals"],
-  ["season.json", "Season onset, peak, end per country and year, raw and harmonized; daily or monthly resolution per country"],
+  ["season.json", "Season onset (10%), midpoint (50%) and end (90%) per country and year, raw and harmonized; daily or monthly resolution per country"],
   ["drift.json", "Mean local solar overpass time per satellite per year (countries with point detections)"],
   ["calendar_harmonized.parquet", "The first four countries (Australia, Canada, Chile, Portugal): fallback copy"],
   ["calendar_raw.parquet", "The first four countries: raw fallback copy"],
@@ -59,7 +59,7 @@ export function DataPage() {
 
   return (
     <div>
-      <PageHead eyebrow="Science · data" title="Every table." italic="Every download."
+      <PageHead compact eyebrow="Science · data" title="Every table." italic="Every download."
         lede="All of Emberline's data is plain files on this site — no account, no API key, no server. Browse it here, download it, or query it straight from your own code." />
       {error && <Failed error={error} />}
       {loading && <Loading h={360} />}
@@ -190,7 +190,7 @@ export function DataPage() {
                   <h2 className="display text-3xl">Query it yourself</h2>
                   <Segmented label="lang" value={lang} onChange={setLang} options={[{ value: "py", label: "Python" }, { value: "js", label: "JavaScript" }, { value: "sql", label: "DuckDB" }]} />
                 </div>
-                <pre className="mt-4 overflow-x-auto rounded-xl bg-[var(--ink)] p-4 font-mono text-xs leading-relaxed text-[#efe9d9]"><code>{snippet}</code></pre>
+                <pre tabIndex={0} role="region" aria-label="Code example" className="mt-4 max-w-full overflow-x-auto rounded-xl bg-[var(--ink)] p-4 font-mono text-xs leading-relaxed text-[#efe9d9]"><code>{snippet}</code></pre>
                 <button type="button" onClick={() => navigator.clipboard?.writeText(snippet)} className="mt-3 glass rounded-full px-3 py-1 text-xs">Copy</button>
                 <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">The Parquet files support HTTP range requests, so readers fetch only the row groups they need. `cell_day.parquet` is sorted by H3 res-2 parent then date: filter on `h3_parent` for fast area queries.</p>
               </section>

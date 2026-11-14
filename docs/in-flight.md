@@ -70,35 +70,41 @@ right now, what state the working tree may be in, and how to pick it up.
 
 ### 2 · Audit fixes: wording
 
-- [ ] `a1` Coverage claims match reality (countries, 2003–2025, live layer separate)
-- [ ] `a2` "Peak" renamed "season midpoint"
-- [ ] `a3` Aqua called "reference", not "truth"
-- [ ] `a4` Soften "The fires did not" and "no longer matters"
-- [ ] `a5` "VIIRS record begins" for 2012
-- [ ] `a6` "Critical" becomes "unusually high: above 90th percentile"
-- [ ] `a7` Globe: "Recent satellite fire detections" with clear timestamps
-- [ ] `a8` Each region shows its own held-out R² and bias
-- [ ] `a9` About: concrete analyst task
-- [ ] `a10` Method: explain κ
-- [ ] `a11` Method: error metrics and how confidence intervals are built
+- [x] `a1` Coverage claims match reality (countries, 2003–2025, live layer separate)
+- [x] `a2` "Peak" renamed "season midpoint"
+- [x] `a3` Aqua called "reference", not "truth"
+- [x] `a4` Soften "The fires did not" and "no longer matters"
+- [x] `a5` "VIIRS record begins" for 2012
+- [x] `a6` "Critical" becomes "unusually high: above 90th percentile"
+- [x] `a7` Globe: "Recent satellite fire detections" with clear timestamps
+- [x] `a8` Each region shows its own held-out R² and bias
+- [x] `a9` About: concrete analyst task
+- [x] `a10` Method: explain κ
+  - κ has no interval of its own in the fit; the page says so and points to the held-out bias interval
+- [x] `a11` Method: error metrics and how confidence intervals are built
 
 ### 3 · Audit fixes: bugs
 
-- [ ] `b1` Trends month axis (July twice, February missing)
-- [ ] `b2` Single-year chart draws a triangle
-- [ ] `b3` Map loading, failure and retry states
-- [ ] `b4` Custom area shows the cells actually included
-- [ ] `b5` Lab converter reports rejected entries
+- [x] `b1` Trends month axis (July twice, February missing)
+- [x] `b2` Single-year chart draws a triangle
+- [x] `b3` Map loading, failure and retry states
+  - Load timeout 15 s, then failure message + Retry + pointer to typed bounds; checked with the basemap host blocked
+- [x] `b4` Custom area shows the cells actually included
+- [x] `b5` Lab converter reports rejected entries
 
 ### 4 · Accessibility and mobile
 
-- [ ] `c1` Lab inputs have accessible names
-- [ ] `c2` Code blocks keyboard focusable
-- [ ] `c3` Escape closes the mobile menu
-- [ ] `c4` Readable scrolling calendar on phones
-- [ ] `c5` Shorter intros on tool pages
-- [ ] `c6` Compare: Region A / Region B and line labels
-- [ ] `c7` Credits link to datasets and papers
+- [x] `c1` Lab inputs have accessible names
+- [x] `c2` Code blocks keyboard focusable
+- [x] `c3` Escape closes the mobile menu
+- [x] `c4` Readable scrolling calendar on phones
+  - Cells 29×28 px at 390 px, matrix scrolls sideways inside its box, years pinned
+- [x] `c5` Shorter intros on tool pages
+  - Compact header on Explorer, Seasons, Trends, Compare, Lab, Data
+- [x] `c6` Compare: Region A / Region B and line labels
+  - Selectors were already 'Region A/B'; lines now labelled at their ends
+- [x] `c7` Credits link to datasets and papers
+  - Linked FIRMS, LAADS transition PDF, CelesTrak, Andela 2015 DOI, Laurent 2019, Natural Earth, OpenFreeMap/OSM; Roberts & Wooster 2008 and Schroeder 2010 cited by name only (DOIs not verified here)
 
 ### 5 · Testing
 
