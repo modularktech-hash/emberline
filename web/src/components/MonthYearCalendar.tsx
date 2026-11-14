@@ -41,7 +41,7 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
                   aria-label={`${MONTHS[mi]} ${y}: ${row?.value == null ? "no data" : fmt(row.value)}`}
                   className="h-[18px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-1 sm:h-[22px]"
                   style={{
-                    background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, rgba(255,255,255,0.06) 3px 4px)" : RAMP[idx],
+                    background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, rgba(18,23,21,0.1) 3px 4px)" : RAMP[idx],
                     transition: `background-color 600ms cubic-bezier(0.22,1,0.36,1) ${yi * 14}ms`,
                   }}
                 />

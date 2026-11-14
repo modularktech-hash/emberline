@@ -72,19 +72,31 @@ export function Explorer() {
 
   return (
     <div>
-      <section className="pb-10 pt-14 sm:pt-20">
-        <p className="eyebrow">NASA FIRMS · MODIS + VIIRS · 2003–2025</p>
-        <h1 className="display mt-4 max-w-3xl text-5xl leading-[1.02] sm:text-7xl">
+      <section className="pb-12 pt-16 text-center sm:pt-24">
+        <p className="eyebrow">Emberline · NASA FIRMS · MODIS + VIIRS · 2003–2025</p>
+        <h1 className="display mx-auto mt-5 max-w-4xl text-[3.4rem] leading-[0.98] sm:text-[6.4rem]">
           25 years of fire.<br /><span className="italic text-[var(--ember)]">One unbroken line.</span>
         </h1>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--text-secondary)] sm:text-lg">
-          In 2012 a sharper satellite sensor began seeing small fires the old one could not. Fire records
-          jumped. The fires did not. Emberline rebuilds the record so the sensor no longer matters, and
-          shows it as a burning calendar for any area.
+        <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-[var(--text-secondary)]">
+          In 2012 a sharper satellite began seeing small fires the old one could not. The records
+          jumped. The fires did not. Emberline rebuilds the record so the sensor no longer matters.
         </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <button type="button" onClick={() => { setMode("harmonized"); document.getElementById("explorer")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+            className="pill-dark px-6 py-3 text-[15px] font-medium shadow-[0_10px_24px_-10px_rgba(18,23,21,0.6)]">
+            Remove the 2012 jump &nbsp;→
+          </button>
+          <a href="/method" className="text-[15px] font-medium underline decoration-[var(--hairline)] underline-offset-4">See the proof</a>
+        </div>
+        <p className="eyebrow mt-6 !text-[10px] !text-[var(--text-muted)]">No account · no API key · every number computed from NASA data</p>
       </section>
 
-      <section className="card p-4 sm:p-6">
+      <section id="explorer" className="window scroll-mt-24">
+        <div className="flex items-center gap-3 border-b border-[var(--hairline)] bg-[var(--surface-2)] px-4 py-2.5">
+          <span className="flex gap-1.5">{[0, 1, 2].map((d) => <span key={d} className="h-2.5 w-2.5 rounded-full bg-[rgba(18,23,21,0.14)]" />)}</span>
+          <span className="tabular mx-auto rounded-md border border-[var(--hairline)] bg-[var(--surface-1)] px-3 py-0.5 font-mono text-[11px] text-[var(--text-secondary)]">emberline / burning-activity-calendar</span>
+        </div>
+        <div className="p-4 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Area">
             {(data?.countries ?? ["Canada"]).map((c) => {
@@ -101,7 +113,7 @@ export function Explorer() {
           <div className="flex rounded-full border border-[var(--hairline)] p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ember)] text-[#1a0d05]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {m === "raw" ? "Raw record" : "Harmonized"}
               </button>
             ))}
@@ -127,7 +139,7 @@ export function Explorer() {
               <div className="flex flex-col justify-center gap-5 border-t border-[var(--hairline)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                 <div>
                   <p className="eyebrow">The 2012 step</p>
-                  <p className="display tabular mt-1 text-5xl">
+                  <p className="display tabular mt-1 text-6xl text-[var(--ember)]">
                     ×{((mode === "raw" ? view.stepRaw : view.stepHarm) ?? NaN).toFixed(2)}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
@@ -191,6 +203,7 @@ export function Explorer() {
             </div>
           </>
         )}
+        </div>
       </section>
 
       <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_20rem]">
@@ -209,7 +222,7 @@ export function Explorer() {
               </label>
             ))}
           </div>
-          <button type="button" onClick={applyTyped} className="mt-3 w-full rounded-lg bg-[var(--ember)] px-3 py-2 text-sm font-medium text-[#1a0d05]">Show this area</button>
+          <button type="button" onClick={applyTyped} className="mt-3 w-full rounded-lg pill-dark px-3 py-2.5 text-sm font-medium">Show this area</button>
           <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
             Areas resolve to the ~300 km grid cells they touch, so a small box reports its surrounding cell.
           </p>

@@ -29,7 +29,7 @@ export function Seasons() {
   const y = (val: number, max: number) => T + (1 - val / max) * (H - T - B);
 
   return (
-    <div className="pt-12">
+    <div className="pt-16">
       <p className="eyebrow">Unusual conditions · critical periods</p>
       <h1 className="display mt-3 text-4xl sm:text-5xl">Is this year normal?</h1>
       <p className="mt-4 max-w-2xl leading-relaxed text-[var(--text-secondary)]">
@@ -97,7 +97,7 @@ export function Seasons() {
                       <tr key={i} className="border-t border-[var(--hairline)]">
                         <td className="py-2 text-[var(--text-secondary)]">{MONTHS[i]}</td>
                         <td>{fmt(m.own)}</td><td className="text-[var(--text-secondary)]">{fmt(m.med)}</td>
-                        <td className={high ? "text-[var(--seq-6)]" : ""}>{ratio === null ? "—" : `×${ratio.toFixed(2)}`}</td>
+                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : `×${ratio.toFixed(2)}`}</td>
                         <td className="text-xs text-[var(--text-secondary)]">{m.own === null ? "no data" : high ? "Critical: above 9 in 10 years" : above ? "Above the usual range" : "Within or below the usual range"}</td>
                       </tr>
                     );

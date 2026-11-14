@@ -29,8 +29,8 @@ export function AnnualLine({ raw, harmonized, mode }: { raw: YearTotal[]; harmon
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Annual detections, ${mode}`}>
       <defs>
         <linearGradient id="glow" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#ff7a1a" stopOpacity="0.28" />
-          <stop offset="1" stopColor="#ff7a1a" stopOpacity="0" />
+          <stop offset="0" stopColor="#d9431a" stopOpacity="0.2" />
+          <stop offset="1" stopColor="#d9431a" stopOpacity="0" />
         </linearGradient>
       </defs>
       {ticks.map((v) => {

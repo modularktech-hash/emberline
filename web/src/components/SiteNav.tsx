@@ -12,24 +12,25 @@ const LINKS = [
 export function SiteNav() {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-30 border-b border-[var(--hairline)] bg-[color-mix(in_srgb,var(--surface-page)_82%,transparent)] backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <header className="sticky top-3 z-30 px-3 sm:px-6">
+      <div className="card mx-auto flex w-full max-w-5xl items-center justify-between gap-3 !rounded-[20px] px-4 py-2.5 sm:px-5">
         <Link href="/" className="flex items-center gap-2.5">
-          <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-[var(--ember)] shadow-[0_0_14px_3px_rgba(255,122,26,0.55)]" />
-          <span className="display text-xl leading-none">Emberline</span>
+          <span aria-hidden className="relative flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--ink)]">
+            <span className="h-2 w-2 rounded-full bg-[var(--ember)]" />
+          </span>
+          <span className="text-[13px] font-medium uppercase tracking-[0.28em]">Emberline</span>
+          <span className="eyebrow ml-3 hidden !text-[10px] md:inline">NASA Space Apps 2026</span>
         </Link>
-        <nav className="flex gap-1" aria-label="Views">
-          {LINKS.map((l) => {
+        <nav className="flex items-center gap-0.5 sm:gap-1" aria-label="Views">
+          {LINKS.map((l, i) => {
             const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+            const last = i === LINKS.length - 1;
             return (
-              <Link
-                key={l.href}
-                href={l.href}
-                aria-current={active ? "page" : undefined}
+              <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
                 className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                  active ? "bg-[var(--ember-soft)] text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                }`}
-              >
+                  last ? "border border-[var(--ink)] bg-[#d6e2cf] text-[var(--text-primary)]"
+                  : active ? "text-[var(--text-primary)] underline decoration-[var(--ember)] decoration-2 underline-offset-8"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {l.label}
               </Link>
             );

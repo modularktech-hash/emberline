@@ -1,33 +1,34 @@
 @import "tailwindcss";
 
 /*
- * Emberline — one dark theme. Warm near-black surfaces, a single ember accent.
- * The sequential ramp ("Ember") rises monotonically in lightness from the
- * surface to pale gold, so it stays ordered for colour-blind readers and in
- * greyscale. Low activity recedes into the page; high activity glows.
+ * Emberline — the Modulark house style: warm paper, ink, one ember accent,
+ * soft pastel glows. The sequential ramp ("Ember") darkens monotonically from
+ * paper to deep maroon, so it stays ordered for colour-blind readers and in
+ * greyscale: low activity recedes into the page, high activity burns dark.
  */
 :root {
-  color-scheme: dark;
-  --surface-page: #0b0908;
-  --surface-1: #141110;
-  --surface-2: #1c1816;
-  --text-primary: #f6efe8;
-  --text-secondary: #b9aea4;
-  --text-muted: #7d736b;
-  --hairline: rgba(246, 239, 232, 0.09);
-  --gridline: rgba(246, 239, 232, 0.06);
-  --ember: #ff7a1a;
-  --ember-soft: rgba(255, 122, 26, 0.14);
-  --cool: #6fb1c9;
+  color-scheme: light;
+  --surface-page: #f7f3e8;
+  --surface-1: #fbf8f0;
+  --surface-2: #efe9d9;
+  --text-primary: #121715;
+  --text-secondary: #4a4f4b;
+  --text-muted: #868a82;
+  --hairline: rgba(18, 23, 21, 0.11);
+  --gridline: rgba(18, 23, 21, 0.07);
+  --ink: #121715;
+  --ember: #d9431a;
+  --ember-soft: rgba(217, 67, 26, 0.1);
+  --cool: #3f7f96;
 
-  --seq-0: #1b1614;
-  --seq-1: #3a1a12;
-  --seq-2: #6a2410;
-  --seq-3: #a1360d;
-  --seq-4: #d6560f;
-  --seq-5: #f48a2a;
-  --seq-6: #ffc163;
-  --seq-7: #fff0c7;
+  --seq-0: #f0eadb;
+  --seq-1: #f8e8c0;
+  --seq-2: #f9c46b;
+  --seq-3: #f49b3f;
+  --seq-4: #e66a26;
+  --seq-5: #c93f1c;
+  --seq-6: #96221a;
+  --seq-7: #561114;
 }
 
 @theme inline {
@@ -39,22 +40,22 @@
 html { background: var(--surface-page); }
 body {
   background:
-    radial-gradient(1100px 520px at 78% -12%, rgba(255, 122, 26, 0.13), transparent 62%),
-    radial-gradient(800px 420px at -8% 4%, rgba(214, 86, 15, 0.07), transparent 60%),
+    radial-gradient(620px 420px at 14% 16%, rgba(255, 160, 150, 0.28), transparent 68%),
+    radial-gradient(700px 460px at 88% 12%, rgba(170, 180, 235, 0.26), transparent 68%),
+    radial-gradient(760px 420px at 50% 44%, rgba(255, 214, 120, 0.3), transparent 70%),
+    radial-gradient(620px 380px at 22% 78%, rgba(150, 220, 190, 0.2), transparent 70%),
     var(--surface-page);
   background-repeat: no-repeat;
+  background-size: 100% 1500px;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
-.display { font-family: var(--font-display), Georgia, serif; letter-spacing: -0.015em; }
+.display { font-family: var(--font-display), Georgia, serif; font-weight: 350; letter-spacing: -0.035em; }
 .tabular { font-variant-numeric: tabular-nums; }
-.card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008));
-  border: 1px solid var(--hairline);
-  border-radius: 18px;
-}
-.eyebrow { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); }
-::selection { background: var(--ember); color: #1a0d05; }
-select, input { color-scheme: dark; }
+.eyebrow { font-family: var(--font-geist-mono), monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
+.card { background: rgba(251, 248, 240, 0.82); border: 1px solid var(--hairline); border-radius: 22px; box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 50px -28px rgba(60, 40, 10, 0.28); backdrop-filter: blur(6px); }
+.window { background: var(--surface-1); border: 1px solid var(--hairline); border-radius: 26px; box-shadow: 0 0 0 6px rgba(255,255,255,0.55), 0 40px 90px -40px rgba(60, 40, 10, 0.4); overflow: hidden; }
+.pill-dark { background: var(--ink); color: #f7f3e8; border-radius: 999px; }
+::selection { background: var(--ember); color: #fff; }
 .maplibregl-ctrl-attrib { font-size: 10px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

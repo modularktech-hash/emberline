@@ -5,13 +5,13 @@ import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
-const HUES = ["#ff7a1a", "#ffc163", "#6fb1c9", "#c98fd6", "#8fd6a4", "#f06b6b"];
+const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
 
 function Bar({ value, tone }: { value: number; tone: "good" | "bad" }) {
   const w = Math.max(2, Math.min(100, Math.abs(value) * 100));
   return (
     <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-[var(--surface-2)] align-middle">
-      <span className="block h-full rounded-full" style={{ width: `${tone === "good" ? w : 100}%`, background: tone === "good" ? "var(--ember)" : "#5a2b2b" }} />
+      <span className="block h-full rounded-full" style={{ width: `${tone === "good" ? w : 100}%`, background: tone === "good" ? "var(--ember)" : "#d8b4ac" }} />
     </span>
   );
 }
@@ -29,7 +29,7 @@ export function Method() {
     }).join(" ");
 
   return (
-    <div className="pt-12">
+    <div className="pt-16">
       <p className="eyebrow">Method & proof</p>
       <h1 className="display mt-3 max-w-3xl text-4xl sm:text-5xl">How we know the correction is real.</h1>
 
@@ -88,7 +88,7 @@ export function Method() {
                   {names.map((n) => { const k = p.countries[n].null_control; return (
                     <tr key={n} className="border-t border-[var(--hairline)]">
                       <td className="py-2.5">{n}</td>
-                      <td className="text-[#f08a8a]">×{k.spliced_raw_step_ratio_2012.toFixed(2)}</td>
+                      <td className="text-[#96221a]">×{k.spliced_raw_step_ratio_2012.toFixed(2)}</td>
                       <td>×{k.aqua_only_step_ratio_2012.toFixed(2)}</td>
                       <td className="text-[var(--ember)]">×{k.harmonized_step_ratio_2012.toFixed(2)}</td>
                     </tr>); })}

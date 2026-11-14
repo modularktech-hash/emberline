@@ -20,8 +20,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
  * module scope, which would break the server render of this route.
  */
 
-const DARK_STYLE =
-  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const DARK_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 const BOX_SOURCE = "aoi-box";
 
@@ -105,13 +104,13 @@ export function AoiMap({ bbox, onSelect, styleUrl, className }: Props) {
             id: `${BOX_SOURCE}-fill`,
             type: "fill",
             source: BOX_SOURCE,
-            paint: { "fill-color": "#ff7a1a", "fill-opacity": 0.12 },
+            paint: { "fill-color": "#d9431a", "fill-opacity": 0.12 },
           });
           map.addLayer({
             id: `${BOX_SOURCE}-line`,
             type: "line",
             source: BOX_SOURCE,
-            paint: { "line-color": "#ff7a1a", "line-width": 2 },
+            paint: { "line-color": "#d9431a", "line-width": 2 },
           });
           if (!cancelled) setReady(true);
         });
