@@ -68,6 +68,9 @@ export interface FrozenEraYear {
 }
 
 export interface CountryFit {
+  /** "own": fitted on this country's matches. "pooled": too few training matches, borrows the pooled curve. */
+  fit_source?: "own" | "pooled";
+  kappa_source?: "own" | "pooled";
   logistic: LogisticFit;
   frp_at_p50_mw: number;
   frp_at_p50_ci95_mw: Ci95;
@@ -91,6 +94,12 @@ export interface Params {
   drift_years: YearSpan;
   match_rule: string;
   countries: Record<string, CountryFit>;
+  /** Countries the fit could not be run for (too sparse), with the fitter's error. World file only. */
+  failed?: Record<string, string>;
+  pooled_model?: { b0: number; b1: number; kappa: number; from_countries: string[] };
+  pooled_rule?: string;
+  /** Set by queries.ts: which file this came from. */
+  dataset?: "world" | "four";
 }
 
 /* ------------------------------------------------------------------ */
@@ -123,6 +132,13 @@ export interface CalendarResult {
   keys: string[];
   /** Requested keys not present in any processed table ("not processed yet"). */
   unknownKeys: string[];
+  /**
+   * Harmonized mode only: requested keys with a raw calendar but no
+   * harmonized one (too sparse to fit). They contribute nothing to `rows`.
+   */
+  uncorrectedKeys: string[];
+  /** Which file set the calendar came from. */
+  dataset: "world" | "four";
   /** Inclusive year range of the grid; every (year, month) in it has a row. */
   years: YearSpan;
   /** One row per (year, month), year-major. */

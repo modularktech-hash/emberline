@@ -1,15 +1,18 @@
 "use client";
 
 import { fmtNum, fmtPct, fmtR2, fmtRatio, fmtSigned } from "@/lib/format";
-import { useMemo, useState } from "react";
-import { Chip, Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
+import { useState } from "react";
+import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
 import { downloadCsv, fmt } from "@/lib/ember";
 import { getCountryTable, type CountryRow } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
+import { prettyName } from "@/lib/names";
+import { CountryPicker } from "@/components/CountryPicker";
+import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
 type Key = keyof Pick<CountryRow, "country" | "harm_mean_2003_2025" | "harm_2025" | "raw_2025" | "step_raw" | "step_harm" | "r2_model" | "bias_pct" | "frp_p50" | "onset_trend_harm">;
 const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint: string }> = [
-  { key: "country", label: "Region", f: (r) => r.country, hint: "" },
+  { key: "country", label: "Country", f: (r) => prettyName(r.country), hint: "FIRMS country name" },
   { key: "harm_mean_2003_2025", label: "Mean / yr (harm.)", f: (r) => fmt(r.harm_mean_2003_2025), hint: "Aqua-equivalent detections, 2003–2025 mean" },
   { key: "harm_2025", label: "2025 (harm.)", f: (r) => fmt(r.harm_2025), hint: "Aqua-equivalent detections in 2025" },
   { key: "raw_2025", label: "2025 (raw)", f: (r) => fmt(r.raw_2025), hint: "Raw VIIRS detections in 2025" },
@@ -22,39 +25,36 @@ const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint:
 ];
 
 const FILES = [
-  ["calendar_harmonized.parquet", "Monthly Aqua-equivalent counts, per region and per H3 res-2 cell"],
-  ["calendar_raw.parquet", "Monthly raw counts by sensor (MODIS, VIIRS), same keys"],
-  ["cell_day.parquet", "Per H3 res-5 cell × UTC day × satellite: counts, FRP, pixel area, local solar time (demo regions)"],
-  ["params.json", "Every fitted coefficient and validation metric"],
+  ["calendar_harmonized_global.parquet", "Monthly Aqua-equivalent counts, per fitted country and per H3 res-2 cell (every FIRMS country)"],
+  ["calendar_raw_global.parquet", "Monthly raw counts by sensor (MODIS, VIIRS), same keys, including countries too sparse to fit (uncorrected)"],
+  ["params_global.json", "Every fitted coefficient and validation metric, per country; pooled fits and unfitted countries listed"],
   ["countries.json", "This summary table, with yearly raw and harmonized totals"],
-  ["season.json", "Season onset, peak, end per region and year, raw and harmonized"],
-  ["drift.json", "Mean local solar overpass time per satellite per year"],
+  ["season.json", "Season onset, peak, end per country and year, raw and harmonized; daily or monthly resolution per country"],
+  ["drift.json", "Mean local solar overpass time per satellite per year (countries with point detections)"],
+  ["calendar_harmonized.parquet", "The first four countries (Australia, Canada, Chile, Portugal): fallback copy"],
+  ["calendar_raw.parquet", "The first four countries: raw fallback copy"],
+  ["params.json", "The first four countries' fit (same numbers as in params_global.json)"],
+  ["cell_day.parquet", "Per H3 res-5 cell × UTC day × satellite: counts, FRP, pixel area, local solar time (the first four countries only)"],
   ["live.json", "Last 24 h and 7 days of fires worldwide, 0.5° cells"],
   ["tle.json", "Orbital elements of the five fire satellites"],
 ];
 
 export function DataPage() {
   const { data, error, loading } = useParquet(() => getCountryTable(), "table");
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState<{ k: Key; dir: 1 | -1 }>({ k: "harm_mean_2003_2025", dir: -1 });
   const [focus, setFocus] = useState<string | null>(null);
+  const [q2, setQ2] = useState("");
   const [lang, setLang] = useState<"py" | "js" | "sql">("py");
   const origin = typeof window === "undefined" ? "https://emberline-tan.vercel.app" : window.location.origin;
 
-  const rows = useMemo(() => {
-    const r = (data?.countries ?? []).filter((c) => c.country.toLowerCase().includes(q.toLowerCase()));
-    return [...r].sort((a, b) => {
-      const x = a[sort.k], y = b[sort.k];
-      if (typeof x === "string" && typeof y === "string") return x.localeCompare(y) * sort.dir;
-      return (((x as number) ?? -Infinity) - ((y as number) ?? -Infinity)) * sort.dir;
-    });
-  }, [data, q, sort]);
+  const tbl = useTable<CountryRow, Key>(data?.countries ?? [], (r) => r.country, (r, k) => (k === "country" ? prettyName(r.country) : r[k]), { k: "harm_mean_2003_2025", dir: -1 });
+  const rows = tbl.shown;
   const sel = data?.countries.find((c) => c.country === (focus ?? rows[0]?.country));
+  const notFitted = (data?.not_fitted ?? []).filter((n) => prettyName(n.country).toLowerCase().includes(q2.toLowerCase()));
 
   const snippet = {
-    py: `import polars as pl\nurl = "${origin}/data/calendar_harmonized.parquet"\ncal = pl.read_parquet(url)\nprint(cal.filter((pl.col("scope") == "country") & (pl.col("key") == "Canada")))`,
-    js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized.parquet" });\nconst rows = await parquetReadObjects({ file });\nconsole.log(rows.filter(r => r.key === "Canada"));`,
-    sql: `-- DuckDB\nSELECT year, SUM(n_harmonized) AS detections\nFROM '${origin}/data/calendar_harmonized.parquet'\nWHERE scope = 'country' AND key = 'Canada'\nGROUP BY year ORDER BY year;`,
+    py: `import polars as pl\nurl = "${origin}/data/calendar_harmonized_global.parquet"\ncal = pl.read_parquet(url)\nprint(cal.filter((pl.col("scope") == "country") & (pl.col("key") == "Canada")))`,
+    js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized_global.parquet" });\nconst rows = await parquetReadObjects({ file });\nconsole.log(rows.filter(r => r.key === "Canada"));`,
+    sql: `-- DuckDB\nSELECT year, SUM(n_harmonized) AS detections\nFROM '${origin}/data/calendar_harmonized_global.parquet'\nWHERE scope = 'country' AND key = 'Canada'\nGROUP BY year ORDER BY year;`,
   }[lang];
 
   return (
@@ -68,34 +68,36 @@ export function DataPage() {
           <Reveal>
             <section className="card overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] p-4">
-                <div><h2 className="display text-3xl">Regions</h2><p className="text-xs text-[var(--text-muted)]">{rows.length} of {data.countries.length} · fit {data.fit_version} · click a row for its yearly table</p></div>
-                <div className="flex gap-2">
-                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search regions…" className="w-48 field rounded-full px-4 py-2 text-sm" />
+                <div><h2 className="display text-3xl">Fitted countries</h2><p className="text-xs text-[var(--text-muted)]">{data.countries.length} fitted ({data.countries.filter((c) => c.fit_source === "pooled").length} on the pooled curve, marked) · fit {data.fit_version} · each country fitted separately, no global correction · click a row for its yearly table</p></div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <TableSearch q={tbl.q} setQ={tbl.setQ} shown={rows.length} total={data.countries.length} />
                   <button type="button" onClick={() => downloadCsv("emberline_regions.csv", { source: "Emberline countries.json", fit_version: data.fit_version, unit: data.unit }, COLS.map((c) => c.key), rows.map((r) => COLS.map((c) => String(r[c.key] ?? ""))))}
                     className="pill-dark px-4 py-2 text-sm font-medium">CSV</button>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="tabular w-full min-w-[980px] text-sm">
+              <div className="px-4 pb-4">
+              <ScrollBox h="32rem">
+                <table className="tabular w-full min-w-[1040px] text-sm">
                   <thead>
-                    <tr className="bg-[var(--surface-2)] text-left text-xs text-[var(--text-secondary)]">
-                      {COLS.map((c) => (
-                        <th key={c.key} title={c.hint} className="px-4 py-3 font-medium">
-                          <button type="button" onClick={() => setSort({ k: c.key, dir: sort.k === c.key ? (sort.dir === 1 ? -1 : 1) : -1 })} className="flex items-center gap-1 hover:text-[var(--text-primary)]">
-                            {c.label}{sort.k === c.key && <span>{sort.dir === 1 ? "↑" : "↓"}</span>}
-                          </button>
-                        </th>
-                      ))}
+                    <tr className="text-left text-xs text-[var(--text-secondary)]">
+                      {COLS.map((c) => <SortTh key={c.key} k={c.key} sort={tbl.sort} toggle={tbl.toggle} title={c.hint} className="font-medium">{c.label}</SortTh>)}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((r) => (
                       <tr key={r.country} onClick={() => setFocus(r.country)} className={`cursor-pointer border-t border-[var(--hairline)] transition-colors hover:bg-[var(--ember-soft)] ${sel?.country === r.country ? "bg-[var(--ember-soft)]" : ""}`}>
-                        {COLS.map((c) => <td key={c.key} className={`px-4 py-3 ${c.key === "country" ? "font-medium" : ""} ${c.key === "step_raw" ? "text-[var(--seq-5)]" : ""}`}>{c.f(r)}</td>)}
+                        {COLS.map((c) => (
+                          <td key={c.key} className={`px-3 py-2.5 first:pl-0 ${c.key === "country" ? "font-medium" : ""} ${c.key === "step_raw" ? "text-[var(--seq-5)]" : ""}`}>
+                            {c.f(r)}
+                            {c.key === "country" && r.fit_source === "pooled" && <span title="Too few training matches for its own curve: uses the pooled curve" className="ml-1.5 font-mono text-[10px] font-normal uppercase text-[var(--ember)]">pooled</span>}
+                            {c.key === "onset_trend_harm" && r.season_resolution === "monthly" && r.onset_trend_harm != null && <span title="Estimated from monthly calendars" className="ml-1 text-[10px] text-[var(--text-muted)]">(monthly)</span>}
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </ScrollBox>
               </div>
             </section>
           </Reveal>
@@ -104,13 +106,14 @@ export function DataPage() {
             <Reveal>
               <section className="card mt-6 overflow-hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] p-4">
-                  <h2 className="display text-3xl">{sel.country}, year by year</h2>
-                  <div className="flex flex-wrap gap-1.5">
-                    {data.countries.map((c) => <Chip key={c.country} on={c.country === sel.country} onClick={() => setFocus(c.country)}>{c.country}</Chip>)}
+                  <h2 className="display text-3xl">{prettyName(sel.country)}, year by year</h2>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <CountryPicker value={sel.country} options={data.countries.map((c) => c.country)} onChange={setFocus} label="Country"
+                      tags={Object.fromEntries(data.countries.map((c) => [c.country, c.fit_source === "pooled" ? ("pooled" as const) : null]))} />
                     <button type="button" onClick={() => downloadCsv(`emberline_${sel.country}_annual.csv`, { region: sel.country, unit: data.unit, fit_version: data.fit_version }, ["year", "raw", "harmonized"], sel.annual.map((a) => [a.year, a.raw, a.harm]))} className="pill-dark px-4 py-1.5 text-sm">CSV</button>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="max-w-full overflow-x-auto">
                   <table className="tabular w-full min-w-[640px] text-sm">
                     <thead><tr className="bg-[var(--surface-2)] text-left text-xs text-[var(--text-secondary)]"><th className="px-4 py-2.5 font-medium">Year</th><th className="font-medium">Raw detections</th><th className="font-medium">Sensor (raw)</th><th className="font-medium">Harmonized</th><th className="font-medium">Raw ÷ harmonized</th><th className="w-1/3 font-medium">Harmonized, relative</th></tr></thead>
                     <tbody>
@@ -128,6 +131,41 @@ export function DataPage() {
                     </tbody>
                   </table>
                 </div>
+              </section>
+            </Reveal>
+          )}
+
+          {data.not_fitted && data.not_fitted.length > 0 && (
+            <Reveal>
+              <section className="card mt-6 p-4 sm:p-5">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2 className="display text-3xl">Not enough data to fit</h2>
+                    <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">
+                      {data.not_fitted.length} FIRMS countries and territories have too few detections for the fit to run, so they have no harmonized record and no score.
+                      Where a raw record exists, the Explorer shows it, marked uncorrected.
+                    </p>
+                  </div>
+                  <input value={q2} onChange={(e) => setQ2(e.target.value)} placeholder="Search…" aria-label="Search countries not fitted" className="field w-full rounded-full px-4 py-2 text-sm sm:w-56" />
+                </div>
+                <ScrollBox h="16rem">
+                  <table className="tabular w-full min-w-[420px] text-sm">
+                    <thead><tr className="text-left text-xs text-[var(--text-muted)]">
+                      <th className="sticky top-0 bg-[var(--surface-page)] py-2.5 font-normal">Country</th>
+                      <th className="sticky top-0 bg-[var(--surface-page)] px-3 font-normal">Raw detections, all years (uncorrected)</th>
+                      <th className="sticky top-0 bg-[var(--surface-page)] px-3 font-normal">Status</th>
+                    </tr></thead>
+                    <tbody>
+                      {notFitted.map((n) => (
+                        <tr key={n.country} className="border-t border-[var(--hairline)]">
+                          <td className="py-2">{prettyName(n.country)}</td>
+                          <td className="px-3 text-[var(--text-secondary)]">{n.has_raw_calendar ? fmt(n.detections_filtered) : "no raw record"}</td>
+                          <td className="px-3 text-xs text-[var(--text-muted)]">not enough data to fit</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ScrollBox>
               </section>
             </Reveal>
           )}

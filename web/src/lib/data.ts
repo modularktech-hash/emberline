@@ -20,8 +20,18 @@ export interface SeasonYear {
   raw_onset?: number | null; raw_peak?: number | null; raw_end?: number | null; raw_length?: number | null; raw_total?: number;
   harm_onset?: number | null; harm_peak?: number | null; harm_end?: number | null; harm_length?: number | null; harm_total?: number;
 }
-export interface SeasonCountry { fire_year_start_month: number; years: SeasonYear[]; trend_days_per_decade: Record<string, number | null> }
-export interface SeasonFile { fit_version: string; unit: string; countries: Record<string, SeasonCountry> }
+export interface SeasonCountry {
+  fire_year_start_month: number;
+  /** "daily": from point detections. "monthly": estimated from the monthly calendars (see resolution_note). */
+  resolution?: "daily" | "monthly";
+  years: SeasonYear[];
+  trend_days_per_decade: Record<string, number | null>;
+}
+export interface SeasonFile {
+  fit_version: string; unit: string; resolution_note?: string;
+  monthly_vs_daily?: { countries: number; trend_abs_diff_median: number | null; trend_abs_diff_max: number | null; definition: string };
+  countries: Record<string, SeasonCountry>;
+}
 
 export interface DriftRow { platform: string; year: number; lst: number; n: number }
 export interface DriftFile { fit_version: string; countries: Record<string, DriftRow[]> }
@@ -30,9 +40,16 @@ export interface CountryRow {
   country: string; detections_filtered: number; raw_2025: number; harm_2025: number; harm_mean_2003_2025: number;
   peak_year: number | null; step_raw: number; step_aqua: number; step_harm: number; r2_model: number; r2_raw: number;
   bias_pct: number; frp_p50: number; fit_source: string; onset_trend_raw: number | null; onset_trend_harm: number | null;
+  season_resolution?: "daily" | "monthly";
   annual: Array<{ year: number; raw: number; harm: number }>;
 }
-export interface CountriesFile { fit_version: string; unit: string; countries: CountryRow[] }
+export interface NotFittedRow { country: string; detections_filtered: number; has_raw_calendar: boolean }
+export interface CountriesFile {
+  fit_version: string; unit: string; train_years?: [number, number]; test_years?: [number, number]; pooled_rule?: string;
+  countries: CountryRow[];
+  /** Countries the fit could not be run for (too sparse): raw record only. */
+  not_fitted?: NotFittedRow[];
+}
 
 const cache = new Map<string, Promise<unknown>>();
 function load<T>(name: string): Promise<T> {

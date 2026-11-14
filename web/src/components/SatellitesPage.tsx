@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
+import { prettyName } from "@/lib/names";
 import { Chip, PageHead, Reveal } from "@/components/ui";
 import { SAT_COLORS } from "@/lib/sats";
 import { DriftClocks } from "@/components/DriftClocks";
@@ -176,7 +177,7 @@ export function SatellitesPage() {
             })}
           </svg>
           <p className="mt-3 max-w-3xl text-xs leading-relaxed text-[var(--text-muted)]">
-            Curve: the published fire diurnal cycle for {cover.toLowerCase()} (Andela et al. 2015, ACP 15:8831, Table 1: peak {fmtNum(p.h, 2)} h, σ {p.s} h), shown for illustration — it was fitted on geostationary data at 0.1°, and real cycles widen at coarser scales. Overpass times: measured over {country} in {year}. As Aqua drifts off the peak it samples less of each day&apos;s fire; Suomi-NPP stays on it.
+            Curve: the published fire diurnal cycle for {cover.toLowerCase()} (Andela et al. 2015, ACP 15:8831, Table 1: peak {fmtNum(p.h, 2)} h, σ {p.s} h), shown for illustration — it was fitted on geostationary data at 0.1°, and real cycles widen at coarser scales. Overpass times: measured over {prettyName(country)} in {year}. As Aqua drifts off the peak it samples less of each day&apos;s fire; Suomi-NPP stays on it.
           </p>
         </section>
       </Reveal>

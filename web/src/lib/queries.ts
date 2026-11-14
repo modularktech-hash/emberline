@@ -26,8 +26,10 @@ import type {
  * Read path: static files under web/public/data/, fetched over HTTP range
  * requests. No database, no API server, no credentials.
  *
- * - The two calendar tables are small (< 0.5 MB each) and are read whole,
- *   once, then held in module scope.
+ * - The calendars: the world files (calendar_*_global.parquet, every FIRMS
+ *   country) are read by HTTP range, country rows first and H3 rows only for
+ *   the row groups a drawn area needs; the four-country files are the
+ *   fallback and are read whole. Both are held in module scope.
  * - cell_day.parquet is sorted by H3 res-2 parent then day. It is only ever
  *   filtered on `h3_parent`, which is what lets row-group statistics skip
  *   most of the file. Never filter it on a raw cell-id range: H3 ids of a
@@ -56,6 +58,21 @@ export function setDataBaseUrl(url: string): void {
   cellDayParentsPromise = null;
 }
 
+/**
+ * The world files (every FIRMS country, fit v1-20261114T1240) and the
+ * four-country files they replace. Every reader tries the world file first
+ * and falls back to the four-country one if it cannot be loaded.
+ */
+const FILESETS = {
+  raw: ["calendar_raw_global.parquet", "calendar_raw.parquet"],
+  harmonized: ["calendar_harmonized_global.parquet", "calendar_harmonized.parquet"],
+  params: ["params_global.json", "params.json"],
+} as const;
+
+/** Which file set actually loaded: "world" or the four-country fallback. */
+export type DataSet = "world" | "four";
+const setOf = (name: string): DataSet => (name.includes("_global") ? "world" : "four");
+
 interface OpenFile {
   file: AsyncBuffer;
   metadata: FileMetaData;
@@ -64,12 +81,16 @@ interface OpenFile {
 const files = new Map<string, Promise<OpenFile>>();
 
 /**
- * Small files (the calendars, < 1 MB) are fetched whole in ONE request: on a
- * high-latency link a HEAD + footer + per-column range reads cost a round trip
- * each, which dominated the Explorer's load time. The page can start this
- * request even earlier with a preload hint (see dataPreloads()).
+ * Small files (the four-country calendars, < 0.5 MB) are fetched whole in ONE
+ * request. The world calendars (2.5-4 MB) are read by range: one request for
+ * the file's tail (size + footer), then only the row groups a view needs. The
+ * country rows sit at the front of each file (sorted by scope, then key), so
+ * the country views read ~0.8 MB and never touch the H3 rows.
  */
 const WHOLE_FILES = new Set(["calendar_raw.parquet", "calendar_harmonized.parquet"]);
+
+/** Bytes read from the end of a world file in its first request: covers the footer. */
+export const TAIL_BYTES = 65536;
 
 /**
  * A download already started by the page's inline prefetch script
@@ -83,20 +104,74 @@ function takePrefetched<T>(url: string): Promise<T> | null {
   return hit ?? null;
 }
 
-/** Open a parquet file once. Large files: one HEAD for its size, one range read for its footer. */
+/** What the tail request returned: the file's size and its last bytes, or the whole file. */
+interface Tail { total: number; start: number; bytes: ArrayBuffer }
+
+/** Shared with DataPreload.tsx (same request, same parsing), so either can start it. */
+async function fetchTail(url: string): Promise<Tail> {
+  const r = await fetch(url, { headers: { Range: `bytes=-${TAIL_BYTES}` } });
+  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+  const bytes = await r.arrayBuffer();
+  const m = /\/(\d+)\s*$/.exec(r.headers.get("content-range") ?? "");
+  if (r.status === 206 && m) {
+    const total = Number(m[1]);
+    return { total, start: total - bytes.byteLength, bytes };
+  }
+  if (r.status === 200) return { total: bytes.byteLength, start: 0, bytes }; // server ignored the range: whole file
+  throw new Error(`${url}: unexpected range response`);
+}
+
+/**
+ * An AsyncBuffer over HTTP range requests that keeps every byte range it has
+ * fetched, so a slice inside an earlier range (the footer inside the tail, a
+ * column chunk inside a prefetched row-group span) costs no request.
+ */
+function rangeBuffer(url: string, tail: Tail): AsyncBuffer & { prefetch(start: number, end: number): void } {
+  const chunks: Array<{ start: number; end: number; buf: Promise<ArrayBuffer> }> = [
+    { start: tail.start, end: tail.total, buf: Promise.resolve(tail.bytes) },
+  ];
+  const get = (start: number, end: number): Promise<ArrayBuffer> => {
+    const hit = chunks.find((c) => c.start <= start && end <= c.end);
+    if (hit) return hit.buf.then((b) => b.slice(start - hit.start, end - hit.start));
+    const entry = {
+      start, end,
+      buf: fetch(url, { headers: { Range: `bytes=${start}-${end - 1}` } }).then(async (r) => {
+        if (r.status === 206) return r.arrayBuffer();
+        if (r.ok) return (await r.arrayBuffer()).slice(start, end);
+        throw new Error(`${url}: HTTP ${r.status}`);
+      }),
+    };
+    entry.buf.catch(() => chunks.splice(chunks.indexOf(entry), 1));
+    chunks.push(entry);
+    return entry.buf;
+  };
+  return {
+    byteLength: tail.total,
+    slice: (start: number, end?: number) => get(start, end ?? tail.total),
+    prefetch: (start: number, end: number) => { void get(start, end).catch(() => {}); },
+  };
+}
+
+/** Open a parquet file once. */
 function openParquet(name: string): Promise<OpenFile> {
   let entry = files.get(name);
   if (!entry) {
     entry = (async () => {
+      const url = `${dataBaseUrl}/${name}`;
       if (WHOLE_FILES.has(name)) {
-        const url = `${dataBaseUrl}/${name}`;
         const file = await (takePrefetched<ArrayBuffer>(url) ?? fetch(url).then((r) => {
           if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
           return r.arrayBuffer();
         }));
         return { file, metadata: await parquetMetadataAsync(file) };
       }
-      const remote = await asyncBufferFromUrl({ url: `${dataBaseUrl}/${name}` });
+      if (name.includes("_global")) {
+        const tail = await (takePrefetched<Tail>(`${url}#tail`) ?? fetchTail(url));
+        const file = rangeBuffer(url, tail);
+        // Footer read from the tail already fetched (a larger footer costs one more range read).
+        return { file, metadata: await parquetMetadataAsync(file, { initialFetchSize: tail.total - tail.start }) };
+      }
+      const remote = await asyncBufferFromUrl({ url });
       // Keeps fetched byte ranges, so repeat reads of the same row group are free.
       const file = cachedAsyncBuffer(remote);
       const metadata = await parquetMetadataAsync(file);
@@ -117,12 +192,16 @@ function num(value: unknown): number {
 const ym = (year: number, month: number) => year * 12 + (month - 1);
 
 /**
- * URLs of the files the calendar views need first; the page starts them from
- * an inline script (components/DataPreload.tsx) so they download in parallel
- * with the JS bundle.
+ * What the inline script in components/DataPreload.tsx starts on a real page
+ * load, in parallel with the JS bundle: `tail` URLs get the ranged tail request
+ * (see fetchTail), `json` URLs a plain fetch.
  */
-export function dataPreloads(): string[] {
-  return ["/data/calendar_raw.parquet", "/data/calendar_harmonized.parquet", "/data/params.json"];
+export function dataPreloads(): { tail: string[]; json: string[]; tailBytes: number } {
+  return {
+    tail: ["/data/calendar_raw_global.parquet", "/data/calendar_harmonized_global.parquet"],
+    json: ["/data/params_global.json"],
+    tailBytes: TAIL_BYTES,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -131,18 +210,33 @@ export function dataPreloads(): string[] {
 
 let paramsPromise: Promise<Params> | null = null;
 
-/** The published fit. Throws if the file is missing or not JSON. */
+async function fetchJson<T>(name: string): Promise<T> {
+  const url = `${dataBaseUrl}/${name}`;
+  const early = takePrefetched<T>(url);
+  if (early) return early;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);
+  return (await response.json()) as T;
+}
+
+/**
+ * The published fit: params_global.json (every fitted country), or
+ * params.json (four countries) if the world file cannot be loaded.
+ * `dataset` records which one it is.
+ */
 export function getParams(): Promise<Params> {
   if (!paramsPromise) {
     paramsPromise = (async () => {
-      const url = `${dataBaseUrl}/params.json`;
-      const early = takePrefetched<Params>(url);
-      if (early) return early;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`params.json: HTTP ${response.status}`);
+      let lastError: unknown;
+      for (const name of FILESETS.params) {
+        try {
+          const p = await fetchJson<Params>(name);
+          return { ...p, failed: p.failed ?? {}, dataset: setOf(name) };
+        } catch (e) {
+          lastError = e;
+        }
       }
-      return (await response.json()) as Params;
+      throw lastError instanceof Error ? lastError : new Error("params: not available");
     })();
     paramsPromise.catch(() => {
       paramsPromise = null;
@@ -155,18 +249,129 @@ export function getParams(): Promise<Params> {
 /* Calendar tables                                                     */
 /* ------------------------------------------------------------------ */
 
-interface RawTable {
-  /** scope -> key -> "sensor|ym" -> n_detections */
-  index: Map<CalendarScope, Map<string, Map<string, number>>>;
+/** Row-group statistics, used to read only the row groups a query needs. */
+interface GroupInfo {
+  rowStart: number;
+  rowEnd: number;
+  byteStart: number;
+  byteEnd: number;
+  scopeMin?: string;
+  scopeMax?: string;
+  keyMin?: string;
+  keyMax?: string;
+}
+
+interface Table<V> {
+  name: string;
+  dataset: DataSet;
+  open: OpenFile;
+  groups: GroupInfo[];
+  loaded: Map<number, Promise<void>>;
+  /** scope -> key -> cell -> value */
+  index: Map<CalendarScope, Map<string, Map<V, number>>>;
+}
+
+function groupInfo(metadata: FileMetaData): GroupInfo[] {
+  const cols = metadata.row_groups[0]?.columns.map((c) => c.meta_data?.path_in_schema.join(".")) ?? [];
+  const si = cols.indexOf("scope"), ki = cols.indexOf("key");
+  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  let row = 0;
+  return metadata.row_groups.map((rg) => {
+    let byteStart = Infinity, byteEnd = 0;
+    for (const c of rg.columns) {
+      const m = c.meta_data;
+      if (!m) continue;
+      const s = Number(m.dictionary_page_offset ?? m.data_page_offset);
+      byteStart = Math.min(byteStart, s);
+      byteEnd = Math.max(byteEnd, s + Number(m.total_compressed_size));
+    }
+    const stat = (i: number) => (i >= 0 ? rg.columns[i].meta_data?.statistics : undefined);
+    const s = stat(si), k = stat(ki);
+    const info: GroupInfo = {
+      rowStart: row, rowEnd: row + Number(rg.num_rows), byteStart, byteEnd,
+      scopeMin: str(s?.min_value ?? s?.min), scopeMax: str(s?.max_value ?? s?.max),
+      keyMin: str(k?.min_value ?? k?.min), keyMax: str(k?.max_value ?? k?.max),
+    };
+    row = info.rowEnd;
+    return info;
+  });
+}
+
+/** Could this row group hold rows of `scope` (and, if given, one of `keys`)? Missing statistics mean yes. */
+function mayHold(g: GroupInfo, scope: CalendarScope, keys: string[] | null): boolean {
+  if (g.scopeMin !== undefined && scope < g.scopeMin) return false;
+  if (g.scopeMax !== undefined && scope > g.scopeMax) return false;
+  if (!keys || g.keyMin === undefined || g.keyMax === undefined) return true;
+  return keys.some((k) => k >= g.keyMin! && k <= g.keyMax!);
+}
+
+async function openTable<V>(kind: "raw" | "harmonized"): Promise<Table<V>> {
+  let lastError: unknown;
+  for (const name of FILESETS[kind]) {
+    try {
+      const open = await openParquet(name);
+      return { name, dataset: setOf(name), open, groups: groupInfo(open.metadata), loaded: new Map(), index: new Map() };
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${kind} calendar: not available`);
+}
+
+/**
+ * Read (once) every row group that may hold `scope` rows for `keys` (all keys
+ * of the scope when null), and add their rows to the table's index.
+ * Consecutive row groups are fetched as one byte range.
+ */
+async function ensureRows<V>(t: Table<V>, scope: CalendarScope, keys: string[] | null, columns: string[],
+  add: (index: Table<V>["index"], r: Record<string, unknown>) => void): Promise<void> {
+  const need = t.groups.map((g, i) => (mayHold(g, scope, keys) ? i : -1)).filter((i) => i >= 0);
+  const waits: Promise<void>[] = [];
+  const todo = need.filter((i) => {
+    const p = t.loaded.get(i);
+    if (p) waits.push(p);
+    return !p;
+  });
+  // Runs of consecutive row groups: one range request and one read each.
+  const runs: number[][] = [];
+  for (const i of todo) {
+    const last = runs[runs.length - 1];
+    if (last && last[last.length - 1] === i - 1) last.push(i);
+    else runs.push([i]);
+  }
+  for (const run of runs) {
+    const first = t.groups[run[0]], last = t.groups[run[run.length - 1]];
+    const file = t.open.file as AsyncBuffer & { prefetch?: (s: number, e: number) => void };
+    if (Number.isFinite(first.byteStart)) file.prefetch?.(first.byteStart, last.byteEnd);
+    const p = parquetReadObjects({
+      file, metadata: t.open.metadata, compressors, columns,
+      rowStart: first.rowStart, rowEnd: last.rowEnd,
+    }).then((rows) => {
+      for (const r of rows) add(t.index, r);
+    });
+    p.catch(() => run.forEach((i) => t.loaded.delete(i))); // retry on the next query
+    for (const i of run) t.loaded.set(i, p);
+    waits.push(p);
+  }
+  await Promise.all(waits);
+}
+
+function cellsOf<V>(index: Table<V>["index"], scope: CalendarScope, key: string): Map<V, number> {
+  let byKey = index.get(scope);
+  if (!byKey) index.set(scope, (byKey = new Map()));
+  let cells = byKey.get(key);
+  if (!cells) byKey.set(key, (cells = new Map()));
+  return cells;
+}
+
+interface RawTable extends Table<string> {
   firstYear: number;
   lastYear: number;
   /** First year with any VIIRS row; the splice point of the naive record. */
   viirsFirstYear: number;
 }
 
-interface HarmonizedTable {
-  /** scope -> key -> ym -> n_harmonized */
-  index: Map<CalendarScope, Map<string, Map<number, number>>>;
+interface HarmonizedTable extends Table<number> {
   /** Inclusive month coverage of the harmonized record (ym units). */
   firstYm: number;
   lastYm: number;
@@ -175,35 +380,32 @@ interface HarmonizedTable {
 let rawTable: Promise<RawTable> | null = null;
 let harmonizedTable: Promise<HarmonizedTable> | null = null;
 
+const RAW_COLUMNS = ["scope", "key", "year", "month", "sensor", "n_detections"];
+const HARM_COLUMNS = ["scope", "key", "year", "month", "n_harmonized"];
+
+const addRaw = (index: RawTable["index"], r: Record<string, unknown>) =>
+  cellsOf(index, r.scope as CalendarScope, r.key as string).set(`${r.sensor}|${ym(num(r.year), num(r.month))}`, num(r.n_detections));
+const addHarm = (index: HarmonizedTable["index"], r: Record<string, unknown>) =>
+  cellsOf(index, r.scope as CalendarScope, r.key as string).set(ym(num(r.year), num(r.month)), num(r.n_harmonized));
+
+/** Opens the raw calendar and reads its country rows (the only rows most views need). */
 function loadRaw(): Promise<RawTable> {
   if (!rawTable) {
     rawTable = (async () => {
-      const { file, metadata } = await openParquet("calendar_raw.parquet");
-      const rows = await parquetReadObjects({
-        file,
-        metadata,
-        compressors,
-        columns: ["scope", "key", "year", "month", "sensor", "n_detections"],
-      });
-      const index: RawTable["index"] = new Map();
-      let firstYear = Infinity;
-      let lastYear = -Infinity;
-      let viirsFirstYear = Infinity;
-      for (const r of rows) {
-        const scope = r.scope as CalendarScope;
-        const year = num(r.year);
-        const month = num(r.month);
-        let byKey = index.get(scope);
-        if (!byKey) index.set(scope, (byKey = new Map()));
-        let cells = byKey.get(r.key);
-        if (!cells) byKey.set(r.key, (cells = new Map()));
-        cells.set(`${r.sensor}|${ym(year, month)}`, num(r.n_detections));
-        if (year < firstYear) firstYear = year;
-        if (year > lastYear) lastYear = year;
-        if (r.sensor === "VIIRS" && year < viirsFirstYear) viirsFirstYear = year;
+      const t = await openTable<string>("raw");
+      await ensureRows(t, "country", null, RAW_COLUMNS, addRaw);
+      let firstYear = Infinity, lastYear = -Infinity, viirsFirstYear = Infinity;
+      for (const cells of t.index.get("country")?.values() ?? []) {
+        for (const cell of cells.keys()) {
+          const [sensor, t0] = cell.split("|");
+          const year = Math.floor(Number(t0) / 12);
+          if (year < firstYear) firstYear = year;
+          if (year > lastYear) lastYear = year;
+          if (sensor === "VIIRS" && year < viirsFirstYear) viirsFirstYear = year;
+        }
       }
-      if (!Number.isFinite(firstYear)) throw new Error("calendar_raw.parquet is empty");
-      return { index, firstYear, lastYear, viirsFirstYear };
+      if (!Number.isFinite(firstYear)) throw new Error(`${t.name} is empty`);
+      return Object.assign(t, { firstYear, lastYear, viirsFirstYear });
     })();
     rawTable.catch(() => {
       rawTable = null;
@@ -215,29 +417,17 @@ function loadRaw(): Promise<RawTable> {
 function loadHarmonized(): Promise<HarmonizedTable> {
   if (!harmonizedTable) {
     harmonizedTable = (async () => {
-      const { file, metadata } = await openParquet("calendar_harmonized.parquet");
-      const rows = await parquetReadObjects({
-        file,
-        metadata,
-        compressors,
-        columns: ["scope", "key", "year", "month", "n_harmonized"],
-      });
-      const index: HarmonizedTable["index"] = new Map();
-      let firstYm = Infinity;
-      let lastYm = -Infinity;
-      for (const r of rows) {
-        const scope = r.scope as CalendarScope;
-        const t = ym(num(r.year), num(r.month));
-        let byKey = index.get(scope);
-        if (!byKey) index.set(scope, (byKey = new Map()));
-        let cells = byKey.get(r.key);
-        if (!cells) byKey.set(r.key, (cells = new Map()));
-        cells.set(t, num(r.n_harmonized));
-        if (t < firstYm) firstYm = t;
-        if (t > lastYm) lastYm = t;
+      const t = await openTable<number>("harmonized");
+      await ensureRows(t, "country", null, HARM_COLUMNS, addHarm);
+      let firstYm = Infinity, lastYm = -Infinity;
+      for (const cells of t.index.get("country")?.values() ?? []) {
+        for (const m of cells.keys()) {
+          if (m < firstYm) firstYm = m;
+          if (m > lastYm) lastYm = m;
+        }
       }
-      if (!Number.isFinite(firstYm)) throw new Error("calendar_harmonized.parquet is empty");
-      return { index, firstYm, lastYm };
+      if (!Number.isFinite(firstYm)) throw new Error(`${t.name} is empty`);
+      return Object.assign(t, { firstYm, lastYm });
     })();
     harmonizedTable.catch(() => {
       harmonizedTable = null;
@@ -246,18 +436,32 @@ function loadHarmonized(): Promise<HarmonizedTable> {
   return harmonizedTable;
 }
 
-/** Country names with a calendar, sorted. */
+/** Which file set the calendars came from ("world", or the four-country fallback). */
+export async function calendarDataset(): Promise<DataSet> {
+  return (await loadRaw()).dataset;
+}
+
+/** Country keys (FIRMS spellings, underscores) with a raw calendar, sorted. Includes countries too sparse to fit. */
 export async function listCountries(): Promise<string[]> {
   const raw = await loadRaw();
   return [...(raw.index.get("country")?.keys() ?? [])].sort();
 }
 
+/** Country keys with a harmonized (fitted) calendar, sorted. */
+export async function listHarmonizedCountries(): Promise<string[]> {
+  const harm = await loadHarmonized();
+  return [...(harm.index.get("country")?.keys() ?? [])].sort();
+}
+
 /**
  * H3 res-2 parent cells with a calendar, sorted. A parent not in this list
- * has not been processed -- that is "no data", not "no fires".
+ * has not been processed -- that is "no data", not "no fires". Reads every
+ * H3 row group of the raw calendar (~3.5 MB for the world file), so only call
+ * it when the whole list is really needed.
  */
 export async function listParentCells(): Promise<string[]> {
   const raw = await loadRaw();
+  await ensureRows(raw, "h3_parent", null, RAW_COLUMNS, addRaw);
   return [...(raw.index.get("h3_parent")?.keys() ?? [])].sort();
 }
 
@@ -268,7 +472,7 @@ export interface CalendarQuery {
 }
 
 const RAW_UNIT =
-  "detections (MODIS Terra+Aqua before the VIIRS start year, Suomi-NPP VIIRS from it)";
+  "detections (MODIS Terra+Aqua before the VIIRS start year, Suomi-NPP VIIRS from it) — raw, uncorrected";
 
 /**
  * Monthly calendar summed across `keys`.
@@ -282,18 +486,30 @@ const RAW_UNIT =
  * Returns a full year x month grid. `value: null` (and an entry in
  * `missing`) means no data for that month, which the UI must show
  * differently from 0. The harmonized table only stores non-zero months, so
- * inside its coverage a processed key with no row contributes 0.
+ * inside its coverage a key it holds contributes 0 for a month with no row.
+ * A key with a raw calendar but no harmonized one (a country too sparse to
+ * fit, or a cell with none of the detections the fit uses) is listed in
+ * `uncorrectedKeys` and contributes nothing to the harmonized series: it is
+ * never counted as zero and never passed off as corrected.
  */
 export async function getCalendar(query: CalendarQuery): Promise<CalendarResult> {
   const { scope, mode } = query;
   const requested = [...new Set(query.keys)];
-  // Both tables load in parallel (the harmonized one used to wait for the raw one).
+  // Both tables load in parallel.
   const [raw, harm] = await Promise.all([loadRaw(), mode === "harmonized" ? loadHarmonized() : null]);
+  if (scope !== "country") {
+    await Promise.all([
+      ensureRows(raw, scope, requested, RAW_COLUMNS, addRaw),
+      harm ? ensureRows(harm, scope, requested, HARM_COLUMNS, addHarm) : null,
+    ]);
+  }
 
   const rawKeys = raw.index.get(scope) ?? new Map<string, Map<string, number>>();
   const harmKeys = harm?.index.get(scope);
-  const known = requested.filter((k) => rawKeys.has(k) || harmKeys?.has(k));
-  const unknownKeys = requested.filter((k) => !known.includes(k));
+  const inRaw = requested.filter((k) => rawKeys.has(k));
+  const known = mode === "raw" ? inRaw : requested.filter((k) => harmKeys?.has(k));
+  const uncorrectedKeys = mode === "raw" ? [] : inRaw.filter((k) => !harmKeys?.has(k));
+  const unknownKeys = requested.filter((k) => !known.includes(k) && !uncorrectedKeys.includes(k));
 
   const rows: CalendarRow[] = [];
   const missing: Array<{ year: number; month: number }> = [];
@@ -334,9 +550,11 @@ export async function getCalendar(query: CalendarQuery): Promise<CalendarResult>
     unit,
     keys: known,
     unknownKeys,
+    uncorrectedKeys,
     years: [raw.firstYear, raw.lastYear],
     rows,
     missing,
+    dataset: raw.dataset,
   };
 }
 

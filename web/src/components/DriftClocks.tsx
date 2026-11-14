@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CountryPicker } from "@/components/CountryPicker";
+import { prettyName } from "@/lib/names";
 import type { DriftFile, DriftRow } from "@/lib/data";
 import { fmtClock, fmtMinutes, span } from "@/lib/format";
 import { isPerfLow } from "@/lib/perf";
@@ -103,19 +105,14 @@ export function DriftClocks({ drift, country, onCountry, picker = true }: {
   return (
     <div ref={box}>
       <div className="grid gap-4 text-sm leading-relaxed text-[var(--text-secondary)] md:grid-cols-3">
-        <p><span className="font-medium text-[var(--text-primary)]">What the hand shows.</span> When each satellite passes over {country}: the average local solar time of its daytime fire detections that year (UTC + longitude ÷ 15, per detection). Noon is at the top.</p>
+        <p><span className="font-medium text-[var(--text-primary)]">What the hand shows.</span> When each satellite passes over {prettyName(country)}: the average local solar time of its daytime fire detections that year (UTC + longitude ÷ 15, per detection). Noon is at the top.</p>
         <p><span className="font-medium text-[var(--text-primary)]">Why it matters.</span> Fires burn hardest in the early afternoon (shaded). Since 2022 Terra and Aqua have left their fixed orbits: Terra now passes earlier, Aqua later. Each sees a different slice of the day&apos;s fire — an orbital artifact, not a change in fire.</p>
         <p><span className="font-medium text-[var(--text-primary)]">Why Emberline is not exposed.</span> From 2012 the harmonized record is built from Suomi-NPP, which has held its overpass, and the model is fitted on {span(FROZEN[0], FROZEN[1])} only, before the drift began.</p>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {picker && countries.length > 1 && onCountry && (
-          <div className="glass-thin flex flex-wrap p-1" role="group" aria-label="Region">
-            {countries.map((c) => (
-              <button key={c} type="button" aria-pressed={c === country} onClick={() => onCountry(c)}
-                className={`rounded-full px-3 py-1 text-sm transition-colors ${c === country ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>{c}</button>
-            ))}
-          </div>
+          <CountryPicker value={country} options={countries} onChange={onCountry} inline={6} />
         )}
         <div className="ml-auto flex items-center gap-3">
           <button type="button" onClick={play} disabled={playing || !rows.length} className="glass-thin px-3.5 py-1.5 text-sm font-medium disabled:opacity-50">
@@ -156,7 +153,7 @@ export function DriftClocks({ drift, country, onCountry, picker = true }: {
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-[var(--text-muted)]">
         <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-2)] align-middle opacity-80" />Shaded: typical daily fire peak, around 13:00 local solar time (published diurnal cycles, Andela et al. 2015)</span>
-        <span>Times: measured over {country} from the detections · 2012–21 = mean of the frozen-orbit years · nominal = design overpass, not measured</span>
+        <span>Times: measured over {prettyName(country)} from the detections · 2012–21 = mean of the frozen-orbit years · nominal = design overpass, not measured</span>
       </div>
     </div>
   );

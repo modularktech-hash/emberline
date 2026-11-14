@@ -13,12 +13,14 @@ import { getCountryTable } from "@/lib/data";
 import { getCalendar } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
+import { prettyName } from "@/lib/names";
 
 const COLORS = ["#d9431a", "#3f7f96"];
 
 export function ComparePage() {
   const { data: table } = useParquet(() => getCountryTable(), "table");
-  const names = table?.countries.map((c) => c.country).sort() ?? [];
+  const names = table?.countries.map((c) => c.country) ?? [];
+  const tags = Object.fromEntries((table?.countries ?? []).map((c) => [c.country, c.fit_source === "pooled" ? ("pooled" as const) : null]));
   const [a, setA] = useState("Canada");
   const [b, setB] = useState("Australia");
   const [mode, setMode] = useState<Series>("harmonized");
@@ -46,7 +48,7 @@ export function ComparePage() {
         {[["A", a, setA], ["B", b, setB]].map(([l, v, set], i) => (
           <div key={l as string} className="flex flex-wrap items-center gap-1.5">
             <span className="mr-1 h-3 w-3 rounded-full" style={{ background: COLORS[i] }} />
-            <CountryPicker value={v as string} options={names} onChange={set as (s: string) => void} label={`Region ${l}`} />
+            <CountryPicker value={v as string} options={names.length ? names : [v as string]} tags={tags} onChange={set as (s: string) => void} label={`Region ${l}`} />
           </div>
         ))}
         <div className="ml-auto flex flex-wrap gap-2">
@@ -54,6 +56,7 @@ export function ComparePage() {
           <Segmented label="cmp-norm" value={norm} onChange={setNorm} options={[{ value: "idx", label: "Index (mean=100)" }, { value: "abs", label: "Absolute" }]} />
         </div>
       </div>
+      <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries too sparse to fit have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
       {error && <div className="mt-6"><Failed error={error} /></div>}
       {loading && <div className="mt-6"><Loading h={300} /></div>}
       {view && data && (
@@ -80,11 +83,11 @@ export function ComparePage() {
               return (
                 <Reveal key={n} delay={k * 0.08}>
                   <section className="card p-5">
-                    <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full" style={{ background: COLORS[k] }} /><h2 className="display text-3xl">{n}</h2></div>
+                    <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full" style={{ background: COLORS[k] }} /><h2 className="display text-3xl">{prettyName(n)}</h2>{row?.fit_source === "pooled" && <span className="rounded-full bg-[var(--ember-soft)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}</div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                       <Stat size="sm" label="2012 step" value={fmtRatio(stepRatio(annualTotals(data[k], 2009, 2014)))} />
                       <Stat size="sm" label="Busiest year" value={String(best?.year ?? "—")} note={<span className="tabular">{fmt(best?.value)}</span>} />
-                      <Stat size="sm" label="Held-out R²" value={row ? fmtR2(row.r2_model) : "—"} />
+                      <Stat size="sm" label="Held-out R²" value={row ? fmtR2(row.r2_model) : "—"} note={mode === "raw" ? <span>raw record, uncorrected</span> : undefined} />
                     </div>
                     <div className="mt-5"><MonthYearCalendar cal={data[k]} from={2003} to={2025} max={view.maxCell} /></div>
                   </section>

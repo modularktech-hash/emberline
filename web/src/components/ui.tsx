@@ -29,19 +29,33 @@ export function Stagger({ children, className, gap = 0.08 }: { children: ReactNo
   );
 }
 
-/** Counts up to a number when scrolled into view. */
+/**
+ * Counts up to a number when scrolled into view.
+ *
+ * The final value is what renders by default (server HTML, screenshots,
+ * readers, a background tab). Only when the number scrolls into view on a
+ * device with motion allowed does it restart from 0 and count up, and a timer
+ * then forces the final value in case the animation is throttled or stopped.
+ * Under reduced motion or low-power mode it never animates.
+ */
 export function CountUp({ to, decimals = 0, prefix = "", suffix = "", className }: { to: number; decimals?: number; prefix?: string; suffix?: string; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
-  const mv = useMotionValue(0);
-  const text = useTransform(mv, (v) => `${prefix}${v.toLocaleString("en", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).replace(/^-/, "\u2212")}${suffix}`);
+  const low = usePerfLow();
+  const fmtV = (v: number) => `${prefix}${v.toLocaleString("en", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).replace(/^-/, "\u2212")}${suffix}`;
+  const mv = useMotionValue(to);
+  const text = useTransform(mv, fmtV);
+  const played = useRef(false);
   useEffect(() => {
-    if (!inView) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { mv.set(to); return; }
+    const still = low || window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.visibilityState !== "visible";
+    if (!inView || played.current || still) { mv.set(to); return; }
+    played.current = true;
+    mv.set(0);
     const c = animate(mv, to, { duration: 1.6, ease: EASE });
-    return () => c.stop();
-  }, [inView, mv, to]);
-  return <motion.span ref={ref} className={`tabular ${className ?? ""}`}>{text}</motion.span>;
+    const t = window.setTimeout(() => { c.stop(); mv.set(to); }, 1900);
+    return () => { c.stop(); clearTimeout(t); mv.set(to); };
+  }, [inView, mv, to, low]);
+  return <motion.span ref={ref} className={`tabular ${className ?? ""}`} aria-label={fmtV(to)}>{text}</motion.span>;
 }
 
 export function PageHead({ eyebrow, title, italic, lede }: { eyebrow: string; title: string; italic?: string; lede: ReactNode }) {

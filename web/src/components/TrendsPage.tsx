@@ -7,19 +7,38 @@ import { DotStat } from "@/components/DotMatrix";
 import { useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
-import { fireDayLabel, getSeason } from "@/lib/data";
+import { fireDayLabel, getCountryTable, getSeason } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
+import { prettyName } from "@/lib/names";
+import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
 type Metric = "onset" | "peak" | "end" | "length";
 const LABEL: Record<Metric, string> = { onset: "Season onset (10% of the year's detections)", peak: "Season peak (50%)", end: "Season end (90%)", length: "Season length (onset → end, days)" };
 const fmt = (v: number | null | undefined) => fmtSigned(v);
 
 export function TrendsPage() {
-  const { data, error, loading } = useParquet(() => getSeason(), "season");
+  const { data, error, loading } = useParquet(async () => {
+    const [season, table] = await Promise.all([getSeason(), getCountryTable().catch(() => null)]);
+    return { ...season, pooled: new Set((table?.countries ?? []).filter((r) => r.fit_source === "pooled").map((r) => r.country)) };
+  }, "season+table");
   const names = data ? Object.keys(data.countries).sort() : [];
   const [country, setCountry] = useState("Chile");
   const [metric, setMetric] = useState<Metric>("onset");
   const c = data?.countries[country];
+  const monthly = c?.resolution === "monthly";
+  const nDaily = names.filter((n) => data?.countries[n].resolution !== "monthly").length;
+  const mvd = data?.monthly_vs_daily;
+  type Col = "name" | "res" | "raw_onset" | "harm_onset" | "raw_length" | "harm_length" | "share";
+  const shareOf = (n: string) => {
+    const t = data!.countries[n].trend_days_per_decade;
+    return t.raw_onset != null && t.harm_onset != null && Math.abs(t.raw_onset) > 0.5 ? 1 - t.harm_onset / t.raw_onset : null;
+  };
+  const tbl = useTable<string, Col>(names, (n) => n, (n, k) => {
+    if (k === "name") return prettyName(n);
+    if (k === "res") return data!.countries[n].resolution ?? "daily";
+    if (k === "share") return shareOf(n);
+    return data!.countries[n].trend_days_per_decade[k];
+  }, { k: "name", dir: 1 });
 
   const W = 760, H = 380, L = 54, R = 18, T = 18, B = 30;
   const years = c?.years.filter((y) => y.harm_onset != null) ?? [];
@@ -39,7 +58,19 @@ export function TrendsPage() {
       {loading && <Loading h={420} />}
       {c && (
         <>
-          <CountryPicker value={country} options={names} onChange={setCountry} />
+          <div className="flex flex-wrap items-center gap-3">
+            <CountryPicker value={country} options={names} onChange={setCountry}
+              tags={Object.fromEntries(names.map((n) => [n, data?.pooled.has(n) ? ("pooled" as const) : null]))} />
+            <span title={data?.resolution_note} className={`rounded-full px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider ${monthly ? "bg-[var(--surface-2)] text-[var(--text-secondary)]" : "bg-[var(--ember-soft)] text-[var(--ember)]"}`}>
+              {monthly ? "monthly resolution" : "daily resolution"}
+            </span>
+          </div>
+          {monthly && (
+            <p className="mt-3 max-w-3xl text-xs leading-relaxed text-[var(--text-secondary)]">
+              Monthly resolution: there is no point-detection table for {prettyName(country)} here, so onset, peak and end are estimated from the monthly calendars, assuming detections are spread evenly within each month. Read dates as approximate.
+              {mvd?.countries ? <> Where both exist ({mvd.countries} countries), the monthly method&apos;s trends differ from the daily ones by a median of {fmtSigned(mvd.trend_abs_diff_median, 1).replace("+", "")} and at most {fmtSigned(mvd.trend_abs_diff_max, 1).replace("+", "")} days per decade.</> : null}
+            </p>
+          )}
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {(["onset", "peak", "end", "length"] as Metric[]).map((m, i) => {
@@ -61,13 +92,13 @@ export function TrendsPage() {
           <Reveal>
             <section className="window mt-8 p-4 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <Eyebrow>{country} · the fire season, year by year (fire year starts {fireDayLabel(1, c.fire_year_start_month)})</Eyebrow>
+                <Eyebrow>{prettyName(country)} · the fire season, year by year (fire year starts {fireDayLabel(1, c.fire_year_start_month)})</Eyebrow>
                 <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--ink)] align-middle opacity-80" />harmonized</span>
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-4)] align-middle opacity-60" />raw</span>
                 </div>
               </div>
-              <svg viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full" role="img" aria-label={`Fire season timing in ${country}`}>
+              <svg viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full" role="img" aria-label={`Fire season timing in ${prettyName(country)}`}>
                 {months.map((m) => <g key={m.day}><line x1={dx(m.day)} x2={dx(m.day)} y1={T} y2={H - B} stroke="var(--gridline)" /><text x={dx(m.day) + 3} y={H - 10} fontSize="10" fill="var(--text-muted)">{m.label}</text></g>)}
                 {years.map((y) => {
                   const cy = yx(y.year);
@@ -118,25 +149,36 @@ export function TrendsPage() {
           </Reveal>
 
           <Reveal>
-            <section className="card mt-8 overflow-x-auto p-5 sm:p-6">
-              <h2 className="display text-3xl">Every region, side by side</h2>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">Least-squares trend 2003–2025, days per decade. Negative = earlier.</p>
-              <table className="tabular mt-5 w-full min-w-[620px] text-sm">
-                <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Region</th><th className="font-normal">Onset raw</th><th className="font-normal">Onset harmonized</th><th className="font-normal">Length raw</th><th className="font-normal">Length harmonized</th><th className="font-normal">Sensor share of onset shift</th></tr></thead>
+            <section className="card mt-8 min-w-0 p-5 sm:p-6">
+              <h2 className="display text-3xl">Every fitted country, side by side</h2>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Least-squares trend 2003–2025, days per decade. Negative = earlier. {nDaily} at daily resolution, {names.length - nDaily} at monthly resolution (marked). Click a row to open it above.</p>
+              <div className="mt-4"><TableSearch q={tbl.q} setQ={tbl.setQ} shown={tbl.shown.length} total={names.length} /></div>
+              <ScrollBox>
+              <table className="tabular w-full min-w-[720px] text-sm">
+                <thead><tr className="text-left text-xs text-[var(--text-muted)]">
+                  <SortTh k="name" {...tbl}>Country</SortTh><SortTh k="res" {...tbl}>Resolution</SortTh>
+                  <SortTh k="raw_onset" {...tbl}>Onset raw</SortTh><SortTh k="harm_onset" {...tbl}>Onset harmonized</SortTh>
+                  <SortTh k="raw_length" {...tbl}>Length raw</SortTh><SortTh k="harm_length" {...tbl}>Length harmonized</SortTh>
+                  <SortTh k="share" {...tbl}>Sensor share of onset shift</SortTh>
+                </tr></thead>
                 <tbody>
-                  {names.map((n) => {
+                  {tbl.shown.map((n) => {
                     const t = data!.countries[n].trend_days_per_decade;
-                    const share = t.raw_onset != null && t.harm_onset != null && Math.abs(t.raw_onset) > 0.5 ? 1 - t.harm_onset / t.raw_onset : null;
+                    const share = shareOf(n);
+                    const mon = data!.countries[n].resolution === "monthly";
                     return (
-                      <tr key={n} className="border-t border-[var(--hairline)]">
-                        <td className="py-2.5">{n}</td><td className="text-[var(--seq-5)]">{fmt(t.raw_onset)}</td><td>{fmt(t.harm_onset)}</td>
-                        <td className="text-[var(--seq-5)]">{fmt(t.raw_length)}</td><td>{fmt(t.harm_length)}</td>
-                        <td className="text-[var(--text-secondary)]">{share == null ? "—" : `${Math.round(share * 100)}%`}</td>
+                      <tr key={n} onClick={() => { setCountry(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} className={`cursor-pointer border-t border-[var(--hairline)] hover:bg-[var(--ember-soft)] ${n === country ? "bg-[var(--ember-soft)]" : ""}`}>
+                        <td className="py-2.5 pr-3">{prettyName(n)}{data!.pooled.has(n) && <span className="ml-1.5 font-mono text-[10px] uppercase text-[var(--ember)]">pooled</span>}</td>
+                        <td className="px-3 text-xs text-[var(--text-muted)]">{mon ? "monthly" : "daily"}</td>
+                        <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_onset)}</td><td className="px-3">{fmt(t.harm_onset)}</td>
+                        <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_length)}</td><td className="px-3">{fmt(t.harm_length)}</td>
+                        <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : `${Math.round(share * 100)}%`}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+              </ScrollBox>
               <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">&quot;Sensor share&quot; = the part of the raw onset trend that disappears after harmonizing. A trend over 23 years is fragile, especially where the fire year is short; read these as indications, with the year-by-year table above.</p>
             </section>
           </Reveal>

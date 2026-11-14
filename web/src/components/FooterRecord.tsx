@@ -38,8 +38,8 @@ export function FooterRecord() {
     if (!d) return [];
     const by = new Map<number, number>();
     for (const c of d.table.countries) for (const a of c.annual) by.set(a.year, (by.get(a.year) ?? 0) + a.harm);
-    // From 2003, Aqua's first full year (the harmonized unit is Aqua-equivalent), and only years every region has.
-    return [...by.entries()].filter(([y]) => y >= 2003 && d.table.countries.every((c) => (c.annual.find((a) => a.year === y)?.harm ?? 0) > 0))
+    // From 2003, Aqua's first full year (the harmonized unit is Aqua-equivalent), to the last year the record has.
+    return [...by.entries()].filter(([y]) => y >= 2003 && y <= d.params.drift_years[1])
       .sort((a, b) => a[0] - b[0]).map(([year, v]) => ({ year, v }));
   }, [d]);
   const max = Math.max(1, ...series.map((s) => s.v));
@@ -57,7 +57,7 @@ export function FooterRecord() {
             <p className="tabular display text-3xl text-[#f7f3e8]">{shown ? fmtInt(shown.v) : "…"}</p>
             <p className="tabular text-sm text-[#b8b2a2]">{shown ? shown.year : ""}</p>
           </div>
-          <p className="text-xs text-[#b8b2a2]">Aqua-MODIS-equivalent detections{names.length ? `, sum of ${names.length} regions` : ""}</p>
+          <p className="text-xs text-[#b8b2a2]">Aqua-MODIS-equivalent detections{names.length ? `, summed over ${names.length} countries, each corrected with its own fit` : ""}</p>
           <div className="mt-3 flex h-16 items-end gap-[3px]" onMouseLeave={() => setHover(null)} role="img"
             aria-label={series.length ? `Harmonized yearly detections ${series[0].year} to ${series[series.length - 1].year}, peak ${fmtCompact(max)}` : "Loading the harmonized record"}>
             {(series.length ? series : Array.from({ length: 23 }, (_, i) => ({ year: i, v: 0 }))).map((s) => (
@@ -68,7 +68,7 @@ export function FooterRecord() {
           </div>
           {series.length > 0 && <div className="tabular mt-1 flex justify-between text-[10px] text-[#8f887a]"><span>{series[0].year}</span><span>{series[series.length - 1].year}</span></div>}
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
-            <dt className="text-[#8f887a]">Regions</dt><dd className="text-[#e6dfcd]">{names.length ? names.join(", ") : "…"}</dd>
+            <dt className="text-[#8f887a]">Countries</dt><dd className="text-[#e6dfcd]">{names.length ? <>{names.length} fitted, {d?.table.not_fitted?.length ?? 0} too sparse to fit (raw only) · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "…"}</dd>
             <dt className="text-[#8f887a]">Years</dt><dd className="tabular text-[#e6dfcd]">{years.length ? span(Math.min(...years), Math.max(...years)) : "…"}</dd>
             <dt className="text-[#8f887a]">Fit</dt><dd className="tabular text-[#e6dfcd]">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "…"}</dd>
           </dl>

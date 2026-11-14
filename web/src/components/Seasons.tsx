@@ -7,7 +7,7 @@ import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
 import { FirePulse } from "@/components/FirePulse";
 import { CountryPicker } from "@/components/CountryPicker";
 import { PageHead, Reveal } from "@/components/ui";
-import { useAreaData, type Area } from "@/lib/useArea";
+import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
 
 const W = 720, H = 300, L = 46, R = 16, T = 18, B = 30;
 
@@ -18,7 +18,7 @@ export function Seasons() {
   const { data, error, loading } = useAreaData(area);
 
   const v = useMemo(() => {
-    if (!data) return null;
+    if (!data || data.harmonized.keys.length === 0) return null;
     const rows = data.harmonized.rows.filter((r) => r.year >= 2003 && r.value !== null);
     const years = [...new Set(rows.map((r) => r.year))].sort((a, b) => a - b);
     const months = MONTHS.map((_, i) => {
@@ -39,7 +39,7 @@ export function Seasons() {
         lede="Each month of a chosen year against that month's historical median and spread, on the harmonized record — so 2005 and 2025 are compared in the same unit." />
       <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <CountryPicker value={area.kind === "country" ? area.name : "Custom area"} options={data?.countries ?? []} onChange={(c) => setArea({ kind: "country", name: c })} />
+          <CountryPicker value={area.kind === "country" ? area.name : ""} options={data?.countries ?? [area.kind === "country" ? area.name : "Canada"]} tags={data?.tags} onChange={(c) => setArea({ kind: "country", name: c })} />
           <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
             <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5 text-[var(--text-primary)]">
               {(v?.years ?? [year]).map((yy) => <option key={yy}>{yy}</option>)}
@@ -49,6 +49,11 @@ export function Seasons() {
 
         {error && <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>}
         {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+        {data && !v && (
+          <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">
+            {areaLabel(area)} has too few detections to fit, so it has no harmonized record. This page compares years in the harmonized unit only; the raw record (uncorrected) is in the Explorer.
+          </p>
+        )}
         {v && (
           <div className="fade-in">
             <svg viewBox={`0 0 ${W} ${H}`} className="mt-6 w-full" role="img" aria-label={`Monthly detections in ${year} against the historical median`}>
@@ -112,7 +117,7 @@ export function Seasons() {
               Each ring is a year, oldest at the centre; each slice is a month. A fire season shows as a band of colour sweeping around the clock — if it widens, shifts, or burns darker in recent rings, you can see it here before you read a number. Harmonized record, same Ember ramp as the calendar.
             </p>
           </div>
-          {data && <FirePulse cal={data.harmonized} />}
+          {data && v && <FirePulse cal={data.harmonized} />}
         </section>
       </Reveal>
     </div>

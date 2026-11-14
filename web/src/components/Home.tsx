@@ -13,6 +13,25 @@ import { ALL } from "@/lib/nav";
 import { Eyebrow, Stat } from "@/components/Figure";
 import { DriftClocks } from "@/components/DriftClocks";
 import { NA, fmtAge, fmtClock, fmtInt, fmtR2, fmtRatio, fmtSigned, fmtUtc, parseUtc, span } from "@/lib/format";
+import { median } from "@/lib/ember";
+import { ORIGINAL_FOUR, prettyName } from "@/lib/names";
+import type { Params } from "@/lib/types";
+
+/** Headline accuracy, computed from the fit: median over own-fit countries, and the single best country. */
+export function accuracySummary(p: Params | undefined) {
+  if (!p) return null;
+  const names = Object.keys(p.countries);
+  const own = names.filter((n) => p.countries[n].fit_source !== "pooled");
+  if (!own.length) return null;
+  const r2 = (n: string) => p.countries[n].validation_test.model.r2;
+  const best = own.reduce((a, n) => (r2(n) > r2(a) ? n : a), own[0]);
+  return {
+    fitted: names.length, own: own.length,
+    medianR2: median(own.map(r2)),
+    best, bestR2: r2(best), bestRaw: p.countries[best].validation_test.raw_viirs.r2,
+    beats: names.filter((n) => r2(n) > p.countries[n].validation_test.raw_viirs.r2).length,
+  };
+}
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
 import { EASE } from "@/lib/motion";
@@ -60,7 +79,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         </h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }}
           className="mx-auto mt-7 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">
-          Two generations of NASA satellites, harmonized into a single fire record you can trust from 2001 to today.
+          Two generations of NASA satellites, harmonized country by country into one consistent fire record from 2001 to today.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
@@ -77,13 +96,14 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
       </motion.div>
 
       <Widgets d={d} />
-      {d && <Ticker names={[...d.table.countries.map((c) => c.country), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]} />}
+      {d && <Ticker names={[...[...d.table.countries].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24).map((c) => prettyName(c.country)), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]}
+        label={`The ${Math.min(24, d.table.countries.length)} fitted countries with the most fire, and the satellites`} />}
     </section>
   );
 }
 
 /* ------------------------------------------- ticker of existing names */
-function Ticker({ names }: { names: string[] }) {
+function Ticker({ names, label }: { names: string[]; label: string }) {
   const row = names.map((n) => (
     <span key={n} className="flex items-center gap-6 pr-6 font-mono text-[12px] uppercase tracking-[0.24em] text-[var(--text-muted)]">
       {n}<span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--ember)] opacity-70" />
@@ -91,7 +111,7 @@ function Ticker({ names }: { names: string[] }) {
   ));
   return (
     <div className="marquee mx-auto mt-14 max-w-5xl py-2">
-      <p className="sr-only">Regions and satellites: {names.join(", ")}</p>
+      <p className="sr-only">{label}: {names.join(", ")}</p>
       <div aria-hidden>{row}{row.map((r, i) => <span key={i}>{r}</span>)}</div>
     </div>
   );
@@ -117,9 +137,11 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
   const age = fmtAge(fetched, now);
   const dates = w?.dates ?? [];
   const countries = d?.table.countries ?? [];
-  const detections = countries.length ? countries.reduce((a, c) => a + c.detections_filtered, 0) : null;
+  const notFitted = d?.table.not_fitted ?? [];
+  const detections = countries.length ? countries.reduce((a, c) => a + c.detections_filtered, 0) + notFitted.reduce((a, c) => a + c.detections_filtered, 0) : null;
+  const withRecord = countries.length + notFitted.filter((c) => c.has_raw_calendar && c.detections_filtered > 0).length;
   const years = countries.flatMap((c) => c.annual.map((a) => a.year));
-  const best = countries.length ? countries.reduce((a, c) => (c.r2_model > a.r2_model ? c : a)) : null;
+  const acc = accuracySummary(d?.params);
   const sats = d?.tle.satellites ?? [];
   const p = d?.params;
   return (
@@ -190,14 +212,14 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           <div className={`glass ${tile}`}>
             <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d ? NA : "…"}
               unit="detections"
-              note={<>Daytime vegetation-fire detections from {years.length ? span(Math.min(...years), Math.max(...years)) : "…"}, in {countries.length || "…"} regions ({countries.map((c) => c.country).join(", ")}), exact total {fmtInt(detections)}.</>}
+              note={<>Daytime vegetation-fire detections, raw, {years.length ? span(Math.min(...years), Math.max(...years)) : "…"}, in {withRecord || "…"} FIRMS countries and territories; {countries.length || "…"} of them have enough data to fit. Exact total {fmtInt(detections)}.</>}
               source={<>Source: NASA FIRMS archive (MODIS C6.1, VIIRS Suomi-NPP) · countries.json</>} />
           </div>
         </Reveal>
         <Reveal delay={0.05}>
           <div className={`${tile} bg-[var(--ember)] text-white shadow-[0_24px_44px_-26px_rgba(217,67,26,0.8)]`}>
-            <Stat dot tone="ember" label="Accuracy · best region" value={best ? fmtR2(best.r2_model) : d ? NA : "…"} unit="R²"
-              note={best && p ? <>{best.country}: the corrected record against what Aqua MODIS really saw in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect; raw VIIRS scores {fmtR2(best.r2_raw)}.</> : null}
+            <Stat dot tone="ember" label="Accuracy · median country" value={acc ? fmtR2(acc.medianR2) : d ? NA : "…"} unit="R²"
+              note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against what Aqua MODIS really saw in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
               source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
           </div>
         </Reveal>
@@ -365,10 +387,10 @@ export function Home() {
         <Reveal><Eyebrow>07 · How we know</Eyebrow></Reveal>
         <Reveal delay={0.05}><h2 className="display mt-3 max-w-3xl t-d2">Tested on years the model <span className="italic text-[var(--ember)]">never saw.</span></h2></Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(d?.table.countries ?? []).map((c, i) => (
+          {(d?.table.countries ?? []).filter((c) => ORIGINAL_FOUR.includes(c.country)).map((c, i) => (
             <Reveal key={c.country} delay={i * 0.07}>
               <div className="card p-5">
-                <Eyebrow>{c.country}</Eyebrow>
+                <Eyebrow>{prettyName(c.country)}</Eyebrow>
                 <p className="mt-3 text-[var(--ink)]"><DotStat text={fmtR2(c.r2_model)} dot={7} /></p>
                 <p className="mt-1 text-xs text-[var(--text-secondary)]">held-out R² against observed Aqua · raw VIIRS {fmtR2(c.r2_raw)}</p>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[var(--surface-2)]">
@@ -378,7 +400,7 @@ export function Home() {
             </Reveal>
           ))}
         </div>
-        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">Fitted 2012–2018, scored 2019–2021 per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Full method and proof →</Link></p></Reveal>
+        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d?.params); return a ? <>Across all {a.fitted} fitted countries, each fitted separately, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
       </section>
 
       <DriftChapter drift={d?.drift} />
@@ -400,7 +422,7 @@ export function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Half of the apparent shift is VIIRS spotting small early-season burns MODIS never could. <Link href="/trends" className="link-ul">Every region →</Link></p>
+              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier.{chile?.raw_onset != null && chile?.harm_onset != null && chile.raw_onset !== 0 ? ` ${Math.round((1 - chile.harm_onset / chile.raw_onset) * 100)}% of the apparent shift disappears once VIIRS's extra small early-season detections are weighted to the MODIS scale.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
             </div>
           </Reveal>
         </div>

@@ -1,5 +1,21 @@
 import Link from "next/link";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { PageHead, Reveal } from "@/components/ui";
+import { median } from "@/lib/ember";
+import { fmtRatio } from "@/lib/format";
+import type { CountriesFile } from "@/lib/data";
+
+/** Read at build time from the published summary, so the sentence below is computed, not typed. */
+function stepSummary(): { median: number | null; n: number } {
+  try {
+    const t = JSON.parse(readFileSync(join(process.cwd(), "public", "data", "countries.json"), "utf8")) as CountriesFile;
+    const own = t.countries.filter((c) => c.fit_source !== "pooled" && Number.isFinite(c.step_raw));
+    return { median: median(own.map((c) => c.step_raw)), n: own.length };
+  } catch {
+    return { median: null, n: 0 };
+  }
+}
 
 const SOURCES = [
   ["MODIS Collection 6.1 active fires (Terra, Aqua)", "NASA FIRMS country archive, 2001–2025, and near-real-time feed"],
@@ -13,14 +29,15 @@ const SOURCES = [
 ];
 
 export function AboutPage() {
+  const step = stepSummary();
   return (
     <div>
       <PageHead eyebrow="About · NASA Space Apps Challenge 2026" title="Built in 48 hours," italic="for the people who fight fires."
         lede="Emberline answers the challenge “MODIS and VIIRS hot spots”: harmonize the satellite fire record so the sensor no longer matters, and turn it into a burning activity calendar for any area." />
       <div className="grid gap-6 lg:grid-cols-3">
         {[
-          ["The problem", "From 2012 a sharper satellite sensor began detecting small fires the old one could not. Raw fire records jumped — by 1.5× to 6.6× in our regions — though the fires did not."],
-          ["What we built", "A detection-probability model, fitted on 2012–2018 and tested on 2019–2021, that converts every VIIRS detection into what MODIS would have seen. Then a calendar, insights, a live globe and open data on top."],
+          ["The problem", `From 2012 a sharper satellite sensor began detecting small fires the old one could not. Raw fire records jumped${step.median != null ? ` — by a median ${fmtRatio(step.median)} (2012–14 over 2009–11) across the ${step.n} countries with their own fit —` : ""} though the fires did not.`],
+          ["What we built", "A detection-probability model, fitted per country on 2012–2018 and tested on 2019–2021, that converts every VIIRS detection into what MODIS would have seen. Regional fits, no global step correction. Then a calendar, insights, a live globe and open data on top."],
           ["Who it is for", "Early-warning and emergency responders, land managers, firefighters and scientists who need to know whether this season is unusual — in a record that holds still."],
         ].map(([t, d], i) => (
           <Reveal key={t} delay={i * 0.06}><div className="card h-full p-6"><p className="display text-3xl">{t}</p><p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">{d}</p></div></Reveal>
@@ -39,7 +56,7 @@ export function AboutPage() {
           <section className="card h-full p-6 sm:p-8">
             <h2 className="display text-4xl">Use of AI</h2>
             <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">
-              We used Anthropic&apos;s Claude (via Claude Code) as a coding and research assistant: for literature research and planning, for writing and debugging the data pipeline and this web application, and for drafting documentation. The scientific choices — the harmonization approach, the 2012–2021 fitting window, the validation design — and every reported number come from our own analysis of NASA FIRMS data, run and checked by the team. No AI-generated images, video or audio are used.
+              We used Anthropic&apos;s Claude (via Claude Code) as a coding and research assistant: for literature research and planning, for writing and debugging the data pipeline and this web application, and for drafting documentation. The scientific choices — the harmonization approach, the 2012–2021 frozen-orbit window (trained 2012–2018, tested 2019–2021), the validation design — and every reported number come from our own analysis of NASA FIRMS data, run and checked by the team. No AI-generated images, video or audio are used.
             </p>
           </section>
         </Reveal>
@@ -48,7 +65,7 @@ export function AboutPage() {
             <h2 className="display text-4xl">Team Modulark</h2>
             <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">A small lab in Tumkur, Karnataka. Emberline is open source under the MIT license.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href="https://github.com/shishirbhat/emberline" className="pill-dark px-5 py-2.5 text-sm font-medium">Source on GitHub</a>
+              <a href="https://github.com/modularktech-hash/emberline" className="pill-dark px-5 py-2.5 text-sm font-medium">Source on GitHub</a>
               <Link href="/method" className="glass-thin px-5 py-2.5 text-sm font-medium">Read the method</Link>
             </div>
             <p className="mt-6 text-xs text-[var(--text-muted)]">Not affiliated with or endorsed by NASA. No NASA logos or insignia are used.</p>

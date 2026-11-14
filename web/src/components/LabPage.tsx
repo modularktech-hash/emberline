@@ -10,6 +10,7 @@ import { MONTHS, fmt, median, quantile } from "@/lib/ember";
 import { getCountryTable } from "@/lib/data";
 import { getCalendar, getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
+import { fitTag, prettyName } from "@/lib/names";
 
 const P = (frp: number, b0: number, b1: number) => 1 / (1 + Math.exp(-(b0 + b1 * Math.log(Math.max(0.1, frp)))));
 const DIURNAL: Record<string, { s: number; h: number }> = {
@@ -116,8 +117,8 @@ export function LabPage() {
 
       <div className="card sticky top-24 z-20 flex flex-wrap items-center gap-3 p-3">
         <Eyebrow as="span" className="pl-2">Region</Eyebrow>
-        <CountryPicker value={region} options={names} onChange={setRegion} />
-        {fit && <span className="tabular ml-auto pr-2 text-xs text-[var(--text-muted)]">b₀ {fmtNum(fit.logistic.b0, 3)} · b₁ {fmtNum(fit.logistic.b1, 3)} · κ {fmtNum(fit.kappa, 3)}</span>}
+        <CountryPicker value={region} options={names.length ? names : [region]} tags={Object.fromEntries(names.map((n) => [n, fitTag(data?.params, n)]))} onChange={setRegion} />
+        {fit && <span className="tabular ml-auto pr-2 text-xs text-[var(--text-muted)]">b₀ {fmtNum(fit.logistic.b0, 3)} · b₁ {fmtNum(fit.logistic.b1, 3)} · κ {fmtNum(fit.kappa, 3)}{fit.fit_source === "pooled" && " · pooled curve"}{fit.kappa_source === "pooled" && " · pooled κ"}</span>}
       </div>
 
       <div className="mt-6 space-y-6">
@@ -134,7 +135,7 @@ export function LabPage() {
               </svg>
             </div>
             <div className="space-y-3">
-              <Out big label={`P(Aqua also detects) · ${region}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
+              <Out big label={`P(Aqua also detects) · ${prettyName(region)}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
               <Out label="FRP at 50% (95% CI)" value={fit ? `${fmtNum(fit.frp_at_p50_mw, 1)} MW` : "—"} />
               <p className="text-xs text-[var(--text-muted)]">CI {fit?.frp_at_p50_ci95_mw.map((v) => fmtNum(v, 1)).join("–")} MW. Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019) — a sanity check, not the same quantity.</p>
             </div>

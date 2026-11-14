@@ -12,6 +12,7 @@ import { bboxToParents, type Bbox } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { prettyName } from "@/lib/names";
 import type { Series } from "@/lib/types";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
@@ -63,8 +64,12 @@ export function Explorer() {
   };
 
   const cal = data ? (mode === "raw" ? data.raw : data.harmonized) : null;
-  const notProcessed = data && cal && cal.keys.length === 0;
+  // No harmonized series, but a raw one: a country too sparse to fit, or a box of such cells.
+  const rawOnly = !!(data && cal && cal.keys.length === 0 && cal.uncorrectedKeys.length > 0);
+  const notProcessed = !!(data && cal && cal.keys.length === 0 && !rawOnly);
   const fit = data && area.kind === "country" ? data.params.countries[area.name] : undefined;
+  const unfitted = !!(data && area.kind === "country" && !fit);
+  const boxCells = area.kind === "box" ? area.parents.length : 0;
 
   const exportCsv = () => {
     if (!data || !cal || !view) return;
@@ -76,7 +81,9 @@ export function Explorer() {
         years: `${view.lo}-${view.hi}`,
         series: mode,
         unit: cal.unit,
-        fit_version: mode === "harmonized" ? data.params.fit_version : "n/a (uncorrected)",
+        fit_version: mode === "harmonized" ? data.params.fit_version : "n/a (raw record, uncorrected)",
+        ...(area.kind === "box" ? { h3_res2_cells: `${cal.keys.length} with data of ${boxCells} touched` } : {}),
+        ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
         source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
         downloaded: new Date().toISOString(),
       },
@@ -100,8 +107,10 @@ export function Explorer() {
         <div className="p-4 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Area">
-            <CountryPicker value={area.kind === "country" ? area.name : "Custom area"} options={data?.countries ?? ["Canada"]} onChange={(c) => setArea({ kind: "country", name: c })} />
+            <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind === "box" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => setArea({ kind: "country", name: c })} />
             {area.kind === "box" && <span className="rounded-full border border-[var(--ember)] bg-[var(--ember-soft)] px-3.5 py-1.5 text-sm">Custom area</span>}
+            {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}
+            {unfitted && <span className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected</span>}
           </div>
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
@@ -117,12 +126,42 @@ export function Explorer() {
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
-            <p className="text-[var(--text-primary)]">This area is not processed yet.</p>
-            <p className="mt-1">Current coverage: {data.countries.join(", ")}. No data is not the same as no fire, so nothing is shown.</p>
+            {data.raw.dataset === "world" ? (
+              <>
+                <p className="text-[var(--text-primary)]">No processed data in this area.</p>
+                <p className="mt-1">
+                  {area.kind === "box"
+                    ? <>None of the {boxCells} ~300 km grid cells this box touches has a detection in the processed FIRMS record (every FIRMS country, {data.countries.length} with detections). Open ocean, ice and deserts often have none.</>
+                    : <>{areaLabel(area)} has no calendar in the processed FIRMS record.</>}
+                  {" "}No data is not the same as no fire, so nothing is shown.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[var(--text-primary)]">This area is not processed yet.</p>
+                <p className="mt-1">The world files could not be loaded, so only the four-country fallback is available: {data.countries.map(prettyName).join(", ")}. No data is not the same as no fire, so nothing is shown.</p>
+              </>
+            )}
           </div>
         )}
+        {rawOnly && data && (
+          <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
+            <p className="text-[var(--text-primary)]">No harmonized record here.</p>
+            <p className="mt-1">
+              {area.kind === "country" ? <>{areaLabel(area)} has a raw FIRMS record but too few matched detections for a fit, so there is no corrected series.</> : <>Every cell this box touches has a raw FIRMS record but no harmonized one (a country too sparse to fit, or none of the Aqua/VIIRS detections the fit uses).</>}
+              {" "}<button type="button" onClick={() => setMode("raw")} className="link-ul text-[var(--text-primary)]">Show the raw record</button> — it is uncorrected and keeps the 2012 sensor step.
+            </p>
+          </div>
+        )}
+        {data && cal && !notProcessed && !rawOnly && (cal.unknownKeys.length > 0 || cal.uncorrectedKeys.length > 0) && area.kind === "box" && (
+          <p className="mt-6 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+            This box touches {boxCells} grid cells; {cal.keys.length} {cal.keys.length === 1 ? "has" : "have"} {mode === "raw" ? "a raw record" : "a harmonized record"} and {cal.keys.length === 1 ? "is" : "are"} summed here.
+            {cal.unknownKeys.length > 0 && <> {cal.unknownKeys.length} {cal.unknownKeys.length === 1 ? "has" : "have"} no processed data (no detections).</>}
+            {cal.uncorrectedKeys.length > 0 && <> {cal.uncorrectedKeys.length} {cal.uncorrectedKeys.length === 1 ? "has" : "have"} only a raw, uncorrected record (in a country too sparse to fit, or with none of the Aqua/VIIRS detections the fit uses) and {cal.uncorrectedKeys.length === 1 ? "is" : "are"} left out of the harmonized series.</>}
+          </p>
+        )}
 
-        {data && cal && view && !notProcessed && (
+        {data && cal && view && !notProcessed && !rawOnly && (
           <div className="fade-in">
             <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_17rem]">
               <div>
@@ -146,17 +185,19 @@ export function Explorer() {
                 {fit && (
                   <div>
                     <Eyebrow>Held-out accuracy</Eyebrow>
-                    <p className="display tabular mt-2 text-3xl"><CountUp to={fit.validation_test.model.r2} decimals={2} /> <span className="stat-unit text-[var(--text-secondary)]">R²</span></p>
+                    <p className="display tabular mt-2 text-3xl"><CountUp to={fit.validation_test.model.r2} decimals={Math.abs(fit.validation_test.model.r2) >= 1 ? 1 : 2} /> <span className="stat-unit text-[var(--text-secondary)]">R²</span></p>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                       Against observed Aqua, {data.params.test_years[0]}–{data.params.test_years[1]}, years the model never saw.
                       Raw VIIRS scores {fmtR2(fit.validation_test.raw_viirs.r2)}.
+                      {fit.fit_source === "pooled" && " Pooled curve: this country had too few training matches for its own."}
                     </p>
                   </div>
                 )}
                 <p className="text-xs leading-relaxed text-[var(--text-muted)]">
                   {mode === "raw"
-                    ? "Raw: MODIS counts to 2011, VIIRS counts from 2012 — what a naive download shows."
+                    ? "Raw record, uncorrected: MODIS counts to 2011, VIIRS counts from 2012 — what a naive download shows."
                     : "Harmonized: the detections a MODIS-class sensor (Aqua) would have made, every year."}
+                  {unfitted && " This country is too sparse to fit, so only the raw record exists."}
                 </p>
               </div>
             </div>
@@ -221,7 +262,7 @@ export function Explorer() {
           </div>
           <button type="button" onClick={applyTyped} className="mt-3 w-full rounded-lg pill-dark px-3 py-2.5 text-sm font-medium">Show this area</button>
           <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
-            Areas resolve to the ~300 km grid cells they touch, so a small box reports its surrounding cell.
+            Areas resolve to the ~300 km grid cells (H3 resolution 2) they touch, anywhere in the processed FIRMS record, so a small box reports its surrounding cell. A cell is summed whole: it can straddle a border.
           </p>
         </div>
       </section>

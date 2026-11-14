@@ -5,7 +5,7 @@ import { FooterRecord } from "@/components/FooterRecord";
 const PROJECT = [
   { href: "/about", label: "About & credits", ext: false },
   { href: "/data", label: "Download the data", ext: false },
-  { href: "https://github.com/shishirbhat/emberline", label: "Source code", ext: true },
+  { href: "https://github.com/modularktech-hash/emberline", label: "Source code", ext: true },
   { href: "https://www.earthdata.nasa.gov/data/tools/firms", label: "NASA FIRMS", ext: true },
 ];
 const GROUPS = [...NAV.map((g) => ({ label: g.label, items: g.items.map((i) => ({ href: i.href, label: i.label, ext: false })) })), { label: "Project", items: PROJECT }];
