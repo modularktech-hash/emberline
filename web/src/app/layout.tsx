@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
 import { Interactions } from "@/components/Interactions";
 import { PerfMode } from "@/components/PerfMode";
+import { RouteTransition } from "@/components/RouteTransition";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteNav />
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
         <SiteFooter />
+        <RouteTransition />
       </body>
     </html>
   );

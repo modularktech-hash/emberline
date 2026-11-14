@@ -10,10 +10,15 @@ readouts. Make it more disciplined and easier to use. Labels say
 ## Checklist (tick here in the same commit as the work)
 
 ### P0 — owner's explicit asks
-- [ ] T1 Named page transition: curtain shows the destination ("EXPLORE" /
+- [x] T1 Named page transition: curtain shows the destination ("EXPLORE" /
       "Calendar Explorer") with a dot progress row, then lifts. ~1.1–1.4 s,
       transform/opacity only, 2.5 s safety lift, none on back/forward, quick
       fade under reduced motion / low-power. Reconcile with `template.tsx`.
+      - Done: `components/RouteTransition.tsx`. Under reduced motion or low-power
+        mode there is no curtain at all (instant navigation). Low-power is auto
+        on <= 4-CPU devices, so many phones get none; `?perf=high` forces it.
+        Explorer's commit can be slow on software GL: the 2.5 s safety lift was
+        seen once in the container.
 - [ ] L1 Logo "ember + line": rounded charcoal stroke, clear gap, one ember
       dot slightly larger than the stroke; plain EMBERLINE wordmark. Variants:
       mark+wordmark (nav, footer, OG image), mark only (favicon/`icon.svg`,
