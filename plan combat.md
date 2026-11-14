@@ -879,10 +879,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E35 — Explain indexing and common period
 
-- [ ] **Status:** P2 · Observed gap · Compare · effort S
+- [x] **Status:** P2 · Observed gap · Compare · effort S
 - **Evidence:** Own-country mean index
 - **Acceptance:** Reference years and missing/zero-mean behavior explicit
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: index divided by a 2003–2025 mean counting missing years as 0 and `mean || 1` hid a zero mean. ComparePage.tsx: missing years are gaps (null, not 0) and excluded from the mean; zero/absent mean → line not drawn and stated; new Period control ("Each side's years" / "Common period", URL `period=common` via useUrlState) restricts both lines and means to years both have data; per-side list of reference years, n, mean and gap years; copy says each index uses its own country's mean. Verified Playwright 390/1440, 0 errors, 0 overflow: Canada/Barbados common → "2003–2025 (n = 23), mean 23,043 / mean 8"; Canada vs Aland_Islands (no fit) common → "reference years none … common period is empty".
 
 ### E36 — Label summed FRP correctly
 
