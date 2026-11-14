@@ -854,14 +854,14 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 - [ ] **Status:** P2 · Observed gap · Trends · effort M
 - **Evidence:** Point slopes with caveat
 - **Acceptance:** CI/usable years/sensitivity shown or descriptive-only label
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: season.json/countries.json carried only point slopes. Implemented: `build_insights.py` `trend_stats()` adds per country and per raw/harm onset/peak/end the OLS SE, 95% t-CI, usable years and first/last year, and slope after dropping the first or last 3 usable years (null if <8 remain) with the min–max range; `trend_note` says descriptive. Verified: rebuilt with the same EMBERLINE_KEEP_RESOLUTION pinning; stripping the new keys gives JSON equal to the published files (season, countries; drift.json byte-unchanged); slopes asserted equal to `trend_days_per_decade`; check_seasons.py and check_data_contract.py OK. Not verified: on-screen display (UI hand-off, `docs/data-contract-additions.md` §8).
 
 ### E32 — Respect monthly estimate precision
 
 - [ ] **Status:** P2 · Source concern · Trends · effort S
 - **Evidence:** 5 monthly countries; maximum trend discrepancy37.61
 - **Acceptance:** Approximate dates and method differences remain visible
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: 5 monthly countries had no per-estimate precision flag. Implemented: `trend_approximate` per season country and `onset_trend_approximate` in countries.json (true for Barbados, Estonia, Mauritius, Slovenia, Solomon_Islands); monthly-vs-daily discrepancy metadata kept. Verified: flags match `resolution == "monthly"`; added-fields-only diff check passed. Not verified: ≈ display in UI (hand-off §8).
 
 ### E33 — Add absolute anomaly and zero-median handling
 

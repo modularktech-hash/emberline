@@ -195,3 +195,41 @@ fitted countries. The fallback files are kept.
   (fit v1-20261114T0630)". Verify by blocking `params_global.json` in DevTools
   (Network → Block request URL): every page must show the banner, and no page
   may show world summaries.
+
+## 8. Trend uncertainty and monthly precision (E31, E32) — additive
+
+Built by `scripts/build_insights.py` (rebuilt with
+`EMBERLINE_DETECTIONS=data/public:data/global_public EMBERLINE_KEEP_RESOLUTION=<copy of published season.json>`;
+every pre-existing field is byte-for-byte unchanged, checked by stripping the new keys and comparing).
+
+`season.json`, top level: `trend_note` (the definition below, in words).
+
+`season.json`, per country:
+
+- `trend_stats.{raw,harm}_{onset,peak,end}` (peak = 50% midpoint):
+  - `n_years`, `first_year`, `last_year` — usable fire years (non-null, not partial).
+  - `slope_per_decade` — identical to `trend_days_per_decade[...]` (asserted).
+  - `se_per_decade` — OLS slope standard error × 10.
+  - `ci95` — `[slope − t·se, slope + t·se]`, t = Student-t 0.975 quantile with n−2 df.
+  - `drop_first3`, `drop_last3` — slope after dropping the first / last 3 **usable**
+    years; null if fewer than 8 usable years remain.
+  - `sensitivity_range` — `[min, max]` of full, drop_first3, drop_last3.
+  - All null except `n_years` when fewer than 8 usable years (no trend published).
+- `trend_approximate` — true for the five monthly-resolution countries
+  (Barbados, Estonia, Mauritius, Slovenia, Solomon_Islands): their dates are
+  interpolated within months, not observed.
+
+`countries.json`, per row: `onset_trend_raw_ci95`, `onset_trend_harm_ci95`,
+`onset_trend_harm_n_years`, `onset_trend_harm_sensitivity`, `onset_trend_approximate`.
+
+**These are descriptive.** The CI assumes independent, homoscedastic residuals
+and a linear trend; none is tested. Wording to use: "descriptive least-squares
+trend; 95% interval assumes independent years". A CI that spans zero, or a
+sensitivity range that changes sign, must not be read as a shift.
+
+**Hand-off to the UI session:** `TrendsPage.tsx` (trend cells, country table)
+— show `ci95` and `n_years` beside each slope, and the sensitivity range on
+hover/detail; label the column "descriptive"; for `trend_approximate` prefix
+dates with "≈" and say "monthly estimate". Types to add in `lib/data.ts`:
+`trend_stats?: Record<string, TrendStats>`, `trend_approximate?: boolean` on the
+season country, and the five `onset_trend_*` fields on `CountryRow`.
