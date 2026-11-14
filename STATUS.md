@@ -10,7 +10,7 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by the "data host" cloud session (session_012Vv…), 14 Nov ~15:10 UTC, owner's instruction
+## `web/` — RELEASED by the "data host" cloud session (14 Nov ~17:00 UTC); was claimed from ~15:10 UTC
 
 Owner said "begin with everything": switch the app to the world data (TODO §2), then testing (TODO §3), README and submission prep. The app-build session's performance and polish passes are live (`06df191`). **No other session edits `web/` until this is released.** What is in progress, and how to resume if this session stops: [`docs/in-flight.md`](docs/in-flight.md).
 
@@ -62,6 +62,8 @@ land in `docs/results.md`.
    country as `fit_source: pooled`).
 
 ## Log (newest first)
+
+- 14 Nov ~17:00 UTC — Data-host session: **app switched to the world data** (171 fitted countries, 4-country fallback), audit wording/method/bug/accessibility fixes, testing pass, README. Season timing: daily for 166 countries (detection tables rebuilt here from `data/global`, each matching the published calendar exactly), monthly resolution (labelled) for 5. `scripts/check_app_numbers.py`: 16,356 checks, 0 failed. 11 routes at 1440/375: no sideways scroll, no console errors. `web/` released. Details: `docs/in-flight.md`.
 
 - 14 Nov ~15:30 UTC — Web performance + polish passes 1–2 live ("app build" session): native scroll, no custom cursor/progress bar/serif, cheap glass, globe rebuilt, Explorer 18.2 s → 8.1 s, home at-a-glance panel, overpass clocks, unified number style, interactive footer with Made by Modulark. All 11 routes checked live at phone + desktop: 200, no overflow, no console errors. Details: `docs/handoff-web-ui.md`. Next: switch the app to the global data.
 - 14 Nov evening — Data-host session released `web/` and wrote `docs/handoff-web-ui.md` (glass + dot-matrix UI, minimal globe home, `/data` route committed — it was gitignored). Its duplicate world download is stopped.

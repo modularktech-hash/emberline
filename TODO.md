@@ -28,24 +28,24 @@ what, `docs/submission.md` has the full submission rules.
 
 ## 2. App: switch to the global data
 
-- [ ] `queries.ts` reads the `*_global` files (fall back to the four-country files)
-- [ ] Country selector usable with ~190 names (search or grouped list)
-- [ ] "Not processed yet" message lists coverage sensibly when it is most of the world
-- [ ] `/method`: tables stay readable with many countries; pooled fits labelled
-- [ ] Map coverage layer performs with the full set of H3 parent cells
+- [x] `queries.ts` reads the `*_global` files (fall back to the four-country files)
+- [x] Country selector usable with ~190 names (search or grouped list)
+- [x] "Not processed yet" message lists coverage sensibly when it is most of the world
+- [x] `/method`: tables stay readable with many countries; pooled fits labelled
+- [x] Map coverage layer performs with the full set of H3 parent cells (no coverage layer exists; H3 rows are range-read per row group only for a drawn box)
 
 ## 3. Testing
 
-- [ ] `npx next build` and `npm run lint` pass on `main`
-- [ ] `packages/firms-ingest` tests pass (`pytest`)
-- [ ] Calendar totals for several countries match the Parquet files (script check)
-- [ ] `/method` table cells match `params_global.json` (script check)
-- [ ] CSV export matches the on-screen matrix, raw and harmonized
-- [ ] Box selection: inside coverage, partly outside, fully outside, invalid input
-- [ ] Phone width 390: no overflow on `/` and `/method`, map usable by touch
+- [x] `npx next build` and `npm run lint` pass on `main`
+- [x] `packages/firms-ingest` tests pass (`pytest`)
+- [x] Calendar totals for several countries match the Parquet files (script check)
+- [x] `/method` table cells match `params_global.json` (script check)
+- [x] CSV export matches the on-screen matrix, raw and harmonized
+- [x] Box selection: inside coverage, partly outside, fully outside, invalid input
+- [x] Phone width 390: no overflow on `/` and `/method`, map usable by touch
 - [ ] Light and dark mode, both pages
-- [ ] No console errors; page still works when the basemap host is unreachable
-- [ ] Hard-constraint review: no placeholder numbers, raw labelled uncorrected,
+- [x] No console errors; page still works when the basemap host is unreachable
+- [x] Hard-constraint review: no placeholder numbers, raw labelled uncorrected,
       9–11 MW cited correctly, no NASA logos, no global claims
 
 ## 4. Deployment
@@ -58,17 +58,17 @@ Live: https://emberline-tan.vercel.app/ — deploys `modularktech-hash/emberline
 - [x] Live URL: `/` and `/method` load, Parquet range reads work (HTTP 206)
 - [x] Live URL checked logged-out at phone size (no overflow, no console errors)
 - [x] Live URL recorded in `STATUS.md` and `docs/session-notes.md`
-- [ ] Live URL in the README
+- [x] Live URL in the README
 - [ ] Re-check the live site after the global data is published
 - [ ] Check on a real phone (only emulated so far)
 
 ## 5. Submission (Sunday, by 16:00 — see `docs/submission.md`)
 
-- [ ] README with real numbers from our fit, credits, MIT license
-- [ ] Pre-event work credited in the README
-- [ ] Every data source, library and paper credited
+- [x] README with real numbers from our fit, credits, MIT license
+- [x] Pre-event work credited in the README
+- [x] Every data source, library and paper credited
 - [ ] 30-second demo video, timed, English or subtitled, public link opens logged-out
-- [ ] No NASA logos in video, app or README
+- [ ] No NASA logos in video (app and README checked: none)
 - [ ] Use-of-AI field written honestly
 - [ ] All 9 submission fields filled in English
 - [ ] Both team members registered at the same local event

@@ -123,8 +123,10 @@ right now, what state the working tree may be in, and how to pick it up.
 
 ### 6 · Docs and deploy
 
-- [ ] `d1` README with real numbers, credits, licence
-- [ ] `d2` TODO and STATUS updated
+- [x] `d1` README with real numbers, credits, licence
+  - README rewritten: live URL, fit v1-20261114T1240 numbers, method, run, credits, pre-event work, Use of AI, MIT
+- [x] `d2` TODO and STATUS updated
+  - TODO §2–§3 ticked, STATUS log entry, web/ released
 - [ ] `d3` Pushed to main; Vercel live site checked
 
 ## Not in this pass (needs the owner or new analysis)
