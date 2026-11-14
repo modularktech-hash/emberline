@@ -5,7 +5,7 @@ import { Eyebrow } from "@/components/Figure";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
-import { PageHead } from "@/components/ui";
+import { PageHead, Reveal } from "@/components/ui";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
 const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
@@ -49,7 +49,7 @@ export function Method() {
       {loading && <div className="mt-8 h-64 animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
       {p && (
         <>
-          <section className="card mt-8 p-5 sm:p-6">
+          <Reveal><section className="card mt-8 p-5 sm:p-6">
             <h2 className="display text-2xl">Tested on years the model never saw</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               Fitted on {p.train_years[0]}–{p.train_years[1]}, scored on {p.test_years[0]}–{p.test_years[1]} against what Aqua MODIS actually observed,
@@ -75,9 +75,9 @@ export function Method() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </section></Reveal>
 
-          <section className="card mt-6 p-5 sm:p-6">
+          <Reveal><section className="card mt-6 p-5 sm:p-6">
             <h2 className="display text-2xl">The control: a sensor that did not change</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               How much did yearly counts change from 2009–11 to 2012–14? Aqua MODIS flew unchanged through both periods, so it shows what fire really did.
@@ -97,9 +97,9 @@ export function Method() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </section></Reveal>
 
-          <section className="card mt-6 p-5 sm:p-6">
+          <Reveal><section className="card mt-6 p-5 sm:p-6">
             <h2 className="display text-2xl">What MODIS can and cannot see</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               Fitted chance that Aqua MODIS also detects a fire VIIRS saw, by the fire&apos;s radiated power. The shaded band is the 9–11 MW
@@ -118,9 +118,9 @@ export function Method() {
                 <span key={n} className="tabular"><span className="mr-1.5 inline-block h-0.5 w-5 align-middle" style={{ background: HUES[i % HUES.length] }} />
                   {n}: 50% at {fmtNum(c.frp_at_p50_mw, 1)} MW ({fmtNum(c.frp_at_p50_ci95_mw[0], 1)}–{fmtNum(c.frp_at_p50_ci95_mw[1], 1)})</span>); })}
             </div>
-          </section>
+          </section></Reveal>
 
-          <section className="card mt-6 p-5 sm:p-6">
+          <Reveal><section className="card mt-6 p-5 sm:p-6">
             <h2 className="display text-2xl">The record is still shifting: orbital drift</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
               Since 2022 Aqua has been drifting to a later overpass. These years were never used for fitting. The table shows Aqua&apos;s mean local
@@ -140,9 +140,9 @@ export function Method() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </section></Reveal>
 
-          <section className="mt-6 grid gap-6 md:grid-cols-2">
+          <Reveal><section className="mt-6 grid gap-6 md:grid-cols-2">
             <div className="card p-5 sm:p-6">
               <h2 className="display text-2xl">Limits</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -162,7 +162,7 @@ cal = pl.read_parquet(
 print(cal.filter(pl.col("key") == "Canada"))`}</code></pre>
               <p className="mt-3 text-xs text-[var(--text-muted)]">Fit {p.fit_version} · unit: {p.unit} · also <code>/data/params.json</code>, <code>/data/calendar_raw.parquet</code>.</p>
             </div>
-          </section>
+          </section></Reveal>
         </>
       )}
     </div>

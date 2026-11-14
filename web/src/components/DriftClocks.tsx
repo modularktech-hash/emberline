@@ -28,8 +28,9 @@ function arc(h0: number, h1: number, r: number) {
 
 function Dial({ name, sensor, color, lst }: { name: string; sensor: string; color: string; lst: number | undefined }) {
   return (
-    <svg viewBox="0 0 120 120" className="mx-auto w-full max-w-[150px]" role="img"
+    <div className="relative mx-auto aspect-square w-full max-w-[150px]" role="img"
       aria-label={`${name} ${sensor}: mean overpass ${lst == null ? "not available" : fmtClock(lst)} local solar time`}>
+      <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden>
       <circle cx="60" cy="60" r="54" fill="var(--surface-1)" stroke="var(--hairline)" />
       {/* Typical daily fire peak, ~12:00–14:00 local solar time. */}
       <path d={arc(12, 14, 47)} fill="none" stroke="var(--seq-2)" strokeWidth="9" strokeOpacity="0.75" />
@@ -40,12 +41,11 @@ function Dial({ name, sensor, color, lst }: { name: string; sensor: string; colo
         const [x, y] = polar(h as number, 30);
         return <text key={t} x={x} y={y + 3} textAnchor="middle" fontSize="8.5" fill="var(--text-muted)" className="tabular">{t}</text>;
       })}
-      {lst != null && (
-        <line x1="60" y1="60" x2="60" y2="15" stroke={color} strokeWidth="3.5" strokeLinecap="round" className="drift-hand"
-          style={{ transform: `rotate(${deg(lst).toFixed(2)}deg)` }} />
-      )}
-      <circle cx="60" cy="60" r="4" fill="var(--ink)" />
-    </svg>
+      </svg>
+      {/* The hand is an HTML element so its rotation runs on the compositor (an SVG transform transition repaints every frame). */}
+      {lst != null && <span className="drift-hand" style={{ background: color, transform: `rotate(${deg(lst).toFixed(2)}deg)` }} />}
+      <span aria-hidden className="absolute left-1/2 top-1/2 h-[6.7%] w-[6.7%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ink)]" />
+    </div>
   );
 }
 
@@ -139,7 +139,7 @@ export function DriftClocks({ drift, country, onCountry, picker = true }: {
           const now = at(p.name, shown), base = frozenMean(p.name), end = at(p.name, last);
           const moved = base != null && end != null && Math.abs(end - base) > 0.25;
           return (
-            <div key={p.name} className="card h-full p-2.5 text-center sm:p-4">
+            <div key={p.name} className="h-full rounded-2xl border border-[var(--hairline)] bg-[var(--surface-1)] p-2.5 text-center sm:p-4">
               <Dial name={p.name} sensor={p.sensor} color={color} lst={now} />
               <p className="mt-2 text-[13px] font-medium leading-tight sm:text-sm" style={{ color }}>{p.name} <span className="block text-[var(--text-muted)] sm:inline"><span className="hidden sm:inline">· </span>{p.sensor}</span></p>
               <p className="tabular display text-xl sm:text-2xl">{fmtClock(now)}</p>

@@ -4,14 +4,16 @@ import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransf
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { EASE, SPRING, SPRING_BOUNCY } from "@/lib/motion";
+import { usePerfLow } from "@/lib/perf";
 import { DotLoader, DotRule } from "@/components/DotMatrix";
 import { Eyebrow } from "@/components/Figure";
 
 /** Fades and lifts its children into view once, as they scroll in (opacity + transform only, compositor-friendly). */
 export function Reveal({ children, delay = 0, y = 24, className }: { children: ReactNode; delay?: number; y?: number; className?: string }) {
   const reduce = useReducedMotion();
+  const low = usePerfLow(); // low-power mode: a plain fade, no movement
   return (
-    <motion.div className={className} initial={reduce ? false : { opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }}
+    <motion.div className={className} initial={reduce ? false : { opacity: 0, y: low ? 0 : y }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: EASE, delay }}>
       {children}
     </motion.div>

@@ -21,7 +21,7 @@ export function MonthYearCalendar({ cal, from, to, max }: { cal: CalendarResult;
   const breaks = rampBreaks(max);
   return (
     <div>
-      <div className="grid gap-[3px]" style={{ gridTemplateColumns: "2.6rem repeat(12, minmax(0, 1fr))" }} onMouseLeave={() => setHover(null)}>
+      <div className="cal-wipe grid gap-[3px]" style={{ gridTemplateColumns: "2.6rem repeat(12, minmax(0, 1fr))" }} onMouseLeave={() => setHover(null)}>
         <div />
         {MONTHS.map((m) => (
           <div key={m} className="pb-1 text-center text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{m}</div>

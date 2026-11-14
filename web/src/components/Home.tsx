@@ -5,7 +5,7 @@ import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { Reveal } from "@/components/ui";
+import { CountUp, Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getSeason, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
@@ -158,7 +158,7 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
                   {feeds.map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3 sm:block">
                       <dt className="text-white/70"><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: FEED[k]?.color ?? "#999" }} />{FEED[k]?.name ?? k} <span className="text-white/45">· {FEED[k]?.sensor ?? ""}</span></dt>
-                      <dd className="tabular font-medium sm:mt-0.5">{fmtInt(v)}</dd>
+                      <dd className="tabular font-medium sm:mt-0.5"><CountUp to={v} /></dd>
                     </div>
                   ))}
                 </dl>

@@ -108,7 +108,7 @@ export function SatellitesPage() {
       </Reveal>
 
       <Reveal>
-        <section className="card mt-10 p-5 sm:p-7">
+        <section className="mt-14 border-t border-[var(--hairline)] pt-10">
           <Eyebrow>Overpass clocks · measured from the detections</Eyebrow>
           <h2 className="display mt-2 t-d3">Two of the three clocks have <span className="italic text-[var(--ember)]">started to move.</span></h2>
           <div className="mt-5"><DriftClocks drift={data?.drift} country={country} onCountry={setCountry} /></div>

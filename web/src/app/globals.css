@@ -292,7 +292,7 @@ html[data-perf=low] .dot-wipe { animation: none; }
 @media (prefers-reduced-motion: reduce) { .dot-loader i:nth-child(odd) { background: var(--ember); } }
 
 /* Overpass clock hands: one CSS transform transition per year step (DriftClocks). */
-.drift-hand { transform-box: view-box; transform-origin: 60px 60px; transition: transform 520ms var(--ease-out); }
+.drift-hand { position: absolute; left: 48.55%; bottom: 50%; width: 2.9%; height: 37.5%; border-radius: 999px; transform-origin: 50% 100%; transition: transform 520ms var(--ease-out); will-change: transform; }
 
 /* Footer: links slide their arrow, the credit and back-to-top light up; all on hover and keyboard focus. */
 .foot-link { transition: color 180ms ease; }
@@ -311,3 +311,8 @@ html[data-perf=low] .dot-wipe { animation: none; }
 .foot-group summary:focus-visible { border-radius: 8px; }
 .foot-bar { transition: background-color 160ms ease, height 600ms var(--ease-out); }
 
+/* Light, once-only motion (pass 2). Off under reduced motion (global rule above); a plain fade in low-power mode. */
+@keyframes wipe-down { from { clip-path: inset(0 0 100% 0); opacity: 0.4; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+.cal-wipe { animation: wipe-down 900ms var(--ease-out) both; }
+html[data-perf=low] .cal-wipe { animation: fade-in 400ms ease both; }
+html[data-perf=low] .fade-in { animation-duration: 300ms; }

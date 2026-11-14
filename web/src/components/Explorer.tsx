@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnualLine } from "@/components/AnnualLine";
-import { CountUp, PageHead } from "@/components/ui";
+import { CountUp, PageHead, Reveal } from "@/components/ui";
 import { Eyebrow } from "@/components/Figure";
 import { fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
@@ -92,7 +92,7 @@ export function Explorer() {
       <PageHead eyebrow="Explorer · burning activity calendar" title="Any area. Every month." italic="Since 2001."
         lede="Pick a region or draw your own, flip between the raw and harmonized record, choose the years, and download exactly what you see." />
 
-      <section id="explorer" className="window scroll-mt-24">
+      <Reveal><section id="explorer" className="window scroll-mt-24">
         <div className="flex items-center gap-3 bg-white/30 px-4 py-2.5">
           <span className="flex gap-1.5">{[0, 1, 2].map((d) => <span key={d} className="h-2.5 w-2.5 rounded-full bg-[rgba(18,23,21,0.14)]" />)}</span>
           <span className="tabular mx-auto rounded-md border border-[var(--hairline)] bg-[var(--surface-1)] px-3 py-0.5 font-mono text-[11px] text-[var(--text-secondary)]">emberline / burning-activity-calendar</span>
@@ -123,7 +123,7 @@ export function Explorer() {
         )}
 
         {data && cal && view && !notProcessed && (
-          <>
+          <div className="fade-in">
             <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_17rem]">
               <div>
                 <Eyebrow>Detections per year · {areaLabel(area)}</Eyebrow>
@@ -194,11 +194,12 @@ export function Explorer() {
                 );
               })()}
             </div>
-          </>
+          </div>
         )}
         </div>
-      </section>
+      </section></Reveal>
 
+      <Reveal>
       <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div ref={mapSlot}>
           {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} onSelect={selectBox} className="h-[340px]" />
@@ -224,6 +225,7 @@ export function Explorer() {
           </p>
         </div>
       </section>
+      </Reveal>
     </div>
   );
 }

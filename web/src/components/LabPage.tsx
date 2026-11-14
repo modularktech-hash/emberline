@@ -37,7 +37,7 @@ function Tool({ n, title, intro, children, formula }: { n: string; title: string
 }
 function Out({ label, value, big }: { label: string; value: ReactNode; big?: boolean }) {
   return (
-    <div className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-1)] p-4">
+    <div className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-1)] p-4 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgba(217,67,26,0.35)]">
       <Eyebrow className="!tracking-[0.14em]">{label}</Eyebrow>
       <motion.p key={String(value)} initial={{ opacity: 0.3, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`display tabular ${big ? "text-5xl text-[var(--ember)]" : "text-3xl"}`}>{value}</motion.p>
     </div>

@@ -37,7 +37,7 @@ export function Seasons() {
     <div>
       <PageHead eyebrow="Insights · unusual conditions · critical periods" title="Is this year" italic="normal?"
         lede="Each month of a chosen year against that month's historical median and spread, on the harmonized record — so 2005 and 2025 are compared in the same unit." />
-      <div className="card mt-8 p-4 sm:p-6">
+      <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <CountryPicker value={area.kind === "country" ? area.name : "Custom area"} options={data?.countries ?? []} onChange={(c) => setArea({ kind: "country", name: c })} />
           <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
@@ -50,7 +50,7 @@ export function Seasons() {
         {error && <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>}
         {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {v && (
-          <>
+          <div className="fade-in">
             <svg viewBox={`0 0 ${W} ${H}`} className="mt-6 w-full" role="img" aria-label={`Monthly detections in ${year} against the historical median`}>
               {[0, 0.25, 0.5, 0.75, 1].map((f) => (
                 <g key={f}>
@@ -100,9 +100,9 @@ export function Seasons() {
             <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">
               Historical statements, not forecasts. Baseline: every other year from 2003 in the harmonized record ({data?.params.unit}).
             </p>
-          </>
+          </div>
         )}
-      </div>
+      </div></Reveal>
     <Reveal>
         <section className="card mt-10 grid items-center gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
           <div>
