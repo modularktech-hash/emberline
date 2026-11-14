@@ -12,7 +12,7 @@ it, commit and push. Times are IST.
 
 ## `web/` — CLAIMED by the "data host" cloud session (session_012Vv…), 14 Nov ~15:10 UTC, owner's instruction
 
-Owner said "begin with everything": switch the app to the world data (TODO §2), then testing (TODO §3), README and submission prep. The app-build session's performance and polish passes are live (`06df191`). **No other session edits `web/` until this is released.**
+Owner said "begin with everything": switch the app to the world data (TODO §2), then testing (TODO §3), README and submission prep. The app-build session's performance and polish passes are live (`06df191`). **No other session edits `web/` until this is released.** What is in progress, and how to resume if this session stops: [`docs/in-flight.md`](docs/in-flight.md).
 
 **Owner decision (14 Nov):** the public submission repo is `modularktech-hash/emberline`.
 
