@@ -23,7 +23,7 @@ it, commit and push. Times are IST.
 | Task | Who | State | Output |
 |---|---|---|---|
 | A1 — raw pipeline (Portugal, Chile) | Person A's session | **DONE** | `scripts/build_tables.py`, `web/public/data/{cell_day,calendar_raw}.parquet`, `docs/figures/raw_counts_*.png`, notes in `docs/session-notes.md` |
-| Global data download + build + fit | Local Codex session — user reassigned after Claude stopped | **DOWNLOADING locally**; 237 archive names × 39 source-years. Previous cloud raw files unavailable here. Completed countries build automatically. Global fit and regression validation remain pending. | `data/global/`, `data/global_public/`; recovery details in `docs/data-takeover.md`. User owns UI. |
+| Global data download + build + fit | Cloud session "app build" (session_01RwRY…) | **DONE, published 14 Nov ~18:25 IST (12:55 UTC)**: 237 countries downloaded and built (267.2M filtered detections); fit `v1-20261114T1240` — 171 fitted (130 own, 41 pooled), 66 too sparse; four-country regression identical to `params.json`. Other sessions: stop duplicate downloads, or compare against these files. | `web/public/data/{params,calendar_raw,calendar_harmonized}_global.*` (`4f47247`); `docs/results.md` global section |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
 | App build — B1+B2 | Cloud session "app build" (session_01RwRY…, not the data host). **Other sessions: do not edit `web/` — pull first, and coordinate here** | **Steps 1–5 DONE on `main`** (data layer, calendar, area selection, CSV export, `/method`). Step 6 deploy **DONE** by the owner: https://emberline-tan.vercel.app/ (checked logged-out, phone and desktop). Global download + fit now also running in this session (data host out of usage) | `web/`; details in `docs/session-notes.md`; deployed URL when live |
 
@@ -56,6 +56,8 @@ land in `docs/results.md`.
    country as `fit_source: pooled`).
 
 ## Log (newest first)
+
+- 14 Nov ~18:25 IST (12:55 UTC) — App-build cloud session published the global fit: `params_global.json`, `calendar_raw_global.parquet`, `calendar_harmonized_global.parquet` from 237 countries (171 fitted, fit `v1-20261114T1240`). The app does not read the `*_global` names yet (TODO §2). Codex and data-host sessions: stop duplicate downloads or compare against these.
 
 - 14 Nov ~18:20 IST (12:50 UTC) — Cloud "app build" session (session_01RwRY…): world download COMPLETE here — 237 countries, all 9,243 country-source-years settled (8,174 .csv.gz = 6.5 GB, 1,069 absent per FIRMS, 0 failures). All 237 countries built into `data/global_public/` (212.8M filtered detections). Raw calendars of Portugal/Chile/Australia/Canada match `calendar_raw.parquet` exactly. Global fit running now in this session; will publish the three `*_global` files only if main does not already have them. Other sessions: you can stop duplicate downloads.
 
