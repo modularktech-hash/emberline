@@ -900,17 +900,17 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E38 — Publish versioned manifest and schema
 
-- [ ] **Status:** P2 · Observed gap · Data · effort M
+- [x] **Status:** P2 · Observed gap · Data · effort M
 - **Evidence:** Static files available; distributed metadata
 - **Acceptance:** Hashes, units, coverage, versions and source products documented
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: no manifest; file metadata spread across files; fit versions differ between the world set (v1-20261114T1240) and the four-country fallback (params.json, calendar_harmonized.parquet: v1-20261114T0630). Implemented: `scripts/build_manifest.py` generates `web/public/data/manifest.json` (14 files: dataset world/fallback_four_country/live, purpose, source products, bytes, sha256, rows, columns+types+units, time span, fit version, fetched time for live files); `scripts/check_data_contract.py` now verifies every file is listed, sizes/hashes match, JSON fit_version matches, world files share one fit version and fallback is separately declared. Verified: check OK; appending one byte to tle.json makes it fail. Not done: app does not yet read the manifest (web/src); any data change must re-run build_manifest.py or the check fails.
 
 ### E39 — Distinguish country and grid rows
 
-- [ ] **Status:** P2 · Observed gap · Data · effort S
+- [x] **Status:** P2 · Observed gap · Data · effort S
 - **Evidence:** CalendarParquet has multiple scopes
 - **Acceptance:** Examples never double-count combined scopes
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: calendar_raw(_global) and calendar_harmonized(_global) parquets hold both `scope='country'` and `scope='h3_parent'` rows over the same detections. Implemented: manifest.json records scope_kind "both", rows/keys/sum per scope and a scope_note ("sum within one scope only"). Verified from the files: per-scope totals are identical (raw global 267,159,561 detections in each scope; harmonized global 63,889,036.875), proving summing both double-counts. Not done: Data page copy/examples (web/src, owned by the UI session).
 
 ### E40 — Add reproducible small fixture and setup
 
