@@ -68,12 +68,16 @@ export function AnnualLine({ raw, harmonized, mode }: { raw: YearTotal[]; harmon
       )}
       <path d={path(mode === "raw" ? harmonized : raw, max)} fill="none" stroke="var(--text-muted)" strokeWidth="1.2" strokeDasharray="2 4" opacity="0.7" />
       <motion.path
+        key={`area-${years[0]}-${years.length}`}
+        initial={false}
         d={`${path(active, max)} L${W - R},${H - B} L${L},${H - B} Z`}
         animate={{ d: `${path(active, max)} L${W - R},${H - B} L${L},${H - B} Z` }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         fill="url(#glow)"
       />
       <motion.path
+        key={`line-${years[0]}-${years.length}`}
+        initial={false}
         d={path(active, max)}
         animate={{ d: path(active, max) }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}

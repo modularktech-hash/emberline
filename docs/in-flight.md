@@ -108,12 +108,18 @@ right now, what state the working tree may be in, and how to pick it up.
 
 ### 5 · Testing
 
-- [ ] `t1` Script cross-checks on-screen numbers against data files
-- [ ] `t2` Type check, lint and production build pass
-- [ ] `t3` Every page at desktop and phone width, no sideways scroll, no console errors
-- [ ] `t4` Three new countries checked in Explorer, Seasons, Compare
-- [ ] `t5` CSV export matches the screen
-- [ ] `t6` Hard-rule review of all wording and numbers
+- [x] `t1` Script cross-checks on-screen numbers against data files
+  - scripts/check_app_numbers.py: 16,356 checks, 0 failed (with the Playwright screen dump of Method/Data tables and 8 Explorer CSV/matrix exports)
+- [x] `t2` Type check, lint and production build pass
+  - tsc, eslint, next build pass; pytest 84 + 5 pass
+- [x] `t3` Every page at desktop and phone width, no sideways scroll, no console errors
+  - 11 routes at 1440 and 375: no sideways scroll, no console or page errors (one motion path error on country switch found and fixed)
+- [x] `t4` Three new countries checked in Explorer, Seasons, Compare
+  - Brazil, Indonesia, DR Congo in Explorer, Seasons, Compare
+- [x] `t5` CSV export matches the screen
+  - CSV equals the on-screen matrix for 4 countries x raw/harmonized
+- [x] `t6` Hard-rule review of all wording and numbers
+  - 9–11 MW citation completed on Lab; no NASA logos; no global claims; live layer labelled NOAA-20/21
 
 ### 6 · Docs and deploy
 

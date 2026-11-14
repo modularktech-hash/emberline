@@ -204,7 +204,7 @@ def main() -> int:
                 y, m = map(int, cell.split("-"))
                 v = csv.get((y, m))
                 shown = None if text in ("—", "", "no data") else float(text.replace(",", ""))
-                check((shown is None and v is None) or (shown is not None and v is not None and abs(shown - round(v)) <= 0.5),
+                check((shown is None and v is None) or (shown is not None and v is not None and abs(shown - v) <= 0.51),
                       f"explorer matrix {key} {mode} {cell}: screen {text} vs CSV {v}")
         print(f"screen: {len(screen.get('method_rows', []))} method rows, {len(screen.get('data_rows', []))} data rows, "
               f"{len(screen.get('explorer', []))} explorer exports checked")

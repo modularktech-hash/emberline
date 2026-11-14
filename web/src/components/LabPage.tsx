@@ -139,7 +139,7 @@ export function LabPage() {
             <div className="space-y-3">
               <Out big label={`P(Aqua also detects) · ${prettyName(region)}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
               <Out label="FRP at 50% (95% CI)" value={fit ? `${fmtNum(fit.frp_at_p50_mw, 1)} MW` : "—"} />
-              <p className="text-xs text-[var(--text-muted)]">CI {fit?.frp_at_p50_ci95_mw.map((v) => fmtNum(v, 1)).join("–")} MW. Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019) — a sanity check, not the same quantity.</p>
+              <p className="text-xs text-[var(--text-muted)]">CI {fit?.frp_at_p50_ci95_mw.map((v) => fmtNum(v, 1)).join("–")} MW. Shaded: 9–11 MW &ldquo;thresholds of FRP detection&rdquo; (Laurent et al. 2019, citing Roberts &amp; Wooster 2008 and Schroeder et al. 2010) — a sanity check, not the same quantity.</p>
             </div>
           </div>
         </Tool>
