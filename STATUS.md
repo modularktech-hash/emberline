@@ -9,7 +9,8 @@ it, commit and push. Times are IST.
 | Task | Who | State | Output |
 |---|---|---|---|
 | A1 — raw pipeline (Portugal, Chile) | Person A's session | **DONE** | `scripts/build_tables.py`, `web/public/data/{cell_day,calendar_raw}.parquet`, `docs/figures/raw_counts_*.png`, notes in `docs/session-notes.md` |
-| Global data download | Cloud session (Claude, "data host") | **RUNNING** | `data/global/*.csv.gz` on the cloud session only — never committed |
+| Global data download + build | Cloud session (Claude, "data host") | **RUNNING** (unattended) | `data/global/*.csv.gz` (~190 countries) → `scripts/run_global.py` → `data/global_public/`. Cloud session only — never committed |
+| Global fit | Cloud session | **queued** after the build | `web/public/data/params_global.json`, `calendar_*_global.parquet` — published only after checking |
 | A2 — the fit + validation (v1, 4 countries) | Cloud session (Claude, "data host") | **DONE** | `web/public/data/params.json`, `web/public/data/calendar_harmonized.parquet`, `docs/results.md`, `docs/figures/fit_*.png`, `scripts/fit_harmonization.py` |
 | App build — B1+B2 | Cloud session (Claude, "app build") | **IN PROGRESS** | branch `shishir/admiring-pascal-8ymvmc`; deployed URL when live |
 
@@ -27,7 +28,25 @@ land in `docs/results.md`.
   the small aggregated tables to `web/public/data/`.
 - `web/public/data/` — what the app reads. Committed. Keep files < 50 MB.
 
+## How the global run works (for anyone picking this up)
+
+1. `scripts/stage_global.sh <list>` downloads every country-year, gzipped,
+   resumable. Country names were discovered by probing the archive: 187
+   confirmed (FIRMS spellings, e.g. `Democratic_Republic_of_the_Congo`,
+   `Lao_PDR`, `Russian_Federation`, `United_States`).
+2. `scripts/run_global.py` builds, per finished country, a slim detection
+   table (lat, lon, acq_ts, platform, frp_mw, lst_hours) and a raw calendar,
+   using `build_tables.py`'s filters unchanged. Re-runnable.
+3. `EMBERLINE_DATA=data/global_public EMBERLINE_PARAMS=params_global.json
+   EMBERLINE_CAL=calendar_harmonized_global.parquet python3 scripts/fit_harmonization.py <countries>`
+   fits every country. Sparse countries borrow a pooled curve (recorded per
+   country as `fit_source: pooled`).
+
 ## Log (newest first)
+
+- 14 Nov ~12:20 — Global run: wave 1 (75 high-fire countries) downloading,
+  wave 2 (116 more) queued, build chained after. Runner and pooled fallback
+  committed; four-country fit regression-checked identical.
 
 - 14 Nov — App build (B1+B2) claimed by a cloud session; work on branch `shishir/admiring-pascal-8ymvmc`.
 - 14 Nov ~12:15 — A2 v1 done: Portugal, Chile, Australia, Canada fitted on 2012–2018, tested 2019–2021. Held-out R² 0.27–0.81 vs raw VIIRS −6.8 to −31.9. See `docs/results.md`.
