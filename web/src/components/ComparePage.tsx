@@ -20,7 +20,7 @@ import { CopyLink } from "@/components/CopyLink";
 import type { Series } from "@/lib/types";
 import { prettyName } from "@/lib/names";
 
-const COLORS = ["#d9431a", "#3f7f96"];
+const COLORS = ["var(--c-harm)", "var(--c-raw)"];
 
 export function ComparePage() {
   const { data: table, error: tableError, retry: tableRetry } = useParquet(() => getCountryTable(), "table");
@@ -71,7 +71,7 @@ export function ComparePage() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Explore · compare" title="Two regions." italic="One unit."
+      <PageHead compact eyebrow="Explore · compare" info="aquaEquivalent" title="Which place burns more," italic="on the same footing?"
         lede="Because the harmonized record is in the same unit every year, two regions can be compared directly — their seasons, their extremes, and how each responded to the 2012 sensor change." />
       <div className="card flex flex-wrap items-end gap-x-5 gap-y-4 p-4">
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Regions">

@@ -122,7 +122,7 @@ export function LabPage() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Science · lab" title="The model," italic="in your hands."
+      <PageHead compact eyebrow="Data · lab" info="frp" title="What does the model do" italic="to a single fire?"
         lede="Every coefficient Emberline uses, exposed as a calculator. Pick a region, move the numbers, and see exactly how a VIIRS detection becomes a MODIS-equivalent count." />
 
       {labError && <div className="mb-4"><Failed error={labError} retry={labRetry} what="the fitted coefficients" /></div>}

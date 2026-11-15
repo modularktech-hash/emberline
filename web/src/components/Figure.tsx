@@ -1,5 +1,19 @@
 import { Fragment, type ReactNode } from "react";
 import { DotStat } from "@/components/DotMatrix";
+import { InfoDot } from "@/components/ui/info-dot";
+import type { InfoKey } from "@/content/info";
+
+/** Which plain-language note (content/info.ts) belongs to a label, by its wording. First match wins. */
+const INFO_RULES: Array<[RegExp, InfoKey]> = [
+  [/2012 step|step collapse/i, "stepCollapse"], [/benchmark/i, "benchmark"], [/blind test|seam/i, "seam"], [/false.record/i, "falseRecord"],
+  [/held.out|r²|validation|observed.*predicted/i, "r2"], [/κ|kappa/i, "kappa"], [/threshold/i, "threshold"], [/frp|detection (probability|curve)|megawatt/i, "frp"],
+  [/drift|overpass|local solar/i, "drift"], [/pooled|borrowed/i, "pooled"], [/eonet/i, "eonet"], [/this month|month.to.date/i, "monthToDate"],
+  [/live|near.real.time|last 24|recent/i, "live"], [/interval|uncertaint/i, "interval"], [/percentile|anomal|unusual/i, "percentile"], [/onset|season shift|trend/i, "seasonShift"],
+  [/calendar/i, "calendar"], [/journey|pipeline/i, "pipeline"], [/dataset|download|manifest|archive/i, "firmsArchive"], [/grid|cell|area|scope/i, "h3"],
+  [/harmonized|corrected|aqua.equivalent/i, "harmonized"], [/uncorrected/i, "uncorrected"], [/\braw\b/i, "raw"], [/modis/i, "modis"], [/viirs/i, "viirs"],
+  [/tle|orbit|fleet|satellite/i, "tle"], [/step/i, "step"],
+];
+export const infoFor = (text: string): InfoKey | undefined => INFO_RULES.find(([re]) => re.test(text))?.[1];
 
 /**
  * The shared label + figure system (see lib/format.ts for the number rules).
@@ -17,10 +31,13 @@ import { DotStat } from "@/components/DotMatrix";
  * Small-caps label above a section or a figure. "06 · Still shifting" renders
  * the index in ember and every "·" as the same spaced, muted separator.
  */
-export function Eyebrow({ children, className = "", as: Tag = "p" }: { children: ReactNode; className?: string; as?: "p" | "span" | "h2" | "h3" }) {
+export function Eyebrow({ children, className = "", as: Tag = "p", info }: { children: ReactNode; className?: string; as?: "p" | "span" | "h2" | "h3"; info?: InfoKey | false }) {
   const parts = typeof children === "string" ? children.split(/\s+·\s+/) : null;
+  // The "i": given explicitly, or picked from the label's wording; `info={false}` when the block has its own.
+  const key = info === false ? undefined : info ?? (typeof children === "string" ? infoFor(children) : undefined);
   return (
-    <Tag className={`eyebrow ${className}`}>
+    <Tag className={`eyebrow ${key ? "flex items-center gap-2.5" : ""} ${className}`}>
+      <span>
       {parts
         ? parts.map((p, i) => (
           <Fragment key={i}>
@@ -30,6 +47,8 @@ export function Eyebrow({ children, className = "", as: Tag = "p" }: { children:
           </Fragment>
         ))
         : children}
+      </span>
+      {key && <InfoDot k={key} align="start" className="shrink-0" />}
     </Tag>
   );
 }

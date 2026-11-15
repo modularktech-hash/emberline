@@ -26,7 +26,7 @@ export function DatasetCard() {
   const { data, error } = useParquet(() => Promise.all([loadJson<Card>("dataset.json"), loadJson<Manifest>("manifest.json")]), "dataset-card");
   const [copied, setCopied] = useState(false);
   if (error) return <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load the dataset card: {error.message}</p>;
-  if (!data) return <div className="card mt-6 h-64 animate-pulse" />;
+  if (!data) return <div className="dot-skel mt-6 h-64" />;
   const [c, m] = data;
   const files = [...m.files].sort((a, b) => b.bytes - a.bytes);
   const total = files.reduce((s, f) => s + f.bytes, 0);

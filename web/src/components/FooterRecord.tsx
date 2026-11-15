@@ -51,30 +51,30 @@ export function FooterRecord() {
 
   return (
     <div ref={box} className="min-w-0">
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#b5ab9c]">The record<span aria-hidden className="mx-[0.55em] opacity-55">·</span>harmonized, per year</p>
-      {failed && <p className="mt-4 text-sm text-[#b8b2a2]">The data files could not be loaded.</p>}
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] opacity-60">The record<span aria-hidden className="mx-[0.55em] opacity-55">·</span>harmonized, per year</p>
+      {failed && <p className="mt-4 text-sm opacity-70">The data files could not be loaded.</p>}
       {!failed && (
         <>
           <div className="mt-4 flex items-baseline justify-between gap-3">
-            <p className="tabular display text-3xl text-[#f7f3e8]">{shown ? fmtInt(shown.v) : "loading"}</p>
-            <p className="tabular text-sm text-[#b8b2a2]">{shown ? shown.year : ""}</p>
+            <p className="tabular display text-3xl">{shown ? fmtInt(shown.v) : "loading"}</p>
+            <p className="tabular text-sm opacity-70">{shown ? shown.year : ""}</p>
           </div>
-          <p className="text-xs text-[#b8b2a2]">Aqua-MODIS-equivalent detections{names.length ? `, summed over ${names.length} countries, each corrected with its own fit` : ""}</p>
+          <p className="text-xs opacity-70">Aqua-MODIS-equivalent detections{names.length ? `, summed over ${names.length} countries, each corrected with its own fit` : ""}</p>
           <div className="mt-3 flex h-16 items-end gap-[3px]" onMouseLeave={() => setHover(null)} role="img"
             aria-label={series.length ? `Harmonized yearly detections ${series[0].year} to ${series[series.length - 1].year}, peak ${fmtCompact(max)}` : "Loading the harmonized record"}>
             {(series.length ? series : Array.from({ length: 23 }, (_, i) => ({ year: i, v: 0 }))).map((s) => (
               <span key={s.year} onMouseEnter={() => setHover(s.year)}
-                className={`foot-bar flex-1 rounded-t-[3px] ${s.year === shown?.year ? "bg-[var(--ember)]" : "bg-white/25"}`}
+                className={`foot-bar flex-1 rounded-t-[3px] ${s.year === shown?.year ? "bg-[var(--ember)]" : "bg-[var(--grey-1)]"}`}
                 style={{ height: series.length ? `${Math.max(4, (s.v / max) * 100)}%` : "8%" }} title={series.length ? `${s.year}: ${fmtInt(s.v)}` : undefined} />
             ))}
           </div>
-          {series.length > 0 && <div className="tabular mt-1 flex justify-between text-[10px] text-[#8f887a]"><span>{series[0].year}</span><span>{series[series.length - 1].year}</span></div>}
+          {series.length > 0 && <div className="tabular mt-1 flex justify-between text-[10px] opacity-60"><span>{series[0].year}</span><span>{series[series.length - 1].year}</span></div>}
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
-            <dt className="text-[#8f887a]">Countries</dt><dd className="text-[#e6dfcd]">{names.length ? <>{names.length} fitted, {cs ? <>{cs.rawOnly} raw calendar only (no fit), {cs.noCalendar} no calendar</> : <>{d?.table.not_fitted?.length ?? 0} without a fit (raw only where one exists)</>} · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "loading"}</dd>
-            <dt className="text-[#8f887a]">Years</dt><dd className="tabular text-[#e6dfcd]">{years.length ? <>archive {span(Math.min(...years), Math.max(...years))}; harmonized {span(2003, Math.max(...years))}</> : "loading"}</dd>
-            <dt className="text-[#8f887a]">Fit</dt><dd className="tabular text-[#e6dfcd]">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "loading"}</dd>
+            <dt className="opacity-60">Countries</dt><dd className="">{names.length ? <>{names.length} fitted, {cs ? <>{cs.rawOnly} raw calendar only (no fit), {cs.noCalendar} no calendar</> : <>{d?.table.not_fitted?.length ?? 0} without a fit (raw only where one exists)</>} · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "loading"}</dd>
+            <dt className="opacity-60">Years</dt><dd className="tabular">{years.length ? <>archive {span(Math.min(...years), Math.max(...years))}; harmonized {span(2003, Math.max(...years))}</> : "loading"}</dd>
+            <dt className="opacity-60">Fit</dt><dd className="tabular">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "loading"}</dd>
           </dl>
-          <Link href="/method" className="foot-link mt-4 inline-flex items-center gap-1.5 rounded-md text-sm text-[#e6dfcd]">How it is corrected <span aria-hidden>→</span></Link>
+          <Link href="/method" className="foot-link mt-4 inline-flex items-center gap-1.5 rounded-md text-sm">How it is corrected <span aria-hidden>→</span></Link>
         </>
       )}
     </div>

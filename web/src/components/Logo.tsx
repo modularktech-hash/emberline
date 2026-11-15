@@ -6,8 +6,8 @@
  * - <Logo/>: mark + EMBERLINE wordmark, "row" (nav) or "stack" (footer, cards).
  * - mono: single-colour variant (currentColor for both parts).
  */
-export const LOGO_INK = "#171C18";
-export const LOGO_EMBER = "#E64218";
+export const LOGO_INK = "#0b0b0b";
+export const LOGO_EMBER = "#d71921";
 
 /** Geometry shared with app/icon.svg and the OG/apple images (viewBox 0 0 40 12). */
 export const MARK = { w: 40, h: 12, x1: 3, x2: 24.5, y: 6, stroke: 5, cx: 34, r: 4 };

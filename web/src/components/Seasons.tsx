@@ -76,7 +76,7 @@ export function Seasons() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Insights · unusual conditions · critical periods" title="Is this year" italic="normal?"
+      <PageHead compact eyebrow="Explore · seasons" info="percentile" title="Is this year" italic="normal?"
         lede="Each month of a chosen year against that month's historical median and spread, on the harmonized record — so 2005 and 2025 are compared in the same unit." />
       <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -91,7 +91,7 @@ export function Seasons() {
 
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
-        {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+        {loading && <div className="mt-6 h-[300px] dot-skel" />}
         {data && !v && (
           <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">
             {areaLabel(area)} has no fit{cov ? ` (${STATUS_LABEL[cov.status]})` : ""}, so it has no harmonized record. This page compares years in the harmonized unit only; the raw record (uncorrected) is in the Explorer.

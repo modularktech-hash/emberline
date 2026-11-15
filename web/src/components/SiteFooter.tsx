@@ -1,104 +1,115 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
-import { NAV } from "@/lib/nav";
+import { useEffect, useRef, useState } from "react";
+import { DotWordmark } from "@/components/DotWordmark";
 import { FooterRecord } from "@/components/FooterRecord";
+import { getLiveSummary } from "@/lib/data";
+import { fmtUtc, parseUtc } from "@/lib/format";
+import { NAV } from "@/lib/nav";
+import { getParams } from "@/lib/queries";
+import { getMonthToDate } from "@/components/MonthToDate";
 
-const PROJECT = [
-  { href: "/about", label: "About & credits", ext: false },
-  { href: "/data", label: "Download the data", ext: false },
-  { href: "https://github.com/modularktech-hash/emberline", label: "Source code", ext: true },
-  { href: "https://www.earthdata.nasa.gov/data/tools/firms", label: "NASA FIRMS", ext: true },
+type Item = { href: string; label: string; ext?: boolean };
+const GH = "https://github.com/modularktech-hash/emberline";
+const page = (label: string) => NAV.find((g) => g.label === label)!.items.map((i) => ({ href: i.href, label: i.label }));
+const COLUMNS: Array<{ label: string; items: Item[] }> = [
+  { label: "Story", items: [{ href: "/#problem", label: "01 Problem" }, { href: "/#repair", label: "02 Repair" }, { href: "/#proof", label: "03 Proof" }, { href: "/#area", label: "04 Your area" }, { href: "/#now", label: "05 Now" }] },
+  { label: "Explore", items: [...page("Explore"), ...page("Live")] },
+  { label: "Data and downloads", items: [{ href: "/data", label: "Every table and download" }, { href: "/data#journey", label: "The data journey" }, { href: "/lab", label: "Lab calculators" }, { href: "/data/manifest.json", label: "manifest.json", ext: true }] },
+  { label: "Method and proof", items: [{ href: "/method", label: "How the repair works" }, { href: "/method#proof", label: "Proof: benchmarks and blind tests" }, { href: "/about", label: "Limits and credits" }] },
+  { label: "Sources", items: [
+    { href: "https://www.earthdata.nasa.gov/data/tools/firms", label: "NASA FIRMS (MODIS C6.1, VIIRS 375 m)", ext: true },
+    { href: "https://firms.modaps.eosdis.nasa.gov/api/", label: "FIRMS NRT and area API", ext: true },
+    { href: "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api", label: "NASA GIBS imagery", ext: true },
+    { href: "https://eonet.gsfc.nasa.gov/", label: "NASA EONET events", ext: true },
+    { href: "https://celestrak.org/", label: "CelesTrak TLEs", ext: true },
+    { href: "https://www.naturalearthdata.com/", label: "Natural Earth outlines", ext: true },
+  ] },
+  { label: "Project", items: [{ href: `${GH}/blob/main/CITATION.cff`, label: "Cite (CITATION.cff)", ext: true }, { href: GH, label: "GitHub repository", ext: true }, { href: "/about#team", label: "The team" }] },
 ];
-const GROUPS = [...NAV.map((g) => ({ label: g.label, items: g.items.map((i) => ({ href: i.href, label: i.label, ext: false })) })), { label: "Project", items: PROJECT }];
 
-const label = "font-mono text-[11px] uppercase tracking-[0.2em] text-[#b5ab9c]";
-const link = "foot-link inline-flex items-center gap-1.5 rounded-md py-0.5 text-[#e6dfcd]";
-
-function Links({ items }: { items: (typeof GROUPS)[number]["items"] }) {
+function Links({ items }: { items: Item[] }) {
   return (
-    <ul className="space-y-2 text-sm">
+    <ul className="space-y-2 text-[14px]">
       {items.map((i) => (
-        <li key={i.href}>
+        <li key={i.href + i.label}>
           {i.ext
-            ? <a href={i.href} target="_blank" rel="noopener noreferrer" className={link}>{i.label}<span aria-hidden className="foot-arrow">↗</span><span className="sr-only"> (opens in a new tab)</span></a>
-            : <Link href={i.href} className={link}>{i.label}<span aria-hidden className="foot-arrow">→</span></Link>}
+            ? <a href={i.href} target="_blank" rel="noopener noreferrer" className="foot-link inline-flex items-center gap-1.5 py-0.5">{i.label}<span aria-hidden className="foot-arrow">↗</span><span className="sr-only"> (opens in a new tab)</span></a>
+            : <Link href={i.href} className="foot-link inline-flex items-center gap-1.5 py-0.5">{i.label}<span aria-hidden className="foot-arrow">→</span></Link>}
         </li>
       ))}
     </ul>
   );
 }
 
-/**
- * Site footer: site map (grouped like the nav, collapsible on phones), data
- * provenance with a small static chart of the harmonized record, back to top
- * (a plain #top anchor: native scrolling, no script) and the maker's credit.
- */
-/** Working pages get a compact footer: site map and credits, no story block or record chart. */
-const TOOL_PAGES = new Set(["/explorer", "/compare", "/seasons", "/trends", "/lab", "/data", "/method"]);
-
-export function SiteFooter({ counts = null }: { counts?: { own: number; borrowed: number } | null }) {
-  const compact = TOOL_PAGES.has(usePathname());
-  // Working pages also get a calmer backdrop behind their dense content (globals.css, html[data-page=tool]).
-  useEffect(() => { document.documentElement.dataset.page = compact ? "tool" : "story"; }, [compact]);
+/** Fit version, last data update and live-feed time, each read from its data file once the footer is near. */
+function StatusLine() {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [s, setS] = useState<{ fit?: string; data?: string; live?: string }>({});
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      getParams().then((p) => setS((v) => ({ ...v, fit: p.fit_version }))).catch(() => {});
+      getLiveSummary().then((l) => setS((v) => ({ ...v, live: fmtUtc(parseUtc(l.fetched_utc)) }))).catch(() => {});
+      getMonthToDate().then((m) => { if (m) setS((v) => ({ ...v, data: fmtUtc(parseUtc(m.generated_utc)) })); });
+    }, { rootMargin: "300px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const cell = (k: string, v?: string) => <span className="inline-flex items-center gap-2"><span className="opacity-60">{k}</span><span className="tabular text-[var(--text-primary)]">{v ?? "not recorded"}</span></span>;
   return (
-    <footer className={`relative px-3 pb-3 text-[#efe9d9] sm:px-6 sm:pb-6 ${compact ? "mt-16" : "mt-32"}`}>
-      <div className="glass-dark mx-auto max-w-6xl !rounded-[32px]">
-        <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[60rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(217,67,26,0.35),transparent)]" />
+    <p ref={ref} className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--text-muted)]" data-testid="status-line">
+      <span className="live-dot" aria-hidden />{cell("Fit", s.fit)}{cell("Month-to-date data", s.data)}{cell("Live feed", s.live)}
+    </p>
+  );
+}
 
-        {!compact && (
-        <div className="relative flex flex-wrap items-end justify-between gap-6 border-b border-white/10 px-6 pb-8 pt-12 sm:px-10">
-          <div>
-            <p className="text-[#f7f3e8]"><Logo layout="stack" height={18} ink="#f7f3e8" wordClass="text-2xl tracking-[0.32em] sm:text-3xl" /></p>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-[#b8b2a2]">
-              Satellite fire detections, harmonized across the MODIS–VIIRS sensor break to reduce the discontinuity between records{counts ? `: ${counts.own} countries with their own fitted curve, ${counts.borrowed} on a borrowed (pooled) curve` : ""}. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days.
-            </p>
-          </div>
-          <a href="#top" className="foot-top group inline-flex items-center gap-3 rounded-full border border-white/15 px-5 py-2.5 text-sm text-[#f7f3e8]">
-            Back to top
-            <span aria-hidden className="foot-top-arrow inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ember)] text-white">↑</span>
+/**
+ * Footer: the interactive wordmark, the harmonized record chart, the site in six columns
+ * (collapsible on phones), a status line read from the data, and the credits.
+ */
+export function SiteFooter({ counts = null }: { counts?: { own: number; borrowed: number } | null }) {
+  return (
+    <footer className="relative mt-[var(--sec-lg)] border-t-[length:var(--stroke)] border-[var(--hairline)] bg-[var(--surface)]">
+      <div className="mx-auto max-w-6xl px-5 pb-8 pt-10 sm:px-8 sm:pt-14">
+        <DotWordmark />
+        <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
+          <p className="max-w-xl text-[15px] leading-relaxed text-[var(--text-secondary)]">
+            Switching satellites in 2012 broke the fire record. Emberline repairs it{counts ? `: ${counts.own} countries with their own fitted curve, ${counts.borrowed} on a borrowed curve` : ""}. Archive 2001–2025; harmonized record 2003–2025; the live layer is a different platform and is never corrected.
+          </p>
+          <a href="#top" className="foot-top glass-thin group inline-flex items-center gap-3 px-5 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em]">
+            Back to top <span aria-hidden className="foot-top-arrow inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--on-ink)]">↑</span>
           </a>
         </div>
 
-        )}
-        <div className={`relative grid gap-10 px-6 sm:px-10 ${compact ? "py-7" : "py-10 lg:grid-cols-[1.25fr_2fr]"}`}>
-          {compact ? <a href="#top" className="foot-link inline-flex w-max items-center gap-3 rounded-md"><Logo height={12} ink="#f7f3e8" wordClass="text-sm text-[#f7f3e8]" /><span className="text-xs text-[#b5ab9c]">· back to top ↑</span></a> : <FooterRecord />}
-
+        <div className="mt-10 grid gap-10 border-t-[length:var(--stroke)] border-[var(--hairline)] pt-10 lg:grid-cols-[1fr_2.2fr]">
+          <FooterRecord />
           <nav aria-label="Site map">
-            {/* Phones: each group collapses. */}
-            <div className="divide-y divide-white/10 border-y border-white/10 md:hidden">
-              {GROUPS.map((g) => (
-                <details key={g.label} className="foot-group group">
-                  <summary className="flex cursor-pointer list-none items-center justify-between py-3.5">
-                    <span className={label}>{g.label}</span>
-                    <span aria-hidden className="foot-plus text-lg leading-none text-[#b5ab9c]">+</span>
-                  </summary>
+            <div className="md:hidden">
+              {COLUMNS.map((g) => (
+                <details key={g.label} className="foot-group group border-b-[length:var(--stroke)] border-[var(--hairline)]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between py-3.5"><span className="eyebrow">{g.label}</span><span aria-hidden className="foot-plus font-mono text-lg leading-none text-[var(--text-muted)]">+</span></summary>
                   <div className="pb-4"><Links items={g.items} /></div>
                 </details>
               ))}
             </div>
-            {/* Wider screens: all groups open. */}
-            <div className="hidden gap-8 md:grid md:grid-cols-4">
-              {GROUPS.map((g) => (
-                <div key={g.label}>
-                  <p className={label}>{g.label}</p>
-                  <div className="mt-4"><Links items={g.items} /></div>
-                </div>
-              ))}
+            <div className="hidden gap-x-8 gap-y-10 md:grid md:grid-cols-3">
+              {COLUMNS.map((g) => (<div key={g.label}><p className="eyebrow">{g.label}</p><div className="mt-4"><Links items={g.items} /></div></div>))}
             </div>
           </nav>
         </div>
 
-        <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-white/10 px-6 py-6 text-xs text-[#b5ab9c] sm:px-10">
-          <p className="max-w-2xl leading-relaxed">
-            Active-fire data: NASA FIRMS — MODIS Collection 6.1 (Terra, Aqua), VIIRS 375 m (Suomi-NPP; NOAA-20 and NOAA-21 for the live layer only). Orbits: public TLEs. Not affiliated with or endorsed by NASA. Open source, MIT. NASA Space Apps Challenge 2026 · Team Modulark, Tumkur, India.
+        <div className="mt-10 border-t-[length:var(--stroke)] border-[var(--hairline)] pt-6"><StatusLine /></div>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-[12.5px] leading-relaxed text-[var(--text-muted)]">
+          <p className="max-w-3xl">
+            NASA Space Apps Challenge 2026 · Harmonization of MODIS and VIIRS Hot Spots · Team Modulark, Tumkur, India. Active-fire data: NASA FIRMS. Globe imagery where shown: NASA Visible Earth. Not affiliated with or endorsed by NASA. Open source, MIT.
           </p>
-          <a href="https://modularktech.com" target="_blank" rel="noopener noreferrer" className="foot-maker group inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm text-[#efe9d9]">
-            <span className="text-[#b5ab9c]">Made by</span> <span className="font-semibold text-[#f7f3e8]">Modulark</span>
-            <span aria-hidden className="foot-arrow">↗</span><span className="sr-only"> (modularktech.com, opens in a new tab)</span>
+          <a href="https://modularktech.com" target="_blank" rel="noopener noreferrer" className="foot-maker glass-thin group inline-flex items-center gap-2 px-4 py-2 text-[13px] text-[var(--text-primary)]">
+            <span className="opacity-60">Made by</span> <span className="font-semibold">Modulark</span><span aria-hidden className="foot-arrow">↗</span><span className="sr-only"> (modularktech.com, opens in a new tab)</span>
           </a>
         </div>
       </div>

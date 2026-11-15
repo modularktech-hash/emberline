@@ -1,31 +1,46 @@
 "use client";
 
-import { DotClock, DotStat, DotText, dotCompact, useToday } from "@/components/DotMatrix";
-import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
-
-/** E25: with prefers-reduced-motion, scroll-linked effects read a fixed progress (their final state) instead of scroll. */
-function useScrollOrFinal(p: MotionValue<number>, final: number): MotionValue<number> {
-  const fixed = useMotionValue(final);
-  return useReducedMotion() ? fixed : p;
-}
+/**
+ * Home: one story in five chapters. Problem (the 2012 jump), Repair (raw becomes harmonized),
+ * Proof (three blind checks), Your area (the calendar and a plain verdict) and Now (this month
+ * and the live layer). Each chapter is one headline, one sentence, one visual and at most three
+ * figures; everything else sits behind an expander or an "i". Every number is read from the
+ * published data files.
+ */
+import { motion, useMotionValue, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { StepCollapse } from "@/components/Proof";
-import { MonthUnusualPanel } from "@/components/MonthToDate";
-import { DataJourney } from "@/components/DataJourney";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CountUp, Reveal } from "@/components/ui";
-import { getCountryTable, getDrift, getLive, getLiveSummary, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
-import { getParams } from "@/lib/queries";
-import { useParquet } from "@/lib/useParquet";
-import { Failed } from "@/components/ui";
-import { ALL } from "@/lib/nav";
-import { Eyebrow, Stat } from "@/components/Figure";
+import { CountryPicker } from "@/components/CountryPicker";
+import { DataJourney } from "@/components/DataJourney";
+import { DotClock, useToday } from "@/components/DotMatrix";
 import { DriftClocks } from "@/components/DriftClocks";
-import { NA, fmtAge, fmtClock, fmtInt, fmtR2, fmtRatio, fmtSigned, fmtUtc, parseUtc, span } from "@/lib/format";
-import { median } from "@/lib/ember";
+import { Eyebrow } from "@/components/Figure";
+import { MonthUnusualPanel } from "@/components/MonthToDate";
+import { MonthYearCalendar } from "@/components/MonthYearCalendar";
+import { PaperCutout } from "@/components/PaperCutout";
+import { StepCollapse } from "@/components/Proof";
+import { DotDigits, DotSkeleton, Expand, Failed, InfoDot, Pill, Reveal, SectionHead, SourceChip, StatTile, Tile } from "@/components/ui";
+import { getCountryTable, getDrift, getLive, getLiveSummary, getProof, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
+import { annualTotals, median } from "@/lib/ember";
+import { fmtAge, fmtClock, fmtInt, fmtNum, fmtR2, fmtRatio, fmtSigned, fmtUtc, parseUtc, span } from "@/lib/format";
+import { ALL } from "@/lib/nav";
 import { ORIGINAL_FOUR, prettyName } from "@/lib/names";
+import { getParams } from "@/lib/queries";
 import type { Params } from "@/lib/types";
+import { useAreaData } from "@/lib/useArea";
+import { useParquet } from "@/lib/useParquet";
+
+const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
+/** Still Earth shown until the interactive globe starts (same picture as the globe's own poster, without loading three.js). */
+function GlobeStill({ height }: { height: number }) {
+  const d = Math.round(height * 0.72);
+  return (
+    <div className="flex items-center justify-center" style={{ height }}>
+      <div aria-hidden className="rounded-full" style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,0.45) 74%), url(/globe/day-small.webp) 22% 50% / 200% 100% #1c3a5e", boxShadow: "0 0 0 1.5px var(--hairline), 0 0 40px 4px rgba(143,184,240,0.35)" }} />
+    </div>
+  );
+}
 
 /** Headline accuracy, computed from the fit: median over own-fit countries, and the single best country. */
 export function accuracySummary(p: Params | undefined) {
@@ -43,33 +58,42 @@ export function accuracySummary(p: Params | undefined) {
   };
 }
 
-const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
-import { EASE } from "@/lib/motion";
-
-/** Splits a headline line into words that rise in one after another. */
-function Words({ text, delay = 0 }: { text: string; delay?: number }) {
-  return (
-    <>
-      {text.split(" ").map((w, i, a) => (
-        <span key={i} className="inline-block overflow-hidden pb-[0.12em] align-top">
-          <motion.span className="inline-block" initial={{ y: "105%", opacity: 0, rotate: 4 }} animate={{ y: "0%", opacity: 1, rotate: 0 }}
-            transition={{ duration: 0.8, ease: EASE, delay: delay + i * 0.07 }}>{w}{i < a.length - 1 ? "\u00a0" : ""}</motion.span>
-        </span>
-      ))}
-    </>
-  );
+/** With prefers-reduced-motion, scroll-linked effects read a fixed progress (their final state) instead of scroll. */
+function useScrollOrFinal(p: MotionValue<number>, final: number): MotionValue<number> {
+  const fixed = useMotionValue(final);
+  return useReducedMotion() ? fixed : p;
+}
+/** True once the element is near the viewport; used to defer a chapter's data and heavy visuals. */
+function useNear<T extends HTMLElement>(margin = "500px") {
+  const ref = useRef<T | null>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (near || !ref.current) return;
+    const io = new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) { setNear(true); io.disconnect(); } }, { rootMargin: margin });
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, [near, margin]);
+  return { ref, near };
 }
 
-/**
- * The home page's data, each file on its own so a tile fills as soon as its
- * file arrives: undefined while loading, null if it could not be loaded.
- * The tiles read small slices (live totals, Chile's season trend, the fit
- * without its Method-only fields); the full live feed is only for the globe.
- */
+/** True once the element has stayed in view for `ms`: a heavy visual starts when the reader stops at it, not while they scroll past. */
+function useDwell<T extends HTMLElement>(ms = 600) {
+  const ref = useRef<T | null>(null);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (on || !ref.current) return;
+    let t = 0;
+    const io = new IntersectionObserver(([e]) => { clearTimeout(t); if (e.isIntersecting) t = window.setTimeout(() => { setOn(true); io.disconnect(); }, ms); }, { threshold: 0.35 });
+    io.observe(ref.current);
+    return () => { clearTimeout(t); io.disconnect(); };
+  }, [on, ms]);
+  return { ref, on };
+}
+
+/** The home page's data, each file on its own: undefined while loading, null if it could not be loaded. */
 function useHomeData() {
   const q = {
     sum: useParquet(getLiveSummary, "home-live-summary"),
-    live: useParquet(getLive, "home-live"),
     tle: useParquet(getTle, "home-tle"),
     table: useParquet(getCountryTable, "home-table"),
     drift: useParquet(getDrift, "home-drift"),
@@ -79,485 +103,476 @@ function useHomeData() {
   const v = <T,>(s: { data: T | null; loading: boolean }) => (s.loading ? undefined : s.data);
   const all = Object.values(q);
   return {
-    sum: v(q.sum), live: v(q.live), tle: v(q.tle), table: v(q.table), drift: v(q.drift), season: v(q.season), params: v(q.params),
-    /** The first file that failed, and a retry of every failed one (E16). */
+    sum: v(q.sum), tle: v(q.tle), table: v(q.table), drift: v(q.drift), season: v(q.season), params: v(q.params),
     error: all.find((s) => s.error)?.error ?? null,
     retry: () => all.forEach((s) => { if (s.error) s.retry(); }),
   };
 }
 type HomeData = ReturnType<typeof useHomeData>;
 
-/* ------------------------------------------------------------------ hero */
-function Hero({ d }: { d: HomeData }) {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: heroP } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const scrollYProgress = useScrollOrFinal(heroP, 0);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const sum = d.sum;
-  const live24 = sum ? Object.values(sum.windows["24h"].totals).reduce((a, b) => a + b, 0) : 0;
-
+const W = 640, H = 300, L = 20, R = 20, T = 22, B = 26;
+const FIRST = 2003, LAST = 2025;
+const xOf = (year: number) => L + ((year - FIRST) / (LAST - FIRST)) * (W - L - R);
+const pathOf = (vals: number[], max: number) => vals.map((v, i) => `${i ? "L" : "M"}${(L + (i / (vals.length - 1)) * (W - L - R)).toFixed(1)},${(H - B - (v / max) * (H - T - B)).toFixed(1)}`).join(" ");
+function Axes({ years }: { years: number[] }) {
+  const x12 = xOf(2011.5);
   return (
-    <section ref={ref} className="relative pb-10 pt-14 sm:pt-24">
-      <motion.div style={{ y: textY, opacity: fade }} className="relative z-10 mx-auto max-w-3xl text-center">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
-          className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
-          <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
-          {sum ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> near-real-time, raw detections in the 24 h to <span className="tabular">{fmtUtc(parseUtc(sum.fetched_utc))}</span></span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
-        </motion.div>
-        <h1 className="display t-hero mt-8">
-          <span className="block"><Words text="23 years of fire." delay={0.1} /></span>
-          <span className="block italic text-[var(--ember)] sm:whitespace-nowrap"><Words text="One steady line." delay={0.38} /></span>
-        </h1>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }}
-          className="mx-auto mt-7 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">
-          Two generations of NASA satellites, harmonized country by country to reduce the discontinuity between sensor records. Source archive from 2001; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days.
-        </motion.p>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
-          <Link href="/globe" className="glass rounded-full px-6 py-3 text-[15px] font-medium">Live globe &nbsp;→</Link>
-        </motion.div>
-        <a href="#tools" className="link-ul mt-5 inline-block text-sm text-[var(--text-secondary)]">Skip the story: go to the tools ↓</a>
-      </motion.div>
+    <>
+      {[0.25, 0.5, 0.75, 1].map((f) => <line key={f} x1={L} x2={W - R} y1={H - B - f * (H - T - B)} y2={H - B - f * (H - T - B)} stroke="var(--gridline)" />)}
+      <line x1={x12} x2={x12} y1={T - 8} y2={H - B} stroke="var(--red)" strokeWidth="1.5" strokeDasharray="2 5" strokeLinecap="round" />
+      <text x={x12 + 8} y={T + 2} fontSize="10.5" fontFamily="var(--font-code)" letterSpacing="0.08em" fill="var(--text-secondary)">2012 · SENSOR CHANGE</text>
+      {years.filter((y) => y % 4 === 3).map((y) => <text key={y} x={xOf(y)} y={H - 6} fontSize="10.5" fontFamily="var(--font-code)" textAnchor="middle" fill="var(--text-muted)">{y}</text>)}
+    </>
+  );
+}
 
-      {/* No scroll parallax on the globe: moving a live WebGL canvas every scrolled frame was a source of judder. */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4, duration: 1 }}
-        className="relative mx-auto mt-6 max-w-[760px] cursor-grab active:cursor-grabbing">
-        <div aria-hidden className="pointer-events-none absolute inset-[4%] rounded-full bg-[radial-gradient(circle,rgba(255,140,80,0.26),transparent_66%)]" />
-        <FireGlobe live={d.live ?? null} tle={d.tle?.satellites ?? null} interactive allowZoom={false} showOrbits height={600} speed={60} maxPoints={5000} />
-        <p className="pointer-events-none mt-1 text-center text-xs tracking-wide text-[var(--text-muted)]">Drag to spin · hover a fire for details</p>
-      </motion.div>
-
-      <Widgets d={d} />
-      <nav aria-label="Start here" className="mx-auto mt-6 grid max-w-5xl gap-3 sm:grid-cols-3">
-        {[
-          ["/explorer", "Explore a country", "Its month-by-month detections, raw or harmonized, as a calendar you can download."],
-          ["/compare", "Compare two regions", "Two countries side by side, in one unit, on one scale."],
-          ["/method", "Understand the correction", "How VIIRS detections become Aqua-equivalent, and how it was tested."],
-        ].map(([href, t, d2]) => (
-          <Link key={href} href={href} className="card group block p-5">
-            <p className="text-[15px] font-medium">{t} <span aria-hidden className="inline-block text-[var(--ember)] transition-transform group-hover:translate-x-1">→</span></p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{d2}</p>
-          </Link>
-        ))}
-      </nav>
-      {d.table && <Ticker names={[...[...d.table.countries].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24).map((c) => prettyName(c.country)), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]}
-        label={`The ${Math.min(24, d.table.countries.length)} fitted countries with the most fire, and the satellites`} />}
+/* ------------------------------------------------------------------ hero */
+function Hero() {
+  return (
+    <section className="relative grid items-center gap-8 pb-[var(--sec-md)] pt-12 sm:pt-20 lg:grid-cols-[1.35fr_1fr]">
+      <div>
+        <Reveal><Eyebrow info={false}>NASA FIRMS · MODIS + VIIRS · 2003–2025</Eyebrow></Reveal>
+        <Reveal delay={0.05}>
+          <h1 className="display t-d1 mt-5 max-w-[17ch]">
+            Switching satellites in 2012 broke the fire record. We repaired it, so you can see whether your fire season is <span className="italic">really unusual.</span>
+          </h1>
+        </Reveal>
+        <Reveal delay={0.12}>
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Pill href="#area" tone="red">Check your area</Pill>
+            <Pill href="#proof" tone="line">See the proof</Pill>
+            <a href="#tools" className="link-ul ml-1 text-sm text-[var(--text-secondary)]">Skip to the tools ↓</a>
+          </div>
+        </Reveal>
+        <Reveal delay={0.18}>
+          <ol className="mt-10 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-muted)]" aria-label="The story in five chapters">
+            {[["01", "Problem", "#problem"], ["02", "Repair", "#repair"], ["03", "Proof", "#proof"], ["04", "Your area", "#area"], ["05", "Now", "#now"]].map(([n, t, h]) => (
+              <li key={n}><a href={h} className="no-ul inline-flex items-center gap-2 hover:text-[var(--text-primary)]"><span className="text-[var(--text-primary)]">{n}</span>{t}</a></li>
+            ))}
+          </ol>
+        </Reveal>
+      </div>
+      <PaperCutout className="mx-auto w-[min(26rem,78vw)] lg:w-full" />
     </section>
   );
 }
 
-/* ------------------------------------------- ticker of existing names */
-function Ticker({ names, label }: { names: string[]; label: string }) {
-  const [paused, setPaused] = useState(false);
-  const row = names.map((n) => (
-    <span key={n} className="flex items-center gap-6 pr-6 font-mono text-[12px] uppercase tracking-[0.24em] text-[var(--text-muted)]">
-      {n}<span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--ember)] opacity-70" />
-    </span>
-  ));
+/* --------------------------------------------------------- 01 · problem */
+function Problem({ row, names, onCountry }: { row: CountryRow | undefined; names: string[]; onCountry: (c: string) => void }) {
+  const years = useMemo(() => row?.annual.filter((a) => a.year >= FIRST && a.year <= LAST) ?? [], [row]);
+  const raw = years.map((a) => a.raw);
+  const max = Math.max(1, ...raw) * 1.05;
+  const d = years.length ? pathOf(raw, max) : "";
   return (
-    <div className="mx-auto mt-14 flex max-w-5xl items-center gap-3">
-      <div className={`marquee marquee-quiet flex-1 py-2 ${paused ? "marquee-paused" : ""}`}>
-        <p className="sr-only">{label}: {names.join(", ")}</p>
-        <div aria-hidden>{row}{row.map((r, i) => <span key={i}>{r}</span>)}</div>
+    <section id="problem" className="scroll-mt-24 py-[var(--sec-md)]">
+      <Reveal><SectionHead eyebrow="01 · Problem" info="step" title={<>In 2012 the satellites changed, and the fire record <span className="italic">jumped.</span></>}
+        lede="The newer sensor sees smaller fires. Spliced onto the old one, the record leaps the year it arrives: more seeing, not more fire." /></Reveal>
+      <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <Reveal>
+          <Tile className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Eyebrow info={false}>Raw record · detections per year</Eyebrow>
+              {names.length > 0 && row && <CountryPicker value={row.country} options={names} onChange={onCountry} label="Country" />}
+            </div>
+            {!row ? <DotSkeleton h={260} className="mt-4" label="Loading the raw record" /> : (
+              <svg key={row.country} viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label={`Raw yearly fire detections in ${prettyName(row.country)}, ${FIRST} to ${LAST}: the count jumps in 2012, by ${fmtRatio(row.step_raw)}.`}>
+                <Axes years={years.map((a) => a.year)} />
+                <path d={`${d} L${W - R},${H - B} L${L},${H - B} Z`} fill="var(--c-raw)" opacity="0.08" />
+                <path d={d} fill="none" stroke="var(--c-raw)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" className="stroke-on" style={{ "--len": 2400 } as React.CSSProperties} />
+              </svg>
+            )}
+            <p className="stat-source mt-2 text-[var(--text-muted)]">Source: NASA FIRMS archive, MODIS C6.1 to 2011 then Suomi-NPP VIIRS 375 m · countries.json</p>
+          </Tile>
+        </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <Reveal delay={0.05}><StatTile tone="ink" label="Raw step at 2012" info="step" value={row ? fmtRatio(row.step_raw) : undefined} note={<>Yearly detections in 2012–14 against 2009–11{row ? `, ${prettyName(row.country)}` : ""}, as the spliced record tells it.</>} className="h-full" /></Reveal>
+          <Reveal delay={0.1}><StatTile label="Same years, unchanged sensor" info="modis" value={row ? fmtRatio(row.step_aqua) : undefined} note="Aqua MODIS alone, a sensor that did not change. That is how much fire really moved." className="h-full" /></Reveal>
+        </div>
       </div>
-      <button type="button" onClick={() => setPaused(!paused)} aria-pressed={paused} aria-label={paused ? "Play the name ticker" : "Pause the name ticker"}
-        className="glass-thin flex h-8 w-8 shrink-0 items-center justify-center text-[11px] text-[var(--text-secondary)]">{paused ? "▶" : "❚❚"}</button>
+      <Reveal>
+        <Expand className="mt-8" label="Why a sharper sensor counts more fires">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["From orbit", "Five satellites circle Earth fourteen times a day.", "Terra and Aqua carry MODIS; Suomi-NPP, NOAA-20 and NOAA-21 carry VIIRS. Each crosses a given place at about the same local time every day.", "orbit"],
+              ["Heat", "They don't see flames. They see heat.", "A fire's radiated power, in megawatts, shows up in the infrared. Big fires shine; small ones barely register.", "heat"],
+              ["2000", "MODIS sees the world in 1 km squares.", "A small crop burn inside a square is too faint to cross the threshold. For twelve years, it simply isn't in the record.", "modis"],
+              ["2012", "VIIRS sees in 375 m squares. Seven times sharper.", "Suddenly the small fires appear. The record jumps: not because there is more fire, but because there is more seeing.", "viirs"],
+            ].map(([e, t, b, v], i) => (
+              <Tile key={e} tone="alt" className="flex flex-col p-5">
+                <Eyebrow info={false}>{`0${i + 1} · ${e}`}</Eyebrow>
+                <SensorVisual kind={v} />
+                <h3 className="display mt-4 text-lg leading-snug">{t}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-secondary)]">{b}</p>
+              </Tile>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-[var(--text-secondary)]"><Link className="link-ul" href="/satellites">Every satellite and its orbit →</Link></p>
+        </Expand>
+      </Reveal>
+    </section>
+  );
+}
+
+/** Small illustrations for the four sensor steps (illustrative, no data). */
+function SensorVisual({ kind }: { kind: string }) {
+  const fires = [5, 10, 17, 30, 44, 51, 63, 77, 92, 101, 118, 130];
+  return (
+    <div aria-hidden className="relative mt-4 aspect-[4/3] overflow-hidden rounded-[18px] bg-[var(--surface)]">
+      {kind === "orbit" && (
+        <svg viewBox="0 0 120 90" className="h-full w-full">
+          <circle cx="60" cy="45" r="20" fill="var(--surface-alt)" stroke="var(--text-primary)" strokeWidth="1.5" />
+          {[0, 1, 2].map((i) => <ellipse key={i} cx="60" cy="45" rx={30 + i * 8} ry={(30 + i * 8) * 0.36} fill="none" stroke="var(--grey-2)" strokeDasharray="1.5 3.5" strokeLinecap="round" transform={`rotate(${-30 + i * 28} 60 45)`} />)}
+          {[[32, 31], [91, 38], [70, 78]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3" fill={i === 2 ? "var(--red)" : "var(--text-primary)"} />)}
+        </svg>
+      )}
+      {kind === "heat" && <div className="absolute inset-0 bg-[radial-gradient(circle_at_42%_48%,var(--seq-1)_0%,var(--seq-3)_22%,var(--seq-5)_40%,transparent_70%)]" />}
+      {kind === "modis" && <div className="absolute inset-3 grid grid-cols-4 gap-1">{Array.from({ length: 12 }, (_, i) => <span key={i} className="rounded-[5px]" style={{ background: i === 5 ? "var(--seq-5)" : "var(--surface-alt)" }} />)}</div>}
+      {kind === "viirs" && <div className="absolute inset-3 grid grid-cols-12 gap-[2px]">{Array.from({ length: 108 }, (_, i) => <span key={i} className="rounded-[2px]" style={{ background: fires.includes(i) ? (i % 3 === 0 ? "var(--seq-6)" : "var(--seq-3)") : "var(--surface-alt)" }} />)}</div>}
     </div>
   );
 }
 
-/* ------------------------------------------------- "at a glance" panel */
-/** What each live feed is, in words (keys as written by scripts/build_live.py). */
+/* ---------------------------------------------------------- 02 · repair */
+function Repair({ row, d }: { row: CountryRow | undefined; d: HomeData }) {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const p = useScrollOrFinal(scrollYProgress, 1);
+  const years = useMemo(() => row?.annual.filter((a) => a.year >= FIRST && a.year <= LAST) ?? [], [row]);
+  const raw = years.map((a) => a.raw), harm = years.map((a) => a.harm);
+  const max = Math.max(1, ...raw) * 1.05;
+  // The signature transition: the line leaves the raw record and settles on the harmonized one.
+  const morph = useTransform(p, [0.12, 0.62], [0, 1]);
+  const line = useTransform(morph, (m) => (years.length ? pathOf(raw.map((r, i) => r + (harm[i] - r) * m), max) : ""));
+  const area = useTransform(line, (s) => (s ? `${s} L${W - R},${H - B} L${L},${H - B} Z` : ""));
+  const rawFade = useTransform(morph, [0, 1], [1, 0.32]);
+  const label = useTransform(morph, (m): string => (m < 0.5 ? "RAW" : "HARMONIZED"));
+  const stats = useTransform(p, [0.5, 0.7], [0, 1]);
+  const [country, setCountry] = useState("Australia");
+  const countries = d.table?.countries ?? [];
+  const notFitted = d.table?.not_fitted ?? [];
+  const detections = countries.length ? countries.reduce((a, c) => a + c.detections_filtered, 0) + notFitted.reduce((a, c) => a + c.detections_filtered, 0) : null;
+  const withRecord = countries.length + notFitted.filter((c) => c.has_raw_calendar && c.detections_filtered > 0).length;
+  return (
+    <section id="repair" ref={ref} className="relative scroll-mt-24" style={{ height: "230vh" }}>
+      <div className="sticky top-16 flex min-h-[calc(100vh-4rem)] flex-col justify-center py-8">
+        <SectionHead eyebrow="02 · Repair" info="harmonized" title={<>We learned how MODIS saw fires, country by country, and <span className="italic">rebuilt the record.</span></>}
+          lede="Each newer detection is weighted by the chance the older sensor would have seen a fire that strong. Scroll: the same line, on one sensor's footing." />
+        <div className="mt-6 grid gap-4 lg:grid-cols-[2fr_1fr]">
+          <Tile className="relative p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <Eyebrow info={false}>{row ? `${prettyName(row.country)} · detections per year` : "Detections per year"}</Eyebrow>
+              <motion.span className="rounded-full bg-[var(--ink)] px-3 py-1 font-mono text-[10.5px] tracking-[0.16em] text-[var(--on-ink)]">{label}</motion.span>
+            </div>
+            {!row ? <DotSkeleton h={260} className="mt-4" label="Loading the record" /> : (
+              <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 w-full" role="img" aria-label={`Yearly fire detections in ${prettyName(row.country)}: raw (blue) and harmonized (ember). The 2012 step is ${fmtRatio(row.step_raw)} raw and ${fmtRatio(row.step_harm)} harmonized.`}>
+                <Axes years={years.map((a) => a.year)} />
+                <motion.path d={pathOf(raw, max)} fill="none" stroke="var(--c-raw)" strokeWidth="2" strokeDasharray="1 6" strokeLinecap="round" style={{ opacity: rawFade }} />
+                <motion.path d={area} fill="var(--c-harm)" opacity="0.1" />
+                <motion.path d={line} fill="none" stroke="var(--c-harm)" strokeWidth="3.4" strokeLinejoin="round" strokeLinecap="round" />
+              </svg>
+            )}
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-[var(--text-secondary)]">
+              <li className="inline-flex items-center gap-2"><span className="h-[3px] w-5 rounded-full bg-[var(--c-raw)]" />raw splice</li>
+              <li className="inline-flex items-center gap-2"><span className="h-[3px] w-5 rounded-full bg-[var(--c-harm)]" />harmonized (Aqua-MODIS-equivalent)</li>
+            </ul>
+          </Tile>
+          <motion.div style={{ opacity: stats }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <StatTile tone="ink" label="Harmonized step at 2012" info="aquaEquivalent" value={row ? fmtRatio(row.step_harm) : undefined} note={<>Raw said {fmtRatio(row?.step_raw)}. The unchanged sensor says {fmtRatio(row?.step_aqua)}. Much of the jump was detection, not fire.</>} className="h-full" />
+            <StatTile label="The record" info="firmsArchive" value={detections != null ? `${fmtNum(detections / 1e6, 1)}M` : undefined} unit="detections"
+              note={<>Daytime vegetation-fire detections in {withRecord || "…"} FIRMS countries and territories; {countries.length || "…"} have enough data to fit. Exact total {fmtInt(detections)}.</>} className="h-full" />
+          </motion.div>
+        </div>
+        <Expand className="mt-6" label="And the old satellites are drifting: why the fit stops at 2021">
+          <p className="max-w-2xl text-[15px] leading-relaxed text-[var(--text-secondary)]">
+            A satellite in a sun-synchronous orbit passes over a place at the same local time every day. Terra and Aqua no longer do. Each clock below is measured from the fire detections themselves, year by year. The fit uses 2012–2021 only; 2022–2025 is held apart.
+          </p>
+          <div className="mt-6"><DriftClocks drift={(d.drift ?? undefined) as DriftFile | undefined} country={country} onCountry={setCountry} /></div>
+          <p className="mt-5 text-sm text-[var(--text-secondary)]"><Link className="link-ul" href="/satellites">Every satellite, and the drift year by year →</Link></p>
+        </Expand>
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------- 03 · proof */
+function Proof({ d }: { d: HomeData }) {
+  const { ref, near } = useNear<HTMLElement>();
+  const { data: pf } = useParquet(() => (near ? getProof() : new Promise<Awaited<ReturnType<typeof getProof>>>(() => {})), near ? "home-proof" : "home-proof-wait");
+  const pct = (v: number) => `${fmtNum(v * 100, 1)}%`;
+  const s = pf?.step_collapse.all, r = pf?.records, seam = pf?.seam, b = pf?.benchmark.all;
+  const acc = accuracySummary(d.params ?? undefined);
+  return (
+    <section id="proof" ref={ref} className="scroll-mt-24 py-[var(--sec-lg)]">
+      <Reveal><SectionHead eyebrow="03 · Proof" size="d1" title={<>Three checks the repair <span className="italic">could have failed.</span></>}
+        lede="None of them uses the fitting target. Each asks one thing: after the repair, does 2012 still look special?" /></Reveal>
+      <div className="mt-10 grid gap-4 lg:grid-cols-3" data-testid="home-proof">
+        <Reveal><StatTile tone="ink" size="lg" label="Step collapse" info="stepCollapse" value={s ? `${s.within_1_25_harm}/${s.n}` : pf === undefined ? undefined : undefined}
+          note={s && pf ? <>countries whose 2012 step now lands within ×{pf.step_collapse.within_factor} of an unchanged sensor. In the raw splice: <span className="dot-num">{s.within_1_25_raw}/{s.n}</span>.</> : "Loading proof.json"} className="h-full" /></Reveal>
+        <Reveal delay={0.06}><StatTile size="lg" label="False-Record Counter" info="falseRecord" value={r ? pct(r.series.harmonized.share) : undefined}
+          note={r ? <>of months after 2012 look like an all-time record, down from <span className="dot-num">{pct(r.series.raw_splice.share)}</span> in the raw splice. Chance level: {fmtNum(r.chance_reference.share * 100, 0)}%.</> : "Loading proof.json"} className="h-full" /></Reveal>
+        <Reveal delay={0.12}><StatTile size="lg" label="Find the Seam" info="seam" value={seam ? `${seam.harm_2012}/${seam.n_countries}` : undefined}
+          note={seam ? <>countries where 2012 is still the biggest jump, down from <span className="dot-num">{seam.raw_2012}/{seam.n_countries}</span>. By chance alone: {fmtNum(seam.chance_2012, 1)}.</> : "Loading proof.json"} className="h-full" /></Reveal>
+      </div>
+      {b && (
+        <Reveal>
+          <p className="mt-6 max-w-[70ch] border-l-[length:var(--stroke)] border-[var(--text-primary)] pl-4 text-[15px] leading-relaxed text-[var(--text-secondary)]" data-testid="honest-benchmark">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--text-primary)]">The honest benchmark · </span>
+            On held-out years the model is far better than raw VIIRS and roughly level with one country-wide ratio: median R² {fmtR2(b.median_r2.model)} against {fmtR2(b.median_r2.ratio)}. It beats that ratio in {b.beats_ratio_r2} of {b.n} countries on R² and in {b.beats_ratio_mae} of {b.n} on mean absolute error. Regional results, not a global claim.
+          </p>
+        </Reveal>
+      )}
+      <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><StepCollapse lazy compact /></Tile></Reveal>
+      <Reveal>
+        <Expand className="mt-8" label="Held-out scores: tested on years the model never saw">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {(d.table?.countries ?? []).filter((c) => ORIGINAL_FOUR.includes(c.country)).map((c) => (
+              <Tile key={c.country} tone="alt" className="p-5">
+                <Eyebrow info={false}>{prettyName(c.country)}</Eyebrow>
+                <p className="mt-3"><DotDigits text={fmtR2(c.r2_model)} className="text-5xl" /></p>
+                <p className="mt-2 text-[13px] text-[var(--text-secondary)]">held-out R² against observed Aqua · raw VIIRS {fmtR2(c.r2_raw)}</p>
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[var(--surface)]"><div className="h-full rounded-full bg-[var(--c-harm)]" style={{ width: `${Math.max(0, c.r2_model) * 100}%` }} /></div>
+              </Tile>
+            ))}
+          </div>
+          <p className="mt-5 max-w-[75ch] text-[14px] leading-relaxed text-[var(--text-secondary)]">
+            The four countries the method was built on. {acc ? <>Across all {acc.fitted} fitted countries, {acc.own} with their own curve and {acc.fitted - acc.own} on a borrowed (pooled) curve, the median held-out R² of the {acc.own} own-fit countries is {fmtR2(acc.medianR2)}; the model beats raw VIIRS in {acc.beats} of {acc.fitted}. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). </> : null}
+            {d.params ? <>Fitted {span(d.params.train_years[0], d.params.train_years[1])}, scored {span(d.params.test_years[0], d.params.test_years[1])} per ~250 km² cell and month. Fit {d.params.fit_version}.</> : null}
+          </p>
+        </Expand>
+      </Reveal>
+      <Reveal><div className="mt-6"><Pill href="/method#proof" tone="ink">All the proof, country by country →</Pill></div></Reveal>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------- 04 · your area */
+function YourArea({ d }: { d: HomeData }) {
+  const [country, setCountry] = useState("Canada");
+  const { ref, near } = useNear<HTMLElement>();
+  const { data, error, retry } = useAreaData({ kind: "country", name: country });
+  const hasHarm = !!data && data.harmonized.rows.some((r) => r.value !== null);
+  const cal = data ? (hasHarm ? data.harmonized : data.raw) : null;
+  // The verdict: the latest complete year against every earlier year of the same harmonized record.
+  const verdict = useMemo(() => {
+    if (!data || !hasHarm) return null;
+    const totals = annualTotals(data.harmonized, FIRST, LAST).filter((t) => t.value !== null) as Array<{ year: number; value: number }>;
+    if (totals.length < 6) return null;
+    const last = totals[totals.length - 1], rest = totals.slice(0, -1);
+    const below = rest.filter((t) => t.value < last.value).length, ties = rest.filter((t) => t.value === last.value).length;
+    const pctl = (100 * (below + 0.5 * ties)) / rest.length;
+    const med = median(rest.map((t) => t.value)) as number;
+    return { year: last.year, value: last.value, below, n: rest.length, pctl, med, from: rest[0].year, to: rest[rest.length - 1].year, word: pctl >= 67 ? "above normal" : pctl <= 33 ? "below normal" : "near normal" };
+  }, [data, hasHarm]);
+  const lo = LAST - 11;
+  const max = cal ? Math.max(1, ...cal.rows.filter((r) => r.year >= lo).map((r) => r.value ?? 0)) : 1;
+  const chile = d.season?.countries.Chile?.trend_days_per_decade;
+  return (
+    <section id="area" ref={ref} className="scroll-mt-24 py-[var(--sec-lg)]">
+      <Reveal><SectionHead eyebrow="04 · Your area" info="calendar" title={<>Is this fire season <span className="italic">really unusual</span> where you are?</>}
+        lede="Pick a country. The calendar is in one unit for every year, so the latest season can be set fairly against the ones before it." /></Reveal>
+      <Reveal>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {data ? <CountryPicker value={country} options={data.countries} onChange={setCountry} label="Country" tags={data.tags} /> : <span className="dot-skel inline-block h-11 w-56 !rounded-full" />}
+          {data && !hasHarm && <span className="rounded-full border-[length:var(--stroke)] border-[var(--red)] px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--red)]">uncorrected · raw only</span>}
+          <InfoDot k={hasHarm || !data ? "harmonized" : "uncorrected"} align="start" />
+        </div>
+      </Reveal>
+      {error && <div className="mt-6"><Failed error={error} retry={retry} what="the calendar" /></div>}
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+        <Reveal>
+          <Tile className="min-w-0 p-5 sm:p-6">
+            <Eyebrow info={false}>{`${prettyName(country)} · ${hasHarm || !data ? "harmonized" : "raw, uncorrected"} detections per month · ${lo}–${LAST}`}</Eyebrow>
+            <div className="mt-4 min-w-0">
+              {cal && near ? <div className="cal-wipe"><MonthYearCalendar cal={cal} from={lo} to={LAST} max={max} areaName={prettyName(country)} /></div> : <DotSkeleton h={380} label="Loading the calendar" />}
+            </div>
+          </Tile>
+        </Reveal>
+        <div className="grid content-start gap-4">
+          <Reveal delay={0.05}>
+            <Tile tone="ink" tilt className="p-6" data-testid="verdict">
+              <div className="flex items-start justify-between gap-3"><Eyebrow info={false} className="!text-inherit opacity-70">{verdict ? `Verdict · ${verdict.year}` : "Verdict"}</Eyebrow><InfoDot k="percentile" /></div>
+              {verdict ? (
+                <>
+                  <p className="display mt-4 text-[clamp(1.9rem,1.4rem+1.6vw,2.6rem)] leading-[1.05]">This season is <span className="italic">{verdict.word}.</span></p>
+                  <p className="mt-4 flex items-baseline gap-2"><DotDigits text={fmtNum(verdict.pctl, 0)} className="text-6xl" /><span className="stat-unit opacity-70">percentile</span></p>
+                  <p className="mt-3 text-[14px] leading-snug opacity-80">
+                    {verdict.year} had {fmtInt(verdict.value)} harmonized detections: more than {verdict.below} of the {verdict.n} years {verdict.from}–{verdict.to} (median {fmtInt(verdict.med)}). Above normal means the top third, below normal the bottom third.
+                  </p>
+                </>
+              ) : data && !hasHarm ? (
+                <p className="mt-4 text-[15px] leading-relaxed opacity-85">No harmonized record exists for {prettyName(country)}, so no verdict is given. The calendar shows raw counts, flagged uncorrected: across 2012 they mix two sensors.</p>
+              ) : <p className="mt-4 font-mono text-sm uppercase tracking-[0.14em] opacity-60">{data ? "not recorded" : "loading"}</p>}
+            </Tile>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="flex flex-wrap gap-3">
+              <Pill href={`/explorer?country=${encodeURIComponent(country)}`} tone="red">Open the full calendar</Pill>
+              <Pill href={`/seasons?country=${encodeURIComponent(country)}`} tone="line">Month by month</Pill>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+      <Reveal>
+        <Expand className="mt-8" label="Is the fire season starting earlier? Less than the raw data says">
+          <Tile tone="alt" className="max-w-2xl p-6">
+            <Eyebrow info={false}>Chile · season onset trend, 2003–2025</Eyebrow>
+            <div className="mt-5 space-y-5">
+              {([["Raw record", chile?.raw_onset, "var(--c-raw)"], ["Harmonized", chile?.harm_onset, "var(--c-harm)"]] as const).map(([l, v, c]) => (
+                <div key={l}>
+                  <div className="flex items-baseline justify-between text-sm"><span>{l}</span><span>{v == null ? <span className="font-mono text-xs uppercase tracking-[0.14em] opacity-60">not recorded</span> : <><span className="dot-num text-3xl">{fmtSigned(v)}</span> <span className="stat-unit text-[var(--text-secondary)]">days / decade</span></>}</span></div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface)]"><div className="h-full rounded-full" style={{ background: c, width: `${Math.min(100, Math.abs(v ?? 0) * 10)}%` }} /></div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-[14px] leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Descriptive least-squares trends.{chile?.raw_onset != null && chile?.harm_onset != null ? ` Change in estimated trend after harmonization: ${fmtSigned(chile.harm_onset - chile.raw_onset)} days/decade (raw ${fmtSigned(chile.raw_onset)}, harmonized ${fmtSigned(chile.harm_onset)} days/decade). This is a difference between two estimates, not a measured sensor effect.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
+          </Tile>
+        </Expand>
+      </Reveal>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------- 05 · now */
 const FEED: Record<string, { name: string; sensor: string; color: string }> = {
-  "NOAA-20": { name: "NOAA-20", sensor: "VIIRS 375 m", color: "#f3efe6" },
-  "NOAA-21": { name: "NOAA-21", sensor: "VIIRS 375 m", color: "#f49b3f" },
-  MODIS: { name: "Terra + Aqua", sensor: "MODIS 1 km", color: "#d9431a" },
+  "NOAA-20": { name: "NOAA-20", sensor: "VIIRS 375 m", color: "var(--on-ink)" },
+  "NOAA-21": { name: "NOAA-21", sensor: "VIIRS 375 m", color: "var(--grey-2)" },
+  MODIS: { name: "Terra + Aqua", sensor: "MODIS 1 km", color: "var(--red)" },
 };
 const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
-function Widgets({ d }: { d: HomeData }) {
+function Now({ d }: { d: HomeData }) {
   const now = useToday();
-  const tile = "h-full rounded-[30px] p-5 sm:p-6";
-  const dark = "bg-[#141414] text-[#f3efe6] shadow-[0_24px_44px_-26px_rgba(0,0,0,0.6)]";
+  const { ref: globeRef, on: spin } = useDwell<HTMLDivElement>();
+  const { data: live } = useParquet(() => (spin ? getLive() : new Promise<Awaited<ReturnType<typeof getLive>>>(() => {})), spin ? "home-live" : "home-live-wait");
   const w = d.sum?.windows["24h"];
   const feeds = w ? Object.entries(w.totals) : [];
   const live24 = feeds.length ? feeds.reduce((a, [, v]) => a + v, 0) : null;
   const fetched = parseUtc(d.sum?.fetched_utc);
   const age = fmtAge(fetched, now);
   const dates = w?.dates ?? [];
-  const countries = d.table?.countries ?? [];
-  const notFitted = d.table?.not_fitted ?? [];
-  const detections = countries.length ? countries.reduce((a, c) => a + c.detections_filtered, 0) + notFitted.reduce((a, c) => a + c.detections_filtered, 0) : null;
-  const withRecord = countries.length + notFitted.filter((c) => c.has_raw_calendar && c.detections_filtered > 0).length;
-  const years = countries.flatMap((c) => c.annual.map((a) => a.year));
-  const acc = accuracySummary(d.params ?? undefined);
   const sats = d.tle?.satellites ?? [];
-  const p = d.params ?? undefined;
   return (
-    <section aria-labelledby="glance" className="mx-auto mt-16 max-w-5xl">
-      <Reveal>
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-          <div>
-            <Eyebrow>At a glance · read from the data files</Eyebrow>
-            <h2 id="glance" className="display t-d3 mt-2">One day of fire, and the long record it joins.</h2>
-          </div>
-          <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year from 2003 to 2025 converted to one unit (Aqua MODIS-equivalent), so a fire season in 2005 and one in 2025 can be compared on the same footing. 2001–2002 are not complete Aqua reference years (Aqua launched in 2002).
-          </p>
-        </div>
-      </Reveal>
-
-      <div className="mt-6 grid gap-3 sm:gap-4 md:grid-cols-3">
-        <Reveal className="md:col-span-2">
-          <div className={`${tile} ${dark}`}>
-            <div className="flex items-start justify-between gap-4">
-              <Eyebrow className="!text-white/60">Near-real-time · raw detections · last 24 hours</Eyebrow>
-              <span className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-[var(--ember)]" aria-hidden />
-            </div>
-            <div className="mt-5">
-              {live24 != null ? <DotText text={fmtInt(live24)} dot={9} gap={3} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <p className="display text-4xl text-white/70">{d.sum === undefined ? "loading" : NA}</p>}
-            </div>
-            <p className="mt-3 text-[15px] leading-snug">
-              <span className="font-medium">active-fire detections</span> <span className="text-white/70">— each one a satellite pixel flagged as burning, seen from orbit in the 24 hours before the snapshot.</span>
-            </p>
+    <section id="now" className="scroll-mt-24 py-[var(--sec-lg)]">
+      <Reveal><SectionHead eyebrow="05 · Now" info="live" title={<>And this month, <span className="italic">so far.</span></>}
+        lede="The live feeds are raw and come from different satellites than the long record. They are shown beside it, labelled, never mixed into it." /></Reveal>
+      <Reveal><div className="mt-6 flex flex-wrap gap-2"><SourceChip name="FIRMS NRT" detail="NOAA-20 · NOAA-21 · MODIS" /><SourceChip name="FIRMS area API" detail="this month" /><SourceChip name="NASA EONET" detail="wildfire events" /><SourceChip name="CelesTrak" detail="TLEs" /></div></Reveal>
+      <div className="mt-6"><MonthUnusualPanel /></div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <Reveal className="lg:col-span-2">
+          <Tile tone="ink" className="h-full p-6 sm:p-7">
+            <div className="flex items-start justify-between gap-4"><Eyebrow info={false} className="!text-inherit opacity-70">Near-real-time · raw detections · last 24 hours</Eyebrow><span className="live-dot mt-1 shrink-0" aria-hidden /></div>
+            <p className="mt-5 leading-none">{live24 != null ? <DotDigits text={fmtInt(live24)} className="text-[clamp(3rem,2rem+6vw,6.5rem)]" /> : <span className="font-mono text-sm uppercase tracking-[0.14em] opacity-60">{d.sum === undefined ? "loading" : "not recorded"}</span>}</p>
+            <p className="mt-4 max-w-[52ch] text-[15px] leading-snug"><span className="font-medium">active-fire detections</span> <span className="opacity-70">Each is a satellite pixel flagged as burning, seen from orbit in the 24 hours before the snapshot.</span></p>
             {live24 != null && (
               <div className="mt-5">
-                <div className="flex h-2 overflow-hidden rounded-full bg-white/10" aria-hidden>
-                  {feeds.map(([k, v]) => <span key={k} style={{ width: `${(v / live24) * 100}%`, background: FEED[k]?.color ?? "#999" }} />)}
-                </div>
+                <div className="flex h-2 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--on-ink)_14%,transparent)]" aria-hidden>{feeds.map(([k, v]) => <span key={k} style={{ width: `${(v / live24) * 100}%`, background: FEED[k]?.color ?? "var(--grey-2)" }} />)}</div>
                 <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-[13px] sm:grid-cols-3">
                   {feeds.map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3 sm:block">
-                      <dt className="text-white/70"><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: FEED[k]?.color ?? "#999" }} />{FEED[k]?.name ?? k} <span className="text-white/45">· {FEED[k]?.sensor ?? ""}</span></dt>
-                      <dd className="tabular font-medium sm:mt-0.5"><CountUp to={v} /></dd>
+                      <dt className="opacity-75"><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: FEED[k]?.color ?? "var(--grey-2)" }} />{FEED[k]?.name ?? k} <span className="opacity-60">· {FEED[k]?.sensor ?? ""}</span></dt>
+                      <dd className="tabular font-medium sm:mt-0.5">{fmtInt(v)}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
             )}
-            <div className="mt-5 border-t border-white/10 pt-4 text-[12px] leading-relaxed text-white/60">
-              <p>
-                <span className="text-white/85">As of {fmtUtc(fetched)}</span>{age && <> · updated {age}</>}
-                {dates.length > 0 && <> · acquisitions dated {dates.length > 1 ? `${dayLabel(dates[0])} – ${dayLabel(dates[dates.length - 1])}` : dayLabel(dates[0])} (UTC)</>}
+            <div className="mt-5 border-t border-[color-mix(in_srgb,var(--on-ink)_16%,transparent)] pt-4 text-[12px] leading-relaxed opacity-75">
+              <p>As of {fmtUtc(fetched)}{age && <> · updated {age}</>}{dates.length > 0 && <> · acquisitions dated {dates.length > 1 ? `${dayLabel(dates[0])} – ${dayLabel(dates[dates.length - 1])}` : dayLabel(dates[0])} (UTC)</>}</p>
+              <p className="stat-source mt-1.5 opacity-80">Source: NASA FIRMS near-real-time global 24 h feeds: VIIRS on NOAA-20 and NOAA-21, MODIS C6.1 on Terra and Aqua. Raw and uncorrected; not the Suomi-NPP record Emberline harmonizes, whose live feed is empty. Includes volcanoes and gas flares.</p>
+            </div>
+          </Tile>
+        </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <Reveal delay={0.05}>
+            <Tile shape="circle" tilt className="mx-auto flex w-full max-w-[18rem] flex-col items-center justify-center p-6 text-center">
+              <Eyebrow info={false}>Time now · UTC</Eyebrow>
+              <DotClock size={112} />
+              <p className="dot-num text-3xl leading-none">{now ? fmtClock(now.getUTCHours() + now.getUTCMinutes() / 60) : "--:--"}</p>
+              <p className="mt-1 max-w-[14rem] text-[11.5px] leading-snug text-[var(--text-muted)]">Fire records are stamped in UTC, then converted to local solar time.</p>
+            </Tile>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Link href="/satellites" className="tile block h-full p-6">
+              <div className="flex items-start justify-between gap-3"><Eyebrow info={false}>The fleet</Eyebrow><InfoDot k="tle" /></div>
+              <p className="mt-4 flex items-baseline gap-2 leading-none">{sats.length ? <DotDigits text={String(sats.length)} className="text-6xl" /> : <span className="font-mono text-sm uppercase tracking-[0.14em] opacity-60">{d.tle === undefined ? "loading" : "not recorded"}</span>}<span className="stat-unit opacity-70">satellites</span></p>
+              <p className="mt-3 text-[13.5px] leading-snug text-[var(--text-secondary)]">
+                In the harmonized record: {sats.filter((s) => s.name !== "NOAA-20" && s.name !== "NOAA-21").map((s) => `${s.name} (${s.instrument})`).join(", ") || "…"}. Live layer only: {sats.filter((s) => s.name === "NOAA-20" || s.name === "NOAA-21").map((s) => s.name).join(", ") || "…"} (VIIRS).
               </p>
-              <p className="stat-source mt-1.5 text-white/50">
-                Source: NASA FIRMS near-real-time global 24 h feeds — VIIRS on NOAA-20 and NOAA-21, MODIS C6.1 on Terra and Aqua. Raw and uncorrected; not the Suomi-NPP record Emberline harmonizes, whose live feed is empty. Includes volcanoes and gas flares.
-              </p>
+              <p className="stat-source mt-3 text-[var(--text-muted)]">{d.tle ? <>Orbits: public TLEs, {fmtUtc(parseUtc(d.tle.fetched))}</> : null}</p>
+            </Link>
+          </Reveal>
+        </div>
+      </div>
+      <Reveal>
+        <Tile className="relative mt-4 overflow-hidden p-5 sm:p-7">
+          <div className="grid items-center gap-6 lg:grid-cols-[1fr_1.2fr]">
+            <div>
+              <Eyebrow info={false}>Live globe · NOAA-20 / NOAA-21 / MODIS · raw</Eyebrow>
+              <h3 className="display mt-3 t-d3">Every detection of the last day, where it burned.</h3>
+              <p className="mt-3 max-w-[46ch] text-[15px] leading-relaxed text-[var(--text-secondary)]">Drag to spin. The globe also carries the satellites’ orbits and NASA EONET wildfire events, a separate, curated source.</p>
+              <div className="mt-6"><Pill href="/globe" tone="ink">Open the live globe →</Pill></div>
+            </div>
+            <div ref={globeRef} className="relative mx-auto w-full max-w-[520px] cursor-grab active:cursor-grabbing">
+              {spin ? <FireGlobe live={live ?? null} tle={d.tle?.satellites ?? null} interactive allowZoom={false} showOrbits height={440} speed={60} maxPoints={5000} /> : <GlobeStill height={440} />}
             </div>
           </div>
-        </Reveal>
-
-        <Reveal delay={0.05}>
-          <div className={`glass ${tile} flex flex-col items-center text-center text-[var(--ink)]`}>
-            <Eyebrow className="self-start">Time now · UTC</Eyebrow>
-            <DotClock size={128} />
-            <p className="tabular display mt-1 text-2xl">{now ? fmtClock(now.getUTCHours() + now.getUTCMinutes() / 60) : "loading"} <span className="text-sm font-medium text-[var(--text-muted)]">UTC</span></p>
-            <p className="text-sm text-[var(--text-secondary)]">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : ""}</p>
-            <p className="mt-3 text-[12px] leading-relaxed text-[var(--text-muted)]">Satellite fire records are stamped in UTC. Emberline converts each detection to local solar time (UTC + longitude ÷ 15) before any time-of-day analysis.</p>
-          </div>
-        </Reveal>
-
-        <Reveal>
-          <div className={`glass ${tile}`}>
-            <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d.table === undefined ? "loading" : NA}
-              unit="detections"
-              note={<>Daytime vegetation-fire detections, raw, {years.length ? span(Math.min(...years), Math.max(...years)) : "loading"}, in {withRecord || "loading"} FIRMS countries and territories; {countries.length || "loading"} of them have enough data to fit. Exact total {fmtInt(detections)}.</>}
-              source={<>Source: NASA FIRMS archive (MODIS C6.1, VIIRS Suomi-NPP) · countries.json</>} />
-          </div>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <div className={`${tile} bg-[var(--ember)] text-white shadow-[0_24px_44px_-26px_rgba(217,67,26,0.8)]`}>
-            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d.params === undefined ? "loading" : NA} unit="R²"
-              note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against Aqua reference observations in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
-              source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
-          </div>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <Link href="/satellites" className={`${tile} ${dark} group flex flex-col transition-transform hover:-translate-y-1`}>
-            <Stat dot tone="dark" label="The fleet" value={sats.length ? String(sats.length) : d.tle === undefined ? "loading" : NA} unit="satellites"
-              note={<>
-                In the harmonized record: {sats.filter((s) => s.name !== "NOAA-20" && s.name !== "NOAA-21").map((s) => `${s.name} (${s.instrument})`).join(", ")}.
-                {" "}Live layer only: {sats.filter((s) => s.name === "NOAA-20" || s.name === "NOAA-21").map((s) => s.name).join(", ")} (VIIRS).
-              </>}
-              source={d.tle ? <>Orbits: public TLEs, {fmtUtc(parseUtc(d.tle.fetched))}</> : null} />
-            <span className="mt-auto pt-4 text-sm text-white/70 transition-transform group-hover:translate-x-1">See every satellite →</span>
-          </Link>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-
-/* --------------------------------------------------------- sticky story */
-/**
- * One text step of the sticky story. `active` comes from the chapter's single
- * useActiveStep() measurement, the same value that picks the visual, so the
- * text and the picture can never be a step apart.
- */
-function StoryStep({ i, active, children }: { i: number; active: number; children: React.ReactNode }) {
-  return (
-    <div data-story-step={i} data-active={i === active ? "" : undefined}
-      className="flex min-h-[60vh] flex-col justify-center py-6 transition-[opacity,transform] duration-[250ms] ease-out"
-      style={{ opacity: i === active ? 1 : 0.3, transform: i > active ? "translateX(-10px)" : "none" }}>{children}</div>
-  );
-}
-
-/**
- * Index of the story step under the middle of the viewport. An
- * IntersectionObserver with a thin band at the viewport centre
- * (rootMargin -45% top and bottom) fires whenever a step enters or leaves the
- * middle; the step whose box holds the centre line is then the active one.
- * Before the first step reaches the middle it is step 0; after the last one
- * has passed, the last step stays active.
- */
-function useActiveStep(root: React.RefObject<HTMLElement | null>): number {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const steps = [...(root.current?.querySelectorAll<HTMLElement>("[data-story-step]") ?? [])];
-    if (!steps.length || typeof IntersectionObserver === "undefined") return;
-    const pick = () => {
-      const mid = window.innerHeight / 2;
-      const i = steps.findIndex((el) => { const r = el.getBoundingClientRect(); return r.top <= mid && r.bottom > mid; });
-      if (i >= 0) setActive(i);
-      else if (steps[0].getBoundingClientRect().top > mid) setActive(0);
-      else if (steps[steps.length - 1].getBoundingClientRect().bottom <= mid) setActive(steps.length - 1);
-    };
-    const io = new IntersectionObserver(pick, { rootMargin: "-45% 0px -45% 0px" });
-    steps.forEach((el) => io.observe(el));
-    // Backstop for jumps and late layout shifts the band can miss: one re-check when scrolling stops
-    // (scrollend), never per scroll frame.
-    window.addEventListener("scrollend", pick, { passive: true });
-    pick();
-    return () => { io.disconnect(); window.removeEventListener("scrollend", pick); };
-  }, [root]);
-  return active;
-}
-
-function OrbitChapter() {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: orbitP } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const p = useScrollOrFinal(orbitP, 1);
-  const rot = useTransform(p, [0, 1], [0, 540]);
-  // SVG rotation written straight to the transform attribute, about the dial's centre in viewBox units.
-  const orbitG = useRef<SVGGElement>(null);
-  useMotionValueEvent(rot, "change", (v) => orbitG.current?.setAttribute("transform", `rotate(${v.toFixed(2)} 100 100)`));
-  // One measurement drives both columns: the step at the viewport centre is the active one, and each
-  // visual is shown exactly while its own step is active (0 orbits, 1 heat, 2 MODIS 1 km grid, 3 VIIRS 375 m grid).
-  const active = useActiveStep(ref);
-  const layer = (k: number) => ({ opacity: active === k ? 1 : 0 });
-  const fadeCls = "transition-opacity duration-[250ms] ease-out";
-  const steps = [
-    ["01 · From orbit", "Five satellites circle Earth fourteen times a day.", "Terra and Aqua carry MODIS; Suomi-NPP, NOAA-20 and NOAA-21 carry VIIRS. Each crosses a given place at about the same local time every day."],
-    ["02 · Heat", "They don't see flames. They see heat.", "A fire's radiated power, in megawatts, shows up in the infrared. Big fires shine; small ones barely register."],
-    ["03 · 2000", "MODIS sees the world in 1 km squares.", "A small crop burn inside a square is too faint to cross the threshold. For twelve years, it simply isn't in the record."],
-    ["04 · 2012", "VIIRS sees in 375 m squares. Seven times sharper.", "Suddenly the small fires appear. The record jumps — not because there is more fire, but because there is more seeing."],
-  ];
-  const fires = useMemo(() => Array.from({ length: 42 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 61) % 100, big: i % 7 === 0 })), []);
-  return (
-    <section ref={ref} className="relative mt-24 grid gap-8 md:grid-cols-2" style={{ height: "380vh" }}>
-      <div className="md:pr-4">
-        {steps.map(([e, t, b], i) => (
-          <StoryStep key={i} i={i} active={active}>
-            <Eyebrow>{e}</Eyebrow>
-            <h2 className="display mt-3 t-d2">{t}</h2>
-            <p className="mt-4 max-w-md text-lg leading-relaxed text-[var(--text-secondary)]">{b}</p>
-          </StoryStep>
-        ))}
-      </div>
-      <div className="sticky top-24 hidden h-[70vh] items-center justify-center md:flex">
-        <div className="window relative aspect-square w-full max-w-[480px]">
-          <svg data-story-visual="orbit" style={{ opacity: active === 0 ? 1 : 0.25 }} viewBox="0 0 200 200" className={`absolute inset-0 h-full w-full ${fadeCls}`}>
-            <circle cx="100" cy="100" r="46" fill="#efe4cb" stroke="var(--ink)" strokeOpacity="0.25" />
-            {[62, 74, 86].map((r, i) => <ellipse key={r} cx="100" cy="100" rx={r} ry={r * 0.36} fill="none" stroke="var(--ink)" strokeOpacity="0.14" strokeDasharray="2 3" transform={`rotate(${-30 + i * 28} 100 100)`} />)}
-            <g ref={orbitG}>
-              {[["#7a4fa0", 62, -30], ["#3f7f96", 74, -2], ["#d9431a", 86, 26]].map(([c, r, a], i) => (
-                <g key={i} transform={`rotate(${a} 100 100)`}><circle cx={100 + (r as number)} cy="100" r="4" fill={c as string} /></g>
-              ))}
-            </g>
-          </svg>
-          <div data-story-visual="heat" style={layer(1)} className={`${fadeCls} absolute inset-8 rounded-2xl bg-[radial-gradient(circle_at_40%_45%,#fff0c7_0%,#f49b3f_22%,#c93f1c_40%,rgba(86,17,20,0.08)_70%,transparent)]`}>
-            <p className="tabular absolute bottom-3 left-4 font-mono text-[11px] text-[var(--ink)]">fire radiative power, in MW</p>
-          </div>
-          <div data-story-visual="modis" style={layer(2)} className={`${fadeCls} absolute inset-8 grid grid-cols-4 gap-1`}>
-            {Array.from({ length: 16 }, (_, i) => <div key={i} className={`rounded-md ${[5, 10].includes(i) ? "bg-[var(--seq-5)]" : "bg-[var(--surface-2)]"}`} />)}
-          </div>
-          <div data-story-visual="viirs" style={layer(3)} className={`${fadeCls} absolute inset-8 grid grid-cols-12 gap-[2px]`}>
-            {Array.from({ length: 144 }, (_, i) => {
-              const f = fires.find((q) => Math.floor(q.x / 8.4) + 12 * Math.floor(q.y / 8.4) === i);
-              return <div key={i} className="rounded-[2px]" style={{ background: f ? (f.big ? "var(--seq-6)" : "var(--seq-3)") : "var(--surface-2)" }} />;
-            })}
-          </div>
-          <div className="absolute left-4 top-4 rounded-full bg-[var(--ink)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#f7f3e8]">sensor view</div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function pathOf(vals: number[], max: number, w = 640, h = 300) {
-  return vals.map((v, i) => `${i ? "L" : "M"}${(20 + (i / (vals.length - 1)) * (w - 40)).toFixed(1)},${(h - 24 - (v / max) * (h - 48)).toFixed(1)}`).join(" ");
-}
-
-function JumpChapter({ row }: { row: CountryRow | undefined }) {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: jumpP } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const p = useScrollOrFinal(jumpP, 1);
-  const years = useMemo(() => row?.annual.filter((a) => a.year >= 2003 && a.year <= 2025) ?? [], [row]);
-  const raw = years.map((a) => a.raw), harm = years.map((a) => a.harm);
-  const max = Math.max(1, ...raw) * 1.05;
-  const draw = useTransform(p, [0.05, 0.45], [0, 1]);
-  const morph = useTransform(p, [0.55, 0.8], [0, 1]);
-  const d = useTransform(morph, (m) => pathOf(raw.map((r, i) => r + (harm[i] - r) * m), max));
-  const area = useTransform(d, (s) => (years.length ? `${s} L620,276 L20,276 Z` : ""));
-  const cap1 = useTransform(p, [0.3, 0.4, 0.52, 0.58], [0, 1, 1, 0]);
-  const cap2 = useTransform(p, [0.7, 0.8], [0, 1]);
-  const x2012 = 20 + ((2011.5 - 2003) / 22) * 600;
-  return (
-    <section ref={ref} className="relative mt-10" style={{ height: "320vh" }}>
-      <div className="sticky top-20 flex min-h-[86vh] flex-col justify-center">
-        <Eyebrow>05 · The jump · Canada, detections per year</Eyebrow>
-        <h2 className="display mt-3 t-d2">The record says fire <span className="italic text-[var(--ember)]">exploded.</span></h2>
-        <div className="window relative mt-8 p-4 sm:p-6">
-          <svg viewBox="0 0 640 300" className="w-full">
-            <defs><linearGradient id="hg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#d9431a" stopOpacity="0.22" /><stop offset="1" stopColor="#d9431a" stopOpacity="0" /></linearGradient></defs>
-            {[0.25, 0.5, 0.75, 1].map((f) => <line key={f} x1="20" x2="620" y1={276 - f * 252} y2={276 - f * 252} stroke="var(--gridline)" />)}
-            <line x1={x2012} x2={x2012} y1="20" y2="276" stroke="var(--text-muted)" strokeDasharray="3 4" />
-            <text x={x2012 + 6} y="32" fontSize="11" fill="var(--text-secondary)">2012 · VIIRS record begins</text>
-            <motion.path d={area} fill="url(#hg)" style={{ opacity: draw }} />
-            <motion.path d={d} fill="none" stroke="var(--ember)" strokeWidth="3" strokeLinejoin="round" style={{ pathLength: draw }} />
-            {years.filter((a) => a.year % 4 === 3).map((a) => <text key={a.year} x={20 + ((a.year - 2003) / 22) * 600} y="294" fontSize="11" textAnchor="middle" fill="var(--text-muted)">{a.year}</text>)}
-          </svg>
-          <motion.div style={{ opacity: cap1 }} className="card absolute right-6 top-6 max-w-[16rem] p-4">
-            <p className="display tabular text-5xl text-[var(--ember)]">{fmtRatio(row?.step_raw)}</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Yearly detections, 2012–14 against 2009–11, in the raw record.</p>
-          </motion.div>
-          <motion.div style={{ opacity: cap2 }} className="card absolute right-6 top-6 max-w-[17rem] p-4">
-            <p className="display tabular text-5xl">{fmtRatio(row?.step_harm)}</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Harmonized. Aqua MODIS alone, an unchanged sensor, says {fmtRatio(row?.step_aqua)}. Much of the jump was the sensor.</p>
-          </motion.div>
-        </div>
-        <motion.p style={{ opacity: cap2 }} className="display mt-6 t-d3">Much of it was detection, not fire. <span className="italic text-[var(--ember)]">Keep scrolling.</span></motion.p>
-      </div>
-    </section>
-  );
-}
-
-function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
-  const [country, setCountry] = useState("Australia");
-  return (
-    <section className="mt-16 py-16">
-      <Reveal><Eyebrow>06 · Still shifting</Eyebrow></Reveal>
-      <Reveal delay={0.05}><h2 className="display mt-3 max-w-3xl t-d2">And the old satellites are <span className="italic text-[var(--ember)]">drifting.</span></h2></Reveal>
-      <Reveal delay={0.1}>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">
-          A satellite in a sun-synchronous orbit passes over a place at the same local time every day. Terra and Aqua no longer do. Each clock below is measured from the fire detections themselves, year by year.
-        </p>
+        </Tile>
       </Reveal>
-      <Reveal delay={0.12}><div className="mt-8"><DriftClocks drift={drift} country={country} onCountry={setCountry} /></div></Reveal>
-      <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]"><Link className="link-ul" href="/satellites">Every satellite, and the drift year by year →</Link></p></Reveal>
     </section>
   );
-}
-
-/** The journey teaser fetches pipeline.json only once it is near the viewport. */
-function LazyJourney() {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [near, setNear] = useState(false);
-  useEffect(() => {
-    if (near || !ref.current) return;
-    const io = new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) { setNear(true); io.disconnect(); } }, { rootMargin: "600px" });
-    io.observe(ref.current);
-    return () => io.disconnect();
-  }, [near]);
-  return <div ref={ref}>{near ? <DataJourney compact /> : <div className="h-40" />}</div>;
 }
 
 /* ---------------------------------------------------------------- page */
 export function Home() {
   const d = useHomeData();
-  const canada = d.table?.countries.find((c) => c.country === "Canada");
-  const chile = d.season?.countries.Chile?.trend_days_per_decade;
-  const homeError = d.error, homeRetry = d.retry;
+  const [country, setCountry] = useState("Canada");
+  const fitted = d.table?.countries ?? [];
+  const row = fitted.find((c) => c.country === country) ?? fitted.find((c) => c.country === "Canada");
+  const names = useMemo(() => fitted.map((c) => c.country), [fitted]);
+  const { ref: journeyRef, near: journeyNear } = useNear<HTMLDivElement>("600px");
+  const top = useMemo(() => [...fitted].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24), [fitted]);
   return (
     <div>
-      <Hero d={d} />
-      <MonthUnusualPanel />
-      {homeError && <div className="mx-auto mb-8 max-w-3xl"><Failed error={homeError} retry={homeRetry} what="the summary figures" /></div>}
-      <OrbitChapter />
-      <JumpChapter row={canada} />
-      <DriftChapter drift={d.drift ?? undefined} />
+      <Hero />
+      {d.error && <div className="mx-auto mb-8 max-w-3xl"><Failed error={d.error} retry={d.retry} what="the summary figures" /></div>}
+      <Problem row={row} names={names} onCountry={setCountry} />
+      <Repair row={row} d={d} />
+      <Proof d={d} />
+      <YourArea d={d} />
+      <Now d={d} />
 
-      <section className="mt-8 py-12">
-        <Reveal><Eyebrow>07 · How we know</Eyebrow></Reveal>
-        <Reveal delay={0.05}><h2 className="display mt-3 max-w-3xl t-d2">Tested on years the model <span className="italic text-[var(--ember)]">never saw.</span></h2></Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(d.table?.countries ?? []).filter((c) => ORIGINAL_FOUR.includes(c.country)).map((c, i) => (
-            <Reveal key={c.country} delay={i * 0.07}>
-              <div className="card p-5">
-                <Eyebrow>{prettyName(c.country)}</Eyebrow>
-                <p className="mt-3 text-[var(--ink)]"><DotStat text={fmtR2(c.r2_model)} dot={7} /></p>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">held-out R² against observed Aqua · raw VIIRS {fmtR2(c.r2_raw)}</p>
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[var(--surface-2)]">
-                  <motion.div className="h-full rounded-full bg-[var(--ember)]" initial={{ width: 0 }} whileInView={{ width: `${Math.max(0, c.r2_model) * 100}%` }} viewport={{ once: true }} transition={{ duration: 1.4, ease: EASE, delay: 0.2 + i * 0.07 }} />
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d.params ?? undefined); return a ? <>Across all {a.fitted} fitted countries, {a.own} with their own curve and {a.fitted - a.own} on a borrowed (pooled) curve, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d.params ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d.params ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d.params?.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
-        <div className="card mt-10 min-w-0 p-5 sm:p-6"><StepCollapse lazy compact /></div>
-        <div className="mt-8"><LazyJourney /></div>
-      </section>
+      <div ref={journeyRef} className="py-[var(--sec-sm)]">{journeyNear ? <DataJourney compact /> : <DotSkeleton h={220} label="Loading the data journey" />}</div>
 
-      <section className="py-16">
-        <Reveal><Eyebrow>08 · What it changes</Eyebrow></Reveal>
-        <div className="mt-6 grid items-center gap-8 lg:grid-cols-2">
-          <Reveal><h2 className="display t-d2">Is the fire season starting earlier? <span className="italic text-[var(--ember)]">Less than the raw data says.</span></h2></Reveal>
-          <Reveal delay={0.1}>
-            <div className="card p-6">
-              <Eyebrow>Chile · season onset trend, 2003–2025</Eyebrow>
-              <div className="mt-5 space-y-5">
-                {[["Raw record", chile?.raw_onset, "#c93f1c"], ["Harmonized", chile?.harm_onset, "var(--ink)"]].map(([l, v, c]) => (
-                  <div key={l as string}>
-                    <div className="flex justify-between text-sm"><span>{l as string}</span><span className="tabular display text-2xl">{v == null ? "—" : <>{fmtSigned(v as number)} <span className="stat-unit text-[var(--text-secondary)]">days / decade</span></>}</span></div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
-                      <motion.div className="h-full rounded-full" style={{ background: c as string }} initial={{ width: 0 }} whileInView={{ width: `${Math.min(100, Math.abs((v as number) ?? 0) * 10)}%` }} viewport={{ once: true }} transition={{ duration: 1.2, ease: EASE }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Descriptive least-squares trends.{chile?.raw_onset != null && chile?.harm_onset != null ? ` Change in estimated trend after harmonization: ${fmtSigned(chile.harm_onset - chile.raw_onset)} days/decade (raw ${fmtSigned(chile.raw_onset)}, harmonized ${fmtSigned(chile.harm_onset)} days/decade). This is a difference between two estimates, not a measured sensor effect.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section id="tools" className="scroll-mt-24 py-16">
-        <Reveal><Eyebrow>09 · Everything inside</Eyebrow></Reveal>
-        <Reveal delay={0.05}><h2 className="display mt-3 t-d2">One record. <span className="italic text-[var(--ember)]">Nine ways in.</span></h2></Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section id="tools" className="scroll-mt-24 py-[var(--sec-md)]">
+        <Reveal><SectionHead eyebrow="Everything inside" title={<>One record. <span className="italic">Nine ways in.</span></>} /></Reveal>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ALL.map((t, i) => (
-            <Reveal key={t.href} delay={(i % 3) * 0.07}>
-              <Link href={t.href} className="card group block h-full p-6">
-                <Eyebrow><span className="eyebrow-n">{String(i + 1).padStart(2, "0")}</span></Eyebrow>
-                <p className="display mt-3 text-3xl">{t.label}</p>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{t.blurb}</p>
-                <p className="mt-5 text-sm font-medium text-[var(--ember)] transition-transform group-hover:translate-x-1">Open →</p>
+            <Reveal key={t.href} delay={(i % 3) * 0.05}>
+              <Link href={t.href} className="tile group flex h-full flex-col p-6">
+                <Eyebrow info={false}><span className="eyebrow-n">{String(i + 1).padStart(2, "0")}</span></Eyebrow>
+                <p className="display mt-3 text-2xl">{t.label}</p>
+                <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-secondary)]">{t.blurb}</p>
+                <p className="mt-auto pt-5 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-primary)]">Open <span aria-hidden className="inline-block transition-transform group-hover:translate-x-1">→</span></p>
               </Link>
             </Reveal>
           ))}
         </div>
+        {top.length > 0 && (
+          <Reveal>
+            <p className="mt-8 font-mono text-[11px] uppercase leading-loose tracking-[0.16em] text-[var(--text-muted)]">
+              <span className="text-[var(--text-primary)]">The {top.length} fitted countries with the most fire · </span>
+              {top.map((c, i) => <span key={c.country}>{i > 0 && <span aria-hidden className="mx-2 opacity-50">·</span>}<Link href={`/explorer?country=${encodeURIComponent(c.country)}`} className="no-ul hover:text-[var(--text-primary)]">{prettyName(c.country)}</Link>{" "}</span>)}
+            </p>
+          </Reveal>
+        )}
       </section>
 
       <Reveal>
-        <section className="window relative mt-8 overflow-hidden p-10 text-center sm:p-16">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_300px_at_50%_0%,rgba(255,180,110,0.35),transparent)]" />
-          <h2 className="display relative t-d1">Pick a place. <span className="italic text-[var(--ember)]">See its fires.</span></h2>
-          <p className="relative mx-auto mt-4 max-w-lg text-[var(--text-secondary)]">Draw any area on the map, choose the years, and download the harmonized calendar as CSV. No account, no API key.</p>
-          <Link href="/explorer" className="pill-dark relative mt-8 inline-block px-7 py-3.5 text-[15px] font-medium">Open the calendar explorer →</Link>
-        </section>
+        <Tile tone="ink" className="relative mt-4 overflow-hidden p-10 text-center sm:p-16">
+          <h2 className="display relative t-d1">Pick a place. <span className="italic">See its fires.</span></h2>
+          <p className="relative mx-auto mt-4 max-w-lg opacity-75">Draw any area on the map, choose the years, and download the harmonized calendar as CSV. No account, no API key.</p>
+          <div className="mt-8"><Pill href="/explorer" tone="red">Open the calendar explorer →</Pill></div>
+        </Tile>
       </Reveal>
     </div>
   );

@@ -84,7 +84,7 @@ export function TrendsPage() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Insights · season shift" title="Is the fire season moving?" italic="Or is it the sensor?"
+      <PageHead compact eyebrow="Explore · season shift" info="seasonShift" title="Is the fire season moving?" italic="Or is it the sensor?"
         lede="For every year: when the season starts (10% of the year's detections), reaches its midpoint (50%) and ends (90%). In the raw record, VIIRS's sharper eyes catch small early burns MODIS never could, so seasons appear to start earlier. The harmonized record removes that." />
 
       {error && <Failed error={error} retry={retry} what="the season timings (season.json)" />}
@@ -116,7 +116,7 @@ export function TrendsPage() {
                     <Eyebrow>{SHORT[m]} · days per decade · descriptive</Eyebrow>
                     <div className="mt-3 flex items-end gap-4">
                       <div><p className="display tabular text-4xl"><DotStat text={String(fmt(harm))} dot={6} /></p><p className="text-xs text-[var(--text-secondary)]">harmonized</p></div>
-                      <div><p className="display tabular text-2xl text-[var(--seq-5)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
+                      <div><p className="display tabular text-2xl text-[var(--c-raw)]">{fmt(raw)}</p><p className="text-xs text-[var(--text-secondary)]">raw</p></div>
                     </div>
                     {m !== "length" ? (
                       <div className="mt-2 space-y-0.5 text-[11px] leading-snug text-[var(--text-secondary)]">
@@ -143,7 +143,7 @@ export function TrendsPage() {
                 <Eyebrow>{prettyName(country)} · the fire season, year by year (fire year starts {fireDayLabel(1, c.fire_year_start_month)})</Eyebrow>
                 <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
                   <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--ink)] align-middle opacity-80" />harmonized</span>
-                  <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--seq-4)] align-middle opacity-60" />raw</span>
+                  <span><span className="mr-1.5 inline-block h-2.5 w-5 rounded-sm bg-[var(--c-raw)] align-middle opacity-60" />raw</span>
                 </div>
               </div>
               <svg ref={chartRef} viewBox={`0 0 ${W} ${H}`} className="fade-in mt-4 w-full overflow-visible" role="img" aria-label={`Fire season timing in ${prettyName(country)}`}>
@@ -154,7 +154,7 @@ export function TrendsPage() {
                     <g key={y.year}>
                       {(!narrow || (y.year - 2012) % 3 === 0) && <text x={L - 8} y={cy + 3.5} textAnchor="end" fontSize={fs(10)} fill={y.year === 2012 ? "var(--ember)" : "var(--text-muted)"}>{y.year}</text>}
                       {y.raw_onset != null && y.raw_end != null && (
-                        <rect x={dx(y.raw_onset)} y={cy - 6} width={dx(y.raw_end) - dx(y.raw_onset)} height="5" rx="2.5" fill="var(--seq-4)" opacity="0.55" />
+                        <rect x={dx(y.raw_onset)} y={cy - 6} width={dx(y.raw_end) - dx(y.raw_onset)} height="5" rx="2.5" fill="var(--c-raw)" opacity="0.55" />
                       )}
                       {y.harm_onset != null && y.harm_end != null && (
                         <rect x={dx(y.harm_onset)} y={cy} width={dx(y.harm_end) - dx(y.harm_onset)} height="5" rx="2.5" fill="var(--ink)" opacity="0.8" />
@@ -231,9 +231,9 @@ export function TrendsPage() {
                       <tr key={n} onClick={() => { setCountry(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} className={`cursor-pointer border-t border-[var(--hairline)] hover:bg-[var(--ember-soft)] ${n === country ? "bg-[var(--ember-soft)]" : ""}`}>
                         <td className="py-2.5 pr-3"><button type="button" data-row-select onClick={(e) => { e.stopPropagation(); setCountry(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-pressed={n === country} aria-label={`Open ${prettyName(n)} above`} className="rounded text-left font-medium underline decoration-[var(--hairline)] underline-offset-2 hover:text-[var(--ember)]">{prettyName(n)}</button>{data!.pooled.has(n) && <span className="ml-1.5 font-mono text-[10px] uppercase text-[var(--ember)]">pooled</span>}</td>
                         <td className="px-3 text-xs text-[var(--text-muted)]">{mon ? "monthly" : "daily"}</td>
-                        <td className="px-3 text-[var(--seq-5)]" title={sensText(data!.countries[n].trend_stats?.raw_onset)}>{fmt(t.raw_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.raw_onset)}</span></td>
+                        <td className="px-3 text-[var(--c-raw)]" title={sensText(data!.countries[n].trend_stats?.raw_onset)}>{fmt(t.raw_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.raw_onset)}</span></td>
                         <td className="px-3" title={sensText(data!.countries[n].trend_stats?.harm_onset)}>{fmt(t.harm_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.harm_onset)}</span></td>
-                        <td className="px-3 text-[var(--seq-5)]">{fmt(t.raw_length)}</td><td className="px-3">{fmt(t.harm_length)}</td>
+                        <td className="px-3 text-[var(--c-raw)]">{fmt(t.raw_length)}</td><td className="px-3">{fmt(t.harm_length)}</td>
                         <td className="px-3">{t.raw_onset != null && t.harm_onset != null ? fmtSigned(t.harm_onset - t.raw_onset) : "—"}</td>
                         <td className="px-3 text-[var(--text-secondary)]">{share == null ? "—" : shareUnstable(share) ? <span title="The raw and harmonized trends have opposite signs, or harmonizing makes the trend larger, so the ratio is not meaningful">{fmtSigned(-share * 100, 0)}% <span className="font-mono text-[10px] uppercase text-[var(--ember)]">unstable</span></span> : `${fmtSigned(-share * 100, 0)}%`}</td>
                       </tr>

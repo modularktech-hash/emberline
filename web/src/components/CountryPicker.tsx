@@ -58,7 +58,7 @@ export function CountryPicker({ value, options, onChange, inline = 8, label = "R
   return (
     <div ref={box} className="relative max-w-full">
       <button type="button" onClick={() => (open ? setOpen(false) : openList())} onKeyDown={onKey} aria-haspopup="listbox" aria-expanded={open} aria-controls={`${id}-list`}
-        className="glass flex w-full min-w-0 items-center justify-between gap-3 rounded-full !border-[var(--ember)] px-4 py-2 text-sm sm:w-auto sm:min-w-[15rem]">
+        className="glass flex w-full min-w-0 items-center justify-between gap-3 rounded-full px-4 py-2 text-sm sm:w-auto sm:min-w-[15rem]">
         <span className="flex min-w-0 items-center truncate"><span className="text-[var(--text-muted)]">{label}:&nbsp;</span><span className="truncate">{display ?? prettyName(value)}</span>{!display && <TagPill t={tags?.[value]} />}</span>
         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>

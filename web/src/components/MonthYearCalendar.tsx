@@ -72,7 +72,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
     <div>
       <div className="mb-2 flex justify-end">
         <button type="button" onClick={() => setAsTable((v) => !v)} aria-pressed={asTable}
-          className="rounded-full border border-[var(--border-subtle,rgba(0,0,0,0.15))] px-3 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+          className="rounded-full border border-[var(--hairline)] px-3 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
           {asTable ? "Show as calendar" : "Show as table"}
         </button>
       </div>
@@ -103,7 +103,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
         </div>
         {years.map((y, yi) => (
           <div key={y} role="row" className="contents">
-            <div role="rowheader" className={`tabular sticky left-0 z-[1] flex items-center bg-[var(--surface-page)] text-[11px] ${y === 2012 ? "text-[var(--ember)]" : "text-[var(--text-muted)]"}`}>{y}</div>
+            <div role="rowheader" className={`tabular sticky left-0 z-[1] flex items-center bg-[var(--surface)] font-mono text-[11px] ${y === 2012 ? "text-[var(--red)]" : "text-[var(--text-muted)]"}`}>{y}</div>
             {MONTHS.map((_, mi) => {
               const row = at(y, mi + 1);
               const idx = rampIndex(row?.value ?? null, max);
@@ -120,8 +120,9 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
                   aria-label={cellName(y, mi + 1)}
                   className={`h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-2 sm:h-[22px] ${sel && sel.year === y && sel.month === mi + 1 ? "ring-2 ring-[var(--ink)]" : ""}`}
                   style={{
-                    background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, rgba(18,23,21,0.1) 3px 4px)" : RAMP[idx],
+                    background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, var(--hairline) 3px 4px)" : RAMP[idx],
                     transition: `background-color 600ms cubic-bezier(0.22,1,0.36,1) ${yi * 14}ms`,
+                    ["--ci" as string]: yi + mi,
                   }}
                 />
                 </div>

@@ -15,7 +15,7 @@ import { Segmented } from "@/components/ui";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Eyebrow } from "@/components/Figure";
 
-const RAW = "#96221a";
+const RAW = "var(--c-raw)";
 const pct = (v: number | null | undefined, dp = 1) => (v == null || !Number.isFinite(v) ? "—" : `${fmtNum(v * 100, dp)}%`);
 
 function useProof(enabled = true) {
@@ -84,11 +84,11 @@ export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean
       <h2 className={`display ${compact ? "text-xl" : "mt-2 text-2xl"}`}>The sensor jump collapses onto the unchanged sensor</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         Each country&apos;s change in yearly fire counts from 2009–11 to 2012–14. Across: Aqua MODIS alone, a sensor that did not change.
-        Up: the same step in our harmonized record (ember) and in the naive splice of MODIS onto VIIRS (faint red).
+        Up: the same step in our harmonized record (ember) and in the naive splice of MODIS onto VIIRS (blue).
         On the diagonal the record moves exactly as the unchanged sensor does. Hover or tap a dot.
       </p>
       {error && <p className="mt-4 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>}
-      {!sc || !dom ? (!error && <div className="mt-4 h-72 animate-pulse rounded-2xl bg-[var(--surface-2)]" />) : (() => {
+      {!sc || !dom ? (!error && <div className="mt-4 h-72 dot-skel" />) : (() => {
         const lx = (v: number) => SL + ((Math.log10(v) - dom[0]) / (dom[1] - dom[0])) * (SW - SL - SR);
         const ly = (v: number) => SH - SB - ((Math.log10(v) - dom[0]) / (dom[1] - dom[0])) * (SH - ST - SB);
         const ticks = [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32].filter((t) => Math.log10(t) >= dom[0] && Math.log10(t) <= dom[1]);
@@ -178,7 +178,7 @@ export function Benchmark() {
   const [group, setGroup] = useState<"all" | "own" | "pooled">("all");
   const [pick, setPick] = useState("Canada");
   if (error) return <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>;
-  if (!data) return <div className="card mt-6 h-72 animate-pulse" />;
+  if (!data) return <div className="dot-skel mt-6 h-72" />;
   const b = data.benchmark;
   const g: ProofBenchCounts = b[group];
   const names = b.countries.map((c) => c.country);
@@ -357,7 +357,7 @@ export function ProofSection() {
         Two checks that use no fitting target at all: they only ask whether 2012 still looks special, in each country, under each series. Regional (per-country) results; fit {data?.fit_version ?? "…"}.
       </p>
       {error && <p className="mt-4 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>}
-      {!data && !error && <div className="mt-4 h-72 animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+      {!data && !error && <div className="mt-4 h-72 dot-skel" />}
       {data && <><RecordCounter p={data} /><FindTheSeam p={data} /></>}
     </section>
   );

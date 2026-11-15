@@ -25,7 +25,7 @@ function Bar({ value, tone }: { value: number; tone: "good" | "bad" }) {
   const w = Math.max(2, Math.min(100, Math.abs(value) * 100));
   return (
     <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-[var(--surface-2)] align-middle">
-      <span className="block h-full rounded-full" style={{ width: `${tone === "good" ? w : 100}%`, background: tone === "good" ? "var(--ember)" : "#d8b4ac" }} />
+      <span className="block h-full rounded-full" style={{ width: `${tone === "good" ? w : 100}%`, background: tone === "good" ? "var(--ember)" : "var(--grey-1)" }} />
     </span>
   );
 }
@@ -88,7 +88,7 @@ export function Method() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Science · method & validation" title="How we know the correction" italic="is real."
+      <PageHead compact eyebrow="Proof · method and validation" info="heldOut" title="How do we know the repair" italic="is real?"
         lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Countries with enough data get their own fitted curve; smaller ones borrow a shared (pooled) curve, counted and marked below. These are regional results, not a global correction." />
       <StepCollapse />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -103,7 +103,7 @@ export function Method() {
 
       {error && <div className="mt-8"><Failed error={error} retry={retry} what="the fit (params)" /></div>}
       <CoverageError state={coverageState} className="mt-4" />
-      {loading && <div className="mt-8 h-64 animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+      {loading && <div className="mt-8 h-64 dot-skel" />}
       {p && summary && (
         <>
           <Reveal><section className="card mt-8 min-w-0 p-5 sm:p-6">
@@ -213,7 +213,7 @@ export function Method() {
                   {step.shown.map((n) => { const k = C(n).null_control; return (
                     <tr key={n} className="border-t border-[var(--hairline)]">
                       <td className="py-2.5 pr-3">{prettyName(n)}<FitBadge c={C(n)} /></td>
-                      <td className="px-3 text-[#96221a]">{fmtRatio(k.spliced_raw_step_ratio_2012)}</td>
+                      <td className="px-3 text-[var(--c-raw)]">{fmtRatio(k.spliced_raw_step_ratio_2012)}</td>
                       <td className="px-3">{fmtRatio(k.aqua_only_step_ratio_2012)}</td>
                       <td className="px-3 text-[var(--ember)]">{fmtRatio(k.harmonized_step_ratio_2012)}</td>
                       <td className="px-3 text-[var(--text-muted)]">{fmtNum(Math.abs(k.harmonized_step_ratio_2012 - k.aqua_only_step_ratio_2012), 2)}</td>

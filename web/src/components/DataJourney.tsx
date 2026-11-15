@@ -7,6 +7,7 @@
  * reduced-motion mode (globals.css .flow-dots).
  */
 import { useState } from "react";
+import { DotDigits, DotSkeleton, InfoDot, Sheet, SourceChip } from "@/components/ui";
 import Link from "next/link";
 import { loadJson } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
@@ -30,7 +31,7 @@ const KB = (b: number) => `${fmtNum(b / 1024, 0)} KB`;
 const MB = (b: number) => `${fmtNum(b / 1e6, 1)} MB`;
 const M = (n: number) => `${fmtNum(n / 1e6, 1)} M`;
 
-interface Stage { key: string; title: string; what: string; num: string; numLabel: string; sources: string[]; detail: string; inputs: string[]; outputs: string[]; scripts: string[]; sample?: { columns: string[]; rows: unknown[][] } | null; link?: [string, string] }
+interface Stage { key: string; short?: string; title: string; what: string; num: string; numLabel: string; sources: string[]; detail: string; inputs: string[]; outputs: string[]; scripts: string[]; sample?: { columns: string[]; rows: unknown[][] } | null; link?: [string, string] }
 
 function stages(p: Pipeline): Stage[] {
   const cal = p.rebuild.calendars;
@@ -73,76 +74,91 @@ function stages(p: Pipeline): Stage[] {
 }
 
 const fileHref = (f: string) => (/^[\w.-]+\.(json|parquet|csv)$/.test(f) ? `/data/${f}` : null);
+/** One short label per stage (six words at most); the full wording is in the stage's sheet. */
+const SHORT: Record<string, string> = {
+  archive: "NASA country-year files", filters: "detections kept after filters", match: "VIIRS detections matched to Aqua", learn: "own + borrowed fits",
+  test: "median held-out R²", rebuild: "in two calendar files", serve: "to open a country", use: "calendar, seasons, globe, downloads",
+};
+const SOURCE_HREF: Record<string, string> = {
+  "FIRMS archive": "https://firms.modaps.eosdis.nasa.gov/country/", "FIRMS NRT / API": "https://firms.modaps.eosdis.nasa.gov/api/", "NASA GIBS": "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
+  "NASA EONET": "https://eonet.gsfc.nasa.gov/", TLEs: "https://celestrak.org/", "Natural Earth": "https://www.naturalearthdata.com/",
+};
 
+/**
+ * The pipeline: eight tiles joined by a dotted conduit whose dots travel in the direction of flow.
+ * Horizontal (scroll-snapped) on wide screens, vertical on phones. Sources drop into the stage where
+ * they join. Tapping a stage opens a sheet with its sentence, files, script, sample rows and numbers.
+ */
 export function DataJourney({ compact = false }: { compact?: boolean }) {
   const { data, error } = useParquet(() => loadJson<Pipeline>("pipeline.json"), "pipeline");
   const [open, setOpen] = useState<string | null>(null);
   if (error) return <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load pipeline.json: {error.message}</p>;
-  if (!data) return <div className="card mt-6 h-48 animate-pulse" />;
+  if (!data) return <DotSkeleton h={compact ? 220 : 320} className="mt-6" label="Loading the data journey" />;
   const st = stages(data);
   const sel = st.find((s) => s.key === open);
-
-  if (compact) return (
-    <section className="window mx-auto max-w-5xl p-6 sm:p-8" data-testid="journey-teaser">
-      <Eyebrow>The data journey</Eyebrow>
-      <h2 className="display mt-2 t-d3">From {data.archive.files ? `${fmtInt(data.archive.files.total)} NASA files` : "the NASA FIRMS archive"} to one calendar</h2>
-      <ol className="mt-5 flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
-        {st.map((s, i) => (
-          <li key={s.key} className="flex items-center gap-1">
-            <span className="rounded-full border border-[var(--hairline)] px-3 py-1"><span className="text-[var(--text-primary)]">{s.title}</span> <span className="tabular text-[var(--ember)]">{s.num}</span></span>
-            {i < st.length - 1 && <span aria-hidden className="text-[var(--text-muted)]">→</span>}
-          </li>
-        ))}
-      </ol>
-      <p className="mt-4 text-sm"><Link href="/data#journey" className="link-ul">Follow every step, with its files and code →</Link></p>
-    </section>
-  );
-
   return (
-    <section id="journey" className="window mt-8 min-w-0 scroll-mt-24 p-5 sm:p-7" data-testid="data-journey">
-      <Eyebrow>Data journey · fit {data.fit_version}</Eyebrow>
-      <h2 className="display mt-2 text-2xl sm:text-3xl">How NASA fire detections become this record</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">Eight steps, each with its number, its files and the script that runs it. Tap a step to open it.</p>
-      <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-8 lg:gap-0">
+    <section id={compact ? undefined : "journey"} className={compact ? "min-w-0" : "mt-8 min-w-0 scroll-mt-24"} data-testid={compact ? "journey-teaser" : "data-journey"}>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3"><Eyebrow info={false}>{compact ? "The data journey" : `Data journey · fit ${data.fit_version}`}</Eyebrow><InfoDot k="pipeline" align="start" /></div>
+          <h2 className={`display mt-2 ${compact ? "t-d3" : "t-d2"}`}>From {data.archive.files ? `${fmtInt(data.archive.files.total)} NASA files` : "the NASA FIRMS archive"} to <span className="italic">one calendar.</span></h2>
+        </div>
+        {compact
+          ? <Link href="/data#journey" className="glass-thin px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em]">Every step, with files and code →</Link>
+          : <p className="max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">Eight stages, each with its real number. Tap a stage for its files, its script and sample rows.</p>}
+      </div>
+      <ol className="mt-6 flex snap-x snap-mandatory flex-col gap-0 pb-3 lg:flex-row lg:items-stretch lg:overflow-x-auto lg:pt-10" aria-label="Pipeline stages">
         {st.map((s, i) => (
-          <li key={s.key} className="relative min-w-0 lg:px-1">
-            <button type="button" onClick={() => setOpen(open === s.key ? null : s.key)} aria-expanded={open === s.key} aria-controls="journey-detail"
-              className={`card flex h-full w-full flex-col p-3 text-left transition-colors ${open === s.key ? "ring-1 ring-[var(--ember)]" : ""}`}>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{String(i + 1).padStart(2, "0")} · {s.title}</span>
-              <span className="tabular mt-1.5 text-xl text-[var(--ember)]">{s.num}</span>
-              <span className="mt-0.5 text-[11px] leading-snug text-[var(--text-secondary)]">{s.numLabel}</span>
-              <span className="mt-2 text-xs leading-snug text-[var(--text-primary)]">{s.what}</span>
-              {s.sources.length > 0 && <span className="mt-2 flex flex-wrap gap-1">{s.sources.map((x) => <span key={x} className="rounded-full bg-[var(--surface-2)] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--text-secondary)]">{x}</span>)}</span>}
-            </button>
-            {i < st.length - 1 && <span aria-hidden className="flow-dots hidden lg:block" />}
+          <li key={s.key} className="flex shrink-0 snap-start flex-col lg:flex-row lg:items-stretch">
+            <div className="relative lg:w-[13.5rem]">
+              {s.sources.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5 lg:absolute lg:bottom-full lg:left-0 lg:mb-2 lg:w-[19rem]">
+                  {s.sources.map((x) => <SourceChip key={x} name={x} href={SOURCE_HREF[x]} />)}
+                </div>
+              )}
+              <div className="tile flex h-full min-h-[11.5rem] flex-col p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <Eyebrow info={false}>{`${String(i + 1).padStart(2, "0")} · ${s.title.replace("NASA FIRMS archive", "Archive")}`}</Eyebrow>
+                  <InfoDot title={s.title}>{s.what}.</InfoDot>
+                </div>
+                <button type="button" onClick={() => setOpen(s.key)} aria-haspopup="dialog" className="mt-3 flex flex-1 flex-col text-left">
+                  <DotDigits text={s.num} className="text-[2.3rem] leading-none" />
+                  <span className="mt-2 text-[13px] leading-snug text-[var(--text-secondary)]">{SHORT[s.key]}</span>
+                  <span className="mt-auto pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Open stage →</span>
+                </button>
+              </div>
+            </div>
+            {i < st.length - 1 && <span aria-hidden className="conduit-auto" />}
           </li>
         ))}
       </ol>
-      <div id="journey-detail" aria-live="polite">
+      <Sheet open={!!sel} onClose={() => setOpen(null)} title={sel ? sel.title : ""}>
         {sel && (
-          <div className="mt-4 rounded-2xl border border-[var(--hairline)] p-4 sm:p-5">
-            <p className="text-sm font-medium text-[var(--text-primary)]">{sel.title}</p>
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">{sel.detail}</p>
-            <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-3">
+          <div>
+            <p className="flex flex-wrap items-baseline gap-x-3"><DotDigits text={sel.num} className="text-5xl" /><span className="text-sm text-[var(--text-secondary)]">{sel.numLabel}</span></p>
+            <p className="mt-4 text-[15px] leading-relaxed text-[var(--text-primary)]">{sel.what}.</p>
+            <p className="mt-2 text-[14px] leading-relaxed text-[var(--text-secondary)]">{sel.detail}</p>
+            {sel.sources.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{sel.sources.map((x) => <SourceChip key={x} name={x} href={SOURCE_HREF[x]} />)}</div>}
+            <dl className="mt-5 grid gap-4 text-xs">
               {([["In", sel.inputs], ["Out", sel.outputs], ["Code", sel.scripts]] as const).map(([k, v]) => (
-                <div key={k} className="min-w-0"><dt className="text-[var(--text-muted)]">{k}</dt>
-                  <dd className="mt-1 space-y-0.5 font-mono">{v.map((x) => {
+                <div key={k} className="min-w-0 border-t-[length:var(--stroke)] border-[var(--hairline)] pt-3"><dt className="eyebrow">{k}</dt>
+                  <dd className="mt-1.5 space-y-0.5 font-mono">{v.map((x) => {
                     const href = k === "Code" ? GH + x : fileHref(x);
                     return <span key={x} className="block break-all">{href ? <a className="link-ul" href={href} target={k === "Code" ? "_blank" : undefined} rel="noreferrer">{x}</a> : x}</span>;
                   })}</dd></div>
               ))}
             </dl>
             {sel.sample && (
-              <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label={`Sample of ${sel.outputs[0]}`}>
-                <p className="text-[11px] text-[var(--text-muted)]">First rows of {sel.outputs[0]} (Canada, 2023, country scope):</p>
-                <table className="tabular mt-1 min-w-[360px] text-xs"><thead><tr className="text-left text-[var(--text-muted)]">{sel.sample.columns.map((c) => <th key={c} className="py-1 pr-4 font-normal">{c}</th>)}</tr></thead>
+              <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label={`Sample of ${sel.outputs[0]}`}>
+                <p className="eyebrow">First rows of {sel.outputs[0]} (Canada, 2023)</p>
+                <table className="tabular mt-2 min-w-[360px] text-xs"><thead><tr className="text-left text-[var(--text-muted)]">{sel.sample.columns.map((c) => <th key={c} className="py-1 pr-4 font-normal">{c}</th>)}</tr></thead>
                   <tbody>{sel.sample.rows.map((r, j) => <tr key={j} className="border-t border-[var(--hairline)]">{r.map((v, k) => <td key={k} className="py-1 pr-4">{String(v)}</td>)}</tr>)}</tbody></table>
               </div>
             )}
-            {sel.link && <p className="mt-3 text-sm"><Link className="link-ul" href={sel.link[0]}>{sel.link[1]} →</Link></p>}
+            {sel.link && <p className="mt-5"><Link className="pill-dark inline-block px-5 py-2.5 text-sm font-medium" href={sel.link[0]}>{sel.link[1]} →</Link></p>}
           </div>
         )}
-      </div>
+      </Sheet>
     </section>
   );
 }

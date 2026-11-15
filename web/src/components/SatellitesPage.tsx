@@ -107,7 +107,7 @@ export function SatellitesPage() {
 
   return (
     <div>
-      <PageHead eyebrow="Satellites · the fleet behind the record" title="Five satellites." italic="Two kinds of eye."
+      <PageHead eyebrow="Live · satellites" info="viirs" title="Which satellites saw it," italic="and when?"
         lede="Every number in Emberline was seen by one of these. The record breaks where the eyes change, and keeps shifting as the old ones drift." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -125,7 +125,7 @@ export function SatellitesPage() {
                 <div className="flex justify-between"><dt>Altitude</dt><dd>{s.alt}</dd></div>
                 <div className="flex justify-between"><dt>Nominal overpass</dt><dd>{s.node}</dd></div>
               </dl>
-              <p className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[11px] ${s.status === "Stable" ? "bg-[#d6e2cf]" : "bg-[var(--ember-soft)] text-[var(--ember)]"}`}>{s.status}</p>
+              <p className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[11px] ${s.status === "Stable" ? "bg-[var(--surface-alt)]" : "bg-[var(--ember-soft)] text-[var(--ember)]"}`}>{s.status}</p>
               <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">{s.role}</p>
             </div>
           </Reveal>
@@ -135,10 +135,10 @@ export function SatellitesPage() {
       <Reveal>
         <section className="window mt-10">
           <div className="grid lg:grid-cols-[1fr_22rem]">
-            <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.3),transparent_60%)]">
+            <div className="min-w-0 overflow-hidden rounded-l-[var(--r-tile)]">
               <FireGlobe live={null} tle={data?.tle.satellites ?? null} showFires={false} speed={180} height={520} satLabels />
             </div>
-            <div className="border-t border-[var(--hairline)] p-6 lg:border-l lg:border-t-0">
+            <div className="min-w-0 border-t border-[var(--hairline)] p-6 lg:border-l lg:border-t-0">
               <Eyebrow>Orbits, live</Eyebrow>
               <h2 className="display mt-2 text-3xl">Sun-synchronous, pole to pole.</h2>
               <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">

@@ -51,12 +51,12 @@ export function GlobePage() {
   const [played, setPlayed] = useState(false);
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    const first = window.setTimeout(() => {
-      setNow(Date.now());
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPaused(true);
-    }, 0);
+    // The clock exists only in the browser; reading it once after mount is the intent.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now());
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPaused(true);
     const t = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => { window.clearTimeout(first); window.clearInterval(t); };
+    return () => window.clearInterval(t);
   }, []);
   const [picked, setPicked] = useState<Cell | null>(null);
   const [satState, setSatState] = useState<SatState[]>([]);
@@ -73,7 +73,7 @@ export function GlobePage() {
 
   return (
     <div>
-      <PageHead eyebrow="Live · NASA FIRMS near-real-time" title="Recent satellite" italic="fire detections."
+      <PageHead eyebrow="Live · globe" info="live" title="Where is it burning" italic="right now?"
         lede={<>Raw active-fire detections from the near-real-time feeds over the last {win === "24h" ? "24 hours" : "7 days"} before the snapshot, and the satellites that made them. Uncorrected, and they include gas flares and volcanoes. Drag to spin, scroll to zoom, hover a spike.</>} />
       {stale && ageH != null && (
         <p role="status" className="-mt-4 mb-6 max-w-4xl rounded-2xl border border-[var(--ember)] bg-[var(--ember-soft)] p-4 text-sm text-[var(--text-primary)]">
@@ -97,7 +97,7 @@ export function GlobePage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Reveal>
           <div className="window relative">
-            <div className="flex flex-wrap items-center gap-2 bg-white/30 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2 bg-[var(--surface-alt)] px-4 py-3">
               <Segmented label="window" value={win} onChange={setWin} options={[{ value: "24h", label: "24 hours" }, { value: "7d", label: "7 days" }]} />
               <Chip on={fires} onClick={() => setFires(!fires)}>Fires</Chip>
               <Chip on={sats} onClick={() => setSats(!sats)}>Satellites</Chip>
@@ -112,7 +112,7 @@ export function GlobePage() {
               </label>
               </div>
             </div>
-            <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
+            <div>
               <FireGlobe live={data?.live ?? null} tle={data?.tle.satellites ?? null} window={win} showFires={fires} showSats={sats}
                 showOrbits={orbits} speed={paused ? 0 : speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} satLabels
                 focus={picked ? { lat: picked[0], lng: picked[1] } : null} motionOverride={played} events={eonetOn ? eonet?.events ?? null : null} />

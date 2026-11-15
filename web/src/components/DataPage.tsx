@@ -78,7 +78,7 @@ export function DataPage() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Science · data" title="Every table." italic="Every download."
+      <PageHead compact eyebrow="Data · tables and downloads" info="pipeline" title="Where do the numbers come from," italic="and can I have them?"
         lede="All of Emberline's data is plain files on this site — no account, no API key, no server. Browse it here, download it, or query it straight from your own code." />
       <DataJourney />
       <DatasetCard />
@@ -210,7 +210,7 @@ export function DataPage() {
                 <ul className="mt-4 divide-y divide-[var(--hairline)]">
                   {FILES.map(([f, d]) => (
                     <li key={f} className="flex items-start justify-between gap-4 py-3">
-                      <div><p className="font-mono text-sm">{f}</p><p className="text-xs text-[var(--text-secondary)]">{d}</p></div>
+                      <div className="min-w-0"><p className="break-all font-mono text-sm">{f}</p><p className="text-xs text-[var(--text-secondary)]">{d}</p></div>
                       <a href={`/data/${f}`} download className="shrink-0 glass rounded-full px-3 py-1 text-xs">Download</a>
                     </li>
                   ))}

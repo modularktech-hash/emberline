@@ -1,13 +1,17 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { LogoMark } from "@/components/Logo";
+import { SearchButton } from "@/components/Search";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { NAV } from "@/lib/nav";
-import { SPRING } from "@/lib/motion";
 
+/**
+ * Top bar: the story, then its four groups (Explore, Live, Proof, Data) and About. A group with one
+ * page is a plain link. The active item carries the red dot. On phones the menu is a full-screen sheet.
+ */
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState<string | null>(null);
@@ -16,21 +20,18 @@ export function SiteNav() {
   if (path !== pathname) { setPath(pathname); setOpen(null); setMobile(false); }
   const toggle = useRef<HTMLButtonElement>(null);
   const mobileRef = useRef(false);
-  useEffect(() => { mobileRef.current = mobile; }, [mobile]);
+  useEffect(() => { mobileRef.current = mobile; document.body.style.overflow = mobile ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [mobile]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       setOpen(null);
-      if (mobileRef.current) { setMobile(false); toggle.current?.focus(); } // focus back on the menu button
+      if (mobileRef.current) { setMobile(false); toggle.current?.focus(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  // Transparent at the top, solid once scrolled; hides on scroll down, returns on scroll up.
-  // One passive listener, read once per frame, and React state only changes when a flag flips.
-  const [solid, setSolid] = useState(false);
+  // Hides on scroll down, returns on scroll up. One passive listener, read once per frame.
   const [hidden, setHidden] = useState(false);
-  const [hover, setHover] = useState<string | null>(null);
   const menuOpen = useRef(false);
   useEffect(() => { menuOpen.current = !!open || mobile; }, [open, mobile]);
   useEffect(() => {
@@ -38,7 +39,6 @@ export function SiteNav() {
     const update = () => {
       raf = 0;
       const y = window.scrollY;
-      setSolid(y > 24);
       if (y > 160 && y > prev + 2 && !menuOpen.current) setHidden(true);
       else if (y < prev - 2 || y <= 160) setHidden(false);
       prev = y;
@@ -47,78 +47,76 @@ export function SiteNav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
   }, []);
-  const active = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const active = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
+  const item = (on: boolean) => `relative flex items-center gap-1.5 rounded-full px-3.5 py-2 font-mono text-[11.5px] uppercase tracking-[0.14em] transition-colors ${on ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`;
+  const dot = <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--red)]" />;
 
   return (
-    <motion.header className="sticky top-3 z-50 px-3 sm:px-6" onMouseLeave={() => { setOpen(null); setHover(null); }}
-      animate={{ y: hidden ? -96 : 0 }} transition={SPRING} onFocusCapture={() => setHidden(false)}>
-      <div className={`glass glass-nav relative transition-[background-color,box-shadow] duration-300 ${solid ? "!bg-[rgba(251,248,241,0.82)]" : ""} mx-auto flex w-full max-w-6xl items-center justify-between gap-3 !rounded-full !overflow-visible py-2 pl-5 pr-2.5`}>
+    <header className="sticky top-3 z-50 px-3 transition-transform duration-[480ms] ease-[cubic-bezier(.2,.8,.2,1)] sm:px-6" style={{ transform: hidden ? "translateY(-96px)" : "none" }}
+      onMouseLeave={() => setOpen(null)} onFocusCapture={() => setHidden(false)}>
+      <div className="glass-nav relative mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-full border-[length:var(--stroke)] border-[var(--hairline)] py-1.5 pl-5 pr-1.5">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Emberline home">
-          <Logo height={11} wordClass="text-[13px]" />
+          <LogoMark height={10} ink="var(--text-primary)" />
+          <span className="dot-num text-[15px] uppercase tracking-[0.2em]">Emberline</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
+        <nav className="hidden items-center lg:flex" aria-label="Main">
+          <Link href="/" aria-current={active("/") ? "page" : undefined} className={item(active("/"))} onMouseEnter={() => setOpen(null)}>{active("/") && dot}Story</Link>
           {NAV.map((g) => {
             const on = g.items.some((i) => active(i.href));
+            if (g.items.length === 1) return <Link key={g.label} href={g.items[0].href} aria-current={on ? "page" : undefined} className={item(on)} onMouseEnter={() => setOpen(null)}>{on && dot}{g.label}</Link>;
             return (
-              <div key={g.label} className="relative" onMouseEnter={() => { setOpen(g.label); setHover(g.label); }}>
-                <button type="button" aria-expanded={open === g.label} onClick={() => setOpen(open === g.label ? null : g.label)}
-                  className={`relative z-0 flex items-center gap-1 rounded-full px-3.5 py-1.5 text-sm transition-colors ${on ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
-                  {hover === g.label && <motion.span layoutId="nav-hover" className="absolute inset-0 -z-10 rounded-full bg-white/70 shadow-[0_2px_8px_-4px_rgba(60,20,10,0.25)]" transition={SPRING} />}
-                  {g.label}
-                  <svg width="10" height="10" viewBox="0 0 10 10" className={`no-wiggle transition-transform ${open === g.label ? "rotate-180" : ""}`}><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
-                  {on && <motion.span layoutId="nav-dot" transition={SPRING} className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--ember)]" />}
+              <div key={g.label} className="relative" onMouseEnter={() => setOpen(g.label)}>
+                <button type="button" aria-expanded={open === g.label} onClick={() => setOpen(open === g.label ? null : g.label)} className={item(on)}>
+                  {on && dot}{g.label}
+                  <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden className={`transition-transform ${open === g.label ? "rotate-180" : ""}`}><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
                 </button>
-                <AnimatePresence>
-                  {open === g.label && (
-                    <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                      transition={{ duration: 0.18 }} className="glass-thick glass-menu absolute left-1/2 top-12 w-[22rem] -translate-x-1/2 p-2">
-                      {g.items.map((i) => (
-                        <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined} className={`block rounded-[14px] px-3.5 py-3 transition-colors hover:bg-white/60 ${active(i.href) ? "bg-[var(--ember-soft)] ring-1 ring-[rgba(217,67,26,0.35)]" : ""}`}>
-                          <span className="flex items-center gap-2 text-sm font-medium">{i.label}{active(i.href) && <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">you are here</span>}</span>
-                          <span className="mt-0.5 block text-xs leading-relaxed text-[var(--text-secondary)]">{i.blurb}</span>
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {open === g.label && (
+                  <div className="glass-menu fade-in absolute left-1/2 top-[calc(100%+10px)] w-[22rem] -translate-x-1/2 rounded-[var(--r-tile)] border-[length:var(--stroke)] border-[var(--text-primary)] p-2">
+                    {g.items.map((i) => (
+                      <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined} className="block rounded-[20px] px-4 py-3 transition-colors hover:bg-[var(--surface-alt)]">
+                        <span className="flex items-center gap-2 text-[15px] font-medium">{active(i.href) && dot}{i.label}</span>
+                        <span className="mt-0.5 block text-[13px] leading-relaxed text-[var(--text-secondary)]">{i.blurb}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
-          <Link href="/about" onMouseEnter={() => { setOpen(null); setHover("About"); }} className={`relative z-0 rounded-full px-3.5 py-1.5 text-sm ${active("/about") ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>{hover === "About" && <motion.span layoutId="nav-hover" className="absolute inset-0 -z-10 rounded-full bg-white/70 shadow-[0_2px_8px_-4px_rgba(60,20,10,0.25)]" transition={SPRING} />}About{active("/about") && <motion.span layoutId="nav-dot" transition={SPRING} className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--ember)]" />}</Link>
+          <Link href="/about" aria-current={active("/about") ? "page" : undefined} className={item(active("/about"))} onMouseEnter={() => setOpen(null)}>{active("/about") && dot}About</Link>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <SearchButton />
+          <ThemeToggle />
           {(() => {
             // Contextual call to action: never a link to the page you are on.
-            const cta = pathname === "/explorer" ? { href: "/method", label: "How it is corrected" } : pathname === "/method" ? { href: "/explorer", label: "Try it on a country" } : { href: "/explorer", label: "Open the calendar" };
-            return <Link href={cta.href} className="glass-dark hidden px-4 py-1.5 text-sm font-medium sm:inline-block">{cta.label}</Link>;
+            const cta = pathname === "/explorer" ? { href: "/method", label: "See the proof" } : { href: "/explorer", label: "Your area" };
+            return <Link href={cta.href} className="pill-dark hidden px-4 py-2 font-mono text-[11.5px] uppercase tracking-[0.14em] sm:inline-block">{cta.label}</Link>;
           })()}
-          <button ref={toggle} type="button" className="glass-thin flex h-9 w-9 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
-            <svg width="16" height="12" viewBox="0 0 16 12"><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.6" fill="none" /></svg>
+          <button ref={toggle} type="button" className="glass-thin flex h-10 w-10 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
+            <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
           </button>
         </div>
       </div>
 
-      <AnimatePresence>
-        {mobile && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            className="glass-thick glass-menu mx-auto mt-2 max-h-[80vh] max-w-6xl !overflow-y-auto p-3 lg:hidden">
-            {NAV.map((g) => (
-              <div key={g.label} className="mb-2">
-                <p className="eyebrow px-3 pb-1 pt-2">{g.label}</p>
-                {g.items.map((i) => (
-                  <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined} className={`block rounded-xl px-3 py-2.5 ${active(i.href) ? "bg-[var(--ember-soft)]" : ""}`}>
-                    <span className="flex items-center gap-2 text-[15px] font-medium">{i.label}{active(i.href) && <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">you are here</span>}</span>
-                    <span className="block text-xs text-[var(--text-secondary)]">{i.blurb}</span>
-                  </Link>
-                ))}
-              </div>
-            ))}
-            <Link href="/about" className="block rounded-xl px-3 py-2.5 text-[15px] font-medium">About</Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+      {mobile && (
+        <div className="fade-in fixed inset-x-0 bottom-0 top-[4.25rem] z-40 overflow-y-auto bg-[var(--bg)] px-6 pb-10 pt-4 lg:hidden" role="dialog" aria-label="Menu">
+          <Link href="/" className="flex items-center gap-3 border-b-[length:var(--stroke)] border-[var(--hairline)] py-4"><span className="display text-3xl">Story</span>{active("/") && dot}</Link>
+          {NAV.map((g) => (
+            <div key={g.label} className="border-b-[length:var(--stroke)] border-[var(--hairline)] py-4">
+              <p className="eyebrow">{g.label}</p>
+              {g.items.map((i) => (
+                <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined} className="mt-2 flex items-center gap-3">
+                  <span className="display text-3xl">{i.label}</span>{active(i.href) && dot}
+                </Link>
+              ))}
+            </div>
+          ))}
+          <Link href="/about" className="flex items-center gap-3 py-4"><span className="display text-3xl">About</span>{active("/about") && dot}</Link>
+        </div>
+      )}
+    </header>
   );
 }

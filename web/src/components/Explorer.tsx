@@ -181,7 +181,7 @@ export function Explorer() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Explorer · burning activity calendar" title="Every fitted country. Every month." italic="2003–2025."
+      <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
         lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
       <Coverage />
 
@@ -196,7 +196,7 @@ export function Explorer() {
                   if (k === "country") { if (area.kind === "box") setArea({ kind: "country", name: lastCountry.current }); }
                   else { document.getElementById("area")?.scrollIntoView({ behavior: "smooth", block: "center" }); document.getElementById("box-west")?.focus({ preventScroll: true }); }
                 }}
-                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${area.kind === k ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${area.kind === k ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {k === "country" ? "Country" : "Draw area"}
               </button>
             ))}
@@ -224,7 +224,7 @@ export function Explorer() {
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
-                className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {m === "raw" ? "Raw record" : "Harmonized"}
               </button>
             ))}
@@ -241,7 +241,7 @@ export function Explorer() {
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
-        {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+        {loading && <div className="mt-8 h-[420px] dot-skel" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
             {ds?.dataset === "world" ? (
