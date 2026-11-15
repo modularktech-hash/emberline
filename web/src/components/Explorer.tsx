@@ -34,6 +34,7 @@ import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/
 import { getProof } from "@/lib/data";
 import { mostUnusualMonth } from "@/lib/unusual";
 import { InfoDot } from "@/components/ui";
+import { CriticalPeriods } from "@/components/CriticalPeriods";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -209,7 +210,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
-        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
+        lede="A burning activity calendar for your area of interest. Pick a country, draw an area or type latitude and longitude, choose a date range, and see the critical periods, the years with the highest burning activity and how this month compares with the historical median. Switch between the raw record (uncorrected) and the harmonized one, and download the calendar, the hotspots and a brief. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
@@ -342,6 +343,7 @@ export function Explorer() {
                   </p>
                 );
               })()}
+              <CriticalPeriods rows={cal.rows} from={view.lo} to={view.hi} place={areaLabel(area)} mode={mode} />
               {mode === "harmonized" && (unusual || errCountry) && (
                 <div data-testid="heldout-context" className="mt-3 rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
                   {unusual && (
