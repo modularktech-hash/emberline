@@ -1,5 +1,19 @@
 # Submission — what we hand in, and the checklist
 
+# 2026 rules — confirmed from the official Project Submission Guide (owner pasted, 15 Nov)
+
+These override anything older below.
+
+- **Deadline:** Sunday 15 Nov, 23:59, local time of our Local Event (Universal Event: Team Owner's residence). Only the last saved submission is judged; re-submitting is allowed until the deadline. Our target stays 16:00 IST.
+- **Demo:** video ≤ 30 s **or** slide deck ≤ 7 slides including title/intro. Over the limit = not eligible for global judging. **Decision: 7-slide deck.** Slides in English. Slides must show **team name, names of team members, the challenge selected**, an image of the project, the user experience, and how NASA/space-agency open data makes it possible.
+- **Hosting:** demo and documents via public link (YouTube, Drive, GitHub, OneDrive, Dropbox), no login. Test in a private window. The project page accepts images (JPG/PNG/GIF ≤ 10 MB) but not videos or documents.
+- **Form fields:** Project Name · High-Level Project Summary · Link to Project Demo · Link to Final Project · Detailed Project Description · **Use of Super Intelligence (SI)** (this replaces the old "Use of AI" field; declare our Claude use there) · NASA Data · Space Agency Partner Data and Other References.
+- **Judging criteria:** Impact, Creativity, Validity, Relevance, Presentation (2026 Judging and Awards Guide).
+- **Eligibility:** all team members confirmed at the same Local Event; all required fields complete and in English; no images, video, audio or likeness of anyone under 18; check "Terms and Conditions" and "Confirm All Work is Original", then **Submit for Judging**.
+- **Website access:** recommended: request a FortiGuard Web Filter Classification for https://emberline-tan.vercel.app (https://www.fortiguard.com/faq/wfratingsubmit; category e.g. "Education" or "Web-based Applications"; Company Name "N/A") so judges' networks do not block it.
+- **Certificate:** downloadable from the Profile after submitting; Full Name in the profile is what prints.
+
+
 **Deadline: Sunday 15 November, 23:59 local time. Submission is final — no
 edits after. Our target is 16:00.**
 
