@@ -84,7 +84,7 @@ export function TrendsPage() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Insights · season shift" title="Is the fire season moving?" italic="Or is it the sensor?"
+      <PageHead compact eyebrow="Explore · season shift" info="seasonShift" title="Is the fire season moving?" italic="Or is it the sensor?"
         lede="For every year: when the season starts (10% of the year's detections), reaches its midpoint (50%) and ends (90%). In the raw record, VIIRS's sharper eyes catch small early burns MODIS never could, so seasons appear to start earlier. The harmonized record removes that." />
 
       {error && <Failed error={error} retry={retry} what="the season timings (season.json)" />}

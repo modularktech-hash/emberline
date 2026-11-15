@@ -238,3 +238,8 @@ html[data-perf=low] :is(.paper[data-in], .paper-sway) { animation: none; }
 @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: live-pulse 1.6s var(--ease-in-out) infinite; }
 html[data-perf=low] .live-dot { animation: none; }
+
+/* Pipeline connector: vertical on phones, horizontal from 1024 px. */
+.conduit-auto { display: block; margin: 0 auto; width: 6px; height: 28px; background: radial-gradient(circle, var(--grey-2) 1.6px, transparent 2px) 50% 0 / 6px 10px repeat-y; animation: conduit-y 0.9s linear infinite; }
+@media (min-width: 1024px) { .conduit-auto { margin: 0; align-self: center; width: 36px; height: 6px; background: radial-gradient(circle, var(--grey-2) 1.6px, transparent 2px) 0 50% / 10px 6px repeat-x; animation-name: conduit-x; } }
+html[data-perf=low] .conduit-auto { animation: none; }

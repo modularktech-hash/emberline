@@ -181,7 +181,7 @@ export function Explorer() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Explorer · burning activity calendar" title="Every fitted country. Every month." italic="2003–2025."
+      <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
         lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
       <Coverage />
 

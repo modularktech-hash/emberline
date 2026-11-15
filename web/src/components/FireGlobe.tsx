@@ -125,6 +125,8 @@ export default function FireGlobe(props: Props) {
   const height = props.height ?? 560;
   const [lost, setLost] = useState(false);
   const [canGl, setCanGl] = useState<boolean | null>(null);
+  // WebGL support exists only in the browser; probing it once after mount is the intent.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setCanGl(webglAvailable()); }, []);
   if (canGl == null) return <GlobePoster height={height} />;
   const fallback = <GlobePoster height={height} note="The 3D globe needs WebGL, which this browser has turned off. Everything else on the page works." />;

@@ -76,7 +76,7 @@ export function Seasons() {
 
   return (
     <div>
-      <PageHead compact eyebrow="Insights · unusual conditions · critical periods" title="Is this year" italic="normal?"
+      <PageHead compact eyebrow="Explore · seasons" info="percentile" title="Is this year" italic="normal?"
         lede="Each month of a chosen year against that month's historical median and spread, on the harmonized record — so 2005 and 2025 are compared in the same unit." />
       <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">

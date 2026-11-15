@@ -7,6 +7,7 @@ import { EASE, SPRING, SPRING_BOUNCY } from "@/lib/motion";
 import { usePerfLow } from "@/lib/perf";
 import { DotLoader, DotRule } from "@/components/DotMatrix";
 import { Eyebrow } from "@/components/Figure";
+import type { InfoKey } from "@/content/info";
 
 /**
  * Fades and lifts its children into view once, as they scroll in (opacity + transform only, compositor-friendly).
@@ -74,11 +75,11 @@ export function CountUp({ to, decimals = 0, prefix = "", suffix = "", className 
   return <motion.span ref={ref} className={`tabular ${className ?? ""}`} aria-label={fmtV(to)}>{text}</motion.span>;
 }
 
-export function PageHead({ eyebrow, title, italic, lede, compact = false }: { eyebrow: string; title: string; italic?: string; lede: ReactNode; compact?: boolean }) {
+export function PageHead({ eyebrow, title, italic, lede, compact = false, info }: { eyebrow: string; title: string; italic?: string; lede: ReactNode; compact?: boolean; info?: InfoKey }) {
   // compact: tool pages, so the tool itself is reachable quickly on a phone.
   return (
     <header className={compact ? "pb-8 pt-8 sm:pb-10 sm:pt-14" : "pb-12 pt-20 sm:pb-16 sm:pt-28"}>
-      <Reveal><Eyebrow>{eyebrow}</Eyebrow></Reveal>
+      <Reveal><Eyebrow info={info}>{eyebrow}</Eyebrow></Reveal>
       <Reveal delay={0.06}>
         <h1 className={`display ${compact ? "t-tool" : "t-d1"} mt-3 max-w-4xl`}>
           {title}{italic && <> <span className="italic">{italic}</span></>}

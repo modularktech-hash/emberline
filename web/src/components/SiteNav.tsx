@@ -56,7 +56,7 @@ export function SiteNav() {
       onMouseLeave={() => setOpen(null)} onFocusCapture={() => setHidden(false)}>
       <div className="glass-nav relative mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-full border-[length:var(--stroke)] border-[var(--hairline)] py-1.5 pl-5 pr-1.5">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Emberline home">
-          <LogoMark height={10} />
+          <LogoMark height={10} ink="var(--text-primary)" />
           <span className="dot-num text-[15px] uppercase tracking-[0.2em]">Emberline</span>
         </Link>
 

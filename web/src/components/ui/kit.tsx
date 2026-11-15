@@ -21,7 +21,9 @@
  */
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { INFO, type InfoKey } from "@/content/info";
+import type { InfoKey } from "@/content/info";
+import { InfoDot } from "./info-dot";
+export { InfoDot, Popover, Tooltip } from "./info-dot";
 import { isPerfLow } from "@/lib/perf";
 import { Eyebrow } from "@/components/Figure";
 import { Segmented } from "./base";
@@ -53,49 +55,6 @@ export function Tile({ shape = "square", tone = "paper", tilt = false, as: Tag =
     </T>
   );
 }
-
-/* ------------------------------------------------------------- Popover / InfoDot */
-export function Popover({ open, onClose, anchor, children, id, align = "end" }: { open: boolean; onClose: () => void; anchor: React.RefObject<HTMLElement | null>; children: ReactNode; id?: string; align?: "start" | "end" }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { onClose(); anchor.current?.focus(); } };
-    const down = (e: PointerEvent) => { const t = e.target as Node; if (!ref.current?.contains(t) && !anchor.current?.contains(t)) onClose(); };
-    window.addEventListener("keydown", key);
-    window.addEventListener("pointerdown", down);
-    return () => { window.removeEventListener("keydown", key); window.removeEventListener("pointerdown", down); };
-  }, [open, onClose, anchor]);
-  if (!open) return null;
-  return (
-    <div ref={ref} id={id} role="tooltip"
-      className={cx("fade-in absolute top-[calc(100%+8px)] z-40 w-[min(18rem,calc(100vw-2.5rem))] rounded-[var(--r-tile)] border-[length:var(--stroke)] border-[var(--text-primary)] bg-[var(--surface)] p-4 text-left text-[13px] font-normal normal-case leading-relaxed tracking-normal text-[var(--text-secondary)] shadow-[var(--shadow-2)]", align === "end" ? "right-0" : "left-0")}>
-      {children}
-    </div>
-  );
-}
-
-/** The "i": a small circle that explains its block in one or two plain sentences. */
-export function InfoDot({ k, title, children, className, align = "end" }: { k?: InfoKey; title?: string; children?: ReactNode; className?: string; align?: "start" | "end" }) {
-  const [open, setOpen] = useState(false);
-  const btn = useRef<HTMLButtonElement>(null);
-  const id = useId();
-  const entry = k ? INFO[k] : undefined;
-  const heading = title ?? entry?.title;
-  const close = useCallback(() => setOpen(false), []);
-  return (
-    <span className={cx("relative inline-flex align-middle", className)}>
-      <button ref={btn} type="button" aria-label={`About ${heading ?? "this"}`} aria-expanded={open} aria-controls={open ? id : undefined}
-        onClick={() => setOpen((o) => !o)}
-        className={cx("inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[length:var(--stroke)] font-mono text-[11px] font-bold leading-none transition-colors",
-          open ? "border-[var(--red)] bg-[var(--red)] text-white" : "border-[var(--grey-2)] text-[var(--text-muted)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]")}>i</button>
-      <Popover open={open} onClose={close} anchor={btn} id={id} align={align}>
-        {heading && <span className="mb-1 block font-mono text-[10.5px] font-bold uppercase tracking-[0.16em] text-[var(--text-primary)]">{heading}</span>}
-        <span className="block">{children ?? entry?.text}</span>
-      </Popover>
-    </span>
-  );
-}
-export const Tooltip = InfoDot;
 
 /* --------------------------------------------------------------- Buttons */
 type PillTone = "ink" | "red" | "line";
@@ -224,7 +183,7 @@ export function SectionHead({ eyebrow, title, accent, lede, info, as: Tag = "h2"
 }) {
   return (
     <div className={className}>
-      <div className="flex items-center gap-3"><Eyebrow>{eyebrow}</Eyebrow>{info && <InfoDot k={info} align="start" />}</div>
+      <div className="flex items-center gap-3"><Eyebrow info={false}>{eyebrow}</Eyebrow>{info && <InfoDot k={info} align="start" />}</div>
       <Tag id={id} className={cx("display mt-3 max-w-4xl", `t-${size}`)}>{title}{accent && <> <span className="italic">{accent}</span></>}</Tag>
       {lede && <p className="mt-4 max-w-[62ch] text-[1.05em] leading-relaxed text-[var(--text-secondary)]">{lede}</p>}
     </div>
@@ -236,11 +195,11 @@ export function StatTile({ label, value, unit, note, source, info, tone = "paper
   label: string; value: string | null | undefined; unit?: ReactNode; note?: ReactNode; source?: ReactNode; info?: InfoKey;
   tone?: "paper" | "alt" | "ink"; shape?: "square" | "circle"; className?: string; size?: "sm" | "md" | "lg";
 }) {
-  const fs = size === "lg" ? "text-[clamp(3rem,2rem+5vw,5.5rem)]" : size === "md" ? "text-[clamp(2.4rem,1.8rem+2.4vw,3.6rem)]" : "text-3xl";
+  const fs = size === "lg" ? "text-[clamp(2.6rem,1.4rem+3.1vw,4.1rem)]" : size === "md" ? "text-[clamp(2.4rem,1.8rem+2.4vw,3.6rem)]" : "text-3xl";
   return (
     <Tile tone={tone} shape={shape} tilt className={cx("flex flex-col p-5 sm:p-6", shape === "circle" && "items-center justify-center text-center", className)}>
       <div className={cx("flex items-start gap-3", shape === "circle" ? "justify-center" : "justify-between")}>
-        <Eyebrow className="!text-inherit opacity-70">{label}</Eyebrow>
+        <Eyebrow info={false} className="!text-inherit opacity-70">{label}</Eyebrow>
         {info && <InfoDot k={info} />}
       </div>
       <p className={cx("mt-4 flex flex-wrap items-baseline gap-x-2 leading-none", shape === "circle" && "justify-center")}>
@@ -276,7 +235,7 @@ export function ChartFrame({ title, eyebrow, info, legend, source, actions, chil
       {(title || eyebrow || info || actions) && (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+            {eyebrow && <Eyebrow info={false}>{eyebrow}</Eyebrow>}
             {title && <figcaption className="display mt-1 text-xl">{title}</figcaption>}
           </div>
           <div className="flex items-center gap-2">{actions}{info && <InfoDot k={info} />}</div>

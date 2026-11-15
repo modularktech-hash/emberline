@@ -51,6 +51,8 @@ export function GlobePage() {
   const [played, setPlayed] = useState(false);
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
+    // The clock exists only in the browser; reading it once after mount is the intent.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNow(Date.now());
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPaused(true);
     const t = window.setInterval(() => setNow(Date.now()), 60_000);
@@ -71,7 +73,7 @@ export function GlobePage() {
 
   return (
     <div>
-      <PageHead eyebrow="Live · NASA FIRMS near-real-time" title="Recent satellite" italic="fire detections."
+      <PageHead eyebrow="Live · globe" info="live" title="Where is it burning" italic="right now?"
         lede={<>Raw active-fire detections from the near-real-time feeds over the last {win === "24h" ? "24 hours" : "7 days"} before the snapshot, and the satellites that made them. Uncorrected, and they include gas flares and volcanoes. Drag to spin, scroll to zoom, hover a spike.</>} />
       {stale && ageH != null && (
         <p role="status" className="-mt-4 mb-6 max-w-4xl rounded-2xl border border-[var(--ember)] bg-[var(--ember-soft)] p-4 text-sm text-[var(--text-primary)]">
