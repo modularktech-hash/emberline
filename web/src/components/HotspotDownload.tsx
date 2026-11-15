@@ -153,8 +153,8 @@ function PointDownload({ area }: { area: HotspotArea }) {
         Every detection FIRMS holds for {label}, up to {MAX_POINT_DAYS} days per file, as served: points, raw, uncorrected, not harmonized. Fetched through this site&apos;s server, which holds the FIRMS key.
       </p>
       <div className="mt-3 flex flex-wrap items-end gap-3 text-sm">
-        <label className="flex flex-col text-xs text-[var(--text-muted)]">Source
-          <select value={source} onChange={(e) => setSource(e.target.value)} className="field mt-1 min-h-[36px] rounded-xl px-2 py-1 text-sm text-[var(--text-primary)]">
+        <label className="flex min-w-0 max-w-full flex-col text-xs text-[var(--text-muted)]">Source
+          <select value={source} onChange={(e) => setSource(e.target.value)} className="field mt-1 min-h-[36px] w-full max-w-full rounded-xl px-2 py-1 text-sm text-[var(--text-primary)]">
             {POINT_SOURCES.map((p) => <option key={p.v} value={p.v}>{p.label}</option>)}
           </select>
         </label>
