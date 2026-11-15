@@ -45,7 +45,7 @@
    "params_file": null,
    "files": {
     "current_month.json": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
-    "live.json": "3011dc87fa2888477dc1d892b3c4e34b74b2f56ce33a3f529c860107d2460e7b",
+    "live.json": "ad9db9c4c56d4aa9ab34bde30584d13fe8664e7066a0a5a438297b8d64f0703f",
     "tle.json": "c26a8153ebc3b57e61ea3a2474fdf8262e40b29ef09812572edd91d78e534533"
    },
    "consistent": true,
@@ -541,8 +541,8 @@
    "dataset": "live",
    "purpose": "Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, not the Suomi-NPP record, not comparable with the historical calendars",
    "source": "NASA FIRMS near-real-time: VIIRS 375 m NOAA-20 and NOAA-21, MODIS Terra/Aqua (raw, uncorrected)",
-   "bytes": 905371,
-   "sha256": "3011dc87fa2888477dc1d892b3c4e34b74b2f56ce33a3f529c860107d2460e7b",
+   "bytes": 1184785,
+   "sha256": "ad9db9c4c56d4aa9ab34bde30584d13fe8664e7066a0a5a438297b8d64f0703f",
    "format": "json",
    "top_level_keys": [
     "fetched_utc",
@@ -551,7 +551,7 @@
     "field_definitions",
     "hottest_cells_rank_by"
    ],
-   "fetched_utc": "2026-11-14T11:10Z",
+   "fetched_utc": "2026-11-15T02:52Z",
    "fit_version": null
   },
   {

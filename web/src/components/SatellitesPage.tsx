@@ -37,6 +37,48 @@ const DIURNAL: Record<string, { s: number; peak: number; base: number; h: number
   Grassland: { s: 1.06, peak: 1642, base: 37.3, h: 12.95 },
   Cropland: { s: 0.95, peak: 1259, base: 23.9, h: 13.33 },
 };
+/**
+ * Platform timeline. Start = first month of each platform's fire product as listed in
+ * docs/data-reference.md ("Products we use": MCD14ML Nov 2000, VNP14IMGML Jan 2012,
+ * VJ114IMGML Jan 2018, VJ214IMGML 2023); Aqua = its first detection in our archive
+ * (2002-07-04, docs/session-notes.md). Drift since 2022: docs/research-findings.md §1, drift.json.
+ */
+const TIMELINE = [
+  { name: "Terra", sensor: "MODIS", from: 2000 + 10 / 12, label: "Nov 2000", drift: true, use: "raw record to 2011" },
+  { name: "Aqua", sensor: "MODIS", from: 2002 + 6 / 12, label: "Jul 2002", drift: true, use: "reference unit; history to 2011" },
+  { name: "Suomi-NPP", sensor: "VIIRS", from: 2012, label: "Jan 2012", drift: false, use: "history from 2012" },
+  { name: "NOAA-20", sensor: "VIIRS", from: 2018, label: "Jan 2018", drift: false, use: "live layer only" },
+  { name: "NOAA-21", sensor: "VIIRS", from: 2023, label: "2023", drift: false, use: "live layer only" },
+];
+const DRIFT_FROM = 2022;
+
+function PlatformTimeline({ until }: { until: number }) {
+  const W = 720, L = 132, R = 14, row = 34, T = 8, H = T + TIMELINE.length * row + 26;
+  const x0 = 2000, x = (t: number) => L + ((t - x0) / (until - x0)) * (W - L - R);
+  const ticks = [2000, 2005, 2010, 2015, 2020, 2025].filter((t) => t <= until);
+  return (
+    <div className="mt-5 overflow-x-auto" tabIndex={0} role="region" aria-label="Platform timeline (scrolls sideways on small screens)"><svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[600px]" role="img" aria-label={`Fire-record timeline: ${TIMELINE.map((p) => `${p.name} ${p.sensor} from ${p.label}`).join("; ")}; Terra and Aqua drifting since ${DRIFT_FROM}`}>
+      <defs>
+        <pattern id="tl-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--surface-page)" /><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="3" /></pattern>
+      </defs>
+      {ticks.map((t) => (<g key={t}><line x1={x(t)} x2={x(t)} y1={T} y2={H - 22} stroke="var(--gridline)" /><text x={x(t)} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--text-muted)">{t}</text></g>))}
+      <line x1={x(2012)} x2={x(2012)} y1={T} y2={H - 22} stroke="var(--ember)" strokeDasharray="3 3" />
+      {TIMELINE.map((p, i) => {
+        const y = T + i * row + 8, c = SAT_COLORS[p.name];
+        const end = p.drift ? DRIFT_FROM : until;
+        return (
+          <g key={p.name} style={{ color: c }}>
+            <text x={0} y={y + 10} fontSize="12" fill="var(--text-primary)">{p.name} <tspan fill="var(--text-muted)" fontSize="10.5">{p.sensor}</tspan></text>
+            <rect x={x(p.from)} y={y} width={Math.max(2, x(end) - x(p.from))} height={14} rx={3} fill={c} opacity="0.85" />
+            {p.drift && <rect x={x(DRIFT_FROM)} y={y} width={x(until) - x(DRIFT_FROM)} height={14} rx={3} fill="url(#tl-hatch)" stroke={c} strokeWidth="1" />}
+            <text x={x(p.from) + 4} y={y + 25} fontSize="9.5" fill="var(--text-muted)">{p.label} · {p.use}</text>
+          </g>
+        );
+      })}
+    </svg></div>
+  );
+}
+
 const frp = (t: number, p: { s: number; peak: number; base: number; h: number }) => p.base + (p.peak - p.base) * Math.exp(-((t - p.h) ** 2) / (2 * p.s ** 2));
 
 export function SatellitesPage() {
@@ -105,6 +147,22 @@ export function SatellitesPage() {
               <p className="mt-4 text-xs text-[var(--text-muted)]">Propagated with SGP4 from TLEs fetched {data?.tle.fetched}. Time runs ×180.</p>
             </div>
           </div>
+        </section>
+      </Reveal>
+
+      <Reveal>
+        <section className="card mt-10 min-w-0 p-5 sm:p-7" data-testid="platform-timeline">
+          <Eyebrow>Platform timeline · fire records used here</Eyebrow>
+          <h2 className="display mt-2 t-d3">Five satellites, one record</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
+            When each platform&apos;s fire product begins, and what Emberline uses it for. The dashed line marks 2012, where the history switches from MODIS to Suomi-NPP VIIRS.
+            Hatched: Terra and Aqua have left their fixed overpass times since {DRIFT_FROM}.
+          </p>
+          <PlatformTimeline until={data ? Number(data.tle.fetched.slice(0, 4)) + 1 : 2027} />
+          <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+            Sources: product start dates from FIRMS product listings as recorded in docs/data-reference.md (MCD14ML Nov 2000, VNP14IMGML Jan 2012, VJ114IMGML Jan 2018, VJ214IMGML 2023);
+            Aqua from its first detection in our archive (4 Jul 2002); drift from docs/research-findings.md §1 and the measured overpass times below. Launch dates are in the fleet cards above.
+          </p>
         </section>
       </Reveal>
 

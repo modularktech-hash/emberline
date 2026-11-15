@@ -30,12 +30,15 @@ curl -O https://firms.modaps.eosdis.nasa.gov/data/country/csv/viirs-snpp/2012/vi
 That matters for the live layer (View C) and nothing else. The entire 25-year
 historical pipeline can be built with no credentials at all.
 
-**NOAA-20 / NOAA-21 slugs are not yet confirmed.** `viirs-noaa20`,
-`j1-viirs-c2`, `noaa-20-viirs-c2` and `suomi-npp-viirs-c2` all return 404 on the
-country endpoint. A 404 arrives as a JSON error document, not a CSV, so check
-the first byte for `{` before parsing. Suomi-NPP alone covers 2012–present and
-is the correct overlap partner for Aqua anyway, so this does not block anything.
-Find the right slug during prep if NOAA-20 is wanted.
+**NOAA-20 / NOAA-21 archives (updated 15 Nov).** FIRMS now lists standard
+(archive) products for NOAA-20 and NOAA-21 as well as Suomi-NPP; NOAA-20 was
+verified in the country archive under slug `viirs-jpss1` (see below). Verify the
+start dates of each before relying on them. Several guessed slugs
+(`viirs-noaa20`, `j1-viirs-c2`, `noaa-20-viirs-c2`, `suomi-npp-viirs-c2`) return
+404 on the country endpoint; a 404 arrives as a JSON error document, not a CSV,
+so check the first byte for `{` before parsing. Emberline's historical VIIRS
+record uses Suomi-NPP only (2012 onward, the overlap partner for Aqua); NOAA-20/21
+appear only in the live layer, labelled as a different platform.
 
 ### Download-size expectations
 

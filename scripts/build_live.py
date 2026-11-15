@@ -30,6 +30,7 @@ FEEDS = {
             ("noaa-21-viirs-c2", "J2_VIIRS_C2_Global_24h", "NOAA-21"),
             ("modis-c6.1", "MODIS_C6_1_Global_24h", "MODIS")],
     "7d": [("noaa-20-viirs-c2", "J1_VIIRS_C2_Global_7d", "NOAA-20"),
+           ("noaa-21-viirs-c2", "J2_VIIRS_C2_Global_7d", "NOAA-21"),
            ("modis-c6.1", "MODIS_C6_1_Global_7d", "MODIS")],
 }
 CELL = 0.5
