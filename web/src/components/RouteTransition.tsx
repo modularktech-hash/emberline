@@ -11,7 +11,7 @@ import { setCovering } from "@/lib/transition";
  * Page curtain. An internal link click is intercepted; ink spreads from the click point behind a
  * leading edge of dots, the destination's name appears in dot-matrix, the route is pushed while the
  * screen is covered, and the curtain dissolves back into dots once the new page has committed.
- * In, hold and out together stay within 650 ms when the page is ready. A safety timer lifts it
+ * In, hold and out together stay within about 520 ms when the page is ready. A safety timer lifts it
  * after SAFETY_MS whatever happens.
  *
  * Not intercepted (the browser or <Link> handles them as usual): modified or non-primary clicks,
@@ -20,7 +20,7 @@ import { setCovering } from "@/lib/transition";
  * aria-hidden and takes no focus; scroll-to-top and the route announcer work unchanged.
  */
 
-const IN_MS = 240, MIN_MS = 150, OUT_MS = 260, SAFETY_MS = 2500;
+const IN_MS = 200, MIN_MS = 100, OUT_MS = 220, SAFETY_MS = 2500;
 
 type Phase = "idle" | "in" | "hold" | "out";
 

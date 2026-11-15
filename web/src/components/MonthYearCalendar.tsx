@@ -40,6 +40,17 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
   // select, Escape returns focus to the scroll region so a further Tab leaves.
   const [cursor, setCursor] = useState<CellRef | null>(null);
   const [asTable, setAsTable] = useState(false);
+  // Year scrubbing: a slider that picks one year, outlines its row and reads out its total.
+  const [scrub, setScrub] = useState<number | null>(null);
+  const yearTotal = (y: number) => { const v = cal.rows.filter((r) => r.year === y && r.value !== null); return v.length ? v.reduce((a, r) => a + (r.value ?? 0), 0) : null; };
+  // A gentle tilt of the whole calendar under a mouse (3 degrees at most); none in low-power or reduced-motion mode.
+  const tilt = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" || document.documentElement.dataset.perf === "low" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const el = e.currentTarget, r = el.getBoundingClientRect();
+    el.style.setProperty("--ty", `${(((e.clientX - r.left) / r.width - 0.5) * 3).toFixed(2)}deg`);
+    el.style.setProperty("--tx", `${(-((e.clientY - r.top) / r.height - 0.5) * 3).toFixed(2)}deg`);
+  };
+  const untilt = (e: React.PointerEvent<HTMLDivElement>) => { e.currentTarget.style.setProperty("--tx", "0deg"); e.currentTarget.style.setProperty("--ty", "0deg"); };
   const gridRef = useRef<HTMLDivElement>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const clampY = (y: number) => Math.min(to, Math.max(from, y));
@@ -95,6 +106,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
         </div>
       ) : (<>
       {/* On phones the matrix keeps readable cells (>= 28 px) and scrolls sideways inside this box, year labels pinned. */}
+      <div className="tilt" onPointerMove={tilt} onPointerLeave={untilt}>
       <div ref={regionRef} className="max-w-full overflow-x-auto overscroll-x-contain outline-none focus-visible:ring-2 ring-[var(--text-primary)]" tabIndex={-1} role="region" aria-label="Burning activity calendar, months by year (scrolls sideways on small screens)">
       <div ref={gridRef} role="grid" aria-label={`Burning activity calendar${areaName ? `, ${areaName}` : ""}: ${unit}. Arrow keys move by month and year, Enter selects, Escape leaves.`} aria-rowcount={years.length + 1} aria-colcount={13} onKeyDown={onKey} className="cal-wipe grid min-w-[26.5rem] gap-[3px] sm:min-w-0" style={{ gridTemplateColumns: "2.6rem repeat(12, minmax(28px, 1fr))" }} onMouseLeave={() => setHover(null)}>
         <div role="row" className="contents">
@@ -105,7 +117,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
         </div>
         {years.map((y, yi) => (
           <div key={y} role="row" className="contents">
-            <div role="rowheader" className={`tabular sticky left-0 z-[1] flex items-center bg-[var(--surface)] font-mono text-[11px] ${y === 2012 ? "text-[var(--red)]" : "text-[var(--text-muted)]"}`}>{y}</div>
+            <div role="rowheader" className={`tabular sticky left-0 z-[1] flex items-center bg-[var(--surface)] font-mono text-[11px] ${y === scrub ? "font-bold text-[var(--text-primary)]" : y === 2012 ? "text-[var(--red)]" : "text-[var(--text-muted)]"}`}>{y === scrub && <span aria-hidden className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[var(--red)]" />}{y}</div>
             {MONTHS.map((_, mi) => {
               const row = at(y, mi + 1);
               const idx = rampIndex(row?.value ?? null, max);
@@ -120,7 +132,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
                   onBlur={() => setHover(null)}
                   onClick={() => { setCursor({ year: y, month: mi + 1 }); choose({ year: y, month: mi + 1 }); }}
                   aria-label={cellName(y, mi + 1)}
-                  className={`h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-2 sm:h-[22px] ${sel && sel.year === y && sel.month === mi + 1 ? "ring-2 ring-[var(--ink)]" : ""}`}
+                  className={`h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-2 sm:h-[22px] ${scrub != null && y !== scrub ? "opacity-35" : ""} ${sel && sel.year === y && sel.month === mi + 1 ? "ring-2 ring-[var(--ink)]" : ""}`}
                   style={{
                     background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, var(--hairline) 3px 4px)" : RAMP[idx],
                     opacity: inRange && !inRange({ year: y, month: mi + 1 }) ? 0.18 : undefined,
@@ -134,6 +146,14 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
           </div>
         ))}
       </div>
+      </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
+        <label htmlFor={`scrub-${from}-${to}`} className="eyebrow">Scrub years</label>
+        <input id={`scrub-${from}-${to}`} type="range" min={from} max={to} step={1} value={scrub ?? to} onChange={(e) => setScrub(Number(e.target.value))} className="w-44" aria-valuetext={scrub != null ? String(scrub) : "all years"} />
+        {scrub != null
+          ? <span className="tabular flex items-center gap-2"><span className="dot-num text-xl text-[var(--text-primary)]">{scrub}</span> total {yearTotal(scrub) == null ? "no data" : fmt(yearTotal(scrub))}<button type="button" onClick={() => setScrub(null)} className="link-ul">show all years</button></span>
+          : <span className="text-[var(--text-muted)]">drag to single out one year</span>}
       </div>
       </>)}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-[var(--text-secondary)]">

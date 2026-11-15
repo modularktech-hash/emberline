@@ -40,11 +40,26 @@ function Tool({ n, title, intro, children, formula }: { n: string; title: string
     </Reveal>
   );
 }
-function Out({ label, value, big }: { label: string; value: ReactNode; big?: boolean }) {
+/** Twenty dots in a ring; the lit share is the value (0..1). Read as a dial. */
+function DotDial({ share }: { share: number }) {
+  const n = 20, lit = Math.round(Math.max(0, Math.min(1, share)) * n);
   return (
-    <div className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface-1)] p-4 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgba(217,67,26,0.35)]">
-      <Eyebrow className="!tracking-[0.14em]">{label}</Eyebrow>
-      <motion.p key={String(value)} initial={{ opacity: 0.3, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`display tabular ${big ? "text-5xl text-[var(--ember)]" : "text-3xl"}`}>{value}</motion.p>
+    <svg viewBox="0 0 60 60" className="h-14 w-14 shrink-0" aria-hidden>
+      {Array.from({ length: n }, (_, i) => {
+        const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+        return <circle key={i} cx={30 + Math.cos(a) * 24} cy={30 + Math.sin(a) * 24} r="2.6" fill={i < lit ? "var(--red)" : "var(--grey-1)"} style={{ transition: "fill 240ms ease" }} />;
+      })}
+    </svg>
+  );
+}
+function Out({ label, value, big, dial }: { label: string; value: ReactNode; big?: boolean; dial?: number }) {
+  return (
+    <div className={`tile p-4 ${big ? "tile-ink" : ""}`}>
+      <Eyebrow className="!text-inherit !tracking-[0.14em] opacity-70">{label}</Eyebrow>
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <motion.p key={String(value)} initial={{ opacity: 0.3, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`dot-num ${big ? "text-5xl" : "text-3xl"}`}>{value}</motion.p>
+        {dial != null && Number.isFinite(dial) && <DotDial share={dial} />}
+      </div>
     </div>
   );
 }
@@ -117,7 +132,7 @@ export function LabPage() {
   }, [cal, ay, am]);
 
   const W = 640, H = 200;
-  const lx = (f: number) => 30 + (Math.log10(f) + 0.3) / 3.3 * (W - 50);
+  const lx = (f: number) => Math.round((30 + (Math.log10(f) + 0.3) / 3.3 * (W - 50)) * 100) / 100; // rounded: identical on server and browser
   const ly = (p: number) => 10 + (1 - p) * (H - 36);
 
   return (
@@ -154,7 +169,7 @@ export function LabPage() {
               </svg>
             </div>
             <div className="space-y-3">
-              <Out big label={`P(Aqua also detects) · ${prettyName(region)}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
+              <Out big dial={fit ? P(frp, fit.logistic.b0, fit.logistic.b1) : undefined} label={`P(Aqua also detects) · ${prettyName(region)}`} value={fit ? `${fmtNum(P(frp, fit.logistic.b0, fit.logistic.b1) * 100, 1)}%` : "—"} />
               <Out label={fit && !coefCiEstimated(fit) ? "FRP at 50% (point value)" : "FRP at 50% (95% CI)"} value={fit ? `${fmtNum(fit.frp_at_p50_mw, 1)} MW` : "—"} />
               <p className="text-xs text-[var(--text-muted)]">{fit && !coefCiEstimated(fit)
                 ? <>Interval not estimated — curve borrowed from the pooled fit: {prettyName(region)} had too few training matches for its own curve, and the borrowed coefficients were not resampled, so their uncertainty is unknown, not zero.</>
@@ -199,8 +214,8 @@ export function LabPage() {
             <span className="text-xs text-[var(--text-muted)]">Try 13.5 (Suomi-NPP) vs 14.9 (Aqua over Australia, 2025)</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <Out label="A sees, of peak" value={`${fmtNum(share(tA, DIURNAL[cover]) * 100, 0)}%`} />
-            <Out label="B sees, of peak" value={`${fmtNum(share(tB, DIURNAL[cover]) * 100, 0)}%`} />
+            <Out dial={share(tA, DIURNAL[cover])} label="A sees, of peak" value={`${fmtNum(share(tA, DIURNAL[cover]) * 100, 0)}%`} />
+            <Out dial={share(tB, DIURNAL[cover])} label="B sees, of peak" value={`${fmtNum(share(tB, DIURNAL[cover]) * 100, 0)}%`} />
             <Out big label="B ÷ A" value={fmtRatio(share(tB, DIURNAL[cover]) / share(tA, DIURNAL[cover]))} />
           </div>
         </Tool>

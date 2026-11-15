@@ -57,11 +57,11 @@ html[data-perf=low] .backdrop-cream { background-image: none; }
 .tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
 .font-mono, code, kbd, pre, samp { font-family: var(--font-code); }
 /* Headline numbers are dot-matrix everywhere. */
-.dot-num, .stat-value { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.dot-num, .stat-value, .display.tabular:is(.text-4xl, .text-5xl, .text-6xl, .text-7xl) { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
 
 /* Labels: one mono, all caps, tracked. */
 .eyebrow { font-family: var(--font-code); font-size: 11px; line-height: 1.5; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.eyebrow-n { color: var(--text-primary); font-weight: 700; }
+.eyebrow-n { color: var(--red); font-weight: 700; }
 .eyebrow-sep { display: inline-block; margin: 0 0.55em; opacity: 0.55; }
 .stat-value { line-height: 1; }
 .stat-unit { font-family: var(--font-code); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; }
@@ -200,8 +200,8 @@ html[data-perf=low] button[data-cell] { animation: none; }
 
 /* Page fade-in and scroll reveals as CSS, so server-rendered content is visible at first paint. */
 @keyframes page-in { from { opacity: 0; transform: translateY(10px); } }
-.page-in { animation: page-in 420ms var(--ease-out) both; }
-[data-reveal] { opacity: 0; transform: translateY(var(--rv-y, 24px)); transition: opacity 700ms var(--ease-out) var(--rv-d, 0s), transform 700ms var(--ease-out) var(--rv-d, 0s); }
+.page-in { animation: page-in 240ms var(--ease-out) both; }
+[data-reveal] { opacity: 0; transform: translateY(min(var(--rv-y, 24px), 14px)); transition: opacity 380ms var(--ease-out) var(--rv-d, 0s), transform 380ms var(--ease-out) var(--rv-d, 0s); }
 [data-reveal][data-in] { opacity: 1; transform: none; }
 html[data-perf=low] [data-reveal] { transform: none; }
 @media (prefers-reduced-motion: reduce) { [data-reveal] { opacity: 1; transform: none; } }

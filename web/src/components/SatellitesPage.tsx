@@ -9,6 +9,7 @@ import { prettyName } from "@/lib/names";
 import { Chip, PageHead, Reveal } from "@/components/ui";
 import { SAT_COLORS } from "@/lib/sats";
 import { DriftClocks } from "@/components/DriftClocks";
+import { OrbitDepth } from "@/components/OrbitDepth";
 import { Eyebrow } from "@/components/Figure";
 import { clock, getDrift, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
@@ -107,8 +108,11 @@ export function SatellitesPage() {
 
   return (
     <div>
-      <PageHead eyebrow="Live · satellites" info="viirs" title="Which satellites saw it," italic="and when?"
-        lede="Every number in Emberline was seen by one of these. The record breaks where the eyes change, and keeps shifting as the old ones drift." />
+      <div className="grid items-center gap-6 md:grid-cols-[1.7fr_1fr]">
+        <div><PageHead eyebrow="Live · satellites" info="viirs" title="Which satellites saw it," italic="and when?"
+        lede="Every number in Emberline was seen by one of these. The record breaks where the eyes change, and keeps shifting as the old ones drift." /></div>
+        <OrbitDepth className="mx-auto hidden w-full max-w-[19rem] md:block" />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {FLEET.map((s, i) => (

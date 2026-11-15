@@ -12,6 +12,7 @@ import Link from "next/link";
 import { fmtInt, fmtNum } from "@/lib/format";
 import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
+import { InfoDot } from "@/components/ui";
 import { getCountryMonthHistory, loadJson } from "@/lib/queries";
 import type { AreaRow } from "@/lib/types";
 
@@ -39,7 +40,7 @@ export function useMonthToDate() {
 
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 export const monthName = (m: string) => MONTH[Number(m.slice(5, 7)) - 1] ?? m;
-const BADGE = "rounded-full border border-[var(--ember)] px-2.5 py-0.5 text-xs font-medium text-[var(--ember)]";
+const BADGE = "rounded-full border border-[var(--red)] px-2.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--red)]";
 
 interface CellsFile {
   generated_utc: string; label: string; month: string; window_utc: [string, string]; days_covered: number; days_in_month: number;
@@ -125,7 +126,7 @@ export function MonthToDateCard({ country, area, range }: {
   return (
     <section className="card mt-6 min-w-0 scroll-mt-24 p-5 sm:p-6" id="this-month" data-testid="month-to-date">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="display text-2xl">This month so far{area ? ` · ${area.label}` : ""}</h2>
+        <h2 className="display flex items-center gap-2.5 text-2xl">This month so far{area ? ` · ${area.label}` : ""} <InfoDot k="monthToDate" align="start" /></h2>
         <span className={BADGE}>provisional · raw · near-real-time · not harmonized</span>
       </div>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -183,7 +184,7 @@ export function MonthUnusualPanel() {
   return (
     <section className="window mx-auto mt-6 max-w-5xl p-6 sm:p-8" data-testid="month-unusual">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="display t-d3">Is this {mn} unusual?</h2>
+        <h2 className="display flex items-center gap-2.5 t-d3">Is this {mn} unusual? <InfoDot k="monthToDate" align="start" /></h2>
         <span className={BADGE}>{data.label}</span>
       </div>
       <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[var(--text-secondary)]">
