@@ -64,7 +64,7 @@ export function Explorer() {
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
-  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to, fm: fromM === 1 ? null : fromM, tm: toM === 12 ? null : toM });
+  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to, fm: fromM === 1 ? null : fromM, tm: toM === 12 ? null : toM, sel: selCell ? `${selCell.year}-${selCell.month}` : null });
   useUrlState((q) => {
     const a = areaFromQuery(q);
     if (a?.ok) {
@@ -72,12 +72,14 @@ export function Explorer() {
       if (a.area.kind === "country") lastCountry.current = a.area.name; else if (a.fields) setBox(a.fields);
     } else if (a && !a.ok) { setBox(a.fields); setBoxErr({ fields: a.fieldErrors, message: a.message }); }
     else { setArea({ kind: "country", name: "Canada" }); }
+    const sm = /^(\d{4})-(\d{1,2})$/.exec(q.get("sel") ?? "");
+    setSelCell(sm && Number(sm[1]) >= FIRST && Number(sm[1]) <= 2025 && Number(sm[2]) >= 1 && Number(sm[2]) <= 12 ? { year: Number(sm[1]), month: Number(sm[2]) } : null);
     const m = q.get("mode");
     setMode(m === "harmonized" ? "harmonized" : "raw");
     const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
     const fm = intParam(q, "fm", 1, 12) ?? 1, tm = intParam(q, "tm", 1, 12) ?? 12;
     if (f * 12 + fm <= t * 12 + tm) { setFrom(f); setTo(t); setFromM(fm); setToM(tm); } else { setFrom(FIRST); setTo(2025); setFromM(1); setToM(12); }
-  }, () => viewQuery(), [areaKey(area), mode, from, to, fromM, toM]);
+  }, () => viewQuery(), [areaKey(area), mode, from, to, fromM, toM, selCell?.year, selCell?.month]);
   const { data, error, loading, retry } = useAreaData(area);
   const ds = useDataset();
   const coverageState = useCoverageState();
@@ -243,7 +245,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
-        lede="A burning activity calendar for your area of interest. Pick a country, draw an area or type latitude and longitude, choose a date range, and see the critical periods, the years with the highest burning activity and how this month compares with the historical median. Switch between the raw record (uncorrected) and the harmonized one, and download the calendar, the hotspots and a brief. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
+        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. Harmonized record 2003–2025; 2026 so far as provisional raw counts." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
@@ -312,21 +314,35 @@ export function Explorer() {
           </button>
         </div>
 
-        {ex && (
-          <p className="mt-4 text-sm text-[var(--text-secondary)]">
-            New here? <button type="button" data-testid="nsw-example" onClick={openExample} className="link-ul font-medium text-[var(--text-primary)]">Open the worked example: New South Wales, {MONTHS[ex.unusual.month - 1]} {ex.unusual.year}</button>, or pick an area and click any month for its fire report.
-            {" "}Quick areas:{" "}
-            {PRESETS.map(([name, bb], i) => (
-              <span key={name}>{i > 0 && " · "}<button type="button" data-testid={`preset-${i}`} onClick={() => openPreset(bb)} className="link-ul text-[var(--text-primary)]">{name}</button></span>
-            ))}.
-          </p>
-        )}
+        <div className="mt-5 grid gap-3 sm:grid-cols-3" data-testid="how-to">
+          {[
+            ["1", "Pick your area", "A country above, a quick area below, or draw your own on the map."],
+            ["2", "Read the verdict", "The fire report says how unusual a month was. Click any month in the calendar to change it."],
+            ["3", "Take it with you", "Download the brief, the calendar or the hotspots, or copy a link to this exact view."],
+          ].map(([n, t, d]) => (
+            <div key={n} className="flex gap-3 rounded-2xl bg-[var(--surface-alt)] p-3.5">
+              <span className="dot-num text-2xl leading-none text-[var(--red)]">{n}</span>
+              <p className="text-[13px] leading-snug text-[var(--text-secondary)]"><span className="block font-medium text-[var(--text-primary)]">{t}</span>{d}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+          Quick areas:{" "}
+          {ex && <><button type="button" data-testid="nsw-example" onClick={openExample} className="link-ul font-medium text-[var(--text-primary)]">New South Wales, {MONTHS[ex.unusual.month - 1]} {ex.unusual.year} (worked example)</button> · </>}
+          {PRESETS.map(([name, bb], i) => (
+            <span key={name}>{i > 0 && " · "}<button type="button" data-testid={`preset-${i}`} onClick={() => openPreset(bb)} className="link-ul text-[var(--text-primary)]">{name}</button></span>
+          ))}
+        </p>
+        <nav aria-label="On this page" className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+          <span>Jump to</span>
+          {[["#report", "Verdict"], ["#calendar", "Calendar"], ["#critical", "Critical periods"], ["#this-month", "This month vs median"], ["#hotspots", "Hotspot CSV"], ["#area", "Draw an area"]].map(([h, t]) => (
+            <a key={h} href={h} className="link-ul text-[var(--text-primary)]">{t}</a>
+          ))}
+        </nav>
         {data && reportCell && data.harmonized.keys.length > 0 && !notProcessed && (
-          <FireReport place={place} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
-            err={errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null} errCountry={errCountry} pooled={!!errPooled} fitVersion={data.params.fit_version} picked={!!selCell} />
+          <div id="report" className="scroll-mt-24"><FireReport place={place} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
+            err={errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null} errCountry={errCountry} pooled={!!errPooled} fitVersion={data.params.fit_version} picked={!!selCell} /></div>
         )}
-        <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
-        <div id="hotspots" className="scroll-mt-24"><HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} /></div>
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
@@ -371,7 +387,7 @@ export function Explorer() {
         {scope && <ScopePanel scope={scope} mode={mode} />}
         {data && cal && view && !notProcessed && !rawOnly && (
           <div className="fade-in">
-            <div className="mt-6">
+            <div id="calendar" className="mt-6 scroll-mt-24">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <Eyebrow>Burning activity calendar · {place} · detections per month</Eyebrow>
                 <p className={`rounded-full px-3 py-1 text-xs font-medium ${mode === "raw" ? "bg-[var(--surface-2)] text-[var(--text-primary)]" : "bg-[var(--ember-soft)] text-[var(--text-primary)]"}`}>
@@ -394,7 +410,7 @@ export function Explorer() {
                   </p>
                 );
               })()}
-              <CriticalPeriods rows={cal.rows} from={view.lo} to={view.hi} place={place} mode={mode} />
+              <div id="critical" className="scroll-mt-24"><CriticalPeriods rows={cal.rows} from={view.lo} to={view.hi} place={place} mode={mode} /></div>
               {mode === "harmonized" && (unusual || errCountry) && (
                 <div data-testid="heldout-context" className="mt-3 rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
                   {unusual && (
@@ -481,6 +497,8 @@ export function Explorer() {
           </div>
         )}
         {fit && data && !notProcessed && <FitQualityCard fit={fit} params={data.params} className="mt-8" />}
+        <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
+        <div id="hotspots" className="scroll-mt-24"><HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} /></div>
         {data && (
           <details className="mt-6 rounded-2xl border border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
             <summary className="cursor-pointer font-medium text-[var(--text-primary)]">Provenance</summary>
