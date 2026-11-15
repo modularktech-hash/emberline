@@ -26,6 +26,7 @@ import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
 import { boxScope, scopeCsvHeader } from "@/lib/scope";
 import { ScopePanel } from "@/components/ScopePanel";
+import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/uncertainty";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -112,6 +113,16 @@ export function Explorer() {
   const boxCells = area.kind === "box" ? area.parents.length : 0;
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
   const covLabel = cov && unfitted ? STATUS_LABEL[cov.status] : null;
+  const unc = useUncertainty();
+  const busiestYear = view ? [...(mode === "raw" ? view.raw : view.harm)].filter((r) => r.value !== null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]?.year ?? null : null;
+  // E27: coefficient-only intervals for harmonized country totals (busiest year, selected year/month).
+  const uncRows = mode === "harmonized" && area.kind === "country" && data && busiestYear != null ? [
+    { label: `Busiest year ${busiestYear}`, u: uncFor(unc.data, data.params.fit_version, area.name, busiestYear) },
+    ...(selCell ? [
+      { label: `Selected year ${selCell.year}`, u: uncFor(unc.data, data.params.fit_version, area.name, selCell.year) },
+      { label: `Selected month ${MONTHS[selCell.month - 1]} ${selCell.year}`, u: uncFor(unc.data, data.params.fit_version, area.name, selCell.year, selCell.month) },
+    ] : []),
+  ] : null;
   const scope = useMemo(() => (area.kind === "box" && data && cal ? boxScope(area.bbox, area.parents, data.raw, cal) : null), [area, data, cal]);
 
   const exportCsv = () => {
@@ -133,6 +144,10 @@ export function Explorer() {
         ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
         source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
         downloaded: new Date().toISOString(),
+        ...(uncRows ? {
+          coefficient_interval_95: uncRows.map((r) => `${r.label}: ${fmtUnc(r.u)}`).join("; "),
+          coefficient_interval_label: `${UNC_LABEL} ${UNC_NOT_TOTAL} 2.5th-97.5th percentile over bootstrap draws; source harmonized_uncertainty.json`,
+        } : {}),
         reproduce: reproducingUrl(viewQuery()),
       },
       ["year", "month", "detections", "basis"],
@@ -263,6 +278,15 @@ export function Explorer() {
                   </p>
                 );
               })()}
+              {uncRows && (
+                <div data-testid="unc-note" className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  <p className="font-medium text-[var(--text-primary)]">95% coefficient interval, harmonized country total</p>
+                  <ul className="tabular mt-1">
+                    {uncRows.map((r) => <li key={r.label}>{r.label}: <span className="text-[var(--text-primary)]">{fmtUnc(r.u)}</span></li>)}
+                  </ul>
+                  <p className="mt-1">{UNC_LABEL} {UNC_NOT_TOTAL}{!selCell && " Select a month in the calendar to see its year and month."}</p>
+                </div>
+              )}
             </div>
             <div className="mt-8 grid gap-6 border-t border-[var(--hairline)] pt-6 lg:grid-cols-[1fr_17rem]">
               <div>
