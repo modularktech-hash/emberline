@@ -147,3 +147,5 @@ right now, what state the working tree may be in, and how to pick it up.
 ## Design pass 3 (14 Nov, ~21:05–21:30 UTC)
 
 Done and pushed: T1 named page transition (`components/RouteTransition.tsx`), L1 logo (`components/Logo.tsx`, icons, OG image), D1–D14. Checklist with notes: `docs/design-pass-3.md`. `web/` released in STATUS.
+
+- 15 Nov — Award features pass (builder, session_012VvB…) finished and released `web/`: proof.json, month_to_date.json, dataset.json, pipeline.json, eonet.json, calendar_harmonized_countries.csv published by committed scripts (build_proof, build_month_to_date, build_dataset_card, build_pipeline_stats, build_eonet, build_density); low-power mode no longer triggered by CPU count (D1). Re-run order after a data change: build_proof → build_dataset_card → build_density → build_pipeline_stats → build_manifest (twice if pipeline.json changed).
