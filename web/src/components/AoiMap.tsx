@@ -22,6 +22,10 @@ import { cellToBoundary } from "h3-js";
  */
 
 const DARK_STYLE = "https://tiles.openfreemap.org/styles/positron";
+/** NASA GIBS true colour (NOAA-20 VIIRS corrected reflectance), WMTS z/y/x, max zoom 9. Optional layer, off by default. */
+const GIBS_SOURCE = "gibs-truecolor";
+const gibsDate = () => new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);
+const gibsTiles = (date: string) => `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
 
 const BOX_SOURCE = "aoi-box";
 const CELL_SOURCE = "aoi-cells";
@@ -82,6 +86,8 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
   const [drawing, setDrawing] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [satView, setSatView] = useState(false);
+  const [satDate, setSatDate] = useState<string | null>(null);
 
   // Keep the latest callback without re-initializing the map on every render.
   // Assigned in an effect, not during render: a render can be discarded, and a
@@ -232,6 +238,19 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
 
   const toggleDraw = useCallback(() => setDrawing((d) => !d), []);
 
+  // Satellite view: the GIBS raster is added on first use (no tile requests until then) and kept under the area layers.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (satView && !map.getSource(GIBS_SOURCE)) {
+      const date = gibsDate();
+      map.addSource(GIBS_SOURCE, { type: "raster", tiles: [gibsTiles(date)], tileSize: 256, maxzoom: 9, attribution: `Imagery: NASA GIBS / EOSDIS (NOAA-20 VIIRS true colour, ${date})` });
+      map.addLayer({ id: GIBS_SOURCE, type: "raster", source: GIBS_SOURCE }, `${CELL_SOURCE}-fill`);
+      setSatDate(date);
+    }
+    if (map.getLayer(GIBS_SOURCE)) map.setLayoutProperty(GIBS_SOURCE, "visibility", satView ? "visible" : "none");
+  }, [satView, ready]);
+
   return (
     <div className={`relative overflow-hidden rounded-2xl border border-[var(--hairline)] ${className ?? "h-80"}`}>
       <div ref={containerRef} className="absolute inset-0" />
@@ -253,6 +272,13 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
           className="absolute left-3 top-3 z-10 glass-thin px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-sm"
         >
           {drawing ? "Drag to draw · cancel" : "Draw area"}
+        </button>
+      )}
+      {ready && !failed && (
+        <button type="button" onClick={() => setSatView((v) => !v)} aria-pressed={satView}
+          title={satDate ? `NASA GIBS, NOAA-20 VIIRS true colour, ${satDate}` : "NASA GIBS true-colour imagery"}
+          className="absolute bottom-3 left-3 z-10 glass-thin px-3 py-1 text-xs font-medium text-[var(--text-primary)] shadow-sm">
+          {satView ? `Satellite view · ${satDate ?? ""}` : "Satellite view (NASA GIBS)"}
         </button>
       )}
     </div>
