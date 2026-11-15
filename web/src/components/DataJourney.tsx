@@ -122,7 +122,7 @@ export function DataJourney({ compact = false }: { compact?: boolean }) {
                   <InfoDot title={s.title}>{s.what}.</InfoDot>
                 </div>
                 <button type="button" onClick={() => setOpen(s.key)} aria-haspopup="dialog" className="mt-3 flex flex-1 flex-col text-left">
-                  <DotDigits text={s.num} className="text-[1.9rem] leading-none" />
+                  <DotDigits text={s.num} className="text-[2.3rem] leading-none" />
                   <span className="mt-2 text-[13px] leading-snug text-[var(--text-secondary)]">{SHORT[s.key]}</span>
                   <span className="mt-auto pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Open stage →</span>
                 </button>

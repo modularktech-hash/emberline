@@ -91,7 +91,7 @@ export function Seasons() {
 
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
-        {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+        {loading && <div className="mt-6 h-[300px] dot-skel" />}
         {data && !v && (
           <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">
             {areaLabel(area)} has no fit{cov ? ` (${STATUS_LABEL[cov.status]})` : ""}, so it has no harmonized record. This page compares years in the harmonized unit only; the raw record (uncorrected) is in the Explorer.

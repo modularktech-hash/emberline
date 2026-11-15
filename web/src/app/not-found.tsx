@@ -9,8 +9,8 @@ export default function NotFound() {
   return (
     <section className="flex min-h-[70vh] flex-col items-center justify-center py-20 text-center">
       <div className="tile tile-ink px-8 py-10 sm:px-12">
-        <div className="flex items-center justify-between gap-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
-          <span>Signal lost</span><span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)]" />
+        <div className="flex items-center justify-between gap-6 font-mono text-[11px] uppercase tracking-[0.18em] opacity-60">
+          <span>Signal lost</span><span aria-hidden className="live-dot" />
         </div>
         <div className="mt-6">
           <DotText text="404" dot={13} gap={4} lit="currentColor" dim="rgba(127,127,127,0.18)" />

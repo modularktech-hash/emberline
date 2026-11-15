@@ -103,7 +103,7 @@ export function Method() {
 
       {error && <div className="mt-8"><Failed error={error} retry={retry} what="the fit (params)" /></div>}
       <CoverageError state={coverageState} className="mt-4" />
-      {loading && <div className="mt-8 h-64 animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+      {loading && <div className="mt-8 h-64 dot-skel" />}
       {p && summary && (
         <>
           <Reveal><section className="card mt-8 min-w-0 p-5 sm:p-6">

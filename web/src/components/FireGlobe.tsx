@@ -15,12 +15,8 @@ export { SAT_COLORS };
 const RAMP = ["#f9c46b", "#f49b3f", "#e66a26", "#c93f1c", "#96221a", "#561114"];
 const fireColor = (frp: number, max: number) => RAMP[Math.min(5, Math.floor(Math.sqrt(frp / max) * 6))];
 const EARTH_KM = 6371;
-/**
- * Dotted land, pre-baked into one small equirectangular texture
- * (scripts/make_globe_texture.py). It replaces ~10k H3 hex-dot meshes that
- * were polyfilled from countries.geojson on the main thread at every load.
- */
-const LAND_TEXTURE = "/geo/land-dots.png";
+/** Earth textures: NASA Blue Marble (day) and Black Marble (night), compressed to WebP; a small copy for the static poster. */
+const DAY_TEXTURE = "/globe/day.webp", NIGHT_TEXTURE = "/globe/night.webp", POSTER_TEXTURE = "/globe/day-small.webp";
 
 /** Position of each satellite at time `t`. */
 export function satellitePositions(recs: Array<{ tle: Tle; rec: SatRec }>, t: Date) {
@@ -90,8 +86,8 @@ export function GlobePoster({ height, note }: { height: number; note?: string })
   const d = Math.round(height * 0.72);
   return (
     <div className="flex h-full max-w-full flex-col items-center justify-center overflow-hidden" style={{ height }}>
-      <div aria-hidden className="rounded-full shadow-[0_0_60px_10px_rgba(242,165,107,0.35)]"
-        style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(60,30,15,0.18) 72%), url(${LAND_TEXTURE}) 22% 50% / 200% 100% #f3ecdc`, backgroundBlendMode: "normal, normal, multiply" }} />
+      <div aria-hidden className="rounded-full"
+        style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,0.45) 74%), url(${POSTER_TEXTURE}) 22% 50% / 200% 100% #1c3a5e`, boxShadow: "0 0 0 1.5px var(--hairline), 0 0 40px 4px rgba(143,184,240,0.35)" }} />
       {note && <p className="mt-4 max-w-xs text-center text-xs text-[var(--text-muted)]">{note}</p>}
     </div>
   );
@@ -334,16 +330,35 @@ function GlobeInner({
     g.renderer().setPixelRatio(Math.min(low ? 1 : 1.5, window.devicePixelRatio || 1));
   }, [ready, low]);
 
+  // Day side: NASA Blue Marble. Night side: NASA Black Marble city lights. The terminator follows the
+  // sun's position for the current UTC time (subsolar point from the day of year and the hour).
   const material = useMemo(() => {
-    const m = new THREE.MeshPhongMaterial({ color: "#fff6e6", emissive: "#efe4cb", emissiveIntensity: 0.28, shininess: 4 });
-    new THREE.TextureLoader().load(LAND_TEXTURE, (tex) => {
+    const now = new Date();
+    const dayOfYear = (Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - Date.UTC(now.getUTCFullYear(), 0, 0)) / 86400000;
+    const lat = -23.44 * Math.cos((2 * Math.PI * (dayOfYear + 10)) / 365);
+    const lng = -((now.getUTCHours() + now.getUTCMinutes() / 60) - 12) * 15;
+    const phi = ((90 - lat) * Math.PI) / 180, theta = ((90 - lng) * Math.PI) / 180;
+    const sun = new THREE.Vector3(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta));
+    const blank = new THREE.DataTexture(new Uint8Array([40, 60, 90, 255]), 1, 1);
+    blank.needsUpdate = true;
+    const m = new THREE.ShaderMaterial({
+      uniforms: { dayTex: { value: blank }, nightTex: { value: blank }, sunDir: { value: sun } },
+      vertexShader: "varying vec2 vUv; varying vec3 vN; void main(){ vUv = uv; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform sampler2D dayTex; uniform sampler2D nightTex; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vN;"
+        + " void main(){ float d = dot(normalize(vN), sunDir); float k = smoothstep(-0.12, 0.22, d);"
+        + " vec3 day = texture2D(dayTex, vUv).rgb; vec3 night = texture2D(nightTex, vUv).rgb;"
+        + " vec3 c = mix(night * 1.35 + day * 0.05, day * (0.62 + 0.38 * clamp(d, 0.0, 1.0)), k);"
+        + " gl_FragColor = vec4(c, 1.0);\n#include <colorspace_fragment>\n}",
+    });
+    const load = (url: string, key: "dayTex" | "nightTex") => new THREE.TextureLoader().load(url, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 4;
-      m.map = tex; m.needsUpdate = true;
+      m.uniforms[key].value = tex; m.needsUpdate = true;
     });
+    load(DAY_TEXTURE, "dayTex"); load(NIGHT_TEXTURE, "nightTex");
     return m;
   }, []);
-  useEffect(() => () => { material.map?.dispose(); material.dispose(); }, [material]);
+  useEffect(() => () => { (material.uniforms.dayTex.value as THREE.Texture).dispose(); (material.uniforms.nightTex.value as THREE.Texture).dispose(); material.dispose(); }, [material]);
 
   const onReady = useCallback(() => {
     const g = ref.current;
@@ -376,7 +391,7 @@ function GlobeInner({
           globeMaterial={material}
           globeCurvatureResolution={low ? 6 : 4}
           showAtmosphere
-          atmosphereColor="#f2a56b"
+          atmosphereColor="#8fb8f0"
           atmosphereAltitude={0.16}
           enablePointerInteraction={satLabels && showSats && !low}
           pointsData={pts}

@@ -57,7 +57,7 @@ html[data-perf=low] .backdrop-cream { background-image: none; }
 .tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
 .font-mono, code, kbd, pre, samp { font-family: var(--font-code); }
 /* Headline numbers are dot-matrix everywhere. */
-.dot-num, .stat-value, .display.tabular, .tabular.display { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.dot-num, .stat-value { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
 
 /* Labels: one mono, all caps, tracked. */
 .eyebrow { font-family: var(--font-code); font-size: 11px; line-height: 1.5; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; }
@@ -182,8 +182,8 @@ html[data-perf=low] .cal-wipe { animation: fade-in 400ms ease both; }
 html[data-perf=low] .fade-in { animation-duration: 240ms; }
 /* Calendar cells ripple in by month, once. */
 @keyframes cell-in { from { opacity: 0; transform: scale(0.4); } }
-.cal-ripple [role=gridcell], .cal-ripple td button { animation: cell-in 420ms var(--ease-out) both; animation-delay: calc(var(--ci, 0) * 14ms); }
-html[data-perf=low] .cal-ripple [role=gridcell], html[data-perf=low] .cal-ripple td button { animation: none; }
+button[data-cell] { animation: cell-in 420ms var(--ease-out) both; animation-delay: calc(var(--ci, 0) * 12ms); }
+html[data-perf=low] button[data-cell] { animation: none; }
 
 .sticky-first table th:first-child, .sticky-first table td:first-child { position: sticky; left: 0; background: var(--surface); }
 .sticky-first table td:first-child { z-index: 1; }

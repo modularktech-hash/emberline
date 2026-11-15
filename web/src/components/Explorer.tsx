@@ -241,7 +241,7 @@ export function Explorer() {
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
-        {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
+        {loading && <div className="mt-8 h-[420px] dot-skel" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
             {ds?.dataset === "world" ? (

@@ -45,7 +45,7 @@ export function ValidationPlot() {
   const [mode, setMode] = useState<"strong" | "weak" | "other">("strong");
   const [other, setOther] = useState("Canada");
   if (error) return <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load validation_points.json: {error.message}</p>;
-  if (!data || !examples) return <div className="mt-6 h-72 animate-pulse rounded-2xl bg-[var(--surface-2)]" />;
+  if (!data || !examples) return <div className="mt-6 h-72 dot-skel" />;
   const sel = mode === "other" ? (data.countries[other] ? other : names[0]) : examples[mode];
   const c = data.countries[sel];
   const max = Math.max(1, ...c.points.flat());

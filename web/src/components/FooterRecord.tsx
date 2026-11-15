@@ -70,9 +70,9 @@ export function FooterRecord() {
           </div>
           {series.length > 0 && <div className="tabular mt-1 flex justify-between text-[10px] opacity-60"><span>{series[0].year}</span><span>{series[series.length - 1].year}</span></div>}
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
-            <dt className="text-[#8f887a]">Countries</dt><dd className="text-[#e6dfcd]">{names.length ? <>{names.length} fitted, {cs ? <>{cs.rawOnly} raw calendar only (no fit), {cs.noCalendar} no calendar</> : <>{d?.table.not_fitted?.length ?? 0} without a fit (raw only where one exists)</>} · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "loading"}</dd>
-            <dt className="text-[#8f887a]">Years</dt><dd className="tabular">{years.length ? <>archive {span(Math.min(...years), Math.max(...years))}; harmonized {span(2003, Math.max(...years))}</> : "loading"}</dd>
-            <dt className="text-[#8f887a]">Fit</dt><dd className="tabular">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "loading"}</dd>
+            <dt className="opacity-60">Countries</dt><dd className="">{names.length ? <>{names.length} fitted, {cs ? <>{cs.rawOnly} raw calendar only (no fit), {cs.noCalendar} no calendar</> : <>{d?.table.not_fitted?.length ?? 0} without a fit (raw only where one exists)</>} · <Link href="/data" className="foot-link rounded-md underline-offset-2 hover:underline">list</Link></> : "loading"}</dd>
+            <dt className="opacity-60">Years</dt><dd className="tabular">{years.length ? <>archive {span(Math.min(...years), Math.max(...years))}; harmonized {span(2003, Math.max(...years))}</> : "loading"}</dd>
+            <dt className="opacity-60">Fit</dt><dd className="tabular">{d ? <>{d.params.fit_version} · trained {span(d.params.train_years[0], d.params.train_years[1])}, tested {span(d.params.test_years[0], d.params.test_years[1])}</> : "loading"}</dd>
           </dl>
           <Link href="/method" className="foot-link mt-4 inline-flex items-center gap-1.5 rounded-md text-sm">How it is corrected <span aria-hidden>→</span></Link>
         </>

@@ -96,22 +96,22 @@ export function RouteTransition() {
   }, [phase, pathname, lift]);
 
   if (phase === "idle") return null;
+  const out = phase === "out";
   const at = `${origin.x.toFixed(1)}% ${origin.y.toFixed(1)}%`;
   const covered = phase === "hold";
-  const out = phase === "out";
   // The ink disc and, just ahead of it, a ring of dots. Out: the ink fades first, the dots last.
   const disc = (lead: number, ms: number): React.CSSProperties => ({
     clipPath: phase === "in" ? `circle(0% at ${at})` : `circle(${150 + lead}% at ${at})`,
-    transition: `clip-path ${ms}ms cubic-bezier(.65,0,.35,1), opacity ${OUT_MS}ms cubic-bezier(.2,.8,.2,1)`,
+    transition: `clip-path ${ms}ms cubic-bezier(.65,0,.35,1), opacity ${OUT_MS}ms cubic-bezier(.2,.8,.2,1) ${out && lead ? 90 : 0}ms`,
   });
   return (
     <div key={label.title} aria-hidden className="pointer-events-auto fixed inset-0 z-[100]" data-curtain={phase}>
       <div className="absolute inset-0" ref={(el) => { if (el && phase === "in") requestAnimationFrame(() => { el.style.clipPath = `circle(165% at ${at})`; }); }}
-        style={{ ...disc(15, IN_MS), opacity: out ? 0 : 1, transitionDelay: out ? "90ms" : "0ms", backgroundImage: "radial-gradient(circle, var(--ink) 3.2px, transparent 3.8px)", backgroundSize: "12px 12px" }} />
+        style={{ ...disc(15, IN_MS), opacity: out ? 0 : 1, backgroundImage: "radial-gradient(circle, var(--ink) 3.2px, transparent 3.8px)", backgroundSize: "12px 12px" }} />
       <div className="absolute inset-0 bg-[var(--ink)]" ref={(el) => { if (el && phase === "in") requestAnimationFrame(() => { el.style.clipPath = `circle(150% at ${at})`; }); }}
         style={{ ...disc(0, IN_MS + 40), opacity: out ? 0 : 1 }} />
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-[var(--on-ink)]"
-        style={{ opacity: covered ? 1 : out ? 0 : 0.0, transition: `opacity ${out ? 120 : 160}ms ease`, transitionDelay: phase === "in" ? "120ms" : "0ms" }}
+        style={{ opacity: covered ? 1 : 0, transition: `opacity ${out ? 120 : 160}ms ease ${phase === "in" ? 120 : 0}ms` }}
         ref={(el) => { if (el && phase === "in") requestAnimationFrame(() => { el.style.opacity = "1"; }); }}>
         <p className="font-mono text-[11px] uppercase tracking-[0.32em] opacity-60">{label.group}</p>
         <p className="dot-num mt-3 text-[clamp(2.4rem,9vw,6rem)] leading-none tracking-[0.08em]">{label.title}</p>
