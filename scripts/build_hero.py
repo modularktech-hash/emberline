@@ -29,7 +29,7 @@ import polars as pl
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "web" / "public" / "data"
 OUT = ROOT / "web" / "src" / "content" / "hero.json"
-COUNTRIES = ["Australia", "Canada", "Brazil", "India"]
+COUNTRIES = ["Australia", "Canada", "Brazil", "United_States"]  # parquet keys; underscores become spaces for display
 FIRST, LAST = 2003, 2025
 
 
@@ -55,7 +55,7 @@ def main() -> None:
         hs = {y: h.get(y, 0.0) for y in range(FIRST, LAST + 1)}
         base_r, base_h = mean(splice, 2003, 2011), mean(hs, 2003, 2011)
         out_c.append({
-            "country": c,
+            "country": c.replace("_", " "),
             "raw": [round(splice[y] / base_r, 4) for y in range(FIRST, LAST + 1)],
             "harm": [round(hs[y] / base_h, 4) for y in range(FIRST, LAST + 1)],
             "step_raw": round(mean(splice, 2012, 2014) / mean(splice, 2009, 2011), 3),
