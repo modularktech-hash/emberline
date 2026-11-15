@@ -99,6 +99,22 @@ with their own version.
   (NOAA-20/21) than the Suomi-NPP history.
 - Claims are regional; there is no corrected global total.
 
+## Other sources
+
+- NASA FIRMS area API (keyed, `FIRMS_MAP_KEY` from the environment only):
+  `month_to_date.json` (`scripts/build_month_to_date.py`).
+- NASA GIBS / EOSDIS true-colour imagery (NOAA-20 VIIRS corrected
+  reflectance), an optional Explorer map layer:
+  https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api
+- NASA EONET open wildfire events, an optional globe layer: `eonet.json`
+  (`scripts/build_eonet.py`), https://eonet.gsfc.nasa.gov/
+- Natural Earth 1:110m country outlines (public domain),
+  `web/public/geo/countries.geojson`: hotspot and month-to-date membership and
+  the approximate land areas behind `land_area_km2` / `harm_per_10k_km2_yr`
+  in `countries.json` (`scripts/build_density.py`),
+  https://www.naturalearthdata.com/
+- Orbital elements: CelesTrak via tle.ivanstanojevic.me (`tle.json`).
+
 ## Licence and citation
 
 Code: MIT (`LICENSE`). Data: derived from NASA FIRMS; credit NASA FIRMS /

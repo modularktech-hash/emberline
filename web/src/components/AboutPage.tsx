@@ -26,7 +26,10 @@ const SOURCES: Array<[string, string, Array<[string, string]>]> = [
   ["Orbital elements (TLEs)", "Public CelesTrak elements via tle.ivanstanojevic.me", [["CelesTrak", "https://celestrak.org/"], ["TLE API", "https://tle.ivanstanojevic.me/"]]],
   ["Fire diurnal cycle parameters", "Andela et al. (2015), Atmos. Chem. Phys. 15, 8831–8846, Table 1 — illustration only", [["doi:10.5194/acp-15-8831-2015", "https://doi.org/10.5194/acp-15-8831-2015"]]],
   ["MODIS FRP detection thresholds (9–11 MW)", "Laurent et al. (2019), Biogeosciences 16, 275–288, citing Roberts & Wooster (2008) and Schroeder et al. (2010) — \u201cthresholds of FRP detection\u201d, a sanity check only", [["Laurent et al. 2019", "https://bg.copernicus.org/articles/16/275/2019/"]]],
-  ["Country outlines", "Natural Earth 1:110m (public domain)", [["naturalearthdata.com", "https://www.naturalearthdata.com/"]]],
+  ["Current month to date", "NASA FIRMS area API (MODIS_NRT, VIIRS_NOAA20_NRT), provisional raw counts", [["FIRMS API", "https://firms.modaps.eosdis.nasa.gov/api/"]]],
+  ["Satellite imagery (optional map layer)", "NASA GIBS / EOSDIS, NOAA-20 VIIRS corrected reflectance true colour", [["NASA GIBS", "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api"]]],
+  ["Wildfire events (optional globe layer)", "NASA EONET API v3, open events in the Wildfires category — curated, a different source from FIRMS", [["NASA EONET", "https://eonet.gsfc.nasa.gov/"]]],
+  ["Country outlines and areas", "Natural Earth 1:110m (public domain): hotspot and month-to-date membership, approximate land areas", [["naturalearthdata.com", "https://www.naturalearthdata.com/"]]],
   ["Basemap", "OpenFreeMap / OpenMapTiles, © OpenStreetMap contributors", [["OpenFreeMap", "https://openfreemap.org/"], ["OpenStreetMap", "https://www.openstreetmap.org/copyright"]]],
 ];
 
