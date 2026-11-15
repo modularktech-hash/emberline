@@ -180,6 +180,7 @@ export interface ProofFile {
     definition: string; n_countries: number; per_country_of: number;
     chance_reference: { share: number; definition: string };
     series: Record<RecordSeries, { flagged: number; of: number; share: number }>;
+    median_per_country: Record<RecordSeries, number>;
     examples: string[]; countries: Record<string, Partial<Record<RecordSeries, number>>>;
   };
   seam: { definition: string; candidates: number[]; n_countries: number; skipped: string[]; raw_2012: number; harm_2012: number; chance_2012: number; countries: Record<string, { raw: number | null; harm: number | null }> };

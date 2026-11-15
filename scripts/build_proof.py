@@ -38,7 +38,7 @@ WITHIN = 1.25  # "within x1.25 of the diagonal"
 BASE_YEARS = (2003, 2011)
 TEST_YEARS = (2012, 2021)
 CANDIDATES = list(range(2006, 2020))  # 3 years before and after stay inside 2003-2021
-EXAMPLES = ["India", "Brazil"]
+EXAMPLES = ["Canada"]  # same default country as the Explorer
 
 
 def r(v: float | None, dp: int = 4) -> float | None:
@@ -169,6 +169,7 @@ def records(own: list[str]) -> dict:
         shares[name] = {"flagged": int(test["rec"].sum()), "of": test.height, "share": r(test["rec"].mean())}
         for row in test.group_by("key").agg(pl.col("rec").sum()).iter_rows():
             per_country[row[0]][name] = int(row[1])
+    med = {name: r(median(per_country[c].get(name, 0) for c in own), 1) for name in series}
     n_base = BASE_YEARS[1] - BASE_YEARS[0] + 1
     return {
         "definition": f"For each own-fit country, calendar month and year {TEST_YEARS[0]}-{TEST_YEARS[1]}: flagged as a record when the "
@@ -182,6 +183,7 @@ def records(own: list[str]) -> dict:
             "definition": f"if a year is exchangeable with the {n_base} baseline years (no trend, no ties), the chance it is the largest of the {n_base + 1} is 1/{n_base + 1}",
         },
         "series": shares,
+        "median_per_country": med,
         "examples": EXAMPLES,
         "countries": per_country,
     }

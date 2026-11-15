@@ -15,6 +15,7 @@ import { qualityCsvHeader } from "@/lib/quality";
 import { MonthYearCalendar, type CellRef } from "@/components/MonthYearCalendar";
 import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
+import { HotspotDownload } from "@/components/HotspotDownload";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
 import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
@@ -368,6 +369,7 @@ export function Explorer() {
         )}
         </div>
       </section></Reveal>
+      <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "box", bbox: area.bbox }} />
 
       <Reveal>
       <section id="area" className="mt-10 grid scroll-mt-24 gap-6 lg:grid-cols-[1fr_20rem]">

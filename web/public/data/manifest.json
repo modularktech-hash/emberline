@@ -16,7 +16,7 @@
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
     "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
     "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
-    "proof.json": "0adfe1493dd91bdba162b8d55c5add8b7578deb0cf911e2a66f1ee21e8c058ff",
+    "proof.json": "57a9a6d55b9d15b6853c22eafdfcd3579cfbb10f374bfe7fac2e9ab72295717f",
     "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
     "transfer_validation.json": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
     "validation_points.json": "a8dbfaaecdcac14b45eed5cbb93f62dafe864ea693adc1270c24458b3905b6ab"
@@ -636,8 +636,8 @@
    "dataset": "world",
    "purpose": "Computed numbers for the Method Proof section: 2012 step collapse, held-out benchmark counts, record-month shares, seam-year placebo",
    "source": "derived from params_global.json, validation_points.json, countries.json and the world calendars (scripts/build_proof.py)",
-   "bytes": 83916,
-   "sha256": "0adfe1493dd91bdba162b8d55c5add8b7578deb0cf911e2a66f1ee21e8c058ff",
+   "bytes": 83979,
+   "sha256": "57a9a6d55b9d15b6853c22eafdfcd3579cfbb10f374bfe7fac2e9ab72295717f",
    "format": "json",
    "top_level_keys": [
     "fit_version",

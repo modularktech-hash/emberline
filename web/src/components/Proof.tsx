@@ -159,7 +159,7 @@ const SERIES: Array<{ k: BenchSeries; label: string; note: string }> = [
 export function Benchmark() {
   const { data, error } = useProof();
   const [group, setGroup] = useState<"all" | "own" | "pooled">("all");
-  const [pick, setPick] = useState("India");
+  const [pick, setPick] = useState("Canada");
   if (error) return <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>;
   if (!data) return <div className="card mt-6 h-72 animate-pulse" />;
   const b = data.benchmark;
@@ -244,10 +244,10 @@ const REC: Array<{ k: RecordSeries; label: string; color: string }> = [
 function RecordCounter({ p }: { p: ProofFile }) {
   const r = p.records;
   const own = Object.keys(r.countries);
-  const [mode, setMode] = useState<string>(r.examples[0] ?? own[0]);
-  const [other, setOther] = useState("Canada");
+  const [mode, setMode] = useState<string>("all");
+  const [other, setOther] = useState(r.examples[0] ?? own[0]);
   const sel = mode === "other" ? (r.countries[other] ? other : own[0]) : mode;
-  const c = r.countries[sel] ?? {};
+  const c: Partial<Record<RecordSeries, number>> = sel === "all" ? r.median_per_country : r.countries[sel] ?? {};
   return (
     <div className="mt-6" data-testid="record-counter">
       <h3 className="display text-xl">False-Record Counter</h3>
@@ -270,12 +270,12 @@ function RecordCounter({ p }: { p: ProofFile }) {
       <p className="mt-2 text-xs text-[var(--text-muted)]">Thin mark: the {pct(r.chance_reference.share, 0)} order-statistics reference ({r.chance_reference.definition}). Trends and real extreme years move every series away from it.</p>
       <div className="mt-5 rounded-2xl border border-[var(--hairline)] p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Segmented label="Example country" value={mode} onChange={setMode} options={[...r.examples.map((e) => ({ value: e, label: prettyName(e) })), { value: "other", label: "Any country" }]} />
+          <Segmented label="Example country" value={mode} onChange={setMode} options={[{ value: "all", label: `All ${r.n_countries} countries (median)` }, { value: "other", label: "One country" }]} />
           {mode === "other" && <CountryPicker value={sel} options={own} onChange={setOther} label="Country" />}
         </div>
         <dl className="tabular mt-3 grid gap-3 sm:grid-cols-3" data-testid="record-example">
           {REC.map((s) => (
-            <div key={s.k}><dt className="text-xs text-[var(--text-muted)]">{s.label}</dt><dd className="mt-0.5 text-base"><span className="text-xl" style={{ color: s.color }}>{c[s.k] ?? "—"}</span> <span className="text-[var(--text-secondary)]">of {r.per_country_of} months flagged as a record</span></dd></div>
+            <div key={s.k}><dt className="text-xs text-[var(--text-muted)]">{s.label}</dt><dd className="mt-0.5 text-base"><span className="text-xl" style={{ color: s.color }}>{c[s.k] ?? "—"}</span> <span className="text-[var(--text-secondary)]">of {r.per_country_of} months flagged as a record{sel === "all" ? ", median country" : ""}</span></dd></div>
           ))}
         </dl>
       </div>
