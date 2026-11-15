@@ -108,7 +108,7 @@ function PointDownload({ area }: { area: HotspotArea }) {
       const chunks: string[] = [];
       let truncated = "no";
       for (const b of boxes) {
-        const r = await fetch(`/api/hotspots?source=${source}&bbox=${b.map((v) => v.toFixed(4)).join(",")}&start=${start}&end=${end}`);
+        const r = await fetch(`/api/hotspots?source=${source}&bbox=${b.map((v) => v.toFixed(4)).join(",")}&start=${start}&end=${end}`, { signal: AbortSignal.timeout(75_000) });
         if (!r.ok) {
           const j = await r.json().catch(() => ({ message: `HTTP ${r.status}` }));
           setMsg(`${j.message ?? `HTTP ${r.status}`} The cell-level CSVs on this page are still available.`);
@@ -142,7 +142,7 @@ function PointDownload({ area }: { area: HotspotArea }) {
       );
       setMsg(rows.length ? `Downloaded ${rows.length.toLocaleString("en")} detections.` : "No detections in this area and period; the file has the header only (a valid empty result).");
     } catch (e) {
-      setMsg(`Could not build the file: ${(e as Error).message}. The cell-level CSVs on this page are still available.`);
+      setMsg(`${(e as Error).name === "TimeoutError" ? "NASA FIRMS did not answer in time; try a shorter date range or again in a minute" : `Could not build the file: ${(e as Error).message}`}. The cell-level CSVs on this page are still available.`);
     } finally { setBusy(false); }
   };
 

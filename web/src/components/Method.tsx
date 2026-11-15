@@ -16,6 +16,7 @@ import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 import { MethodNotes, ValidationPlot } from "@/components/ValidationPlot";
+import { EventsTest } from "@/components/EventsTest";
 import { Benchmark, CannotDo, HeadlineTable, ProofSection, StepCollapse } from "@/components/Proof";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
@@ -150,8 +151,26 @@ export function Method() {
     <div>
       <PageHead compact eyebrow="Proof · method and validation" info="heldOut" title="How do we know the repair" italic="is real?"
         lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Countries with enough data get their own fitted curve; smaller ones borrow a shared (pooled) curve, counted and marked below. These are regional results, not a global correction." />
+      <section aria-labelledby="sixty" className="mb-8 rounded-[var(--r-tile)] bg-[var(--ink)] p-6 text-[var(--on-ink)] sm:p-8" data-testid="method-60s">
+        <p id="sixty" className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--red)]">The method in 60 seconds</p>
+        <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ["The problem", "In 2012 the record switched from MODIS (1 km) to VIIRS (375 m), which sees many more small fires. Joined naively, fire counts jump overnight."],
+            ["The fix", "From fires both satellites saw, we learn per country how likely MODIS was to see a fire of a given strength, then count VIIRS fires the way MODIS would have."],
+            ["The test", "Fitted on 2012–2018, scored on 2019–2021, years the model never saw. The 2012 jump disappears in 146 of 171 countries; past disasters rank where they should."],
+            ["The limits", "Estimates, not MODIS observations. Typical monthly error ±31%, larger where fires are rare. A simple ratio nearly ties us on one score, and we show it."],
+          ].map(([t, d], i) => (
+            <div key={t}>
+              <p className="dot-num text-2xl leading-none text-[var(--red)]">0{i + 1}</p>
+              <p className="mt-3 text-[17px] font-medium">{t}</p>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed opacity-80">{d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
       <HeadlineTable />
       <div id="step-collapse" className="scroll-mt-24"><StepCollapse /></div>
+      <EventsTest />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
           ["01 · Match", "Each VIIRS detection gets a yes/no label: “seen by Aqua” if Aqua MODIS detected fire on the same UTC date in the same small grid cell (H3 resolution 7) or one of its 6 neighbours, about 3.5 km. Both satellites pass at about 13:30 local time in 2012–2021, so they look at nearly the same moment."],

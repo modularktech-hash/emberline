@@ -21,6 +21,18 @@ Canada, mean yearly detections in 2012–14 divided by 2009–11:
 The same test for every fitted country, and where the correction is weakest, is on the
 [Method page](https://emberline-ten.vercel.app/method).
 
+## Two joins, both fixed
+
+The fire record has been broken twice, and Emberline repairs both:
+
+1. **2012: MODIS → VIIRS (Suomi-NPP).** The sharper sensor sees small fires MODIS missed. Fixed by
+   per-country detection curves, tested on held-out 2019–2021.
+2. **Today: Suomi-NPP → NOAA-20.** Suomi-NPP is ageing, and the current data comes from NOAA-20.
+   Fixed by a per-country bridge, tested on held-out 2022–2023: 50 of 50 countries pass.
+
+So the calendar runs from 2003 to the present on one scale, and it keeps working as MODIS retires
+and VIIRS moves to newer satellites.
+
 ## Use it in three steps
 
 1. **Pick an area of interest.** A country, a one-click area (New South Wales worked
@@ -58,9 +70,12 @@ comparison, the method and its validation, calculators for every coefficient, op
 data files, and a separate live layer of recent raw detections.
 
 Source archive 2001–2025; the harmonized record is 2003–2025 (Aqua launched in
-May 2002, so 2001–2002 have no Aqua reference). 2026 appears only as provisional, raw
-month-to-date counts in the "This month so far" card (when its file is loaded), compared
-raw against raw history of the same calendar month, never on the harmonized scale. The live
+May 2002, so 2001–2002 have no Aqua reference). **2026 to the latest day** is on the
+harmonized scale for countries whose NOAA-20 bridge passed its held-out test (50 passed; the 2026 row is published for those listed in `calendar_2026.json`)
+(2022–2023, median monthly miss 7.25%): NOAA-20 VIIRS from the FIRMS API (standard
+processing, then near-real-time) goes through the same fit and the country's bridge ratio,
+and shows as a provisional 2026 row under the calendar (`calendar_2026.json`,
+`scripts/build_2026.py`). Other countries show 2026 only as raw month-to-date counts. The live
 globe covers the last 24 h and 7 days of NOAA-20/21 VIIRS plus MODIS near-real-time data:
 raw, uncorrected, and not the Suomi-NPP platform the history is built from. Terra/Aqua orbital drift since 2022 is measured
 and shown, not corrected: the 2022–2025 values use the frozen-orbit (2012–2018) fit unchanged.
@@ -127,6 +142,38 @@ Full method: `/method` on the site, `docs/science.md`, `scripts/fit_harmonizatio
   carry no type, so the live layer and the current month say that they include them.
 - **Raw is always one click away.** Every harmonized view has its raw counterpart, and
   countries without a fit are shown raw and labelled uncorrected.
+
+## Carrying the record to today: the NOAA-20 bridge
+
+Suomi-NPP, the satellite the fit was trained on, is ageing, and its near-real-time feed has
+gaps. NOAA-20 carries the same VIIRS instrument design about 50 minutes ahead on the same
+orbit. Per country, NOAA-20 detections go through the published fit unchanged, then one
+ratio lines them up with the harmonized Suomi-NPP record.
+
+- Trained April 2018 (the start of the NOAA-20 archive) to 2021; tested on held-out 2022–2023.
+- All 50 countries tested pass (rule: held-out median monthly miss of 25% or less). Median
+  monthly miss **7.25%** with the ratio and
+  **7.47%** without it: NOAA-20 through the
+  fit already matches the record, and the ratio adds little.
+- Used for the harmonized current month and the provisional 2026 row
+  (`bridge.json`, `calendar_2026.json`, `scripts/build_bridge.py`, `scripts/build_2026.py`).
+- Not tested: near-real-time against standard processing of NOAA-20 itself (no near-real-time
+  archive exists for the test years).
+
+## If NASA or another service is down
+
+Nothing a visitor sees waits on NASA. The calendar, the fire reports, the 2026 row, the proof
+and the live-fire globe are read from files published with the site (`web/public/data/`), built
+from NASA data in advance. If a NASA service is slow or down, the site shows the last good data,
+with its date, never a blank page or an endless loading screen.
+
+| What you see | Where it comes from | If NASA or another service fails |
+|---|---|---|
+| Calendar, fire report, critical periods, 2026 row, proof, method, this month vs median | Files on this site, built from NASA FIRMS in advance | Unaffected: the last good data, dated |
+| Live layer (last 24 h and 7 days) | A daily job reads NASA FIRMS and publishes `live.json` | If NASA errors, the job stops and the previous file stays up; a file is only replaced after it passes the data checks |
+| Map background | OpenFreeMap tiles | Falls back to a plain country-outline map; drawing still works |
+| Individual hotspots for chosen dates (download button) | NASA FIRMS, live, through the site's key | Gives up after 75 seconds with a clear message; the grid-cell hotspot CSVs, from the site's own files, still download |
+| Satellite imagery layer | NASA GIBS | Optional and off by default |
 
 ## Run it
 

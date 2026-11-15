@@ -37,6 +37,7 @@ import { mostUnusualMonth } from "@/lib/unusual";
 import { InfoDot } from "@/components/ui";
 import { CriticalPeriods } from "@/components/CriticalPeriods";
 import { FireReport } from "@/components/FireReport";
+import { Year2026 } from "@/components/Year2026";
 import { findingLines } from "@/lib/findings";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
@@ -246,7 +247,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
-        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. A detection is one active-fire hotspot seen by a satellite. Harmonized record 2003–2025; 2026 so far as provisional raw counts." />
+        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. A detection is one active-fire hotspot seen by a satellite. Harmonized record 2003–2025, and 2026 so far through the tested NOAA-20 bridge for Canada, Australia, Brazil and the United States, with more countries being added." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
@@ -398,6 +399,7 @@ export function Explorer() {
                 </p>
               </div>
               <MonthYearCalendar cal={cal} from={view.lo} to={view.hi} max={view.max} selected={selCell} onSelect={setSelCell} areaName={areaLabel(area)} inRange={view.partial ? view.inRange : undefined} />
+              {mode === "harmonized" && area.kind === "country" && view.hi === 2025 && <Year2026 country={area.name} harm={data.harmonized.rows} max={view.max} />}
               {(() => {
                 const rows = cal.rows.filter((r) => view.inRange(r) && r.value !== null);
                 if (!rows.length) return null;

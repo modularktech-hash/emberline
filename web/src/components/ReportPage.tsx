@@ -37,6 +37,10 @@ function geometryText(a: Area): string {
   return `Polygon (lon lat): ${ringToParam(a.ring)} · ${a.cells.length} H3 res-4 cells whose centre is inside`;
 }
 
+/** The worked example keeps its name; any other box shows its bounds. */
+const EXAMPLE_BOX = [141, -37.5, 153.7, -28.2];
+const boxName = (b: number[]) => (b.every((v, i) => Math.abs(v - EXAMPLE_BOX[i]) < 1e-6) ? "New South Wales (example box)" : `Box ${fmtBounds(b as [number, number, number, number])}`);
+
 export function ReportPage() {
   const [area, setArea] = useState<Area>(() => makeArea({ kind: "box", bbox: NSW_BOX }));
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null);
@@ -121,7 +125,7 @@ export function ReportPage() {
   const exportReport = () => {
     if (!data || !ctx || !sel) return;
     const html = buildReport({
-      place: area.kind === "country" ? prettyName(area.name) : area.kind === "box" ? `Box ${fmtBounds(area.bbox)}` : "Custom polygon",
+      place: area.kind === "country" ? prettyName(area.name) : area.kind === "box" ? boxName(area.bbox) : "Custom polygon",
       geometry: geometryText(area), year: sel.y, month: sel.m, sentence, facts, trust, caveats, monthChart, yearChart,
       params: data.params, url: reproducingUrl({ ...areaToQuery(area), y: sel.y, m: sel.m, mode: "harmonized", fit: data.params.fit_version }), generated: new Date().toISOString(),
     });
@@ -196,7 +200,7 @@ export function ReportPage() {
       {data && ctx && sel && (
         <div className="fade-in">
           <Tile tone="ink" className="mt-6 p-6 sm:p-8" data-testid="report-headline">
-            <Eyebrow info={false} className="!text-inherit opacity-70">{area.kind === "country" ? prettyName(area.name) : area.kind === "box" ? `Box ${fmtBounds(area.bbox)}` : "Custom polygon"} · {mo} {sel.y}</Eyebrow>
+            <Eyebrow info={false} className="!text-inherit opacity-70">{area.kind === "country" ? prettyName(area.name) : area.kind === "box" ? boxName(area.bbox) : "Custom polygon"} · {mo} {sel.y}</Eyebrow>
             <p className="display mt-4 text-[clamp(1.6rem,1.2rem+1.6vw,2.4rem)] leading-[1.1]" data-testid="report-sentence">{sentence}</p>
             <p className="mt-3 text-[13px] opacity-75">Observed historical anomaly, not a forecast or burned-area estimate.</p>
             <dl className="tabular mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="report-facts">
