@@ -40,6 +40,14 @@ import { findingLines } from "@/lib/findings";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
+/** One-click areas of interest (west, south, east, north). */
+const PRESETS: Array<[string, Bbox]> = [
+  ["Amazon basin", [-66, -12, -52, -2]],
+  ["Sierra Nevada, California", [-122, 36, -118, 40.5]],
+  ["Pantanal", [-59, -21, -55, -16]],
+  ["Central Africa savanna", [15, -12, 30, -4]],
+];
+
 const FIRST = 2003; // Aqua's first full year; the harmonized unit is Aqua-equivalent.
 
 export function Explorer() {
@@ -149,7 +157,8 @@ export function Explorer() {
   const reportCell = selCell ?? (harmUnusual ? { year: harmUnusual.year, month: harmUnusual.month } : null);
   const ex = proof.data?.worked_example;
   // The worked example keeps its name instead of showing as bare coordinates.
-  const place = area.kind === "box" && ex && area.bbox.every((v, i) => Math.abs(v - ex.bbox[i]) < 1e-6) ? "New South Wales, Australia (example box)" : areaLabel(area);
+  const sameBox = (bb: Bbox) => area.kind === "box" && area.bbox.every((v, i) => Math.abs(v - bb[i]) < 1e-6);
+  const place = ex && sameBox(ex.bbox) ? "New South Wales, Australia (example box)" : PRESETS.find(([, bb]) => sameBox(bb))?.[0].concat(" (box)") ?? areaLabel(area);
   const openExample = () => {
     if (!ex) return;
     const [w, so, e, n] = ex.bbox;
@@ -158,6 +167,13 @@ export function Explorer() {
     setArea(makeArea({ kind: "box", bbox: ex.bbox }));
     setMode("harmonized");
     setSelCell({ year: ex.unusual.year, month: ex.unusual.month });
+  };
+  const openPreset = (bbox: Bbox) => { setBox(bbox.map((v) => v.toFixed(2))); setBoxErr(null); setArea(makeArea({ kind: "box", bbox })); setMode("harmonized"); setSelCell(null); };
+  const [cited, setCited] = useState(false);
+  const copyCitation = () => {
+    if (!data || !view) return;
+    const text = `Emberline (2026). Harmonized MODIS–VIIRS burning activity calendar, fit ${data.params.fit_version}. Area: ${place}. Period: ${view.label}. Series: ${mode === "raw" ? "raw (uncorrected)" : "harmonized, Aqua-MODIS-equivalent detections"}. Source data: NASA FIRMS, MODIS Collection 6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP). ${reproducingUrl(viewQuery())}`;
+    navigator.clipboard?.writeText(text).then(() => { setCited(true); setTimeout(() => setCited(false), 2000); }, () => {});
   };
   const busiestYear = view ? [...(mode === "raw" ? view.raw : view.harm)].filter((r) => r.value !== null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]?.year ?? null : null;
   // E27: coefficient-only intervals for harmonized country totals (busiest year, selected year/month).
@@ -288,6 +304,9 @@ export function Explorer() {
           <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Calendar CSV
           </button>
+          <button type="button" data-testid="copy-citation" onClick={copyCitation} disabled={!view} className="glass-thin min-h-[40px] px-4 text-sm font-medium disabled:opacity-40" aria-live="polite">
+            {cited ? "Citation copied" : "Copy citation"}
+          </button>
           <button type="button" onClick={exportBrief} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download brief
           </button>
@@ -296,6 +315,10 @@ export function Explorer() {
         {ex && (
           <p className="mt-4 text-sm text-[var(--text-secondary)]">
             New here? <button type="button" data-testid="nsw-example" onClick={openExample} className="link-ul font-medium text-[var(--text-primary)]">Open the worked example: New South Wales, {MONTHS[ex.unusual.month - 1]} {ex.unusual.year}</button>, or pick an area and click any month for its fire report.
+            {" "}Quick areas:{" "}
+            {PRESETS.map(([name, bb], i) => (
+              <span key={name}>{i > 0 && " · "}<button type="button" data-testid={`preset-${i}`} onClick={() => openPreset(bb)} className="link-ul text-[var(--text-primary)]">{name}</button></span>
+            ))}.
           </p>
         )}
         {data && reportCell && data.harmonized.keys.length > 0 && !notProcessed && (
