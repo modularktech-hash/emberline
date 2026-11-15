@@ -131,6 +131,23 @@ Full method: `/method` on the site, `docs/science.md`, `scripts/fit_harmonizatio
 - **Raw is always one click away.** Every harmonized view has its raw counterpart, and
   countries without a fit are shown raw and labelled uncorrected.
 
+## Carrying the record to today: the NOAA-20 bridge
+
+Suomi-NPP, the satellite the fit was trained on, is ageing, and its near-real-time feed has
+gaps. NOAA-20 carries the same VIIRS instrument design about 50 minutes ahead on the same
+orbit. Per country, NOAA-20 detections go through the published fit unchanged, then one
+ratio lines them up with the harmonized Suomi-NPP record.
+
+- Trained April 2018 (the start of the NOAA-20 archive) to 2021; tested on held-out 2022–2023.
+- All 50 countries tested pass (rule: held-out median monthly miss of 25% or less). Median
+  monthly miss **7.25%** with the ratio and
+  **7.47%** without it: NOAA-20 through the
+  fit already matches the record, and the ratio adds little.
+- Used for the harmonized current month and the provisional 2026 row
+  (`bridge.json`, `calendar_2026.json`, `scripts/build_bridge.py`, `scripts/build_2026.py`).
+- Not tested: near-real-time against standard processing of NOAA-20 itself (no near-real-time
+  archive exists for the test years).
+
 ## Run it
 
 ```bash
