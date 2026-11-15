@@ -11,7 +11,7 @@ import type { CalendarRow, CountryFit, Params } from "@/lib/types";
  */
 export interface BriefInput {
   place: string;
-  areaKind: "country" | "box";
+  areaKind: "country" | "box" | "polygon";
   from: number;
   to: number;
   mode: "raw" | "harmonized";
@@ -93,18 +93,18 @@ export function buildBrief(b: BriefInput): string {
 
   const unc = b.unc && b.unc.length
     ? `<ul>${b.unc.map((r) => `<li>${esc(r.label)}: ${esc(fmtUnc(r.u))}</li>`).join("")}</ul><p class="note">${esc(UNC_LABEL)} ${esc(UNC_NOT_TOTAL)} 2.5th–97.5th percentile over bootstrap draws (harmonized_uncertainty.json).</p>`
-    : `<p>${b.mode === "raw" ? "Not applicable: raw record." : b.areaKind === "box" ? "Not estimated for custom areas (intervals are published per country)." : "Not available."}</p>`;
+    : `<p>${b.mode === "raw" ? "Not applicable: raw record." : b.areaKind !== "country" ? "Not estimated for custom areas (intervals are published per country)." : "Not available."}</p>`;
 
   const s = b.scope;
   const coverage = s
     ? kv([
-        ["Requested bounds (W, S, E, N)", esc(fmtBounds(s.requested)) + (s.antimeridian ? " — crosses the 180° meridian" : "")],
+        [s.ring ? "Polygon bounding box (W, S, E, N)" : "Requested bounds (W, S, E, N)", esc(fmtBounds(s.requested)) + (s.antimeridian ? " — crosses the 180° meridian" : "")],
         ["Effective bounds of summed cells", s.effective ? esc(fmtBounds(s.effective, 2)) : "none"],
         ["Selection", esc(SELECTION_RULE)],
         ["Grid", `H3 resolution ${s.resolution} (${CELL_SIZE_NOTE})`],
         ["Cells", `${s.touched.length} touched · ${s.withRaw.length} with data · ${s.summed.length} summed`],
-        ["Summed cell IDs", `<code>${esc(s.summed.join(" ") || "none")}</code>`],
-      ]) + `<p class="warn">Whole cells are summed, so activity outside the box — possibly across national borders — is included.</p>`
+        ["Contributing country files", esc(s.countries.map((c) => `${c.country}${c.fitted ? "" : " (no fit, uncorrected)"}`).join(", ") || "none")],
+      ]) + `<p class="warn">Whole cells are summed, so the result follows the cells, not the exact outline. Cell IDs are in the cell-level CSV.</p>`
     : `<p>Country total: every detection assigned to ${esc(b.place)} in the processed FIRMS record (dataset: ${esc(b.dataset)}).</p>`;
 
   return `<!doctype html>

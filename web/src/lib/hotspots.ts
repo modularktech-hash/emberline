@@ -4,7 +4,7 @@
  * area when its centre lies inside the country outline (web/public/geo/countries.geojson,
  * Natural Earth 110 m) or inside the drawn box. Raw, uncorrected NRT data.
  */
-import type { Bbox } from "@/lib/aoi";
+import { geomContains, type AreaGeom, type Bbox } from "@/lib/aoi";
 
 /** FIRMS country names whose Natural Earth 110 m NAME differs (others: underscores → spaces). */
 const NE_NAME: Record<string, string> = {
@@ -41,10 +41,11 @@ function inside(rings: Ring[], lon: number, lat: number): boolean {
 
 const inBox = ([w, s, e, n]: Bbox, lon: number, lat: number) => lat >= s && lat <= n && (w <= e ? lon >= w && lon <= e : lon >= w || lon <= e);
 
-export type HotspotArea = { kind: "country"; name: string } | { kind: "box"; bbox: Bbox };
+export type HotspotArea = { kind: "country"; name: string } | { kind: "box"; bbox: Bbox } | { kind: "geom"; geom: AreaGeom };
 /** Returns a cell filter for the area, or null when the country has no outline in the 110 m map. */
 export async function areaFilter(area: HotspotArea): Promise<((lat: number, lon: number) => boolean) | null> {
   if (area.kind === "box") return (lat, lon) => inBox(area.bbox, lon, lat);
+  if (area.kind === "geom") { const g = area.geom; return (lat, lon) => geomContains(g, lon, lat); }
   const rings = (await outlines()).get(neName(area.name));
   return rings ? (lat, lon) => inside(rings, lon, lat) : null;
 }

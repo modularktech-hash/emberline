@@ -1,4 +1,4 @@
-import { cellToBoundary, cellToLatLng, getResolution, gridDisk, latLngToCell, polygonToCells } from "h3-js";
+import { cellToBoundary, cellToLatLng, cellToParent, getResolution, gridDisk, latLngToCell, polygonToCells } from "h3-js";
 
 /**
  * Area-of-interest helpers.
@@ -320,4 +320,132 @@ export function cellsExtent(cells: string[]): Bbox | null {
   }
   if (e2 - w2 < e - w && e2 > 180 && w2 < 180) return [wrapLon(w2), s, wrapLon(e2), n];
   return [w, s, e, n];
+}
+
+/* ------------------------------------------------------------------ */
+/* Drawn areas on the fine grid (R7, R11)                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * H3 resolution of the drawn-area cell files (web/public/data/area/, built by
+ * scripts/build_area_cells.py): ~1,770 km² cells, about 26 km edge to edge.
+ * Must match area/index.json `resolution`.
+ */
+export const AREA_RESOLUTION = 4;
+
+/** A polygon ring as [lon, lat] vertices (open: the first vertex is not repeated). */
+export type Ring = Array<[number, number]>;
+export type AreaGeom = { kind: "box"; bbox: Bbox } | { kind: "polygon"; ring: Ring };
+
+/**
+ * Insert points along each edge, at most `step` degrees apart, so the H3
+ * polygon (whose edges are great circles) follows the straight lines drawn on
+ * the flat map, and a box's north and south edges stay on their parallels.
+ */
+function densify(ring: Ring, step = 1): Ring {
+  const out: Ring = [];
+  for (let i = 0; i < ring.length; i += 1) {
+    const [x0, y0] = ring[i], [x1, y1] = ring[(i + 1) % ring.length];
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) / step));
+    for (let k = 0; k < n; k += 1) out.push([x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n]);
+  }
+  return out;
+}
+
+/** Cells of a ring that is narrower than 180° in longitude (h3-js polygonToCells, GeoJSON order). */
+function ringCells(ring: Ring, res: number): string[] {
+  return polygonToCells([densify(ring)], res, true);
+}
+
+/** A box as rings no wider than 60° each (H3 edges are great circles; narrow pieces keep them honest). */
+function boxRings(bbox: Bbox): Ring[] {
+  const [west, south, , north] = bbox;
+  const span = bboxLonSpan(bbox);
+  const pieces = Math.max(1, Math.ceil(span / 60));
+  const rings: Ring[] = [];
+  for (let i = 0; i < pieces; i += 1) {
+    let x0 = west + (span * i) / pieces, x1 = west + (span * (i + 1)) / pieces;
+    if (x0 >= 180) { x0 -= 360; x1 -= 360; }
+    if (x1 > 180) { // this piece crosses 180°: split it there
+      rings.push([[x0, south], [180, south], [180, north], [x0, north]]);
+      rings.push([[-180, south], [x1 - 360, south], [x1 - 360, north], [-180, north]]);
+    } else rings.push([[x0, south], [x1, south], [x1, north], [x0, north]]);
+  }
+  return rings;
+}
+
+export type PolygonCheck = { ok: true; ring: Ring } | { ok: false; message: string };
+
+/** A drawn polygon: at least three distinct vertices, longitudes wrapped, not crossing 180°, under 180° wide. */
+export function validateRing(raw: Ring): PolygonCheck {
+  const ring = raw.map(([x, y]) => [wrapLon(x), y] as [number, number])
+    .filter((p, i, a) => i === 0 || p[0] !== a[i - 1][0] || p[1] !== a[i - 1][1]);
+  if (ring.length > 3 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]) ring.pop();
+  if (ring.length < 3) return { ok: false, message: "A polygon needs at least three corners." };
+  if (ring.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y) || Math.abs(y) > 90)) return { ok: false, message: "A corner is outside the globe." };
+  const xs = ring.map((p) => p[0]);
+  if (Math.max(...xs) - Math.min(...xs) >= 180) return { ok: false, message: "This polygon crosses the 180° meridian or is wider than half the globe. Draw a box for that area instead (boxes may cross 180°)." };
+  return { ok: true, ring };
+}
+
+export interface AreaCells {
+  cells: string[];
+  /** True when the area held no cell centre and the cell under its centre was used instead. */
+  fallback: boolean;
+}
+
+/**
+ * The H3 cells of a drawn area: every cell whose centre lies inside it (the
+ * h3-js polygonToCells rule). An area smaller than one cell falls back to the
+ * cell under its centre, and says so.
+ */
+export function geomCells(g: AreaGeom, res: number = AREA_RESOLUTION): AreaCells {
+  const rings = g.kind === "box" ? boxRings(g.bbox) : [g.ring];
+  const set = new Set<string>();
+  for (const r of rings) for (const c of ringCells(r, res)) set.add(c);
+  if (set.size) return { cells: [...set].sort(), fallback: false };
+  const [lon, lat] = geomCentre(g);
+  return { cells: [latLngToCell(lat, lon, res)], fallback: true };
+}
+
+export function geomCentre(g: AreaGeom): [number, number] {
+  if (g.kind === "box") {
+    const [w, s, , n] = g.bbox;
+    return [wrapLon(w + bboxLonSpan(g.bbox) / 2), (s + n) / 2];
+  }
+  const xs = g.ring.map((p) => p[0]), ys = g.ring.map((p) => p[1]);
+  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+}
+
+/** Bounding box of a geometry (W, S, E, N). */
+export function geomBbox(g: AreaGeom): Bbox {
+  if (g.kind === "box") return g.bbox;
+  const xs = g.ring.map((p) => p[0]), ys = g.ring.map((p) => p[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
+/** Point-in-area test for individual detections (even-odd rule for polygons; antimeridian policy for boxes). */
+export function geomContains(g: AreaGeom, lon: number, lat: number): boolean {
+  if (g.kind === "box") {
+    const [w, s, e, n] = g.bbox;
+    return lat >= s && lat <= n && (w <= e ? lon >= w && lon <= e : lon >= w || lon <= e);
+  }
+  let hit = false;
+  const r = g.ring;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, yi] = r[i], [xj, yj] = r[j];
+    if ((yi > lat) !== (yj > lat) && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+}
+
+/** Ring as a compact URL value: "lon lat,lon lat,..." (4 decimals, ~10 m). */
+export const ringToParam = (ring: Ring) => ring.map(([x, y]) => `${+x.toFixed(4)} ${+y.toFixed(4)}`).join(",");
+export function ringFromParam(s: string): Ring {
+  return s.split(",").map((p) => p.trim().split(/\s+/).map(Number) as [number, number]).filter((p) => p.length === 2);
+}
+
+/** H3 res-1 ancestors of a set of cells: the names of the area files to fetch. */
+export function res1Of(cells: string[]): string[] {
+  return [...new Set(cells.map((c) => cellToParent(c, 1)))].sort();
 }

@@ -5,13 +5,13 @@ import { useState } from "react";
 import { getLive } from "@/lib/data";
 import { downloadCsv } from "@/lib/ember";
 import { areaFilter, type HotspotArea } from "@/lib/hotspots";
-import { formatBbox } from "@/lib/aoi";
+import { formatBbox, geomBbox } from "@/lib/aoi";
 import { prettyName } from "@/lib/names";
 
 export function HotspotDownload({ area }: { area: HotspotArea }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const label = area.kind === "country" ? prettyName(area.name) : `box ${formatBbox(area.bbox)}`;
+  const label = area.kind === "country" ? prettyName(area.name) : area.kind === "box" ? `box ${formatBbox(area.bbox)}` : area.geom.kind === "box" ? `box ${formatBbox(area.geom.bbox)}` : `polygon in ${formatBbox(geomBbox(area.geom))}`;
 
   const run = async () => {
     setBusy(true); setMsg(null);
@@ -25,7 +25,7 @@ export function HotspotDownload({ area }: { area: HotspotArea }) {
         `emberline_hotspots_7d_${label.replace(/[^a-z0-9]+/gi, "_")}.csv`,
         {
           product: "Emberline recent hotspots (raw NASA FIRMS near-real-time, uncorrected, not harmonized)",
-          area: area.kind === "country" ? `${label}: 0.5° cells whose centre lies inside the Natural Earth 110 m outline` : `${label}: 0.5° cells whose centre lies inside the box`,
+          area: area.kind === "country" ? `${label}: 0.5° cells whose centre lies inside the Natural Earth 110 m outline` : `${label}: 0.5° cells whose centre lies inside the area`,
           window: `last 7 days: ${w.dates[0]} to ${w.dates[w.dates.length - 1]} (UTC dates in the feed)`,
           fetched_utc: live.fetched_utc,
           platforms: `${plats.join(" + ")} (NRT; NOAA-20/21 are not the Suomi-NPP platform of the historical record)`,
