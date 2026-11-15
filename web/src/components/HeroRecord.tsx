@@ -14,6 +14,7 @@ import { DotDigits, Pill } from "@/components/ui";
 import { fmtInt, fmtNum, fmtRatio } from "@/lib/format";
 import { isPerfLow } from "@/lib/perf";
 import { NSW_REPORT } from "@/lib/reportLink";
+import { WhereBox } from "@/components/WhereBox";
 
 type Mode = "raw" | "harm";
 const [Y0, Y1] = hero.years;
@@ -246,6 +247,8 @@ export function NothingHero({ live24 }: { live24: number | null | undefined }) {
           <RecordWidget />
         </div>
       </div>
+
+      <WhereBox />
 
       <div className="mt-12"><Widgets live24={live24} /></div>
 
