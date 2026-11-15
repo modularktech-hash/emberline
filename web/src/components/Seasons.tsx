@@ -7,9 +7,11 @@ import { useMemo, useState } from "react";
 import { MONTHS, fmt, fmtCompact, median, quantile } from "@/lib/ember";
 import { FirePulse } from "@/components/FirePulse";
 import { CountryPicker } from "@/components/CountryPicker";
-import { PageHead, Reveal } from "@/components/ui";
-import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
-import { CoverageNote, useCoverage } from "@/components/CoverageNote";
+import { Failed, PageHead, Reveal } from "@/components/ui";
+import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaFromQuery, areaToQuery, intParam, useUrlState } from "@/lib/urlState";
+import { CopyLink } from "@/components/CopyLink";
+import { CoverageNote, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { FitQualityTag } from "@/components/FitQuality";
 import { STATUS_LABEL } from "@/lib/coverage";
 
@@ -36,9 +38,15 @@ function bandOf(m: { own: number | null; q1: number | null; q3: number | null; p
 export function Seasons() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
   const [year, setYear] = useState(2023);
+  useUrlState((q) => {
+    const a = areaFromQuery(q);
+    setArea(a?.ok ? a.area : { kind: "country", name: "Canada" });
+    setYear(intParam(q, "year", 2003, 2025) ?? 2023);
+  }, () => ({ ...areaToQuery(area), year }), [areaKey(area), year]);
   const { ref: chartRef, fs, narrow } = useChartScale(720);
-  const { data, error, loading } = useAreaData(area);
-  const coverage = useCoverage();
+  const { data, error, loading, retry } = useAreaData(area);
+  const coverageState = useCoverageState();
+  const coverage = coverageState.data;
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
 
   const v = useMemo(() => {
@@ -57,7 +65,8 @@ export function Seasons() {
     const ownTotal = ownRows.length ? ownRows.reduce((t, r) => t + (r.value as number), 0) : null;
     const medTotal = median(totals);
     const bands = months.map(bandOf);
-    return { years, months, max, bands, ownTotal, medTotal, nMonths: ownRows.length };
+    const baseYears = years.filter((yy) => yy !== year);
+    return { years, months, max, bands, ownTotal, medTotal, nMonths: ownRows.length, baseYears };
   }, [data, year]);
 
   const x = (i: number) => L + (i / 11) * (W - L - R);
@@ -70,14 +79,16 @@ export function Seasons() {
       <Reveal><div className="card mt-8 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <CountryPicker value={area.kind === "country" ? area.name : ""} options={data?.countries ?? [area.kind === "country" ? area.name : "Canada"]} tags={data?.tags} onChange={(c) => setArea({ kind: "country", name: c })} />
-          <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
+          <CopyLink className="ml-auto" />
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">Year
             <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="field rounded-xl px-2.5 py-1.5 text-[var(--text-primary)]">
               {(v?.years ?? [year]).map((yy) => <option key={yy}>{yy}</option>)}
             </select>
           </label>
         </div>
 
-        {error && <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>}
+        {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
+        <CoverageError state={coverageState} className="mt-4" />
         {loading && <div className="mt-6 h-[300px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {data && !v && (
           <p className="mt-6 rounded-2xl border border-[var(--hairline)] p-5 text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -94,7 +105,8 @@ export function Seasons() {
                 <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-[var(--text-primary)]" data-testid="seasons-takeaway">
                   {v.ownTotal == null ? <>No harmonized data for {year}.</> : <>
                     {areaLabel(area)}, {year}: {fmt(v.ownTotal)} harmonized detections{v.nMonths < 12 ? ` in ${v.nMonths} months with data` : ""}
-                    {v.medTotal ? <>, {fmtRatio(v.ownTotal / v.medTotal)} the median year</> : null}.{" "}
+                    {v.medTotal != null ? <>, {v.ownTotal - v.medTotal >= 0 ? "+" : "−"}{fmt(Math.abs(v.ownTotal - v.medTotal))} vs the median year</> : null}
+                    {v.medTotal ? <> ({fmtRatio(v.ownTotal / v.medTotal)} the median year)</> : null}.{" "}
                     {hi.length ? <>{hi.length} {hi.length === 1 ? "month" : "months"} above the historical 90th percentile ({hi.join(", ")}); </> : <>No month above the historical 90th percentile; </>}
                     {ab} other {ab === 1 ? "month" : "months"} above and {be} below the typical range (middle 50% of other years).
                   </>}
@@ -126,6 +138,9 @@ export function Seasons() {
                 </g>
               ))}
             </svg>
+            <p className="mt-2 text-xs text-[var(--text-secondary)]" data-testid="seasons-baseline">
+              Baseline: n = {v.baseYears.length} years ({v.baseYears.length ? `${v.baseYears[0]}–${v.baseYears[v.baseYears.length - 1]}` : "none"}, {year} excluded — leave-one-year-out). Years: {v.baseYears.join(", ")}. Months whose median is 0 have no ratio; the difference is shown instead.
+            </p>
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[var(--text-secondary)]">
               <span><span className="mr-1.5 inline-block h-0.5 w-5 bg-[var(--ember)] align-middle" />{year}</span>
               <span><span className="mr-1.5 inline-block w-5 border-t border-dashed border-[var(--cool)] align-middle" />median of other years</span>
@@ -140,7 +155,7 @@ export function Seasons() {
 
             <div className="mt-6 overflow-x-auto">
               <table className="tabular w-full min-w-[560px] text-sm">
-                <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Month</th><th className="font-normal">{year}</th><th className="font-normal">Median</th><th className="font-normal">vs median</th><th className="font-normal">Reading</th></tr></thead>
+                <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 font-normal">Month</th><th className="font-normal">{year}</th><th className="font-normal">Median</th><th className="font-normal">Difference</th><th className="font-normal">vs median</th><th className="font-normal">Reading</th></tr></thead>
                 <tbody>
                   {v.months.map((m, i) => {
                     const ratio = m.own !== null && m.med ? m.own / m.med : null;
@@ -150,7 +165,8 @@ export function Seasons() {
                       <tr key={i} className="border-t border-[var(--hairline)]">
                         <td className="py-2 text-[var(--text-secondary)]">{MONTHS[i]}</td>
                         <td>{fmt(m.own)}</td><td className="text-[var(--text-secondary)]">{fmt(m.med)}</td>
-                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{ratio === null ? "—" : fmtRatio(ratio)}</td>
+                        <td data-testid="seasons-diff">{m.own !== null && m.med !== null ? `${m.own - m.med >= 0 ? "+" : "−"}${fmt(Math.abs(m.own - m.med))}` : "—"}</td>
+                        <td className={high ? "font-medium text-[var(--ember)]" : ""}>{m.own !== null && m.med === 0 ? <span className="text-xs text-[var(--text-secondary)]" data-testid="seasons-undefined">no historical activity in this month — ratio undefined</span> : ratio === null ? "—" : fmtRatio(ratio)}</td>
                         <td className={`text-xs ${high ? "font-medium text-[var(--ember)]" : "text-[var(--text-secondary)]"}`}><span aria-hidden className="mr-1.5">{BAND[band].mark}</span>{BAND[band].label}</td>
                       </tr>
                     );

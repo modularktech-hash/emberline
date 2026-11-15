@@ -1,25 +1,41 @@
 "use client";
 
-import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from "motion/react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { animate, motion, useInView, useMotionValue, useTransform } from "motion/react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
 import { EASE, SPRING, SPRING_BOUNCY } from "@/lib/motion";
 import { usePerfLow } from "@/lib/perf";
 import { DotLoader, DotRule } from "@/components/DotMatrix";
 import { Eyebrow } from "@/components/Figure";
 
-/** Fades and lifts its children into view once, as they scroll in (opacity + transform only, compositor-friendly). */
+/**
+ * Fades and lifts its children into view once, as they scroll in (opacity + transform only, compositor-friendly).
+ *
+ * Plain CSS (globals.css, [data-reveal]) switched on by one shared IntersectionObserver, not a Motion
+ * component: the server HTML is revealed by the small inline script in the root layout as soon as it is
+ * parsed, so a page's text is visible at first paint instead of waiting for the JS bundle to hydrate.
+ * Same look as before: 0.7 s, expo-out, 24 px lift, 60 px inside the viewport, once. Reduced motion
+ * shows the content at once; low-power mode fades without movement.
+ */
+let revealIo: IntersectionObserver | null = null;
+function watchReveal(el: HTMLElement) {
+  if (el.dataset.in != null) return;
+  if (typeof IntersectionObserver === "undefined") { el.dataset.in = ""; return; }
+  revealIo ??= new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { (e.target as HTMLElement).dataset.in = ""; revealIo!.unobserve(e.target); }
+  }, { rootMargin: "-60px" });
+  revealIo.observe(el);
+}
 export function Reveal({ children, delay = 0, y = 24, className }: { children: ReactNode; delay?: number; y?: number; className?: string }) {
-  const reduce = useReducedMotion();
-  const low = usePerfLow(); // low-power mode: a plain fade, no movement
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (ref.current) watchReveal(ref.current); }, []);
   return (
-    <motion.div className={className} initial={reduce ? false : { opacity: 0, y: low ? 0 : y }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: EASE, delay }}>
+    <div ref={ref} data-reveal="" suppressHydrationWarning className={className}
+      style={{ "--rv-y": `${y}px`, "--rv-d": `${delay}s` } as CSSProperties}>
       {children}
-    </motion.div>
+    </div>
   );
 }
-
 /** Staggers a list of children into view. */
 export function Stagger({ children, className, gap = 0.08 }: { children: ReactNode[]; className?: string; gap?: number }) {
   return (
@@ -104,6 +120,14 @@ export function Chip({ on, onClick, children }: { on: boolean; onClick: () => vo
 export function Loading({ h = 320 }: { h?: number }) {
   return <div className="flex items-center justify-center rounded-[28px] bg-white/35" style={{ height: h }}><DotLoader /></div>;
 }
-export function Failed({ error }: { error: Error }) {
-  return <p className="glass p-5 text-sm text-[var(--text-secondary)]">Could not load the data: {error.message}</p>;
+/** A data-load failure: what failed, what to do, and a Retry that keeps the page's selections. */
+export function Failed({ error, retry, what = "the data" }: { error: Error; retry?: () => void; what?: string }) {
+  const network = /failed to fetch|network|load failed|HTTP 5/i.test(error.message);
+  return (
+    <div role="alert" className="glass p-5 text-sm text-[var(--text-secondary)]">
+      <p className="text-[var(--text-primary)]">Could not load {what}.</p>
+      <p className="mt-1">{network ? "The data file did not arrive — check your connection, then retry. " : ""}<span className="font-mono text-xs">{error.message}</span></p>
+      {retry && <button type="button" onClick={retry} className="glass-thin mt-3 px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--ember)]">Retry</button>}
+    </div>
+  );
 }

@@ -34,7 +34,7 @@ const DATA = join(web, "public", "data");
 const OUT = join(DATA, "slices");
 const SOURCES = ["calendar_raw_global.parquet", "calendar_harmonized_global.parquet", "params_global.json", "live.json", "season.json"];
 /** Bump when the slice format changes, so old output is rebuilt. */
-const FORMAT = 2;
+const FORMAT = 3;
 
 const sha = (name) => createHash("sha256").update(readFileSync(join(DATA, name))).digest("hex");
 const manifest = { format: FORMAT, sources: Object.fromEntries(SOURCES.filter((n) => existsSync(join(DATA, n))).map((n) => [n, sha(n)])) };
@@ -72,7 +72,7 @@ rmSync(OUT, { recursive: true, force: true });
 let files = 0;
 
 /* --- calendars: one file per country, plus the index ------------------- */
-if (manifest.sources["calendar_raw_global.parquet"] && manifest.sources["calendar_harmonized_global.parquet"]) {
+if (manifest.sources["calendar_raw_global.parquet"] && manifest.sources["calendar_harmonized_global.parquet"] && manifest.sources["params_global.json"]) {
   const raw = await countryRows("calendar_raw_global.parquet", ["scope", "key", "year", "month", "sensor", "n_detections"]);
   const harm = await countryRows("calendar_harmonized_global.parquet", ["scope", "key", "year", "month", "n_harmonized"]);
   /** key -> { r: { sensor: [ym, n, ym, n, ...] }, h: [ym, v, ...] | null } */
@@ -106,6 +106,7 @@ if (manifest.sources["calendar_raw_global.parquet"] && manifest.sources["calenda
   if (!rawKeys.length || !harmKeys.size) throw new Error("the world calendars have no country rows");
   for (const [key, e] of by) { write(join("calendar", `${key}.json`), e); files += 1; }
   write("calendar_index.json", {
+    fit_version: readJson("params_global.json").fit_version,
     countries: rawKeys, harmonized: [...harmKeys].sort(),
     first_year: firstYear, last_year: lastYear, viirs_first_year: viirsFirstYear, first_ym: firstYm, last_ym: lastYm,
   });

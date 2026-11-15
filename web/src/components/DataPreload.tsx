@@ -1,4 +1,4 @@
-import { dataPreloads, dataUrl } from "@/lib/queries";
+import { DATASET_FILES, dataPreloads, dataUrl } from "@/lib/queries";
 
 /**
  * Starts a page's first data requests from the HTML itself, in parallel with
@@ -17,7 +17,7 @@ import { dataPreloads, dataUrl } from "@/lib/queries";
  * navigation, where the loaders simply fetch as usual).
  */
 export function DataPreload({ countries, files = [] }: { countries?: string[]; files?: string[] }) {
-  const urls = [...(countries ? dataPreloads(countries) : []), ...files.map(dataUrl)];
+  const urls = [...new Set([...DATASET_FILES.map(dataUrl), ...(countries ? dataPreloads(countries) : []), ...files.map(dataUrl)])];
   const js = `(function(){try{var p=window.__emberlinePrefetch=window.__emberlinePrefetch||{};
 ${JSON.stringify(urls)}.forEach(function(u){if(!p[u]){var v=p[u]=fetch(u).then(function(r){if(!r.ok)throw new Error(u+": HTTP "+r.status);return r.json()});v.catch(function(){delete p[u]})}});
 }catch(e){}})();`;

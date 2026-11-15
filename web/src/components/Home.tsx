@@ -1,7 +1,13 @@
 "use client";
 
 import { DotClock, DotStat, DotText, dotCompact, useToday } from "@/components/DotMatrix";
-import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "motion/react";
+import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
+
+/** E25: with prefers-reduced-motion, scroll-linked effects read a fixed progress (their final state) instead of scroll. */
+function useScrollOrFinal(p: MotionValue<number>, final: number): MotionValue<number> {
+  const fixed = useMotionValue(final);
+  return useReducedMotion() ? fixed : p;
+}
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
@@ -9,6 +15,7 @@ import { CountUp, Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getLiveSummary, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
+import { Failed } from "@/components/ui";
 import { ALL } from "@/lib/nav";
 import { Eyebrow, Stat } from "@/components/Figure";
 import { DriftClocks } from "@/components/DriftClocks";
@@ -56,26 +63,32 @@ function Words({ text, delay = 0 }: { text: string; delay?: number }) {
  * The tiles read small slices (live totals, Chile's season trend, the fit
  * without its Method-only fields); the full live feed is only for the globe.
  */
-function useFile<T>(run: () => Promise<T>, key: string): T | null | undefined {
-  const q = useParquet(run, key);
-  return q.loading ? undefined : q.data;
-}
 function useHomeData() {
-  const sum = useFile(getLiveSummary, "home-live-summary");
-  const live = useFile(getLive, "home-live");
-  const tle = useFile(getTle, "home-tle");
-  const table = useFile(getCountryTable, "home-table");
-  const drift = useFile(getDrift, "home-drift");
-  const season = useFile(getSeasonHome, "home-season");
-  const params = useFile(getParams, "home-params");
-  return useMemo(() => ({ sum, live, tle, table, drift, season, params }), [sum, live, tle, table, drift, season, params]);
+  const q = {
+    sum: useParquet(getLiveSummary, "home-live-summary"),
+    live: useParquet(getLive, "home-live"),
+    tle: useParquet(getTle, "home-tle"),
+    table: useParquet(getCountryTable, "home-table"),
+    drift: useParquet(getDrift, "home-drift"),
+    season: useParquet(getSeasonHome, "home-season"),
+    params: useParquet(getParams, "home-params"),
+  };
+  const v = <T,>(s: { data: T | null; loading: boolean }) => (s.loading ? undefined : s.data);
+  const all = Object.values(q);
+  return {
+    sum: v(q.sum), live: v(q.live), tle: v(q.tle), table: v(q.table), drift: v(q.drift), season: v(q.season), params: v(q.params),
+    /** The first file that failed, and a retry of every failed one (E16). */
+    error: all.find((s) => s.error)?.error ?? null,
+    retry: () => all.forEach((s) => { if (s.error) s.retry(); }),
+  };
 }
 type HomeData = ReturnType<typeof useHomeData>;
 
 /* ------------------------------------------------------------------ hero */
 function Hero({ d }: { d: HomeData }) {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const { scrollYProgress: heroP } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const scrollYProgress = useScrollOrFinal(heroP, 0);
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const sum = d.sum;
@@ -187,7 +200,7 @@ function Widgets({ d }: { d: HomeData }) {
             <h2 id="glance" className="display t-d3 mt-2">One day of fire, and the long record it joins.</h2>
           </div>
           <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year from 2003 to 2025 converted to one unit (Aqua MODIS-equivalent), so a fire season in 2005 and one in 2025 can be compared on the same footing. Aqua launched in May 2002, so 2001–2002 have no Aqua reference.
+            The live count is today&apos;s raw satellite view. Emberline&apos;s job is the long record: every year from 2003 to 2025 converted to one unit (Aqua MODIS-equivalent), so a fire season in 2005 and one in 2025 can be compared on the same footing. 2001–2002 are not complete Aqua reference years (Aqua launched in 2002).
           </p>
         </div>
       </Reveal>
@@ -280,12 +293,14 @@ function StoryStep({ i, n, p, children }: { i: number; n: number; p: MotionValue
   const a0 = Math.max(0, a - 0.08), a1 = Math.max(0.01, a);
   const opacity = useTransform(p, [a0, a1, b - 0.06, b], [i === 0 ? 1 : 0.3, 1, 1, i === n - 1 ? 1 : 0.3]);
   const x = useTransform(p, [a0, a1], [i === 0 ? 0 : -10, 0]);
-  return <motion.div style={{ opacity, x }} className="flex min-h-[60vh] flex-col justify-center py-6">{children}</motion.div>;
+  const reduced = useReducedMotion();
+  return <motion.div style={reduced ? { opacity: 1, x: 0 } : { opacity, x }} className="flex min-h-[60vh] flex-col justify-center py-6">{children}</motion.div>;
 }
 
 function OrbitChapter() {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const { scrollYProgress: orbitP } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const p = useScrollOrFinal(orbitP, 1);
   const rot = useTransform(p, [0, 1], [0, 540]);
   // SVG rotation written straight to the transform attribute, about the dial's centre in viewBox units.
   const orbitG = useRef<SVGGElement>(null);
@@ -348,7 +363,8 @@ function pathOf(vals: number[], max: number, w = 640, h = 300) {
 
 function JumpChapter({ row }: { row: CountryRow | undefined }) {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const { scrollYProgress: jumpP } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const p = useScrollOrFinal(jumpP, 1);
   const years = useMemo(() => row?.annual.filter((a) => a.year >= 2003 && a.year <= 2025) ?? [], [row]);
   const raw = years.map((a) => a.raw), harm = years.map((a) => a.harm);
   const max = Math.max(1, ...raw) * 1.05;
@@ -411,9 +427,11 @@ export function Home() {
   const d = useHomeData();
   const canada = d.table?.countries.find((c) => c.country === "Canada");
   const chile = d.season?.countries.Chile?.trend_days_per_decade;
+  const homeError = d.error, homeRetry = d.retry;
   return (
     <div>
       <Hero d={d} />
+      {homeError && <div className="mx-auto mb-8 max-w-3xl"><Failed error={homeError} retry={homeRetry} what="the summary figures" /></div>}
       <OrbitChapter />
       <JumpChapter row={canada} />
       <DriftChapter drift={d.drift ?? undefined} />
@@ -435,7 +453,7 @@ export function Home() {
             </Reveal>
           ))}
         </div>
-        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d.params ?? undefined); return a ? <>Across all {a.fitted} fitted countries, each fitted separately, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d.params ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d.params ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d.params?.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
+        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d.params ?? undefined); return a ? <>Across all {a.fitted} fitted countries, {a.own} with their own curve and {a.fitted - a.own} on a borrowed (pooled) curve, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d.params ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d.params ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d.params?.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
       </section>
 
       <section className="py-16">
@@ -455,7 +473,7 @@ export function Home() {
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier.{chile?.raw_onset != null && chile?.harm_onset != null && chile.raw_onset !== 0 ? ` ${Math.round((1 - chile.harm_onset / chile.raw_onset) * 100)}% of the apparent shift disappears once VIIRS's extra small early-season detections are weighted to the MODIS scale.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
+              <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">Negative = earlier. Descriptive least-squares trends.{chile?.raw_onset != null && chile?.harm_onset != null ? ` Change in estimated trend after harmonization: ${fmtSigned(chile.harm_onset - chile.raw_onset)} days/decade (raw ${fmtSigned(chile.raw_onset)}, harmonized ${fmtSigned(chile.harm_onset)} days/decade). This is a difference between two estimates, not a measured sensor effect.` : ""} <Link href="/trends" className="link-ul">Every country →</Link></p>
             </div>
           </Reveal>
         </div>

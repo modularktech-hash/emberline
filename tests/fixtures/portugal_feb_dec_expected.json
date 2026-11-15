@@ -1,0 +1,93 @@
+{
+ "fixture": "tests/fixtures/portugal_feb_dec (FIRMS archive, Portugal, Feb+Dec 2019-2021)",
+ "raw_rows": 997,
+ "filtered_detections": 672,
+ "cell_day_rows": 422,
+ "h3_parents": 7,
+ "calendar": [
+  {
+   "year": 2019,
+   "month": 2,
+   "sensor": "MODIS",
+   "n_detections": 90,
+   "frp_sum_mw": 1374.5
+  },
+  {
+   "year": 2019,
+   "month": 2,
+   "sensor": "VIIRS",
+   "n_detections": 166,
+   "frp_sum_mw": 1256.77
+  },
+  {
+   "year": 2019,
+   "month": 12,
+   "sensor": "MODIS",
+   "n_detections": 24,
+   "frp_sum_mw": 539.9
+  },
+  {
+   "year": 2019,
+   "month": 12,
+   "sensor": "VIIRS",
+   "n_detections": 53,
+   "frp_sum_mw": 393.18
+  },
+  {
+   "year": 2020,
+   "month": 2,
+   "sensor": "MODIS",
+   "n_detections": 60,
+   "frp_sum_mw": 1525.1
+  },
+  {
+   "year": 2020,
+   "month": 2,
+   "sensor": "VIIRS",
+   "n_detections": 152,
+   "frp_sum_mw": 1475.23
+  },
+  {
+   "year": 2020,
+   "month": 12,
+   "sensor": "MODIS",
+   "n_detections": 7,
+   "frp_sum_mw": 414.2
+  },
+  {
+   "year": 2020,
+   "month": 12,
+   "sensor": "VIIRS",
+   "n_detections": 8,
+   "frp_sum_mw": 36.11
+  },
+  {
+   "year": 2021,
+   "month": 2,
+   "sensor": "MODIS",
+   "n_detections": 20,
+   "frp_sum_mw": 319.2
+  },
+  {
+   "year": 2021,
+   "month": 2,
+   "sensor": "VIIRS",
+   "n_detections": 31,
+   "frp_sum_mw": 198.16
+  },
+  {
+   "year": 2021,
+   "month": 12,
+   "sensor": "MODIS",
+   "n_detections": 19,
+   "frp_sum_mw": 205.9
+  },
+  {
+   "year": 2021,
+   "month": 12,
+   "sensor": "VIIRS",
+   "n_detections": 42,
+   "frp_sum_mw": 177.08
+  }
+ ]
+}

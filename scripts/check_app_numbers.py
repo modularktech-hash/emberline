@@ -209,6 +209,50 @@ def main() -> int:
         print(f"screen: {len(screen.get('method_rows', []))} method rows, {len(screen.get('data_rows', []))} data rows, "
               f"{len(screen.get('explorer', []))} explorer exports checked")
 
+    # 4. the per-page slices (web/scripts/build-slices.mjs) hold exactly their sources' values
+    sl = DATA / "slices"
+    if sl.exists():
+        up = subprocess.run(["node", str(ROOT / "web" / "scripts" / "build-slices.mjs"), "--check"], capture_output=True, text=True)
+        check(up.returncode == 0, f"slices out of date: {up.stderr.strip()}")
+        core = json.loads((sl / "params_core.json").read_text())
+        drop = {"validation_train", "drift_era", "frozen_era_obs_over_pred"}
+        check({k: v for k, v in core.items() if k != "countries"} == {k: v for k, v in params.items() if k != "countries"}, "params_core: top-level fields differ")
+        check(set(core["countries"]) == set(params["countries"]), "params_core: country set differs")
+        for name, fit in params["countries"].items():
+            check(core["countries"].get(name) == {k: v for k, v in fit.items() if k not in drop}, f"params_core {name} differs from params_global")
+        live = json.loads((DATA / "live.json").read_text())
+        for w in live["windows"].values():
+            w.pop("cells", None)
+        check(json.loads((sl / "live_summary.json").read_text()) == live, "live_summary differs from live.json")
+        season = json.loads((DATA / "season.json").read_text())
+        head = {k: v for k, v in season.items() if k != "countries"}
+        home = json.loads((sl / "season_home.json").read_text())
+        check(home == {**head, "countries": {"Chile": season["countries"]["Chile"]}}, "season_home differs from season.json")
+        trends = json.loads((sl / "season_trends.json").read_text())
+        check(trends == {**head, "countries": {k: {a: b for a, b in c.items() if a != "years"} for k, c in season["countries"].items()}}, "season_trends differs from season.json")
+        for name, c in season["countries"].items():
+            f = sl / "season" / f"{name}.json"
+            check(f.exists() and json.loads(f.read_text()) == c, f"season slice {name} differs from season.json")
+        idx = json.loads((sl / "calendar_index.json").read_text())
+        check(idx["fit_version"] == params["fit_version"], "calendar_index fit_version")
+        ym = lambda y, m: int(y) * 12 + int(m) - 1
+        rc = raw.filter(pl.col("scope") == "country")
+        hc = harm.filter(pl.col("scope") == "country")
+        check(idx["countries"] == sorted(rc["key"].unique().to_list()), "calendar_index countries")
+        check(idx["harmonized"] == sorted(hc["key"].unique().to_list()), "calendar_index harmonized")
+        want_raw: dict = {}
+        for key, sensor, y, m, n in rc.select("key", "sensor", "year", "month", "n_detections").iter_rows():
+            want_raw.setdefault(key, {}).setdefault(sensor, {})[ym(y, m)] = n
+        want_harm: dict = {}
+        for key, y, m, v in hc.select("key", "year", "month", "n_harmonized").iter_rows():
+            want_harm.setdefault(key, {})[ym(y, m)] = v
+        pairs = lambda flat: dict(zip(flat[0::2], flat[1::2]))
+        for key in idx["countries"]:
+            got = json.loads((sl / "calendar" / f"{key}.json").read_text())
+            check({s_: pairs(v) for s_, v in got["r"].items()} == want_raw.get(key, {}), f"calendar slice {key}: raw rows differ from the Parquet calendar")
+            check((pairs(got["h"]) if got["h"] is not None else None) == want_harm.get(key), f"calendar slice {key}: harmonized rows differ from the Parquet calendar")
+        print(f"slices: params_core, live_summary, season ({len(season['countries'])} countries) and {len(idx['countries'])} country calendars equal their sources")
+
     print(f"{passes} checks passed, {len(failures)} failed")
     for f in failures[:40]:
         print("FAIL", f)

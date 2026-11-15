@@ -20,7 +20,17 @@ For each country:
   (MODIS to 2011, VIIRS from 2012) and the harmonized one (Aqua, then VIIRS
   weighted by the fitted detection probability). The fire year starts at the
   country's quietest month, so a southern-hemisphere season is not cut in two.
-  Each series gets a least-squares trend in days per decade, 2003-2025.
+  Each series gets a least-squares trend in days per decade, 2003-2025, with
+  its OLS standard error, 95% CI, usable years and endpoint sensitivity
+  ("trend_stats"; descriptive, see TREND_NOTE).
+  Fire-year label: with a start month of 2-6 the label is the calendar year
+  the fire year starts in; with 7-12 it is the year it ends in (the year
+  holding most of its months; July splits 6/6 and takes the end year).
+  A fire year whose window runs past the end of the record (31 Dec 2025) or
+  starts before a series has data (raw 1 Jan 2001; harmonized, i.e. Aqua,
+  4 Jul 2002) is incomplete: its values for that series are null, it is
+  listed in "partial", and it is left out of the trend. Checked by
+  scripts/check_seasons.py.
 * drift.json -- mean local solar overpass time of daytime detections, per
   satellite per year. Shows Terra and Aqua leaving their frozen orbits.
 * countries.json -- one row per country: totals, 2012 step ratios, held-out
@@ -28,7 +38,9 @@ For each country:
 
 Usage: python3 scripts/build_insights.py
   env EMBERLINE_PARAMS (default params_global.json), EMBERLINE_DETECTIONS
-  (colon-separated detection-table directories, default data/public:data/global_public)
+  (colon-separated detection-table directories, default data/public:data/global_public),
+  EMBERLINE_KEEP_RESOLUTION (path to a published season.json: a country published at
+  monthly resolution stays monthly, so a rebuild changes nothing it was not asked to)
 """
 
 from __future__ import annotations
@@ -52,6 +64,25 @@ CAL_HARM = WEB / os.environ.get("EMBERLINE_CAL_HARM", "calendar_harmonized_globa
 FIRST, LAST = 2003, 2025
 VIIRS_FROM = 2012
 DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+# First and last day each season series has data for (UTC). Aqua's archive starts 4 Jul 2002.
+SERIES_FROM = {"raw": np.datetime64("2001-01-01"), "harm": np.datetime64("2002-07-04")}
+RECORD_END = np.datetime64(f"{LAST}-12-31")
+PARTIAL_NOTE = ("fire years whose window extends past 31 Dec 2025, or begins before the series has data "
+                "(raw 2001-01-01, harmonized 2002-07-04), are listed in 'partial' with null values for that "
+                "series and are excluded from trends")
+
+
+def fire_year_window(fy: int, start: int) -> tuple[np.datetime64, np.datetime64]:
+    """First and last day of fire year fy (label convention as in fire_year_of)."""
+    y0 = fy - (1 if start > 6 else 0) if start != 1 else fy
+    first = np.datetime64(f"{y0:04d}-{start:02d}-01")
+    nxt = np.datetime64(f"{y0 + 1:04d}-{start:02d}-01")
+    return first, nxt - np.timedelta64(1, "D")
+
+
+def partial_series(fy: int, start: int) -> list[str]:
+    first, last = fire_year_window(fy, start)
+    return [k for k in ("raw", "harm") if first < SERIES_FROM[k] or last > RECORD_END]
 
 
 def trend(years: list[int], values: list[float | None]) -> float | None:
@@ -60,6 +91,56 @@ def trend(years: list[int], values: list[float | None]) -> float | None:
         return None
     x = np.array([p[0] for p in pts], float); y = np.array([p[1] for p in pts], float)
     return float(np.polyfit(x, y, 1)[0] * 10)
+
+
+# Two-sided 95% Student-t quantiles by degrees of freedom (standard table values; no scipy here).
+T975 = {6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228, 11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145,
+        15: 2.131, 16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086, 21: 2.080, 22: 2.074, 23: 2.069,
+        24: 2.064, 25: 2.060}
+DROP = 3
+TREND_NOTE = (
+    "Descriptive OLS of the day (onset 10%, midpoint 50%, end 90%) on fire year over usable years "
+    "(non-null, not partial), in days/decade. se_per_decade is the usual OLS slope standard error; ci95 is "
+    "slope +/- t(0.975, n-2) * se. These assume independent, homoscedastic residuals and a linear trend, "
+    "none of which has been tested: treat them as descriptive. Endpoint sensitivity: the slope recomputed "
+    "after dropping the first 3 usable years (drop_first3) and, separately, the last 3 usable years "
+    "(drop_last3), each only if at least 8 usable years remain (else null); sensitivity_range is the min and "
+    "max of the full, drop_first3 and drop_last3 slopes. approximate = true for countries at monthly "
+    "resolution, whose days are interpolated within months, not observed.")
+
+
+def trend_stats(years: list[int], values: list[float | None]) -> dict:
+    """Slope (identical to trend()), its OLS standard error and 95% CI, usable years, endpoint sensitivity."""
+    pts = [(y, v) for y, v in zip(years, values) if v is not None]
+    n = len(pts)
+    out: dict = {"n_years": n, "first_year": pts[0][0] if pts else None, "last_year": pts[-1][0] if pts else None,
+                 "slope_per_decade": None, "se_per_decade": None, "ci95": None,
+                 "drop_first3": None, "drop_last3": None, "sensitivity_range": None}
+    if n < 8:
+        return out
+    x = np.array([p[0] for p in pts], float); y = np.array([p[1] for p in pts], float)
+    b, a = np.polyfit(x, y, 1)
+    resid = y - (a + b * x)
+    se = math.sqrt(float(resid @ resid) / (n - 2) / float(((x - x.mean()) ** 2).sum()))
+    t = T975[n - 2]
+    slope = trend(years, values)
+    out.update(slope_per_decade=slope, se_per_decade=se * 10, ci95=[slope - t * se * 10, slope + t * se * 10])
+    ys, vs = [p[0] for p in pts], [p[1] for p in pts]
+    out["drop_first3"] = trend(ys[DROP:], vs[DROP:])
+    out["drop_last3"] = trend(ys[:-DROP], vs[:-DROP])
+    cand = [v for v in (slope, out["drop_first3"], out["drop_last3"]) if v is not None]
+    out["sensitivity_range"] = [min(cand), max(cand)]
+    return out
+
+
+def add_trend_stats(season: dict) -> dict:
+    yrs = [r["year"] for r in season["years"]]
+    season["trend_stats"] = {f"{k}_{m}": trend_stats(yrs, [r.get(f"{k}_{m}") for r in season["years"]])
+                             for k in ("raw", "harm") for m in ("onset", "peak", "end")}
+    for k, v in season["trend_stats"].items():
+        assert v["slope_per_decade"] == season["trend_days_per_decade"][k], k
+    season["trend_approximate"] = season["resolution"] == "monthly"
+    return season
 
 
 def quantile_days(day_counts: np.ndarray) -> tuple[int | None, int | None, int | None]:
@@ -121,7 +202,14 @@ def country_insights(name: str, fit: dict, path: Path) -> tuple[dict, list[dict]
         start_day = (np.datetime64(f"{y0:04d}-{start:02d}-01") - np.datetime64("2000-01-01")).astype(int)
         day = (sub["abs_day"].to_numpy() - start_day).clip(0, 365)
         rec = {"year": fy}
+        partial = partial_series(fy, start)
+        if partial:
+            rec["partial"] = partial
         for key in ("raw", "harm"):
+            if key in partial:
+                rec[f"{key}_onset"] = rec[f"{key}_peak"] = rec[f"{key}_end"] = rec[f"{key}_length"] = None
+                rec[f"{key}_total"] = None
+                continue
             counts = np.bincount(day, weights=sub[f"w_{key}"].to_numpy(), minlength=366)[:366]
             on, pk, en = quantile_days(counts)
             rec[f"{key}_onset"], rec[f"{key}_peak"], rec[f"{key}_end"] = on, pk, en
@@ -174,24 +262,33 @@ def calendar_country(name: str, raw: pl.DataFrame, harm: pl.DataFrame) -> tuple[
     return r, m
 
 
-def monthly_season(m: pl.DataFrame) -> dict:
+def monthly_season(m: pl.DataFrame, start: int | None = None) -> dict:
     """Season timing from monthly totals: fire-year day by which 10/50/90% had happened.
 
     Within a month, detections are assumed evenly spread (linear interpolation
     of the cumulative share), so a day here is an estimate at monthly
     resolution, not an observed date.
     """
-    clim = m.filter(pl.col("year").is_between(FIRST, LAST)).group_by("month").agg(pl.col("harm").sum()).sort("harm")
-    start = int(clim["month"][0]) if clim.height and clim["harm"].sum() > 0 else 1
+    clim = (m.filter(pl.col("year").is_between(FIRST, LAST)).group_by("month").agg(pl.col("harm").sum())
+            .sort("harm", "month"))  # ties (e.g. several empty months) break to the earliest month
+    if start is None:
+        start = int(clim["month"][0]) if clim.height and clim["harm"].sum() > 0 else 1
     by = {(r["year"], r["month"]): r for r in m.iter_rows(named=True)}
     rows = []
     for fy in range(FIRST, LAST + 1):
         y0 = fy - (1 if start > 6 else 0) if start != 1 else fy
         months = [((y0 + (start - 1 + i) // 12), (start - 1 + i) % 12 + 1) for i in range(12)]
         rec: dict = {"year": fy}
+        partial = partial_series(fy, start)
+        if partial:
+            rec["partial"] = partial
         if not all(k in by for k in months):
             rows.append(rec); continue
         for key in ("raw", "harm"):
+            if key in partial:
+                rec[f"{key}_onset"] = rec[f"{key}_peak"] = rec[f"{key}_end"] = rec[f"{key}_length"] = None
+                rec[f"{key}_total"] = None
+                continue
             vals = np.array([by[k][key] for k in months], float)
             lens = np.array([DAYS[mm - 1] for _, mm in months], float)
             total = vals.sum()
@@ -250,6 +347,11 @@ def main() -> int:
     harm = pl.read_parquet(CAL_HARM).filter(pl.col("scope") == "country")
     season, drift, table, checks, checks_mvd = {}, {}, [], {}, []
     only = set(sys.argv[1:])  # optional: a subset, for testing (files are then written for it only)
+    keep = os.environ.get("EMBERLINE_KEEP_RESOLUTION")
+    # published monthly countries keep their resolution and fire-year start month (the start month was
+    # picked by an unstable sort among tied empty months before the tie-break above was added)
+    forced_monthly = ({k: v["fire_year_start_month"] for k, v in json.loads(Path(keep).read_text())["countries"].items()
+                       if v["resolution"] == "monthly"} if keep else {})
     for name, fit in sorted(params["countries"].items()):
         if only and name not in only:
             continue
@@ -257,7 +359,9 @@ def main() -> int:
         row = calendar_summary(name, fit, r, m)
         path = detections_path(name)
         resolution, why = "monthly", "no detection table on this machine"
-        if path is not None:
+        if name in forced_monthly:
+            why = f"kept at monthly resolution as published ({keep})"
+        elif path is not None:
             s_daily, dr, det_row = country_insights(name, fit, path)
             cal_ann = {a["year"]: a["raw"] for a in row["annual"]}
             det_ann = {a["year"]: a["raw"] for a in det_row["annual"]}
@@ -274,9 +378,15 @@ def main() -> int:
             else:
                 why = f"detection table differs from the published calendar in {len(mismatch)} years"
         if resolution == "monthly":
-            season[name] = monthly_season(m)
+            season[name] = monthly_season(m, forced_monthly.get(name))
+        add_trend_stats(season[name])
         tr = season[name]["trend_days_per_decade"]
-        row.update({"season_resolution": resolution, "onset_trend_raw": tr["raw_onset"], "onset_trend_harm": tr["harm_onset"]})
+        ts = season[name]["trend_stats"]
+        row.update({"season_resolution": resolution, "onset_trend_raw": tr["raw_onset"], "onset_trend_harm": tr["harm_onset"],
+                    "onset_trend_raw_ci95": ts["raw_onset"]["ci95"], "onset_trend_harm_ci95": ts["harm_onset"]["ci95"],
+                    "onset_trend_harm_n_years": ts["harm_onset"]["n_years"],
+                    "onset_trend_harm_sensitivity": ts["harm_onset"]["sensitivity_range"],
+                    "onset_trend_approximate": season[name]["trend_approximate"]})
         table.append(row)
         checks[name] = why
         print(f"{name}: {resolution} ({why}); onset trend raw {tr['raw_onset']} harm {tr['harm_onset']} d/decade", flush=True)
@@ -291,7 +401,7 @@ def main() -> int:
             "train_years": params["train_years"], "test_years": params["test_years"]}
     n_daily = sum(1 for v in season.values() if v["resolution"] == "daily")
     diffs = [abs(v) for c in checks_mvd for k, v in c.items() if k != "country" and v is not None]
-    seasons_meta = {**meta, "resolution_note": (
+    seasons_meta = {**meta, "partial_note": PARTIAL_NOTE, "trend_note": TREND_NOTE, "resolution_note": (
         "daily: from point detections; monthly: from the monthly calendars, assuming detections spread evenly "
         "within each month (an estimate at monthly resolution)"),
         "monthly_vs_daily": {"countries": len(checks_mvd), "trend_abs_diff_median": float(np.median(diffs)) if diffs else None,

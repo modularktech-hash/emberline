@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Run an async data-layer query (from src/lib/queries.ts) and track it.
@@ -15,13 +15,21 @@ export interface QueryState<T> {
   data: T | null;
   error: Error | null;
   loading: boolean;
+  /** Re-run the query (same key, component state such as selections is kept). */
+  retry: () => void;
 }
 
+type Core<T> = Omit<QueryState<T>, "retry">;
 const LOADING = { data: null, error: null, loading: true } as const;
 
 export function useParquet<T>(run: () => Promise<T>, key: string): QueryState<T> {
-  const [state, setState] = useState<QueryState<T>>(LOADING);
+  const [state, setState] = useState<Core<T>>(LOADING);
   const [activeKey, setActiveKey] = useState(key);
+  const [nonce, setNonce] = useState(0);
+  const retry = useCallback(() => {
+    setState(LOADING);
+    setNonce((n) => n + 1);
+  }, []);
 
   if (key !== activeKey) {
     setActiveKey(key);
@@ -48,7 +56,7 @@ export function useParquet<T>(run: () => Promise<T>, key: string): QueryState<T>
     };
     // `run` closes over the same values `key` encodes, so `key` is the dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, nonce]);
 
-  return state;
+  return { ...state, retry };
 }

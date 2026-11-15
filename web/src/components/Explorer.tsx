@@ -3,11 +3,12 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnnualLine } from "@/components/AnnualLine";
-import { CountUp, PageHead, Reveal } from "@/components/ui";
+import { useDataset } from "@/components/DatasetBanner";
+import { Failed, CountUp, PageHead, Reveal } from "@/components/ui";
 import { Eyebrow } from "@/components/Figure";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { CountryPicker } from "@/components/CountryPicker";
-import { CoverageNote, CoverageSummaryText, useCoverage } from "@/components/CoverageNote";
+import { CoverageNote, CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 import { FitQualityCard } from "@/components/FitQuality";
 import { qualityCsvHeader } from "@/lib/quality";
@@ -16,11 +17,17 @@ import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normal
 import { DotStat } from "@/components/DotMatrix";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
-import { areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaFromQuery, areaToQuery, intParam, reproducingUrl, useUrlState } from "@/lib/urlState";
+import { CopyLink } from "@/components/CopyLink";
 import { prettyName } from "@/lib/names";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
+import { boxScope, scopeCsvHeader } from "@/lib/scope";
+import { ScopePanel } from "@/components/ScopePanel";
+import { buildBrief } from "@/lib/brief";
+import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/uncertainty";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -37,8 +44,23 @@ export function Explorer() {
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
-  const { data, error, loading } = useAreaData(area);
-  const coverage = useCoverage();
+  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to });
+  useUrlState((q) => {
+    const a = areaFromQuery(q);
+    if (a?.ok) {
+      setArea(a.area); setBoxErr(null);
+      if (a.area.kind === "country") lastCountry.current = a.area.name; else if (a.fields) setBox(a.fields);
+    } else if (a && !a.ok) { setBox(a.fields); setBoxErr({ fields: a.fieldErrors, message: a.message }); }
+    else { setArea({ kind: "country", name: "Canada" }); }
+    const m = q.get("mode");
+    setMode(m === "harmonized" ? "harmonized" : "raw");
+    const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
+    if (f <= t) { setFrom(f); setTo(t); } else { setFrom(FIRST); setTo(2025); }
+  }, () => viewQuery(), [areaKey(area), mode, from, to]);
+  const { data, error, loading, retry } = useAreaData(area);
+  const ds = useDataset();
+  const coverageState = useCoverageState();
+  const coverage = coverageState.data;
   // The map (maplibre, ~1 MB of JS plus tiles) mounts only once the calendar has
   // its data and the map slot is near the viewport, so it never competes with it.
   const mapSlot = useRef<HTMLDivElement>(null);
@@ -92,6 +114,17 @@ export function Explorer() {
   const boxCells = area.kind === "box" ? area.parents.length : 0;
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
   const covLabel = cov && unfitted ? STATUS_LABEL[cov.status] : null;
+  const unc = useUncertainty();
+  const busiestYear = view ? [...(mode === "raw" ? view.raw : view.harm)].filter((r) => r.value !== null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]?.year ?? null : null;
+  // E27: coefficient-only intervals for harmonized country totals (busiest year, selected year/month).
+  const uncRows = mode === "harmonized" && area.kind === "country" && data && busiestYear != null ? [
+    { label: `Busiest year ${busiestYear}`, u: uncFor(unc.data, data.params.fit_version, area.name, busiestYear) },
+    ...(selCell ? [
+      { label: `Selected year ${selCell.year}`, u: uncFor(unc.data, data.params.fit_version, area.name, selCell.year) },
+      { label: `Selected month ${MONTHS[selCell.month - 1]} ${selCell.year}`, u: uncFor(unc.data, data.params.fit_version, area.name, selCell.year, selCell.month) },
+    ] : []),
+  ] : null;
+  const scope = useMemo(() => (area.kind === "box" && data && cal ? boxScope(area.bbox, area.parents, data.raw, cal) : null), [area, data, cal]);
 
   const exportCsv = () => {
     if (!data || !cal || !view) return;
@@ -108,13 +141,38 @@ export function Explorer() {
         ...(unfitted && cov ? { fit_status: `no fit: ${STATUS_LABEL[cov.status]}` } : {}),
         ...(mode === "harmonized" && flags.length ? { fit_flags: `suspicious (docs/results.md): ${flags.join("; ")}` } : {}),
         ...(area.kind === "box" ? { h3_res2_cells: `${cal.keys.length} with data of ${boxCells} touched` } : {}),
+        ...(scope ? scopeCsvHeader(scope) : {}),
         ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
         source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
         downloaded: new Date().toISOString(),
+        ...(uncRows ? {
+          coefficient_interval_95: uncRows.map((r) => `${r.label}: ${fmtUnc(r.u)}`).join("; "),
+          coefficient_interval_label: `${UNC_LABEL} ${UNC_NOT_TOTAL} 2.5th-97.5th percentile over bootstrap draws; source harmonized_uncertainty.json`,
+        } : {}),
+        reproduce: reproducingUrl(viewQuery()),
       },
       ["year", "month", "detections", "basis"],
       cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi).map((r) => [r.year, r.month, r.value == null ? "" : Math.round(r.value * 100) / 100, r.basis]),
     );
+  };
+
+  // E09: deterministic, self-contained HTML brief built from the values on screen.
+  const exportBrief = () => {
+    if (!data || !cal || !view) return;
+    const html = buildBrief({
+      place: areaLabel(area), areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
+      rows: cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi), max: view.max,
+      annual: mode === "raw" ? view.raw : view.harm, params: data.params, fit,
+      noFitReason: unfitted ? covLabel : null, unc: uncRows, scope,
+      dataset: ds?.dataset === "world" ? "world files (calendar_*_global.parquet, params_global.json)" : "four-country fallback (calendar_raw.parquet, calendar_harmonized.parquet, params.json)",
+      url: reproducingUrl(viewQuery()), generated: new Date().toISOString(),
+    });
+    const href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = `emberline_brief_${areaLabel(area).replace(/[^a-z0-9]+/gi, "_")}_${mode}_${view.lo}-${view.hi}.html`;
+    a.click();
+    URL.revokeObjectURL(href);
   };
 
   const years = data ? Array.from({ length: data.raw.years[1] - FIRST + 1 }, (_, i) => FIRST + i) : [];
@@ -169,17 +227,22 @@ export function Explorer() {
               </button>
             ))}
           </div>
-          <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark ml-auto min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
+          <CopyLink className="ml-auto" />
+          <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download CSV
+          </button>
+          <button type="button" onClick={exportBrief} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
+            Download brief
           </button>
         </div>
 
-        {error && <p className="mt-8 text-sm text-[var(--text-secondary)]">Could not load the data files: {error.message}</p>}
+        {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
+        <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
         {loading && <div className="mt-8 h-[420px] animate-pulse rounded-2xl bg-[var(--surface-2)]" />}
         {notProcessed && data && (
           <div className="mt-8 rounded-2xl border border-[var(--hairline)] p-6 text-sm leading-relaxed text-[var(--text-secondary)]">
-            {data.raw.dataset === "world" ? (
+            {ds?.dataset === "world" ? (
               <>
                 <p className="text-[var(--text-primary)]">No processed data in this area.</p>
                 <p className="mt-1">
@@ -214,6 +277,7 @@ export function Explorer() {
           </p>
         )}
 
+        {scope && <ScopePanel scope={scope} mode={mode} />}
         {data && cal && view && !notProcessed && !rawOnly && (
           <div className="fade-in">
             <div className="mt-6">
@@ -237,6 +301,15 @@ export function Explorer() {
                   </p>
                 );
               })()}
+              {uncRows && (
+                <div data-testid="unc-note" className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  <p className="font-medium text-[var(--text-primary)]">95% coefficient interval, harmonized country total</p>
+                  <ul className="tabular mt-1">
+                    {uncRows.map((r) => <li key={r.label}>{r.label}: <span className="text-[var(--text-primary)]">{fmtUnc(r.u)}</span></li>)}
+                  </ul>
+                  <p className="mt-1">{UNC_LABEL} {UNC_NOT_TOTAL}{!selCell && " Select a month in the calendar to see its year and month."}</p>
+                </div>
+              )}
             </div>
             <div className="mt-8 grid gap-6 border-t border-[var(--hairline)] pt-6 lg:grid-cols-[1fr_17rem]">
               <div>
@@ -286,9 +359,9 @@ export function Explorer() {
             <summary className="cursor-pointer font-medium text-[var(--text-primary)]">Provenance</summary>
             <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[auto_1fr]">
               <dt className="text-[var(--text-muted)]">Fit version</dt><dd className="tabular">{data.params.fit_version} · trained {data.params.train_years[0]}–{data.params.train_years[1]}, tested {data.params.test_years[0]}–{data.params.test_years[1]}</dd>
-              <dt className="text-[var(--text-muted)]">Files</dt><dd>{data.raw.dataset === "world" ? "calendar_raw_global.parquet, calendar_harmonized_global.parquet, params_global.json" : "four-country fallback: calendar_raw.parquet, calendar_harmonized.parquet, params.json"}</dd>
+              <dt className="text-[var(--text-muted)]">Files</dt><dd>{ds?.dataset === "world" ? "calendar_raw_global.parquet, calendar_harmonized_global.parquet, params_global.json" : "four-country fallback: calendar_raw.parquet, calendar_harmonized.parquet, params.json"}</dd>
               <dt className="text-[var(--text-muted)]">Source</dt><dd>NASA FIRMS archive: MODIS C6.1 (Terra, Aqua), VIIRS 375 m (Suomi-NPP); daytime vegetation-fire detections, nominal and high confidence</dd>
-              {coverage && data.raw.dataset === "world" && <><dt className="text-[var(--text-muted)]">Coverage</dt><dd><CoverageSummaryText coverage={coverage} /></dd></>}
+              {coverage && ds?.dataset === "world" && <><dt className="text-[var(--text-muted)]">Coverage</dt><dd><CoverageSummaryText coverage={coverage} /></dd></>}
               <dt className="text-[var(--text-muted)]">Record</dt><dd>Archive 2001–2025; harmonized 2003–2025. Historical snapshot: the live globe is a separate, uncorrected layer.</dd>
             </dl>
           </details>
@@ -355,6 +428,7 @@ export function Explorer() {
  */
 function Coverage() {
   const { data: p } = useParquet(() => getParams(), "params");
+  const ds = useDataset();
   if (!p) return null;
   const fits = Object.values(p.countries);
   const pooled = fits.filter((f) => f.fit_source === "pooled").length;
@@ -364,7 +438,7 @@ function Coverage() {
       Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
       <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
       <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected). Reasons under Provenance.
-      {p.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
+      {ds?.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );
 }

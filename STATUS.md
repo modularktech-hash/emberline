@@ -10,7 +10,11 @@ it, commit and push. Times are IST.
 
 **`web/` was redesigned on 14 Nov (evening) by the data-host cloud session at the owner's request** — Modulark house style (cream paper, Newsreader, ember accent), pages `/`, `/anomaly` (Seasons), `/method`. The previous UI is in git history (`c0eb082`). The data layer (`queries.ts`, `types.ts`, `useParquet.ts`) is unchanged. **Pull before touching `web/`.**
 
-## `web/` — CLAIMED by builder subagent "speed pass" (session_012VvB…, 14 Nov). Do not edit `web/` until released. Log: docs/speed-pass.md
+## `web/src` Plan Combat items — TAKEN OVER by the technical session (session_01RwRY…) at the owner's direction, 14 Nov ~23:05 UTC
+
+The "speed pass" claim below had no commits for ~90 minutes and its session could not be reached. The owner asked for every Plan Combat item to be built in the app. The technical session's builders now work through the UI hand-off list below, one commit per item, always merging (never force-pushing). **UI session: if you are back, pull first, commit what you have, and post here which files you are touching** so the two do not edit the same component at once.
+
+### Earlier: `web/` — CLAIMED by builder subagent "speed pass" (session_012VvB…, 14 Nov). Do not edit `web/` until released. Log: docs/speed-pass.md
 
 ### Previous: `web/` — RELEASED by the "data host" cloud session after design pass 3 (14 Nov ~21:30 UTC); was claimed from ~21:05 UTC
 
@@ -35,6 +39,30 @@ The cloud "data host" session has handed `web/` over. Read
 now, where everything lives, and what is open. Its duplicate world download was
 stopped (the app-build session's global fit is the one to use). Claim `web/`
 here before editing and pull first.
+
+## Split of work (owner decision, 14 Nov ~22:45 UTC)
+
+- **UI session owns `web/src/**`.** **Technical session (app build, session_01RwRY…) owns data, science, scripts, `web/public/data/*` and submission docs.** Neither edits the other's area; ask here.
+- **Plan Combat items handed to the UI session** (details in `plan combat.md`, `grep -n '^### E' 'plan combat.md'`):
+  - E08 shareable URL state (area, mode, years, baseline; restore on refresh/back)
+  - E09 evidence brief download (chart + metadata + quality + sources, numbers identical to screen)
+  - E14 requested vs effective bounds, res-2 cell IDs, whole-cell warning in the UI
+  - E15 exact geometry, cell IDs and reproducing URL in the custom-area CSV header
+  - E12 remainder: rename "sensor share" to "change in estimated trend after harmonization", show both slopes
+  - E20–E22, E25 accessibility (Data scroll region, keyboard row actions, calendar arrow keys/table, JS reduced motion)
+  - E33–E37 Seasons absolute anomaly and zero median, Compare quality and index period, Globe FRP-sum label and fallbacks
+  - **E13 landed (5da868e) — needed now:** `season.json` has a `partial` list and null values for incomplete fire years. `TrendsPage.tsx:45` silently drops years with null `harm_onset`, which also affects the year table (≈130–140) and the onset chart (≈101–112). Show them as "incomplete" instead. Add `partial?: ("raw"|"harm")[]` to the types in `lib/data.ts`.
+  - E38/E39 landed (2d06121): `web/public/data/manifest.json`. DataPage could link it and note that the calendar parquets hold both country and grid rows (summing both double-counts). Method copy to place: `docs/data-contract-additions.md` §4 (evaluation population) and §5.
+  - **E16 data side landed:** `manifest.json` v2 groups files into versioned datasets; the loaders still fall back per file (`queries.ts` `getParams` ≈l.234, `openTable` ≈l.341) so world and four-country files can mix, and `season/countries/drift.json` have no fallback. Resolve one dataset for all three files, refuse a fit-version mismatch, and show a site-wide fallback banner. Exact steps: `docs/data-contract-additions.md` §7.
+  - **E31/E32 data landed:** `season.json` `trend_stats` (SE, 95% CI, usable years, drop-first/last-3 sensitivity) and `trend_approximate`; `countries.json` `onset_trend_*_ci95/_n_years/_sensitivity/_approximate`. Show CI + n beside each slope on Season Shift, label OLS "descriptive", prefix monthly-country dates with ≈. Fields and wording: `docs/data-contract-additions.md` §8.
+  - **E47 measured (`docs/performance-budget.md`):** cold Slow-4G/4x-CPU phone, live Explorer calendar usable at 7.84 s and 1.33 MB (budget 5 s / 700 KB); Home LCP 4.62 s (budget 3 s). Worst: both world calendar parquets fetched in full (~610 KB), params_global.json 166 KB on Explorer, 345-428 KB JS per route. Fixes listed in the doc.
+  - **E27 data landed:** `harmonized_uncertainty.json` (130 own fits, coefficient-only 95% interval per country-year/month; pooled = not estimated). Display with the label in `docs/data-contract-additions.md` §10.
+  - **E36 data landed:** `live.json` now carries `field_definitions`, `hottest_cells_rank_by` and per-window `platforms`, `detections_total`, `frp_sum_definition`, `window_start_utc/end_utc` (null until next refresh). Relabel Globe "hottest" values as summed FRP: "sum of reported FRP across detections in this window — not instantaneous power or energy". Spec: `docs/data-contract-additions.md` §9.
+  - **E48 failure matrix (docs/failure-matrix.md) — defects:** (1) params_global.json blocked → `/`, `/seasons`, `/compare`, `/lab`, `/data` silently use four-country `params.json`; expected: site-wide fallback banner or refusal. (2) calendar_*_global.parquet blocked → `/explorer`, `/seasons`, `/compare`, `/lab` load four-country calendars beside world params with no notice (mixed versions); expected: resolve one dataset (E16, §7) and show it. (3) season.json / countries.json blocked → `/` goes blank with no message; `/method` with params_global blocked loses its tables silently; expected: per-section error. (4) `/trends` (season.json) and `/data` (countries.json) show 'Could not load the data: Failed to fetch' with no retry; expected: name the file, Retry button, keep selections. (5) No page has a retry control anywhere; app never reads manifest.json. Map-tile failure not verified (headless map requested no tiles).
+  - Any change under `web/public/data` must re-run `scripts/build_manifest.py` or `scripts/check_data_contract.py` fails.
+  - **E07 (1909e82, a2e01e7):** add a separate "recent activity" card from the "UI card spec" in `docs/current-month.md`, reading `web/public/data/current_month.json` (Canada, Portugal, Chile, Australia). Badge it "Provisional · not harmonized". Hide the ratio when it is null, warn when polygon capture is below 0.95, and never put these numbers on the harmonized calendar scale. It compares NOAA-20 with its own 2018–2025 history for the same 6 complete days; it is not month-to-date.
+- **Technical session, in order:** E13, E38/E39 done → E07 feasibility (running) → E16 mixed-version check → E07 current-month feasibility → E31/E32 → E40 fixture.
+- **Owner:** E18 form/deadline, E19 disclosure, E41 team links.
 
 ## Who is doing what right now
 

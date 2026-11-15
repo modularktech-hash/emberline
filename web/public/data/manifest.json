@@ -1,0 +1,744 @@
+{
+ "manifest_version": 2,
+ "fit_version": "v1-20261114T1240",
+ "fallback_fit_version": "v1-20261114T0630",
+ "datasets": {
+  "world": {
+   "role": "primary",
+   "description": "the published world fit; what the app reads first",
+   "fit_version": "v1-20261114T1240",
+   "params_file": "params_global.json",
+   "files": {
+    "calendar_harmonized_global.parquet": "62b545bd7170fee0399576493a556848bd27338091af9d2a6200e9672f8e2d63",
+    "calendar_raw_global.parquet": "8123debe2f6dbc3d853ae2bf266081fb8ca68f7e64e459670185d7da2335fb0e",
+    "countries.json": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
+    "coverage_status.json": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
+    "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
+    "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
+    "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
+    "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
+    "transfer_validation.json": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
+    "validation_points.json": "a8dbfaaecdcac14b45eed5cbb93f62dafe864ea693adc1270c24458b3905b6ab"
+   },
+   "consistent": true,
+   "problems": []
+  },
+  "fallback_four_country": {
+   "role": "fallback",
+   "description": "older four-country files (Australia, Canada, Chile, Portugal), a complete set of their own; read only as a whole set",
+   "fit_version": "v1-20261114T0630",
+   "params_file": "params.json",
+   "files": {
+    "calendar_harmonized.parquet": "e0d94f1fc68129e03dcbee667b9def21b87c44730858cbdfc92c1c3b90836281",
+    "calendar_raw.parquet": "4582bc6c26c4aadd0afd9ad0eb026c9367bfbf9a42cbd9aa576c47eeeca5801c",
+    "cell_day.parquet": "8ecc5f843228a76ada258d68e08b1cb6b3c260651756dacf3b686556c87d6ba7",
+    "params.json": "88f98487739b7ef192caae1151cef03bde9095dd29b5ae82fb4b4b705aebeb82"
+   },
+   "consistent": true,
+   "problems": []
+  },
+  "live": {
+   "role": "separate",
+   "description": "recent raw feeds; never harmonized, never mixed with the historical record",
+   "fit_version": null,
+   "params_file": null,
+   "files": {
+    "current_month.json": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
+    "live.json": "3011dc87fa2888477dc1d892b3c4e34b74b2f56ce33a3f529c860107d2460e7b",
+    "tle.json": "c26a8153ebc3b57e61ea3a2474fdf8262e40b29ef09812572edd91d78e534533"
+   },
+   "consistent": true,
+   "problems": []
+  }
+ },
+ "mixing_rule": "A view may combine files only from ONE dataset (plus 'live', which is never harmonized). Never combine params, calendars or summaries from 'world' with any file from 'fallback_four_country'. If any world file needed by a view fails, either load the whole fallback set (params.json + calendar_raw.parquet + calendar_harmonized.parquet) and say so on screen, or show the view as unavailable. World-only summaries (countries.json, season.json, drift.json, coverage_status.json, validation_points.json) have no fallback equivalent.",
+ "generated_by": "scripts/build_manifest.py",
+ "files": [
+  {
+   "name": "calendar_harmonized.parquet",
+   "dataset": "fallback_four_country",
+   "purpose": "Fallback: harmonized monthly calendar for the first four countries",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 256982,
+   "sha256": "e0d94f1fc68129e03dcbee667b9def21b87c44730858cbdfc92c1c3b90836281",
+   "format": "parquet",
+   "rows": 42950,
+   "columns": [
+    {
+     "name": "scope",
+     "type": "String",
+     "unit": "'country' (key = FIRMS country name) or 'h3_parent' (key = H3 resolution-2 cell)"
+    },
+    {
+     "name": "key",
+     "type": "String",
+     "unit": "country name or H3 res-2 cell index, per scope"
+    },
+    {
+     "name": "year",
+     "type": "Int32",
+     "unit": "UTC calendar year of acquisition"
+    },
+    {
+     "name": "month",
+     "type": "Int8",
+     "unit": "UTC calendar month, 1-12"
+    },
+    {
+     "name": "n_harmonized",
+     "type": "Float64",
+     "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections (count, may be fractional)"
+    }
+   ],
+   "time_span": {
+    "first_year": 2002,
+    "last_year": 2025
+   },
+   "scope_kind": "both",
+   "scopes": {
+    "country": {
+     "rows": 1124,
+     "keys": 4,
+     "sum_n_harmonized": 3509467.115
+    },
+    "h3_parent": {
+     "rows": 41826,
+     "keys": 303,
+     "sum_n_harmonized": 3509467.115
+    }
+   },
+   "scope_note": "Country rows and h3_parent rows count the same detections twice. Sum within one scope only: filter scope == 'country' for national totals or scope == 'h3_parent' for areas.",
+   "fit_version": "v1-20261114T0630",
+   "fit_version_from": "params.json"
+  },
+  {
+   "name": "calendar_harmonized_global.parquet",
+   "dataset": "world",
+   "purpose": "Harmonized monthly Aqua-MODIS-equivalent counts (Aqua to 2011, kappa*sum P over Suomi-NPP from 2012), per country and per H3 res-2 cell; fitted countries only",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 2482440,
+   "sha256": "62b545bd7170fee0399576493a556848bd27338091af9d2a6200e9672f8e2d63",
+   "format": "parquet",
+   "rows": 415842,
+   "columns": [
+    {
+     "name": "scope",
+     "type": "String",
+     "unit": "'country' (key = FIRMS country name) or 'h3_parent' (key = H3 resolution-2 cell)"
+    },
+    {
+     "name": "key",
+     "type": "String",
+     "unit": "country name or H3 res-2 cell index, per scope"
+    },
+    {
+     "name": "year",
+     "type": "Int32",
+     "unit": "UTC calendar year of acquisition"
+    },
+    {
+     "name": "month",
+     "type": "Int8",
+     "unit": "UTC calendar month, 1-12"
+    },
+    {
+     "name": "n_harmonized",
+     "type": "Float64",
+     "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections (count, may be fractional)"
+    }
+   ],
+   "time_span": {
+    "first_year": 2002,
+    "last_year": 2025
+   },
+   "scope_kind": "both",
+   "scopes": {
+    "country": {
+     "rows": 43631,
+     "keys": 171,
+     "sum_n_harmonized": 63889036.875
+    },
+    "h3_parent": {
+     "rows": 372211,
+     "keys": 2023,
+     "sum_n_harmonized": 63889036.875
+    }
+   },
+   "scope_note": "Country rows and h3_parent rows count the same detections twice. Sum within one scope only: filter scope == 'country' for national totals or scope == 'h3_parent' for areas.",
+   "fit_version": "v1-20261114T1240",
+   "fit_version_from": "params_global.json"
+  },
+  {
+   "name": "calendar_raw.parquet",
+   "dataset": "fallback_four_country",
+   "purpose": "Fallback: raw monthly calendar for the first four countries",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 432775,
+   "sha256": "4582bc6c26c4aadd0afd9ad0eb026c9367bfbf9a42cbd9aa576c47eeeca5801c",
+   "format": "parquet",
+   "rows": 147420,
+   "columns": [
+    {
+     "name": "scope",
+     "type": "String",
+     "unit": "'country' (key = FIRMS country name) or 'h3_parent' (key = H3 resolution-2 cell)"
+    },
+    {
+     "name": "key",
+     "type": "String",
+     "unit": "country name or H3 res-2 cell index, per scope"
+    },
+    {
+     "name": "year",
+     "type": "Int16",
+     "unit": "UTC calendar year of acquisition"
+    },
+    {
+     "name": "month",
+     "type": "Int8",
+     "unit": "UTC calendar month, 1-12"
+    },
+    {
+     "name": "sensor",
+     "type": "String",
+     "unit": "'MODIS' (Terra+Aqua) or 'VIIRS' (Suomi-NPP)"
+    },
+    {
+     "name": "n_detections",
+     "type": "Int64",
+     "unit": "count of filtered detections"
+    },
+    {
+     "name": "frp_sum_mw",
+     "type": "Float64",
+     "unit": "sum of per-detection fire radiative power, MW (a sum, not an energy)"
+    }
+   ],
+   "time_span": {
+    "first_year": 2001,
+    "last_year": 2025
+   },
+   "scope_kind": "both",
+   "scopes": {
+    "country": {
+     "rows": 1872,
+     "keys": 4,
+     "sum_n_detections": 17923567.0
+    },
+    "h3_parent": {
+     "rows": 145548,
+     "keys": 311,
+     "sum_n_detections": 17923567.0
+    }
+   },
+   "scope_note": "Country rows and h3_parent rows count the same detections twice. Sum within one scope only: filter scope == 'country' for national totals or scope == 'h3_parent' for areas.",
+   "fit_version": null
+  },
+  {
+   "name": "calendar_raw_global.parquet",
+   "dataset": "world",
+   "purpose": "Raw monthly detection counts and summed FRP per sensor (MODIS to 2011 and VIIRS from 2012 both present for every year archived), per country and per H3 res-2 cell",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 4071386,
+   "sha256": "8123debe2f6dbc3d853ae2bf266081fb8ca68f7e64e459670185d7da2335fb0e",
+   "format": "parquet",
+   "rows": 1078728,
+   "columns": [
+    {
+     "name": "scope",
+     "type": "String",
+     "unit": "'country' (key = FIRMS country name) or 'h3_parent' (key = H3 resolution-2 cell)"
+    },
+    {
+     "name": "key",
+     "type": "String",
+     "unit": "country name or H3 res-2 cell index, per scope"
+    },
+    {
+     "name": "year",
+     "type": "Int16",
+     "unit": "UTC calendar year of acquisition"
+    },
+    {
+     "name": "month",
+     "type": "Int8",
+     "unit": "UTC calendar month, 1-12"
+    },
+    {
+     "name": "sensor",
+     "type": "String",
+     "unit": "'MODIS' (Terra+Aqua) or 'VIIRS' (Suomi-NPP)"
+    },
+    {
+     "name": "n_detections",
+     "type": "Int64",
+     "unit": "count of filtered detections"
+    },
+    {
+     "name": "frp_sum_mw",
+     "type": "Float64",
+     "unit": "sum of per-detection fire radiative power, MW (a sum, not an energy)"
+    }
+   ],
+   "time_span": {
+    "first_year": 2001,
+    "last_year": 2025
+   },
+   "scope_kind": "both",
+   "scopes": {
+    "country": {
+     "rows": 97140,
+     "keys": 232,
+     "sum_n_detections": 267159561.0
+    },
+    "h3_parent": {
+     "rows": 981588,
+     "keys": 2118,
+     "sum_n_detections": 267159561.0
+    }
+   },
+   "scope_note": "Country rows and h3_parent rows count the same detections twice. Sum within one scope only: filter scope == 'country' for national totals or scope == 'h3_parent' for areas.",
+   "fit_version": null
+  },
+  {
+   "name": "cell_day.parquet",
+   "dataset": "fallback_four_country",
+   "purpose": "Per H3 res-5 cell x UTC day x satellite for the first four countries; sorted by H3 res-2 parent then date (filter on h3_parent for range reads)",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 3198905,
+   "sha256": "8ecc5f843228a76ada258d68e08b1cb6b3c260651756dacf3b686556c87d6ba7",
+   "format": "parquet",
+   "rows": 155730,
+   "columns": [
+    {
+     "name": "h3",
+     "type": "String",
+     "unit": "H3 resolution-5 cell index"
+    },
+    {
+     "name": "h3_parent",
+     "type": "String",
+     "unit": "H3 resolution-2 parent cell index"
+    },
+    {
+     "name": "acq_date",
+     "type": "Date",
+     "unit": "UTC acquisition date"
+    },
+    {
+     "name": "year",
+     "type": "Int16",
+     "unit": "UTC calendar year of acquisition"
+    },
+    {
+     "name": "month",
+     "type": "Int8",
+     "unit": "UTC calendar month, 1-12"
+    },
+    {
+     "name": "doy",
+     "type": "Int16",
+     "unit": "UTC day of year"
+    },
+    {
+     "name": "sensor",
+     "type": "String",
+     "unit": "'MODIS' (Terra+Aqua) or 'VIIRS' (Suomi-NPP)"
+    },
+    {
+     "name": "platform",
+     "type": "String",
+     "unit": "satellite (Terra, Aqua, Suomi-NPP)"
+    },
+    {
+     "name": "n_detections",
+     "type": "Int32",
+     "unit": "count of filtered detections"
+    },
+    {
+     "name": "frp_sum_mw",
+     "type": "Float64",
+     "unit": "sum of per-detection fire radiative power, MW (a sum, not an energy)"
+    },
+    {
+     "name": "frp_mean_mw",
+     "type": "Float64",
+     "unit": "mean FRP per detection, MW"
+    },
+    {
+     "name": "frp_max_mw",
+     "type": "Float64",
+     "unit": "maximum FRP of a detection, MW"
+    },
+    {
+     "name": "mean_pixel_area_km2",
+     "type": "Float64",
+     "unit": "mean detection pixel area, km2"
+    },
+    {
+     "name": "mean_lst_hours",
+     "type": "Float64",
+     "unit": "mean local solar time of acquisition, hours (UTC + longitude/15)"
+    }
+   ],
+   "time_span": {
+    "first_year": 2001,
+    "last_year": 2025,
+    "first_date": "2001-01-11",
+    "last_date": "2025-12-31"
+   },
+   "scope_kind": "h3_grid",
+   "fit_version": null
+  },
+  {
+   "name": "countries.json",
+   "dataset": "world",
+   "purpose": "One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)",
+   "source": "derived from the world calendars and params_global.json",
+   "bytes": 307339,
+   "sha256": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "unit",
+    "train_years",
+    "test_years",
+    "pooled_rule",
+    "countries",
+    "not_fitted"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ]
+   },
+   "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "coverage_status.json",
+   "dataset": "world",
+   "purpose": "Reason-coded fit status for all 237 FIRMS countries",
+   "source": "derived from params_global.json and calendar_raw_global.parquet",
+   "bytes": 164390,
+   "sha256": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "statuses",
+    "summary",
+    "n_countries",
+    "thresholds",
+    "count_definitions",
+    "has_raw_calendar",
+    "countries"
+   ],
+   "rows": 237,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "current_month.json",
+   "dataset": "live",
+   "purpose": "Prototype same-platform NOAA-20 recent window vs NOAA-20 history; not harmonized, not Aqua-equivalent",
+   "source": "FIRMS NRT and standard archive, NOAA-20 VIIRS (scripts, E07 prototype)",
+   "bytes": 3208,
+   "sha256": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
+   "format": "json",
+   "top_level_keys": [
+    "generated_utc",
+    "status",
+    "comparison",
+    "platform",
+    "filters",
+    "membership",
+    "nrt_feed",
+    "nrt_feed_span_utc",
+    "acquisition_cutoff_utc",
+    "window_utc",
+    "elapsed_days",
+    "month_to_date",
+    "month_to_date_note",
+    "provisional_nrt",
+    "reference_years",
+    "countries"
+   ],
+   "rows": 4,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "fit_version": null
+  },
+  {
+   "name": "drift.json",
+   "dataset": "world",
+   "purpose": "Mean local solar overpass time per satellite per year (Terra/Aqua orbital drift), with observed/predicted Aqua ratios",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 529825,
+   "sha256": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "unit",
+    "train_years",
+    "test_years",
+    "countries"
+   ],
+   "rows": 166,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ]
+   },
+   "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "harmonized_uncertainty.json",
+   "dataset": "world",
+   "purpose": "E27: 95% bootstrap interval of harmonized country totals from logistic-coefficient uncertainty only (see its `covers` field); pooled-curve countries not estimated",
+   "source": "derived from the FIRMS archive and params_global.json (scripts/output_uncertainty.py)",
+   "bytes": 703532,
+   "sha256": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
+   "format": "json",
+   "top_level_keys": [
+    "analysis",
+    "fit_version",
+    "unit",
+    "interval",
+    "columns",
+    "covers",
+    "method",
+    "pre_2012",
+    "self_check",
+    "summary",
+    "countries"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "unit": "Aqua-equivalent detections",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "live.json",
+   "dataset": "live",
+   "purpose": "Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, not the Suomi-NPP record, not comparable with the historical calendars",
+   "source": "NASA FIRMS near-real-time: VIIRS 375 m NOAA-20 and NOAA-21, MODIS Terra/Aqua (raw, uncorrected)",
+   "bytes": 905371,
+   "sha256": "3011dc87fa2888477dc1d892b3c4e34b74b2f56ce33a3f529c860107d2460e7b",
+   "format": "json",
+   "top_level_keys": [
+    "fetched_utc",
+    "cell_deg",
+    "windows",
+    "field_definitions",
+    "hottest_cells_rank_by"
+   ],
+   "fetched_utc": "2026-11-14T11:10Z",
+   "fit_version": null
+  },
+  {
+   "name": "params.json",
+   "dataset": "fallback_four_country",
+   "purpose": "Fallback: the first four countries' fit (Australia, Canada, Chile, Portugal)",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 19815,
+   "sha256": "88f98487739b7ef192caae1151cef03bde9095dd29b5ae82fb4b4b705aebeb82",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "unit",
+    "train_years",
+    "test_years",
+    "drift_years",
+    "match_rule",
+    "countries"
+   ],
+   "rows": 4,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ],
+    "drift_years": [
+     2022,
+     2025
+    ]
+   },
+   "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T0630"
+  },
+  {
+   "name": "params_global.json",
+   "dataset": "world",
+   "purpose": "Fitted parameters and train/held-out validation for the 171 fitted countries; pooled model; the 66 countries without a published fit",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 854391,
+   "sha256": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "unit",
+    "train_years",
+    "test_years",
+    "drift_years",
+    "match_rule",
+    "pooled_model",
+    "pooled_rule",
+    "failed",
+    "countries"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ],
+    "drift_years": [
+     2022,
+     2025
+    ]
+   },
+   "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "season.json",
+   "dataset": "world",
+   "purpose": "Per fire year: day by which 10/50/90% of detections occurred, raw and harmonized; daily or monthly resolution per country",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 1085351,
+   "sha256": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "unit",
+    "train_years",
+    "test_years",
+    "partial_note",
+    "trend_note",
+    "resolution_note",
+    "monthly_vs_daily",
+    "countries"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ],
+    "first_year": 2003,
+    "last_year": 2025
+   },
+   "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "tle.json",
+   "dataset": "live",
+   "purpose": "Orbital elements for the satellite view",
+   "source": "CelesTrak public two-line elements via tle.ivanstanojevic.me",
+   "bytes": 1808,
+   "sha256": "c26a8153ebc3b57e61ea3a2474fdf8262e40b29ef09812572edd91d78e534533",
+   "format": "json",
+   "top_level_keys": [
+    "source",
+    "fetched",
+    "satellites"
+   ],
+   "fetched_utc": "2026-11-14T11:10Z",
+   "fit_version": null
+  },
+  {
+   "name": "transfer_validation.json",
+   "dataset": "world",
+   "purpose": "E28 analysis: leave-one-country-out held-out (2019-2021) scores of the pooled curve vs own fits; not a published fit",
+   "source": "derived from params_global.json and the FIRMS archive (scripts/transfer_validation.py)",
+   "bytes": 2564,
+   "sha256": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
+   "format": "json",
+   "top_level_keys": [
+    "analysis",
+    "fit_version",
+    "method",
+    "n_countries",
+    "errors",
+    "own_fit_reproduction_max_abs_r2_diff",
+    "all_own_fit_countries",
+    "pool_sources_left_out",
+    "not_pool_sources"
+   ],
+   "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "validation_points.json",
+   "dataset": "world",
+   "purpose": "Held-out (2019-2021) cell-month sample per fitted country and the training-only ratio baseline",
+   "source": "NASA FIRMS archive country files: MODIS Collection 6.1 (Terra, Aqua; MCD14) and VIIRS 375 m Suomi-NPP (VNP14IMG), filtered to daytime vegetation fires (type 0)",
+   "bytes": 535121,
+   "sha256": "a8dbfaaecdcac14b45eed5cbb93f62dafe864ea693adc1270c24458b3905b6ab",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "test_years",
+    "train_years",
+    "unit",
+    "points_format",
+    "sampling",
+    "baseline_definition",
+    "metric_definitions",
+    "summary",
+    "countries"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ]
+   },
+   "unit": "Aqua MODIS daytime vegetation-fire detections per H3 res-5 cell per month",
+   "fit_version": "v1-20261114T1240"
+  }
+ ]
+}

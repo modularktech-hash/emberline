@@ -45,7 +45,45 @@ def fetch(slug: str, name: str) -> str:
     raise RuntimeError(f"could not fetch {name}")
 
 
+FRP_SUM_DEFINITION = ("sum of reported FRP (MW) across all detections in this cell and window, from every "
+                      "listed platform and overpass -- not instantaneous power or energy")
+FIELD_DEFINITIONS = {
+    "detections": "number of active-fire detections (all listed platforms) in the cell during the window",
+    "frp_sum_mw": FRP_SUM_DEFINITION,
+    "frp_max_mw": "largest single-detection FRP (MW) in the cell during the window",
+    "satellites": "platforms that contributed at least one detection to the cell, joined with '+'",
+}
+
+
+def annotate(out: dict, spans: dict | None = None) -> dict:
+    """Add explicit, additive metadata (E36). Never alters cells or totals."""
+    out["field_definitions"] = FIELD_DEFINITIONS
+    out["hottest_cells_rank_by"] = "frp_sum_mw"
+    for window, w in out["windows"].items():
+        w["platforms"] = sorted(w["totals"])
+        w["detections_total"] = sum(w["totals"].values())
+        w["frp_sum_definition"] = FRP_SUM_DEFINITION
+        span = (spans or {}).get(window)
+        w.setdefault("window_start_utc", span[0] if span else None)
+        w.setdefault("window_end_utc", span[1] if span else None)
+        if w["window_start_utc"] is None:
+            w["window_span_note"] = ("first/last detection time not recorded in this snapshot; "
+                                     "the next live refresh carries it. 'dates' lists the UTC acquisition dates.")
+    return out
+
+
+def _acq_utc(row: dict) -> str | None:
+    d, t = row.get("acq_date", ""), (row.get("acq_time") or "").zfill(4)
+    return f"{d}T{t[:2]}:{t[2:]}Z" if d and t.isdigit() else None
+
+
 def main() -> int:
+    import sys
+    if "--annotate-only" in sys.argv:  # add metadata to the existing snapshot, no network fetch
+        OUT.write_text(json.dumps(annotate(json.loads(OUT.read_text())), separators=(",", ":")))
+        print(f"annotated {OUT}")
+        return 0
+    spans: dict = {}
     out = {"fetched_utc": time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime()), "cell_deg": CELL, "windows": {}}
     for window, feeds in FEEDS.items():
         bins: dict = defaultdict(lambda: [0, 0.0, 0.0, set()])
@@ -61,6 +99,9 @@ def main() -> int:
                 b = bins[key]
                 b[0] += 1; b[1] += frp; b[2] = max(b[2], frp); b[3].add(label)
                 dates.add(row.get("acq_date", ""))
+                if (ts := _acq_utc(row)):
+                    lo, hi = spans.get(window, (ts, ts))
+                    spans[window] = (min(lo, ts), max(hi, ts))
                 n += 1
             totals[label] = n
             print(f"{window} {label}: {n:,} detections", flush=True)
@@ -69,6 +110,7 @@ def main() -> int:
         out["windows"][window] = {"totals": totals, "dates": sorted(d for d in dates if d),
                                   "columns": ["lat", "lon", "detections", "frp_sum_mw", "frp_max_mw", "satellites"],
                                   "cells": cells}
+    annotate(out, spans)
     OUT.write_text(json.dumps(out, separators=(",", ":")))
     print(f"wrote {OUT} ({OUT.stat().st_size / 1e6:.1f} MB)")
     return 0

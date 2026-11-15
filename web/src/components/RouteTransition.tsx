@@ -24,7 +24,7 @@ import { setCovering } from "@/lib/transition";
  * route announcer work unchanged. <Link> prefetching is untouched.
  */
 
-const IN_MS = 350, MIN_MS = 500, OUT_MS = 450, SAFETY_MS = 2500;
+const IN_MS = 350, MIN_MS = 350, OUT_MS = 450, SAFETY_MS = 2500;
 const DOTS = 14;
 
 type Phase = "idle" | "in" | "hold" | "out";

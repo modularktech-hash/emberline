@@ -1,0 +1,2 @@
+/** Reveals server-rendered [data-reveal] elements before hydration (same rule as watchReveal in components/ui.tsx). Rendered once, at the end of <body>. */
+export const REVEAL_SCRIPT = `(function(){try{var q=document.querySelectorAll("[data-reveal]:not([data-in])");if(!("IntersectionObserver" in window)){q.forEach(function(e){e.dataset.in=""});return}var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.dataset.in="";io.unobserve(e.target)}})},{rootMargin:"-60px"});q.forEach(function(e){io.observe(e)})}catch(e){}})();`;
