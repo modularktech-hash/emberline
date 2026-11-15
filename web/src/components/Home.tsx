@@ -10,7 +10,7 @@ function useScrollOrFinal(p: MotionValue<number>, final: number): MotionValue<nu
 }
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CountUp, Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getLiveSummary, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
@@ -288,13 +288,45 @@ function Widgets({ d }: { d: HomeData }) {
 
 
 /* --------------------------------------------------------- sticky story */
-function StoryStep({ i, n, p, children }: { i: number; n: number; p: MotionValue<number>; children: React.ReactNode }) {
-  const a = i / n, b = (i + 1) / n;
-  const a0 = Math.max(0, a - 0.08), a1 = Math.max(0.01, a);
-  const opacity = useTransform(p, [a0, a1, b - 0.06, b], [i === 0 ? 1 : 0.3, 1, 1, i === n - 1 ? 1 : 0.3]);
-  const x = useTransform(p, [a0, a1], [i === 0 ? 0 : -10, 0]);
-  const reduced = useReducedMotion();
-  return <motion.div style={reduced ? { opacity: 1, x: 0 } : { opacity, x }} className="flex min-h-[60vh] flex-col justify-center py-6">{children}</motion.div>;
+/**
+ * One text step of the sticky story. `active` comes from the chapter's single
+ * useActiveStep() measurement, the same value that picks the visual, so the
+ * text and the picture can never be a step apart.
+ */
+function StoryStep({ i, active, children }: { i: number; active: number; children: React.ReactNode }) {
+  return (
+    <div data-story-step={i} data-active={i === active ? "" : undefined}
+      className="flex min-h-[60vh] flex-col justify-center py-6 transition-[opacity,transform] duration-[250ms] ease-out"
+      style={{ opacity: i === active ? 1 : 0.3, transform: i > active ? "translateX(-10px)" : "none" }}>{children}</div>
+  );
+}
+
+/**
+ * Index of the story step under the middle of the viewport. An
+ * IntersectionObserver with a thin band at the viewport centre
+ * (rootMargin -45% top and bottom) fires whenever a step enters or leaves the
+ * middle; the step whose box holds the centre line is then the active one.
+ * Before the first step reaches the middle it is step 0; after the last one
+ * has passed, the last step stays active.
+ */
+function useActiveStep(root: React.RefObject<HTMLElement | null>): number {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const steps = [...(root.current?.querySelectorAll<HTMLElement>("[data-story-step]") ?? [])];
+    if (!steps.length || typeof IntersectionObserver === "undefined") return;
+    const pick = () => {
+      const mid = window.innerHeight / 2;
+      const i = steps.findIndex((el) => { const r = el.getBoundingClientRect(); return r.top <= mid && r.bottom > mid; });
+      if (i >= 0) setActive(i);
+      else if (steps[0].getBoundingClientRect().top > mid) setActive(0);
+      else if (steps[steps.length - 1].getBoundingClientRect().bottom <= mid) setActive(steps.length - 1);
+    };
+    const io = new IntersectionObserver(pick, { rootMargin: "-45% 0px -45% 0px" });
+    steps.forEach((el) => io.observe(el));
+    pick();
+    return () => io.disconnect();
+  }, [root]);
+  return active;
 }
 
 function OrbitChapter() {
@@ -305,10 +337,11 @@ function OrbitChapter() {
   // SVG rotation written straight to the transform attribute, about the dial's centre in viewBox units.
   const orbitG = useRef<SVGGElement>(null);
   useMotionValueEvent(rot, "change", (v) => orbitG.current?.setAttribute("transform", `rotate(${v.toFixed(2)} 100 100)`));
-  const orbitOpacity = useTransform(p, [0, 0.25, 0.32], [1, 1, 0.25]);
-  const heat = useTransform(p, [0.2, 0.32, 0.5, 0.56], [0, 1, 1, 0]);
-  const coarse = useTransform(p, [0.45, 0.55, 0.72, 0.78], [0, 1, 1, 0]);
-  const fine = useTransform(p, [0.72, 0.82], [0, 1]);
+  // One measurement drives both columns: the step at the viewport centre is the active one, and each
+  // visual is shown exactly while its own step is active (0 orbits, 1 heat, 2 MODIS 1 km grid, 3 VIIRS 375 m grid).
+  const active = useActiveStep(ref);
+  const layer = (k: number) => ({ opacity: active === k ? 1 : 0 });
+  const fadeCls = "transition-opacity duration-[250ms] ease-out";
   const steps = [
     ["01 · From orbit", "Five satellites circle Earth fourteen times a day.", "Terra and Aqua carry MODIS; Suomi-NPP, NOAA-20 and NOAA-21 carry VIIRS. Each crosses a given place at about the same local time every day."],
     ["02 · Heat", "They don't see flames. They see heat.", "A fire's radiated power, in megawatts, shows up in the infrared. Big fires shine; small ones barely register."],
@@ -320,7 +353,7 @@ function OrbitChapter() {
     <section ref={ref} className="relative mt-24 grid gap-8 md:grid-cols-2" style={{ height: "380vh" }}>
       <div className="md:pr-4">
         {steps.map(([e, t, b], i) => (
-          <StoryStep key={i} i={i} n={steps.length} p={p}>
+          <StoryStep key={i} i={i} active={active}>
             <Eyebrow>{e}</Eyebrow>
             <h2 className="display mt-3 t-d2">{t}</h2>
             <p className="mt-4 max-w-md text-lg leading-relaxed text-[var(--text-secondary)]">{b}</p>
@@ -329,7 +362,7 @@ function OrbitChapter() {
       </div>
       <div className="sticky top-24 hidden h-[70vh] items-center justify-center md:flex">
         <div className="window relative aspect-square w-full max-w-[480px]">
-          <motion.svg style={{ opacity: orbitOpacity }} viewBox="0 0 200 200" className="absolute inset-0 h-full w-full">
+          <svg data-story-visual="orbit" style={{ opacity: active === 0 ? 1 : 0.25 }} viewBox="0 0 200 200" className={`absolute inset-0 h-full w-full ${fadeCls}`}>
             <circle cx="100" cy="100" r="46" fill="#efe4cb" stroke="var(--ink)" strokeOpacity="0.25" />
             {[62, 74, 86].map((r, i) => <ellipse key={r} cx="100" cy="100" rx={r} ry={r * 0.36} fill="none" stroke="var(--ink)" strokeOpacity="0.14" strokeDasharray="2 3" transform={`rotate(${-30 + i * 28} 100 100)`} />)}
             <g ref={orbitG}>
@@ -337,19 +370,19 @@ function OrbitChapter() {
                 <g key={i} transform={`rotate(${a} 100 100)`}><circle cx={100 + (r as number)} cy="100" r="4" fill={c as string} /></g>
               ))}
             </g>
-          </motion.svg>
-          <motion.div style={{ opacity: heat }} className="absolute inset-8 rounded-2xl bg-[radial-gradient(circle_at_40%_45%,#fff0c7_0%,#f49b3f_22%,#c93f1c_40%,rgba(86,17,20,0.08)_70%,transparent)]">
+          </svg>
+          <div data-story-visual="heat" style={layer(1)} className={`${fadeCls} absolute inset-8 rounded-2xl bg-[radial-gradient(circle_at_40%_45%,#fff0c7_0%,#f49b3f_22%,#c93f1c_40%,rgba(86,17,20,0.08)_70%,transparent)]`}>
             <p className="tabular absolute bottom-3 left-4 font-mono text-[11px] text-[var(--ink)]">fire radiative power, in MW</p>
-          </motion.div>
-          <motion.div style={{ opacity: coarse }} className="absolute inset-8 grid grid-cols-4 gap-1">
+          </div>
+          <div data-story-visual="modis" style={layer(2)} className={`${fadeCls} absolute inset-8 grid grid-cols-4 gap-1`}>
             {Array.from({ length: 16 }, (_, i) => <div key={i} className={`rounded-md ${[5, 10].includes(i) ? "bg-[var(--seq-5)]" : "bg-[var(--surface-2)]"}`} />)}
-          </motion.div>
-          <motion.div style={{ opacity: fine }} className="absolute inset-8 grid grid-cols-12 gap-[2px]">
+          </div>
+          <div data-story-visual="viirs" style={layer(3)} className={`${fadeCls} absolute inset-8 grid grid-cols-12 gap-[2px]`}>
             {Array.from({ length: 144 }, (_, i) => {
               const f = fires.find((q) => Math.floor(q.x / 8.4) + 12 * Math.floor(q.y / 8.4) === i);
               return <div key={i} className="rounded-[2px]" style={{ background: f ? (f.big ? "var(--seq-6)" : "var(--seq-3)") : "var(--surface-2)" }} />;
             })}
-          </motion.div>
+          </div>
           <div className="absolute left-4 top-4 rounded-full bg-[var(--ink)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#f7f3e8]">sensor view</div>
         </div>
       </div>
