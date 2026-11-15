@@ -7,13 +7,14 @@
  */
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { getProof, type BenchSeries, type ProofBenchCounts, type ProofFile, type ProofStepRow, type RecordSeries } from "@/lib/data";
+import { getProof, type BenchSeries, type ProofBenchCounts, type ProofBenchRow, type ProofFile, type ProofStepRow, type RecordSeries } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { prettyName } from "@/lib/names";
 import { Segmented } from "@/components/ui";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Eyebrow } from "@/components/Figure";
+import { median } from "@/lib/ember";
 
 const RAW = "var(--c-raw)";
 const pct = (v: number | null | undefined, dp = 1) => (v == null || !Number.isFinite(v) ? "—" : `${fmtNum(v * 100, dp)}%`);
@@ -173,6 +174,34 @@ const SERIES: Array<{ k: BenchSeries; label: string; note: string }> = [
   { k: "raw_viirs", label: "Raw VIIRS", note: "no correction" },
 ];
 
+/**
+ * Where the model loses to the ratio on R², read from the published per-country
+ * held-out metrics (no refit, nothing tuned on 2019–2021): the split by
+ * outcome and the median bias of each method in each group.
+ */
+function BenchmarkLoss({ rows }: { rows: ProofBenchRow[] }) {
+  const withRatio = rows.flatMap((r) => (r.ratio && r.ratio.r2 != null && r.model.r2 != null && r.ratio.bias_pct != null && r.model.bias_pct != null
+    ? [{ src: r.fit_source, m: r.model.r2, q: r.ratio.r2, bm: r.model.bias_pct, bq: r.ratio.bias_pct }] : []));
+  const lose = withRatio.filter((r) => r.m < r.q), win = withRatio.filter((r) => r.m >= r.q);
+  const med = (xs: number[]) => median(xs);
+  const gap = med(lose.map((r) => r.q - r.m));
+  const bLose = med(lose.map((r) => r.bm)), bLoseR = med(lose.map((r) => r.bq));
+  const bWin = med(win.map((r) => r.bm)), bWinR = med(win.map((r) => r.bq));
+  const pooledLose = lose.filter((r) => r.src === "pooled").length;
+  return (
+    <div className="mt-3 border-t border-[var(--hairline)] pt-3 text-xs">
+      <p className="font-medium text-[var(--text-primary)]">Where and why the model loses on R²</p>
+      <p className="mt-1">
+        In the <span className="tabular">{lose.length}</span> countries where the ratio wins, the margin is small (median R² gap <span className="tabular">{fmtR2(gap)}</span>) and the model over-predicts the held-out Aqua total
+        (median bias <span className="tabular">{fmtPct(bLose)}</span>, ratio <span className="tabular">{fmtPct(bLoseR)}</span>); where the model wins its median bias is <span className="tabular">{fmtPct(bWin)}</span> (ratio <span className="tabular">{fmtPct(bWinR)}</span>).
+        {" "}{pooledLose} of the {lose.length} use the pooled curve. Our reading (a hypothesis, not a tested cause): the losses look mostly like a level shift between the training years and 2019–2021 that the
+        model&apos;s single scale factor (κ, set on 2012–2018) carries into the held-out years, rather than a wrong detection curve. We did not re-tune anything on 2019–2021 to close
+        the gap: that would turn the test years into training years. A principled fix (choosing κ on a validation split inside 2012–2018) is listed as future work.
+      </p>
+    </div>
+  );
+}
+
 export function Benchmark() {
   const { data, error } = useProof();
   const [group, setGroup] = useState<"all" | "own" | "pooled">("all");
@@ -195,10 +224,16 @@ export function Benchmark() {
       <h2 className="display mt-2 text-2xl">Against simpler corrections, on held-out years</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         Four ways to put VIIRS counts on the Aqua MODIS scale, scored on the same held-out 2019–2021 cell-months (fit on 2012–2018).
-        The plain result: the model is far better than raw VIIRS or a single cut-off, and roughly level with one country-wide ratio (median R² {fmtR2(b.all.median_r2.model)} against {fmtR2(b.all.median_r2.ratio)}).
-        It beats that ratio on held-out R² in <span className="tabular text-[var(--text-primary)]">{b.all.beats_ratio_r2} of {b.all.n}</span> countries
-        and has lower mean absolute error in <span className="tabular text-[var(--text-primary)]">{b.all.beats_ratio_mae} of {b.all.n}</span>.
       </p>
+      <div className="mt-3 max-w-3xl rounded-2xl border border-[var(--ember)] p-4 text-sm leading-relaxed text-[var(--text-secondary)]" data-testid="benchmark-honest">
+        <p className="font-medium text-[var(--text-primary)]">The honest result</p>
+        <ul className="mt-1 list-disc pl-5">
+          <li>On held-out R², a single country-wide ratio does slightly better: median R² <span className="tabular text-[var(--text-primary)]">{fmtR2(b.all.median_r2.ratio)}</span> for the ratio against <span className="tabular text-[var(--text-primary)]">{fmtR2(b.all.median_r2.model)}</span> for our model. The model has the higher R² in only <span className="tabular text-[var(--text-primary)]">{b.all.beats_ratio_r2} of {b.all.n_with_ratio}</span> countries.</li>
+          <li>On mean absolute error the model is better in <span className="tabular text-[var(--text-primary)]">{b.all.beats_ratio_mae} of {b.all.n_with_ratio}</span> countries (median MAE {fmtNum(b.all.median_mae.model, 2)} against {fmtNum(b.all.median_mae.ratio, 2)}).</li>
+          <li>Both are far better than raw VIIRS (model better in {b.all.beats_raw_r2} of {b.all.n}) and than a single FRP cut-off (model better in {b.all.beats_threshold_r2} of {b.all.n}). The model removes the 2012 step (step collapse above); the ratio&apos;s step is not scored here.</li>
+        </ul>
+        <BenchmarkLoss rows={b.countries} />
+      </div>
       <div className="mt-4"><Segmented label="Countries" value={group} onChange={setGroup} options={[
         { value: "all", label: `All fitted (${b.all.n})` }, { value: "own", label: `Own curve (${b.own.n})` }, { value: "pooled", label: `Pooled curve (${b.pooled.n})` },
       ]} /></div>

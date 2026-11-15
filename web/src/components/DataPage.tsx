@@ -12,7 +12,7 @@ import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
-import { STATUS_LABEL, coverageReason } from "@/lib/coverage";
+import { STATUS_LABEL, UNFITTED_MEANING, coverageReason } from "@/lib/coverage";
 import { DatasetCard } from "@/components/DatasetCard";
 import { DataJourney } from "@/components/DataJourney";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
@@ -169,7 +169,8 @@ export function DataPage() {
                     <h2 className="display text-3xl">Not enough data to fit</h2>
                     <p className="mt-1 max-w-2xl text-sm text-[var(--text-secondary)]">
                       {data.not_fitted.length} FIRMS countries and territories lack the data the fit needs, so they have no harmonized record and no score.
-                      Where a raw record exists, the Explorer shows it, marked uncorrected.
+                      Where a raw record exists, the Explorer shows it, marked uncorrected. Why: each row gives the reason, traced to the counts the fit needs (no Aqua detections to learn from, an empty reference window, or too few held-out cells to score).
+                      {" "}{UNFITTED_MEANING}
                       {coverage && <> <span data-testid="coverage-summary"><CoverageSummaryText coverage={coverage} />.</span></>}
                     </p>
                   </div>
@@ -185,7 +186,7 @@ export function DataPage() {
                     <tbody>
                       {notFitted.map((n) => (
                         <tr key={n.country} className="border-t border-[var(--hairline)]">
-                          <td className="py-2">{prettyName(n.country)}</td>
+                          <td className="py-2">{n.has_raw_calendar ? <a className="link-ul" href={`/explorer?country=${encodeURIComponent(n.country)}`}>{prettyName(n.country)}</a> : prettyName(n.country)}</td>
                           <td className="px-3 text-[var(--text-secondary)]">{n.has_raw_calendar ? fmt(n.detections_filtered) : "no raw record"}</td>
                           <td className="px-3 py-2 text-xs text-[var(--text-muted)]">{coverage?.countries[n.country]
                             ? <><span className="text-[var(--text-primary)]">{STATUS_LABEL[coverage.countries[n.country].status]}</span>{n.has_raw_calendar ? "" : " · no calendar"} — {coverageReason(coverage.countries[n.country])}</>

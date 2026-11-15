@@ -51,8 +51,9 @@ reference observations, per H3 resolution-5 cell (~250 km²) and month. 2022–2
   are flagged in the Method page table. A best single FRP cut-off has higher held-out R² than
   the model in **21 of 171**.
 - Against a stronger baseline, one training-era (2012–2018) Aqua ÷ Suomi-NPP ratio per country,
-  the model has higher held-out R² in only **84 of 171** countries and lower mean absolute error
-  in **141 of 171** (`docs/results.md`). Most of the gain over raw VIIRS comes from getting the
+  the model has higher held-out R² in only **84 of 171** countries (median R² **0.55** for the
+  model, **0.59** for the ratio) and lower mean absolute error in **141 of 171**
+  (`web/public/data/proof.json`, `docs/results.md`). Most of the gain over raw VIIRS comes from getting the
   overall scale right, which the simple ratio also does.
 - Canada, the demo example: the raw record steps up **×6.60** from 2009–11 to 2012–14.
   Aqua alone shows **×1.43** over the same years; the harmonized record shows **×1.68**.
