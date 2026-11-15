@@ -141,10 +141,10 @@ function Hero({ d }: { d: HomeData }) {
           <span className="block text-[var(--red)] sm:whitespace-nowrap"><Words text="One steady line." delay={0.22} /></span>
         </h1>
         <p className="mx-auto mt-7 max-w-[34rem] text-[18px] leading-relaxed text-[var(--text-secondary)]">
-          Naively joining the MODIS and VIIRS fire records makes 2012 look like a jump in fire. We remove that step, country by country, so you can see whether your fire season is <span className="accent text-[1.15em] text-[var(--text-primary)]">really unusual.</span>
+          In 2012 the fire satellites changed, and the counts jumped overnight. The fires did not. We repair that break, country by country, into one burning activity calendar, so a fire manager can see whether a month in their area is <span className="accent text-[1.15em] text-[var(--text-primary)]">really unusual.</span>
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Pill href="/explorer" tone="red">Open the calendar</Pill>
+          <Pill href="/explorer" tone="red">Check your area</Pill>
           <Pill href="/globe" tone="line">Live globe →</Pill>
         </div>
         <nav aria-label="The evidence" className="mx-auto mt-7 grid max-w-3xl gap-3 text-left sm:grid-cols-3" data-testid="hero-evidence">
