@@ -9,7 +9,6 @@ import { RouteTransition } from "@/components/RouteTransition";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { SearchPalette } from "@/components/Search";
-import { THEME_SCRIPT } from "@/components/ThemeToggle";
 import { DatasetBanner } from "@/components/DatasetBanner";
 import "./globals.css";
 import { fitCounts, fitCountsPhrase } from "@/lib/fitCounts";
@@ -29,12 +28,11 @@ export const metadata: Metadata = {
   openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Emberline", type: "website" },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
-export const viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f4f4f2" }, { media: "(prefers-color-scheme: dark)", color: "#0b0b0b" }] };
+export const viewport = { themeColor: "#f4f4f2", colorScheme: "light" as const };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${dot.variable} ${ui.variable} ${mono.variable} ${accent.variable} h-full antialiased`} suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
+    <html lang="en" data-theme="light" className={`${dot.variable} ${ui.variable} ${mono.variable} ${accent.variable} h-full antialiased`} suppressHydrationWarning>
       <body id="top" className="flex min-h-full flex-col">
         <MotionPrefs>
         <Backdrop />
