@@ -81,7 +81,7 @@ export function PageHead({ eyebrow, title, italic, lede, compact = false }: { ey
       <Reveal><Eyebrow>{eyebrow}</Eyebrow></Reveal>
       <Reveal delay={0.06}>
         <h1 className={`display ${compact ? "t-tool" : "t-d1"} mt-3 max-w-4xl`}>
-          {title}{italic && <> <span className="italic text-[var(--ember)]">{italic}</span></>}
+          {title}{italic && <> <span className="italic">{italic}</span></>}
         </h1>
       </Reveal>
       <Reveal delay={0.12}><p className={`${compact ? "mt-3 text-base" : "mt-6 text-lg"} max-w-2xl leading-relaxed text-[var(--text-primary)]/80`}>{lede}</p></Reveal>
@@ -95,8 +95,8 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
     <div className="glass-thin flex p-1" role="group" aria-label={label}>
       {options.map((o) => (
         <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={value === o.value}
-          className={`relative z-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-[0.96] ${value === o.value ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
-          {value === o.value && <motion.span layoutId={`seg-${label}`} className="glass absolute inset-0 -z-10 !rounded-full !bg-white/80" transition={SPRING} />}
+          className={`relative z-10 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-[0.96] ${value === o.value ? "text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+          {value === o.value && <motion.span layoutId={`seg-${label}`} className="absolute inset-0 -z-10 rounded-full bg-[var(--ink)]" transition={SPRING} />}
           {o.label}
         </button>
       ))}
@@ -107,9 +107,9 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
 export function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={on}
-      className={`glass-thin px-3.5 py-1.5 text-sm ${on ? "!bg-[rgba(217,67,26,0.16)] font-medium text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+      className={`glass-thin px-3.5 py-1.5 text-sm ${on ? "!border-[var(--text-primary)] font-medium text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
       <span className="inline-flex items-center">
-        <motion.span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--ember)]" initial={false} animate={{ scale: on ? 1 : 0, opacity: on ? 1 : 0, width: on ? 6 : 0, marginRight: on ? 6 : 0 }} transition={SPRING_BOUNCY} />
+        <motion.span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--red)]" initial={false} animate={{ scale: on ? 1 : 0, opacity: on ? 1 : 0, width: on ? 6 : 0, marginRight: on ? 6 : 0 }} transition={SPRING_BOUNCY} />
         {children}
       </span>
     </button>
@@ -118,7 +118,7 @@ export function Chip({ on, onClick, children }: { on: boolean; onClick: () => vo
 
 
 export function Loading({ h = 320 }: { h?: number }) {
-  return <div className="flex items-center justify-center rounded-[28px] bg-white/35" style={{ height: h }}><DotLoader /></div>;
+  return <div className="dot-skel flex items-center justify-center" style={{ height: h }}><span className="rounded-full bg-[var(--surface)] px-4 py-3"><DotLoader /></span></div>;
 }
 /** A data-load failure: what failed, what to do, and a Retry that keeps the page's selections. */
 export function Failed({ error, retry, what = "the data" }: { error: Error; retry?: () => void; what?: string }) {
@@ -127,7 +127,7 @@ export function Failed({ error, retry, what = "the data" }: { error: Error; retr
     <div role="alert" className="glass p-5 text-sm text-[var(--text-secondary)]">
       <p className="text-[var(--text-primary)]">Could not load {what}.</p>
       <p className="mt-1">{network ? "The data file did not arrive — check your connection, then retry. " : ""}<span className="font-mono text-xs">{error.message}</span></p>
-      {retry && <button type="button" onClick={retry} className="glass-thin mt-3 px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--ember)]">Retry</button>}
+      {retry && <button type="button" onClick={retry} className="glass-thin mt-3 px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:text-[var(--red)]">Retry</button>}
     </div>
   );
 }

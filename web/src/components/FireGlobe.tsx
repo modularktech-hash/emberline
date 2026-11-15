@@ -416,15 +416,15 @@ function GlobeInner({
         <GlobePoster height={height} />
       )}
       {interactive && hover && (
-        <div className="tabular pointer-events-none absolute left-4 top-4 rounded-xl bg-[var(--ink)] px-3.5 py-2.5 text-xs leading-relaxed text-[#f7f3e8] shadow-xl">
+        <div className="tabular pointer-events-none absolute left-4 top-4 rounded-xl bg-[var(--ink)] px-3.5 py-2.5 text-xs leading-relaxed text-[var(--on-ink)] shadow-xl">
           <p className="font-medium">{hover[0].toFixed(1)}°, {hover[1].toFixed(1)}°</p>
           {hover[2] < 0 ? (<>
             <p>{hover[5]}</p>
-            <p className="text-[#b8b2a2]">NASA EONET curated event, a different source from the FIRMS detections</p>
+            <p className="opacity-70">NASA EONET curated event, a different source from the FIRMS detections</p>
           </>) : (<>
           <p>{hover[2].toLocaleString()} detections · {Math.round(hover[3]).toLocaleString()} MW Σ FRP</p>
-          <p className="text-[#b8b2a2]">summed over detections in the window, not instantaneous power</p>
-          <p className="text-[#b8b2a2]">peak {Math.round(hover[4])} MW · {hover[5]}</p>
+          <p className="opacity-70">summed over detections in the window, not instantaneous power</p>
+          <p className="opacity-70">peak {Math.round(hover[4])} MW · {hover[5]}</p>
           </>)}
         </div>
       )}

@@ -1,0 +1,107 @@
+/*
+ * Emberline design tokens: the single source of truth for colour, shape, spacing, type and motion.
+ * Light values on :root; dark values under the system preference (unless the visitor chose light)
+ * and under an explicit data-theme="dark". Components read tokens only.
+ */
+:root {
+  color-scheme: light;
+  /* Surfaces and text */
+  --bg: #f4f4f2;
+  --surface: #ffffff;
+  --surface-alt: #eaeae7;
+  --ink: #0b0b0b;
+  --on-ink: #f4f4f2;
+  --grey-1: #c8c8c4;
+  --grey-2: #8a8a86;
+  --grey-3: #3c3c3a;
+  --text-primary: #0b0b0b;
+  --text-secondary: #3c3c3a;
+  --text-muted: #6a6a66;
+  --hairline: rgba(11, 11, 11, 0.14);
+  --gridline: rgba(11, 11, 11, 0.08);
+  --dot-dim: rgba(11, 11, 11, 0.1);
+  /* The one accent: live, alert, active, the single primary action. */
+  --red: #d71921;
+  --red-soft: rgba(215, 25, 33, 0.1);
+  /* Fire data only. */
+  --ember: #d9431a;
+  --ember-soft: rgba(217, 67, 26, 0.12);
+  /* Data series, identical on every page: raw is blue, harmonized is ember, the unchanged sensor is ink. */
+  --c-raw: #2f6db0;
+  --c-harm: var(--ember);
+  --c-ref: var(--ink);
+  --cool: #2f6db0;
+  /* Sequential fire ramp: lightness-ordered, low activity recedes into the page. */
+  --seq-0: #e9e9e5; --seq-1: #f6e3b8; --seq-2: #f7c26a; --seq-3: #f29a3e;
+  --seq-4: #e46a26; --seq-5: #c63f1c; --seq-6: #93221a; --seq-7: #531114;
+
+  /* Shape: circles, squares with one radius, or pills. One stroke. */
+  --r-tile: 28px;
+  --r-pill: 999px;
+  --stroke: 1.5px;
+  /* Two shadow levels, plus the paper cut-out shadow. */
+  --shadow-1: 0 6px 18px -10px rgba(11, 11, 11, 0.28);
+  --shadow-2: 0 24px 48px -24px rgba(11, 11, 11, 0.45);
+  --shadow-paper: 10px 14px 0 rgba(11, 11, 11, 0.12);
+
+  /* Spacing: 4 px base. Section rhythm large / medium / small. */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-16: 64px; --s-24: 96px;
+  --sec-lg: 96px; --sec-md: 64px; --sec-sm: 40px;
+
+  /* Type: dot-matrix display, one grotesk, one mono, one accent serif. */
+  --font-dot: var(--f-dot), "Courier New", monospace;
+  --font-ui: var(--f-ui), "Helvetica Neue", Arial, sans-serif;
+  --font-code: var(--f-mono), "Courier New", monospace;
+  --font-accent: var(--f-accent), Georgia, "Times New Roman", serif;
+  --display-hero: clamp(2.7rem, 1.4rem + 5.6vw, 5.6rem);
+  --display-1: clamp(2.3rem, 1.6rem + 3vw, 4rem);
+  --display-2: clamp(1.9rem, 1.4rem + 2.2vw, 3.2rem);
+  --display-3: clamp(1.45rem, 1.2rem + 1vw, 2rem);
+
+  /* Motion */
+  --d-1: 120ms; --d-2: 240ms; --d-3: 480ms; --d-4: 800ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--red);
+
+  /* Names kept for existing components. */
+  --surface-page: var(--bg);
+  --surface-1: var(--surface);
+  --surface-2: var(--surface-alt);
+}
+@media (max-width: 640px) {
+  :root { --r-tile: 22px; --sec-lg: 64px; --sec-md: 40px; --sec-sm: 24px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b0b0b; --surface: #151515; --surface-alt: #202020; --ink: #f4f4f2; --on-ink: #0b0b0b;
+    --grey-1: #3a3a38; --grey-2: #8a8a86; --grey-3: #c8c8c4;
+    --text-primary: #f4f4f2; --text-secondary: #c8c8c4; --text-muted: #94948f;
+    --hairline: rgba(244, 244, 242, 0.16); --gridline: rgba(244, 244, 242, 0.09); --dot-dim: rgba(244, 244, 242, 0.1);
+    --red: #ff3038; --red-soft: rgba(255, 48, 56, 0.14);
+    --ember: #ff7a3d; --ember-soft: rgba(255, 122, 61, 0.14);
+    --c-raw: #7fb2ee; --cool: #7fb2ee;
+    --seq-0: #1b1b1b; --seq-1: #3b2413; --seq-2: #6e3512; --seq-3: #a54c16;
+    --seq-4: #dc661f; --seq-5: #f68d3c; --seq-6: #fbbd70; --seq-7: #fff1cc;
+    --shadow-1: 0 6px 18px -10px rgba(0, 0, 0, 0.7); --shadow-2: 0 24px 48px -24px rgba(0, 0, 0, 0.9);
+    --shadow-paper: 10px 14px 0 rgba(0, 0, 0, 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0b0b; --surface: #151515; --surface-alt: #202020; --ink: #f4f4f2; --on-ink: #0b0b0b;
+  --grey-1: #3a3a38; --grey-2: #8a8a86; --grey-3: #c8c8c4;
+  --text-primary: #f4f4f2; --text-secondary: #c8c8c4; --text-muted: #94948f;
+  --hairline: rgba(244, 244, 242, 0.16); --gridline: rgba(244, 244, 242, 0.09); --dot-dim: rgba(244, 244, 242, 0.1);
+  --red: #ff3038; --red-soft: rgba(255, 48, 56, 0.14);
+  --ember: #ff7a3d; --ember-soft: rgba(255, 122, 61, 0.14);
+  --c-raw: #7fb2ee; --cool: #7fb2ee;
+  --seq-0: #1b1b1b; --seq-1: #3b2413; --seq-2: #6e3512; --seq-3: #a54c16;
+  --seq-4: #dc661f; --seq-5: #f68d3c; --seq-6: #fbbd70; --seq-7: #fff1cc;
+  --shadow-1: 0 6px 18px -10px rgba(0, 0, 0, 0.7); --shadow-2: 0 24px 48px -24px rgba(0, 0, 0, 0.9);
+  --shadow-paper: 10px 14px 0 rgba(0, 0, 0, 0.55);
+}

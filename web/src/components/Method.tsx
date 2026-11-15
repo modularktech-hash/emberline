@@ -25,7 +25,7 @@ function Bar({ value, tone }: { value: number; tone: "good" | "bad" }) {
   const w = Math.max(2, Math.min(100, Math.abs(value) * 100));
   return (
     <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-[var(--surface-2)] align-middle">
-      <span className="block h-full rounded-full" style={{ width: `${tone === "good" ? w : 100}%`, background: tone === "good" ? "var(--ember)" : "#d8b4ac" }} />
+      <span className="block h-full rounded-full" style={{ width: `${tone === "good" ? w : 100}%`, background: tone === "good" ? "var(--ember)" : "var(--grey-1)" }} />
     </span>
   );
 }
@@ -213,7 +213,7 @@ export function Method() {
                   {step.shown.map((n) => { const k = C(n).null_control; return (
                     <tr key={n} className="border-t border-[var(--hairline)]">
                       <td className="py-2.5 pr-3">{prettyName(n)}<FitBadge c={C(n)} /></td>
-                      <td className="px-3 text-[#96221a]">{fmtRatio(k.spliced_raw_step_ratio_2012)}</td>
+                      <td className="px-3 text-[var(--c-raw)]">{fmtRatio(k.spliced_raw_step_ratio_2012)}</td>
                       <td className="px-3">{fmtRatio(k.aqua_only_step_ratio_2012)}</td>
                       <td className="px-3 text-[var(--ember)]">{fmtRatio(k.harmonized_step_ratio_2012)}</td>
                       <td className="px-3 text-[var(--text-muted)]">{fmtNum(Math.abs(k.harmonized_step_ratio_2012 - k.aqua_only_step_ratio_2012), 2)}</td>

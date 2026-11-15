@@ -8,12 +8,12 @@ export const metadata = { title: "Not found — Emberline" };
 export default function NotFound() {
   return (
     <section className="flex min-h-[70vh] flex-col items-center justify-center py-20 text-center">
-      <div className="rounded-[34px] bg-[#141414] px-8 py-10 text-[#f3efe6] shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] sm:px-12">
+      <div className="tile tile-ink px-8 py-10 sm:px-12">
         <div className="flex items-center justify-between gap-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/50">
           <span>Signal lost</span><span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--ember)]" />
         </div>
         <div className="mt-6">
-          <DotText text="404" dot={13} gap={4} lit="#f3efe6" dim="rgba(255,255,255,0.06)" />
+          <DotText text="404" dot={13} gap={4} lit="currentColor" dim="rgba(127,127,127,0.18)" />
         </div>
       </div>
       <Eyebrow className="mt-10">Nothing burning here</Eyebrow>

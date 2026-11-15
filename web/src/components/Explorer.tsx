@@ -196,7 +196,7 @@ export function Explorer() {
                   if (k === "country") { if (area.kind === "box") setArea({ kind: "country", name: lastCountry.current }); }
                   else { document.getElementById("area")?.scrollIntoView({ behavior: "smooth", block: "center" }); document.getElementById("box-west")?.focus({ preventScroll: true }); }
                 }}
-                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${area.kind === k ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${area.kind === k ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {k === "country" ? "Country" : "Draw area"}
               </button>
             ))}
@@ -224,7 +224,7 @@ export function Explorer() {
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
-                className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[#f7f3e8]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {m === "raw" ? "Raw record" : "Harmonized"}
               </button>
             ))}

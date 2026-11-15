@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { Backdrop } from "@/components/Backdrop";
 import { Interactions } from "@/components/Interactions";
 import { MotionPrefs } from "@/components/MotionPrefs";
@@ -8,15 +8,17 @@ import { REVEAL_SCRIPT } from "@/lib/reveal";
 import { RouteTransition } from "@/components/RouteTransition";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
+import { SearchPalette } from "@/components/Search";
+import { THEME_SCRIPT } from "@/components/ThemeToggle";
 import { DatasetBanner } from "@/components/DatasetBanner";
 import "./globals.css";
 import { fitCounts, fitCountsPhrase } from "@/lib/fitCounts";
 
-// UI and headings use the system stack (real San Francisco on Apple devices; see --font-ui
-// in globals.css). Inter (variable, self-hosted by next/font) is the named fallback so Windows,
-// Linux and Android get the closest metric match. Geist Mono backs ui-monospace / SF Mono.
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
-const mono = Geist_Mono({ variable: "--font-mono-fallback", subsets: ["latin"], display: "swap" });
+// Four self-hosted faces: dot-matrix display, one grotesk for text, one mono for labels, one serif accent.
+const dot = localFont({ src: "../fonts/doto.woff2", variable: "--f-dot", weight: "100 900", display: "swap" });
+const ui = localFont({ src: "../fonts/space-grotesk.woff2", variable: "--f-ui", weight: "300 700", display: "swap" });
+const mono = localFont({ src: [{ path: "../fonts/space-mono-400.woff2", weight: "400" }, { path: "../fonts/space-mono-700.woff2", weight: "700" }], variable: "--f-mono", display: "swap", preload: false });
+const accent = localFont({ src: "../fonts/playfair-italic.woff2", variable: "--f-accent", weight: "500", style: "italic", display: "swap", preload: false });
 
 // Title, description and social cards share the visible headline: 23 years, 2003–2025 (E43).
 const TITLE = "Emberline — 23 years of fire detections (2003–2025), harmonized across the sensor change";
@@ -27,11 +29,12 @@ export const metadata: Metadata = {
   openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Emberline", type: "website" },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
-export const viewport = { themeColor: "#f7f3e8" };
+export const viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f4f4f2" }, { media: "(prefers-color-scheme: dark)", color: "#0b0b0b" }] };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="en" className={`${dot.variable} ${ui.variable} ${mono.variable} ${accent.variable} h-full antialiased`} suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body id="top" className="flex min-h-full flex-col">
         <MotionPrefs>
         <Backdrop />
@@ -42,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-8">{children}</main>
         <SiteFooter counts={fitCounts()} />
         <RouteTransition />
+        <SearchPalette />
         <script dangerouslySetInnerHTML={{ __html: REVEAL_SCRIPT }} />
         <noscript><style>{"[data-reveal]{opacity:1;transform:none}"}</style></noscript>
         </MotionPrefs>

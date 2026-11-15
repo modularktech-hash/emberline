@@ -15,7 +15,7 @@ import { Segmented } from "@/components/ui";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Eyebrow } from "@/components/Figure";
 
-const RAW = "#96221a";
+const RAW = "var(--c-raw)";
 const pct = (v: number | null | undefined, dp = 1) => (v == null || !Number.isFinite(v) ? "—" : `${fmtNum(v * 100, dp)}%`);
 
 function useProof(enabled = true) {
@@ -84,7 +84,7 @@ export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean
       <h2 className={`display ${compact ? "text-xl" : "mt-2 text-2xl"}`}>The sensor jump collapses onto the unchanged sensor</h2>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         Each country&apos;s change in yearly fire counts from 2009–11 to 2012–14. Across: Aqua MODIS alone, a sensor that did not change.
-        Up: the same step in our harmonized record (ember) and in the naive splice of MODIS onto VIIRS (faint red).
+        Up: the same step in our harmonized record (ember) and in the naive splice of MODIS onto VIIRS (blue).
         On the diagonal the record moves exactly as the unchanged sensor does. Hover or tap a dot.
       </p>
       {error && <p className="mt-4 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>}

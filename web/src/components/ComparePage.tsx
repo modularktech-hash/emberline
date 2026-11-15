@@ -20,7 +20,7 @@ import { CopyLink } from "@/components/CopyLink";
 import type { Series } from "@/lib/types";
 import { prettyName } from "@/lib/names";
 
-const COLORS = ["#d9431a", "#3f7f96"];
+const COLORS = ["var(--c-harm)", "var(--c-raw)"];
 
 export function ComparePage() {
   const { data: table, error: tableError, retry: tableRetry } = useParquet(() => getCountryTable(), "table");

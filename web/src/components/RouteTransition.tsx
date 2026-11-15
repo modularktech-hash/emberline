@@ -1,39 +1,32 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EASE, EASE_IN_OUT } from "@/lib/motion";
-import { NAV } from "@/lib/nav";
+import type React from "react";
+import { NAV, ROUTE_NAME } from "@/lib/nav";
 import { isPerfLow } from "@/lib/perf";
 import { setCovering } from "@/lib/transition";
 
 /**
- * Named page transition. An internal link click is intercepted, an ink
- * curtain slides up over the page and names the destination ("EXPLORE /
- * Calendar explorer") with a filling dot row, the route is pushed while the
- * screen is covered, and the curtain lifts once the new pathname has
- * committed and it has been on screen at least MIN_MS. A safety timer lifts it
+ * Page curtain. An internal link click is intercepted; ink spreads from the click point behind a
+ * leading edge of dots, the destination's name appears in dot-matrix, the route is pushed while the
+ * screen is covered, and the curtain dissolves back into dots once the new page has committed.
+ * In, hold and out together stay within 650 ms when the page is ready. A safety timer lifts it
  * after SAFETY_MS whatever happens.
  *
- * Not intercepted (the browser or <Link> handles them as usual): modified or
- * non-primary clicks, target=_blank, download links, other origins, hash-only
- * or same-path links, back/forward (popstate never reaches here), the first
- * page load, and reduced motion or low-power mode (instant navigation).
- * The curtain is aria-hidden and takes no focus; Next's scroll-to-top and
- * route announcer work unchanged. <Link> prefetching is untouched.
+ * Not intercepted (the browser or <Link> handles them as usual): modified or non-primary clicks,
+ * target=_blank, download links, other origins, hash-only or same-path links, back/forward, the
+ * first page load, and reduced motion or low-power mode (instant navigation). The curtain is
+ * aria-hidden and takes no focus; scroll-to-top and the route announcer work unchanged.
  */
 
-const IN_MS = 350, MIN_MS = 350, OUT_MS = 450, SAFETY_MS = 2500;
-const DOTS = 14;
+const IN_MS = 240, MIN_MS = 150, OUT_MS = 260, SAFETY_MS = 2500;
 
 type Phase = "idle" | "in" | "hold" | "out";
 
-function labelFor(path: string, text: string): { group: string; title: string } {
-  if (path === "/") return { group: "Home", title: "Emberline" };
-  for (const g of NAV) for (const it of g.items) if (it.href === path) return { group: g.label, title: it.label };
-  if (path === "/about") return { group: "About", title: "About Emberline" };
-  return { group: "Emberline", title: text.trim().replace(/\s+/g, " ").replace(/[→↗]/g, "").trim() || "Emberline" };
+function labelFor(path: string): { group: string; title: string } {
+  for (const g of NAV) for (const it of g.items) if (it.href === path) return { group: g.label, title: ROUTE_NAME[path] ?? it.label.toUpperCase() };
+  return { group: "Emberline", title: ROUTE_NAME[path] ?? "EMBERLINE" };
 }
 
 export function RouteTransition() {
@@ -41,6 +34,7 @@ export function RouteTransition() {
   const pathname = usePathname();
   const [phase, setPhase] = useState<Phase>("idle");
   const [label, setLabel] = useState({ group: "", title: "" });
+  const [origin, setOrigin] = useState({ x: 50, y: 50 });
   const target = useRef<string | null>(null);
   const coveredAt = useRef(0);
   const timers = useRef<number[]>([]);
@@ -67,7 +61,8 @@ export function RouteTransition() {
       e.preventDefault();
       e.stopPropagation(); // <Link>'s own handler would navigate immediately
       const dest = url.pathname + url.search + url.hash;
-      setLabel(labelFor(url.pathname, a.textContent ?? ""));
+      setLabel(labelFor(url.pathname));
+      setOrigin({ x: (e.clientX / window.innerWidth) * 100, y: (e.clientY / window.innerHeight) * 100 });
       target.current = url.pathname;
       setCovering(true);
       clear();
@@ -100,45 +95,28 @@ export function RouteTransition() {
     return () => clearTimeout(t);
   }, [phase, pathname, lift]);
 
-  const words = label.title.split(" ");
+  if (phase === "idle") return null;
+  const at = `${origin.x.toFixed(1)}% ${origin.y.toFixed(1)}%`;
+  const covered = phase === "hold";
+  const out = phase === "out";
+  // The ink disc and, just ahead of it, a ring of dots. Out: the ink fades first, the dots last.
+  const disc = (lead: number, ms: number): React.CSSProperties => ({
+    clipPath: phase === "in" ? `circle(0% at ${at})` : `circle(${150 + lead}% at ${at})`,
+    transition: `clip-path ${ms}ms cubic-bezier(.65,0,.35,1), opacity ${OUT_MS}ms cubic-bezier(.2,.8,.2,1)`,
+  });
   return (
-    <AnimatePresence>
-      {phase !== "idle" && (
-        <motion.div
-          key="curtain"
-          aria-hidden
-          className="pointer-events-auto fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#121715] text-[#f7f3e8]"
-          initial={{ y: "100%" }}
-          animate={{ y: phase === "out" ? "-100%" : "0%" }}
-          exit={{ y: "-100%" }}
-          transition={{ duration: (phase === "out" ? OUT_MS : IN_MS) / 1000, ease: phase === "out" ? EASE : EASE_IN_OUT }}
-        >
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_380px_at_50%_60%,rgba(230,66,24,0.22),transparent_70%)]" />
-          <div className="relative px-6 text-center">
-            <motion.p className="font-mono text-[11px] uppercase tracking-[0.32em] text-[#e6a58a]"
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.3, ease: EASE }}>
-              {label.group}
-            </motion.p>
-            <p className="display mt-4 text-[clamp(2.25rem,7vw,4.75rem)] leading-[1.02]">
-              {words.map((w, i) => (
-                <span key={`${label.title}-${i}`} className="inline-block overflow-hidden pb-[0.1em] align-top">
-                  <motion.span className="inline-block" initial={{ y: "110%" }} animate={{ y: "0%" }}
-                    transition={{ delay: 0.22 + i * 0.07, duration: 0.45, ease: EASE }}>
-                    {w}{i < words.length - 1 ? " " : ""}
-                  </motion.span>
-                </span>
-              ))}
-            </p>
-            <div className="mx-auto mt-7 flex w-max gap-[7px]">
-              {Array.from({ length: DOTS }, (_, i) => (
-                <motion.span key={i} className="h-[6px] w-[6px] rounded-full bg-[#e64218]"
-                  initial={{ opacity: 0.16 }} animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 + (i / DOTS) * 0.55, duration: 0.12 }} />
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div key={label.title} aria-hidden className="pointer-events-auto fixed inset-0 z-[100]" data-curtain={phase}>
+      <div className="absolute inset-0" ref={(el) => { if (el && phase === "in") requestAnimationFrame(() => { el.style.clipPath = `circle(165% at ${at})`; }); }}
+        style={{ ...disc(15, IN_MS), opacity: out ? 0 : 1, transitionDelay: out ? "90ms" : "0ms", backgroundImage: "radial-gradient(circle, var(--ink) 3.2px, transparent 3.8px)", backgroundSize: "12px 12px" }} />
+      <div className="absolute inset-0 bg-[var(--ink)]" ref={(el) => { if (el && phase === "in") requestAnimationFrame(() => { el.style.clipPath = `circle(150% at ${at})`; }); }}
+        style={{ ...disc(0, IN_MS + 40), opacity: out ? 0 : 1 }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-[var(--on-ink)]"
+        style={{ opacity: covered ? 1 : out ? 0 : 0.0, transition: `opacity ${out ? 120 : 160}ms ease`, transitionDelay: phase === "in" ? "120ms" : "0ms" }}
+        ref={(el) => { if (el && phase === "in") requestAnimationFrame(() => { el.style.opacity = "1"; }); }}>
+        <p className="font-mono text-[11px] uppercase tracking-[0.32em] opacity-60">{label.group}</p>
+        <p className="dot-num mt-3 text-[clamp(2.4rem,9vw,6rem)] leading-none tracking-[0.08em]">{label.title}</p>
+        <span className="mt-6 flex items-center gap-2"><span className="live-dot" /><span className="h-2 w-2 rounded-full bg-[var(--on-ink)] opacity-30" /><span className="h-2 w-2 rounded-full bg-[var(--on-ink)] opacity-30" /></span>
+      </div>
+    </div>
   );
 }
