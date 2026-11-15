@@ -36,6 +36,7 @@ import { mostUnusualMonth } from "@/lib/unusual";
 import { InfoDot } from "@/components/ui";
 import { CriticalPeriods } from "@/components/CriticalPeriods";
 import { FireReport } from "@/components/FireReport";
+import { findingLines } from "@/lib/findings";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -147,6 +148,8 @@ export function Explorer() {
   const harmUnusual = useMemo(() => (data && data.harmonized.keys.length ? mostUnusualMonth(data.harmonized.rows, [FIRST, 2025]) : null), [data]);
   const reportCell = selCell ?? (harmUnusual ? { year: harmUnusual.year, month: harmUnusual.month } : null);
   const ex = proof.data?.worked_example;
+  // The worked example keeps its name instead of showing as bare coordinates.
+  const place = area.kind === "box" && ex && area.bbox.every((v, i) => Math.abs(v - ex.bbox[i]) < 1e-6) ? "New South Wales, Australia (example box)" : areaLabel(area);
   const openExample = () => {
     if (!ex) return;
     const [w, so, e, n] = ex.bbox;
@@ -203,12 +206,13 @@ export function Explorer() {
   const exportBrief = () => {
     if (!data || !cal || !view) return;
     const html = buildBrief({
-      place: areaLabel(area), areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
+      place: place, areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
       rows: cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi).map((r) => (view.inRange(r) ? r : { ...r, value: null })), max: view.max,
       annual: mode === "raw" ? view.raw : view.harm, params: data.params, fit,
       noFitReason: unfitted ? covLabel : null, unc: uncRows, scope,
       dataset: ds?.dataset === "world" ? "world files (calendar_*_global.parquet, params_global.json)" : "four-country fallback (calendar_raw.parquet, calendar_harmonized.parquet, params.json)",
       url: reproducingUrl(viewQuery()), generated: new Date().toISOString(),
+      findings: data.harmonized.keys.length ? findingLines({ harm: data.harmonized.rows, raw: data.raw.rows, cell: reportCell, from: view.lo, to: view.hi, err: errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null }) : [],
     });
     const href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     const a = document.createElement("a");
@@ -295,7 +299,7 @@ export function Explorer() {
           </p>
         )}
         {data && reportCell && data.harmonized.keys.length > 0 && !notProcessed && (
-          <FireReport place={areaLabel(area)} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
+          <FireReport place={place} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
             err={errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null} errCountry={errCountry} pooled={!!errPooled} fitVersion={data.params.fit_version} picked={!!selCell} />
         )}
         <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
@@ -346,7 +350,7 @@ export function Explorer() {
           <div className="fade-in">
             <div className="mt-6">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <Eyebrow>Burning activity calendar · {areaLabel(area)} · detections per month</Eyebrow>
+                <Eyebrow>Burning activity calendar · {place} · detections per month</Eyebrow>
                 <p className={`rounded-full px-3 py-1 text-xs font-medium ${mode === "raw" ? "bg-[var(--surface-2)] text-[var(--text-primary)]" : "bg-[var(--ember-soft)] text-[var(--text-primary)]"}`}>
                   {mode === "raw" ? "Raw detections · uncorrected · MODIS to 2011, VIIRS from 2012" : `Harmonized · ${cal.unit} · fit ${data.params.fit_version}`}
                   <span className="text-[var(--text-muted)]"> · {view.label}</span>
@@ -367,7 +371,7 @@ export function Explorer() {
                   </p>
                 );
               })()}
-              <CriticalPeriods rows={cal.rows} from={view.lo} to={view.hi} place={areaLabel(area)} mode={mode} />
+              <CriticalPeriods rows={cal.rows} from={view.lo} to={view.hi} place={place} mode={mode} />
               {mode === "harmonized" && (unusual || errCountry) && (
                 <div data-testid="heldout-context" className="mt-3 rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
                   {unusual && (
