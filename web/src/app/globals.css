@@ -348,3 +348,11 @@ html[data-page=tool] .backdrop-cream::after { opacity: 0.4; }
 html[data-perf=low] [data-reveal] { transform: none; }
 @media (prefers-reduced-motion: reduce) { [data-reveal] { opacity: 1; transform: none; } }
 @media print { [data-reveal] { opacity: 1; transform: none; } }
+
+/* G7 data journey: a thin dot flow between stages. CSS only; off in low-power and reduced-motion mode. */
+.flow-dots { position: absolute; right: -7px; top: 50%; width: 14px; height: 4px; z-index: 1; pointer-events: none;
+  background: radial-gradient(circle, var(--ember) 1.2px, transparent 1.6px) 0 0 / 5px 4px repeat-x; opacity: 0.7;
+  animation: flow-dots 1.2s linear infinite; }
+@keyframes flow-dots { to { background-position: 5px 0; } }
+html[data-perf=low] .flow-dots { animation: none; }
+@media (prefers-reduced-motion: reduce) { .flow-dots { animation: none; } }

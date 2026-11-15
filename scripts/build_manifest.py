@@ -67,6 +67,9 @@ FILES = {
     "eonet.json": dict(
         dataset="live", fit=None, source="NASA EONET API v3, category wildfires, status open (scripts/build_eonet.py)",
         purpose="Open NASA EONET wildfire events (curated; a different source from the FIRMS detections), latest point per event"),
+    "pipeline.json": dict(
+        dataset="world", fit="self", source="derived from the published files (and file counts from data/global/ on the build machine) by scripts/build_pipeline_stats.py",
+        purpose="Numbers for the /data data journey: archive files, filtered detections, training matches, fits, held-out score, calendar sizes, bytes of a country view"),
     "countries.json": dict(
         dataset="world", fit="self", source="derived from the world calendars and params_global.json",
         purpose="One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)"),

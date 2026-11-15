@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { StepCollapse } from "@/components/Proof";
 import { MonthUnusualPanel } from "@/components/MonthToDate";
+import { DataJourney } from "@/components/DataJourney";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CountUp, Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getLiveSummary, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
@@ -461,6 +462,19 @@ function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
   );
 }
 
+/** The journey teaser fetches pipeline.json only once it is near the viewport. */
+function LazyJourney() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (near || !ref.current) return;
+    const io = new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) { setNear(true); io.disconnect(); } }, { rootMargin: "600px" });
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, [near]);
+  return <div ref={ref}>{near ? <DataJourney compact /> : <div className="h-40" />}</div>;
+}
+
 /* ---------------------------------------------------------------- page */
 export function Home() {
   const d = useHomeData();
@@ -495,6 +509,7 @@ export function Home() {
         </div>
         <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d.params ?? undefined); return a ? <>Across all {a.fitted} fitted countries, {a.own} with their own curve and {a.fitted - a.own} on a borrowed (pooled) curve, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d.params ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d.params ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d.params?.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
         <div className="card mt-10 min-w-0 p-5 sm:p-6"><StepCollapse lazy compact /></div>
+        <div className="mt-8"><LazyJourney /></div>
       </section>
 
       <section className="py-16">

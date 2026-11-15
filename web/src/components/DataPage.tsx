@@ -14,6 +14,7 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL, coverageReason } from "@/lib/coverage";
 import { DatasetCard } from "@/components/DatasetCard";
+import { DataJourney } from "@/components/DataJourney";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
 type Key = keyof Pick<CountryRow, "country" | "harm_mean_2003_2025" | "harm_per_10k_km2_yr" | "harm_2025" | "raw_2025" | "step_raw" | "step_harm" | "r2_model" | "bias_pct" | "frp_p50" | "onset_trend_harm">;
@@ -79,6 +80,7 @@ export function DataPage() {
     <div>
       <PageHead compact eyebrow="Science · data" title="Every table." italic="Every download."
         lede="All of Emberline's data is plain files on this site — no account, no API key, no server. Browse it here, download it, or query it straight from your own code." />
+      <DataJourney />
       <DatasetCard />
       {error && <Failed error={error} retry={retry} what="the country table (countries.json)" />}
       <CoverageError state={coverageState} className="mt-3" />
