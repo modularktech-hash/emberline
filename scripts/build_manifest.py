@@ -58,6 +58,9 @@ FILES = {
     "month_to_date.json": dict(
         dataset="world", fit=None, source="NASA FIRMS near-real-time area API (MODIS_NRT, VIIRS_NOAA20_NRT) and calendar_raw_global.parquet (scripts/build_month_to_date.py)",
         purpose="Provisional, raw month-to-date counts per country against the raw history of the same calendar month; not harmonized"),
+    "month_to_date_cells.json": dict(
+        dataset="world", fit=None, source="the FIRMS responses cached by build_month_to_date.py, counted per H3 res-4 cell (scripts/build_month_to_date_cells.py)",
+        purpose="Provisional, raw month-to-date counts per grid cell, so a drawn area can be compared with its own history; not harmonized"),
     "dataset.json": dict(
         dataset="world", fit="self", source="derived from params_global.json, coverage_status.json and the world calendars (scripts/build_dataset_card.py)",
         purpose="Dataset card: coverage, scale, unit, licence and citation of the published record"),
@@ -249,7 +252,7 @@ def build_datasets(files: list[dict]) -> dict:
     return out
 
 
-OPTIONAL = {"month_to_date.json"}  # needs a FIRMS MAP_KEY run (scripts/build_month_to_date.py)
+OPTIONAL = {"month_to_date.json", "month_to_date_cells.json"}  # needs a FIRMS MAP_KEY run (scripts/build_month_to_date.py)
 
 
 def main() -> int:

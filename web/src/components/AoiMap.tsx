@@ -29,6 +29,21 @@ const gibsTiles = (date: string) => `https://gibs.earthdata.nasa.gov/wmts/epsg38
 
 const BOX_SOURCE = "aoi-box";
 const CELL_SOURCE = "aoi-cells";
+/**
+ * Fallback when the tile server does not answer: country outlines from this
+ * site's own /geo/countries.geojson, no external requests, so drawing an area
+ * still works offline or behind a blocking network.
+ */
+const OUTLINE_STYLE = {
+  version: 8 as const,
+  sources: { countries: { type: "geojson" as const, data: "/geo/countries.geojson" } },
+  layers: [
+    { id: "bg", type: "background" as const, paint: { "background-color": "#eef2f3" } },
+    { id: "land", type: "fill" as const, source: "countries", paint: { "fill-color": "#f7f5ef" } },
+    { id: "borders", type: "line" as const, source: "countries", paint: { "line-color": "#9a9a92", "line-width": 0.6 } },
+  ],
+};
+
 /** A basemap that has not loaded by then is treated as failed (with a retry). */
 const LOAD_TIMEOUT_MS = 15000;
 
@@ -98,6 +113,8 @@ export function AoiMap({ bbox, ring, onPolygon, cells, onSelect, styleUrl, class
   const onPolygonRef = useRef(onPolygon);
   useEffect(() => { onPolygonRef.current = onPolygon; }, [onPolygon]);
   const [failed, setFailed] = useState(false);
+  // After the tile basemap fails once, the outline map is used (and drawing keeps working).
+  const [outline, setOutline] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [satView, setSatView] = useState(false);
   const [satDate, setSatDate] = useState<string | null>(null);
@@ -121,7 +138,7 @@ export function AoiMap({ bbox, ring, onPolygon, cells, onSelect, styleUrl, class
 
         const map = new maplibregl.Map({
           container: containerRef.current,
-          style: styleUrl ?? DARK_STYLE,
+          style: outline ? OUTLINE_STYLE : styleUrl ?? DARK_STYLE,
           center: [20, 10],
           zoom: 0.9,
           attributionControl: { compact: true },
@@ -133,9 +150,14 @@ export function AoiMap({ bbox, ring, onPolygon, cells, onSelect, styleUrl, class
         // are individual tiles timing out, and replacing a working map with an
         // error panel because one tile 404'd would be worse than the gap.
         let loaded = false;
-        const slow = window.setTimeout(() => { if (!loaded && !cancelled) setFailed(true); }, LOAD_TIMEOUT_MS);
+        const fail = () => {
+          if (loaded || cancelled) return;
+          if (!outline) { cancelled = true; setReady(false); setOutline(true); return; }
+          setFailed(true);
+        };
+        const slow = window.setTimeout(fail, LOAD_TIMEOUT_MS);
         map.on("error", () => {
-          if (!loaded) setFailed(true);
+          if (!loaded) fail();
         });
         map.on("load", () => {
           loaded = true;
@@ -173,7 +195,7 @@ export function AoiMap({ bbox, ring, onPolygon, cells, onSelect, styleUrl, class
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [styleUrl, attempt]);
+  }, [styleUrl, attempt, outline]);
 
   useEffect(() => {
     const map = mapRef.current;
