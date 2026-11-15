@@ -35,6 +35,7 @@ import { getProof } from "@/lib/data";
 import { mostUnusualMonth } from "@/lib/unusual";
 import { InfoDot } from "@/components/ui";
 import { CriticalPeriods } from "@/components/CriticalPeriods";
+import { FireReport } from "@/components/FireReport";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -143,6 +144,18 @@ export function Explorer() {
   const errRow = errCountry && proof.data?.fit_version === data?.params.fit_version ? proof.data?.limits.per_country[errCountry] : undefined;
   const errPooled = errCountry ? data?.params.countries[errCountry]?.fit_source === "pooled" : false;
   const unusual = useMemo(() => (mode === "harmonized" && cal && cal.keys.length ? mostUnusualMonth(cal.rows, [FIRST, 2025]) : null), [mode, cal]);
+  const harmUnusual = useMemo(() => (data && data.harmonized.keys.length ? mostUnusualMonth(data.harmonized.rows, [FIRST, 2025]) : null), [data]);
+  const reportCell = selCell ?? (harmUnusual ? { year: harmUnusual.year, month: harmUnusual.month } : null);
+  const ex = proof.data?.worked_example;
+  const openExample = () => {
+    if (!ex) return;
+    const [w, so, e, n] = ex.bbox;
+    setBox([w, so, e, n].map((v) => v.toFixed(2)));
+    setBoxErr(null);
+    setArea(makeArea({ kind: "box", bbox: ex.bbox }));
+    setMode("harmonized");
+    setSelCell({ year: ex.unusual.year, month: ex.unusual.month });
+  };
   const busiestYear = view ? [...(mode === "raw" ? view.raw : view.harm)].filter((r) => r.value !== null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]?.year ?? null : null;
   // E27: coefficient-only intervals for harmonized country totals (busiest year, selected year/month).
   const uncRows = mode === "harmonized" && area.kind === "country" && data && busiestYear != null ? [
@@ -276,6 +289,15 @@ export function Explorer() {
           </button>
         </div>
 
+        {ex && (
+          <p className="mt-4 text-sm text-[var(--text-secondary)]">
+            New here? <button type="button" data-testid="nsw-example" onClick={openExample} className="link-ul font-medium text-[var(--text-primary)]">Open the worked example: New South Wales, {MONTHS[ex.unusual.month - 1]} {ex.unusual.year}</button>, or pick an area and click any month for its fire report.
+          </p>
+        )}
+        {data && reportCell && data.harmonized.keys.length > 0 && !notProcessed && (
+          <FireReport place={areaLabel(area)} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
+            err={errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null} errCountry={errCountry} pooled={!!errPooled} fitVersion={data.params.fit_version} picked={!!selCell} />
+        )}
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
