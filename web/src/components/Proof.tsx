@@ -199,11 +199,11 @@ export function HeadlineTable({ compact = false, lazy = false }: { compact?: boo
             <table className={`tabular w-full ${compact ? "min-w-[560px]" : "min-w-[760px]"} text-sm`}>
               <thead><tr className="text-left text-xs text-[var(--text-muted)]">
                 <th className="py-2 pr-3 font-normal">Method</th>
-                <th className="px-3 font-normal">Median R²</th>
-                <th className="px-3 font-normal" title="Mean |observed − predicted| per cell-month, Aqua detections">Median MAE</th>
-                <th className="px-3 font-normal" title="(predicted − observed) ÷ observed, held-out total">Median bias</th>
-                {!compact && <th className="px-3 font-normal" title="Median monthly miss of the whole-country total, held-out 2019–2021; not a confidence interval">Typical held-out error</th>}
-                <th className="px-3 font-normal">Lowest MAE in</th>
+                <th className="px-3 font-normal">Median R²<span className="block text-[10.5px] opacity-80">tracking, 1 = perfect</span></th>
+                <th className="px-3 font-normal" title="Mean |observed − predicted| per cell-month, Aqua detections">Median MAE<span className="block text-[10.5px] opacity-80">average miss per cell-month</span></th>
+                <th className="px-3 font-normal" title="(predicted − observed) ÷ observed, held-out total">Median bias<span className="block text-[10.5px] opacity-80">over (+) or under (−) the total</span></th>
+                {!compact && <th className="px-3 font-normal" title="Median monthly miss of the whole-country total, held-out 2019–2021; not a confidence interval">Typical error on test years</th>}
+                <th className="px-3 font-normal">Lowest MAE in<span className="block text-[10.5px] opacity-80">smallest average miss</span></th>
                 <th className="px-3 font-normal" title={`2012 step within ×${h.within_factor} of Aqua alone`}>2012 step removed</th>
               </tr></thead>
               <tbody>
@@ -263,9 +263,9 @@ export function CannotDo() {
           <li><span className="text-[var(--text-primary)]">Few fires, bigger error.</span> Countries ranked by held-out Aqua detections, in three equal groups:
             <span className="mt-2 block overflow-x-auto" tabIndex={0} role="region" aria-label="Held-out error by fire-count tercile">
               <table className="tabular w-full min-w-[480px] text-xs">
-                <thead><tr className="text-left text-[var(--text-muted)]"><th className="py-1 pr-3 font-normal">Group</th><th className="px-2 font-normal">Held-out Aqua detections</th><th className="px-2 font-normal">Typical held-out error</th><th className="px-2 font-normal">Median |bias|</th><th className="px-2 font-normal">Median R²</th><th className="px-2 font-normal">R² below 0</th></tr></thead>
+                <thead><tr className="text-left text-[var(--text-muted)]"><th className="py-1 pr-3 font-normal">Group</th><th className="px-2 font-normal">Aqua detections in test years</th><th className="px-2 font-normal">Typical error on test years</th><th className="px-2 font-normal">Median |bias|<span className="block text-[10.5px] opacity-80">size of over/under-count</span></th><th className="px-2 font-normal">Median R²<span className="block text-[10.5px] opacity-80">tracking, 1 = perfect</span></th><th className="px-2 font-normal">R² below 0</th></tr></thead>
                 <tbody>
-                  {[...L.terciles.map((t, i) => [["Fewest fires", "Middle", "Most fires"][i], t] as const), ["Own fit", L.own] as const, ["Pooled fit", L.pooled] as const].map(([label, t]) => (
+                  {[...L.terciles.map((t, i) => [["Fewest fires", "Middle", "Most fires"][i], t] as const), ["Own correction", L.own] as const, ["Shared correction", L.pooled] as const].map(([label, t]) => (
                     <tr key={label} className="border-t border-[var(--hairline)]">
                       <td className="py-1.5 pr-3 text-[var(--text-primary)]">{label} <span className="text-[var(--text-muted)]">({t.n})</span></td>
                       <td className="px-2">{fmtNum(t.heldout_aqua_min)}–{fmtNum(t.heldout_aqua_max)}</td>
@@ -359,14 +359,14 @@ export function Benchmark() {
         <BenchmarkLoss rows={b.countries} />
       </div>
       <div className="mt-4"><Segmented label="Countries" value={group} onChange={setGroup} options={[
-        { value: "all", label: `All fitted (${b.all.n})` }, { value: "own", label: `Own curve (${b.own.n})` }, { value: "pooled", label: `Pooled curve (${b.pooled.n})` },
+        { value: "all", label: `All fitted (${b.all.n})` }, { value: "own", label: `Own curve (${b.own.n})` }, { value: "pooled", label: `Shared curve (${b.pooled.n})` },
       ]} /></div>
       <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Benchmark summary table">
         <table className="tabular w-full min-w-[560px] text-sm">
           <thead><tr className="text-left text-xs text-[var(--text-muted)]">
             <th className="py-2 pr-3 font-normal">Method</th>
-            <th className="px-3 font-normal">Median R²</th>
-            <th className="px-3 font-normal">Median RMSE</th>
+            <th className="px-3 font-normal">Median R²<span className="block text-[10.5px] opacity-80">tracking, 1 = perfect</span></th>
+            <th className="px-3 font-normal">Median RMSE<span className="block text-[10.5px] opacity-80">typical miss, big misses count more</span></th>
             <th className="px-3 font-normal">Model is better in</th>
           </tr></thead>
           <tbody>
@@ -393,7 +393,7 @@ export function Benchmark() {
         </div>
         <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label={`Benchmark for ${prettyName(row.country)}`}>
           <table className="tabular w-full min-w-[480px] text-sm">
-            <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-1.5 pr-3 font-normal">Method</th><th className="px-3 font-normal">R²</th><th className="px-3 font-normal">RMSE</th><th className="px-3 font-normal">MAE</th><th className="px-3 font-normal">Bias</th></tr></thead>
+            <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-1.5 pr-3 font-normal">Method</th><th className="px-3 font-normal">R²<span className="block text-[10.5px] opacity-80">tracking, 1 = perfect</span></th><th className="px-3 font-normal">RMSE<span className="block text-[10.5px] opacity-80">typical miss, big misses count more</span></th><th className="px-3 font-normal">MAE<span className="block text-[10.5px] opacity-80">average miss per cell-month</span></th><th className="px-3 font-normal">Bias<span className="block text-[10.5px] opacity-80">over (+) or under (−) the total</span></th></tr></thead>
             <tbody>
               {SERIES.map((s) => { const m = row[s.k]; return (
                 <tr key={s.k} className="border-t border-[var(--hairline)]">

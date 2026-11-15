@@ -72,8 +72,8 @@ function BridgeSection() {
       <ScrollBox label="Bridge validation table">
         <table className="tabular mt-4 w-full min-w-[640px] text-sm">
           <thead><tr className="text-left text-xs text-[var(--text-muted)]">
-            <th className="py-2 pr-3 font-normal">Country</th><th className="px-3 font-normal">r</th><th className="px-3 font-normal">Median miss, no bridge</th><th className="px-3 font-normal">Median miss, bridged</th>
-            <th className="px-3 font-normal">Bias, bridged</th><th className="px-3 font-normal">R², bridged</th><th className="px-3 font-normal">Months</th><th className="px-3 font-normal">Typical error now</th>
+            <th className="py-2 pr-3 font-normal">Country</th><th className="px-3 font-normal">r<span className="block text-[10.5px] opacity-80">bridge ratio</span></th><th className="px-3 font-normal">Median miss, no bridge</th><th className="px-3 font-normal">Median miss, bridged</th>
+            <th className="px-3 font-normal">Bias, bridged<span className="block text-[10.5px] opacity-80">over (+) or under (−) the total</span></th><th className="px-3 font-normal">R², bridged<span className="block text-[10.5px] opacity-80">tracking, 1 = perfect</span></th><th className="px-3 font-normal">Months</th><th className="px-3 font-normal">Typical error now</th>
           </tr></thead>
           <tbody>{rows.map(([n, c]) => (
             <tr key={n} className="border-t border-[var(--hairline)]">

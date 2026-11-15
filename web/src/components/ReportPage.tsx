@@ -11,7 +11,7 @@ import Link from "next/link";
 import { CountryPicker } from "@/components/CountryPicker";
 import { CopyLink } from "@/components/CopyLink";
 import { Eyebrow } from "@/components/Figure";
-import { Failed, InfoDot, PageHead, Tile } from "@/components/ui";
+import { Expand, Failed, InfoDot, PageHead, Tile } from "@/components/ui";
 import { HarmonizedVerdict, monthName, useMonthToDate } from "@/components/MonthToDate";
 import { validateBoxInput } from "@/lib/aoi";
 import { NSW_BOX } from "@/lib/reportLink";
@@ -49,11 +49,13 @@ export function ReportPage() {
   const [boxText, setBoxText] = useState("");
   const [point, setPoint] = useState("");
   const [inputErr, setInputErr] = useState<string | null>(null);
+  const [showInputs, setShowInputs] = useState(false);
 
   const { data, error, retry } = useAreaData(area);
   useUrlState((q) => {
     const at = q.get("at");
     const a = areaFromQuery(q);
+    setShowInputs(!at && !a?.ok);
     if (at) {
       const [lat, lon] = at.split(",").map(Number);
       const c = validateBoxInput([String(lon - 0.5), String(lat - 0.5), String(lon + 0.5), String(lat + 0.5)]);
@@ -147,43 +149,45 @@ export function ReportPage() {
     setInputErr(null); setYm(null); setArea(makeArea({ kind: "box", bbox: c.bbox }));
   };
 
+  const inputs = (
+      <Tile className="mt-6 px-4 sm:px-5" data-testid="report-inputs">
+        <Expand className="!border-t-0" label="Change area or month" open={showInputs || (!!data && !hasHarm)}>
+          <div className="flex flex-wrap items-end gap-3" role="toolbar" aria-label="Report selection">
+            <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind !== "country" ? (area.kind === "box" ? `Box ${area.bbox.map((v) => v.toFixed(1)).join(", ")}` : "Custom polygon") : undefined}
+              options={data?.countries ?? []} tags={data?.tags} onChange={(c) => { setYm(null); setArea({ kind: "country", name: c }); }} label="Country" />
+            <label className="text-xs text-[var(--text-muted)]">Box W, S, E, N
+              <input value={boxText} onChange={(e) => setBoxText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") applyBox(); }} placeholder="141, -37.5, 153.7, -28.2" inputMode="decimal" className="field mt-1 block min-h-[36px] w-56 rounded-xl px-2 text-sm text-[var(--text-primary)]" />
+            </label>
+            <button type="button" onClick={applyBox} className="glass-thin min-h-[36px] px-3.5 text-sm font-medium">Use box</button>
+            <label className="text-xs text-[var(--text-muted)]">Point lat, lon (1° box)
+              <input value={point} onChange={(e) => setPoint(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") applyPoint(); }} placeholder="-33.9, 151.2" inputMode="decimal" className="field mt-1 block min-h-[36px] w-40 rounded-xl px-2 text-sm text-[var(--text-primary)]" />
+            </label>
+            <button type="button" onClick={applyPoint} className="glass-thin min-h-[36px] px-3.5 text-sm font-medium">Use point</button>
+            <Link href={`/explorer?${new URLSearchParams(Object.entries(areaToQuery(area)).filter(([, v]) => v) as Array<[string, string]>).toString()}#area`} className="link-ul self-center text-sm">Draw a polygon in the Explorer →</Link>
+          </div>
+          {sel && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]" role="group" aria-label="Month">
+              <select data-testid="report-month" value={sel.m} onChange={(e) => setYm({ y: sel.y, m: Number(e.target.value) })} className="field min-h-[36px] rounded-xl px-2 text-[var(--text-primary)]">
+                {MONTH_NAMES.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
+              </select>
+              <select data-testid="report-year" value={sel.y} onChange={(e) => setYm({ y: Number(e.target.value), m: sel.m })} className="field min-h-[36px] rounded-xl px-2 text-[var(--text-primary)]">
+                {Array.from({ length: LAST - FIRST + 1 }, (_, i) => FIRST + i).map((y) => <option key={y}>{y}</option>)}
+              </select>
+              {unusual && <button type="button" onClick={() => setYm(null)} className="link-ul">Most unusual month ({MONTH_NAMES[unusual.month - 1]} {unusual.year})</button>}
+            </div>
+          )}
+          {inputErr && <p role="alert" className="mt-2 text-sm text-[var(--ember)]">{inputErr}</p>}
+        </Expand>
+      </Tile>
+  );
+
   return (
     <div>
       <PageHead compact eyebrow="Report · one area, one month" info="unusualMonth" title="Was this month" italic="unusual here?"
         lede="Pick an area and a month. The report sets that month against the same calendar month in every other year of the harmonized record, says how far to trust it, and exports as a self-contained file. Observed history, not a forecast." />
 
-      <Tile className="p-4 sm:p-5">
-        <div className="flex flex-wrap items-end gap-3" role="toolbar" aria-label="Report selection">
-          <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind !== "country" ? (area.kind === "box" ? boxName(area.bbox) : "Custom polygon") : undefined}
-            options={data?.countries ?? []} tags={data?.tags} onChange={(c) => { setYm(null); setArea({ kind: "country", name: c }); }} label={area.kind === "country" ? "Country" : "Area"} />
-          <label className="text-xs text-[var(--text-muted)]">Box W, S, E, N
-            <input value={boxText} onChange={(e) => setBoxText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") applyBox(); }} placeholder="141, -37.5, 153.7, -28.2" inputMode="decimal" className="field mt-1 block min-h-[36px] w-56 rounded-xl px-2 text-sm text-[var(--text-primary)]" />
-          </label>
-          <button type="button" onClick={applyBox} className="glass-thin min-h-[36px] px-3.5 text-sm font-medium">Use box</button>
-          <label className="text-xs text-[var(--text-muted)]">Point lat, lon (1° box)
-            <input value={point} onChange={(e) => setPoint(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") applyPoint(); }} placeholder="-33.9, 151.2" inputMode="decimal" className="field mt-1 block min-h-[36px] w-40 rounded-xl px-2 text-sm text-[var(--text-primary)]" />
-          </label>
-          <button type="button" onClick={applyPoint} className="glass-thin min-h-[36px] px-3.5 text-sm font-medium">Use point</button>
-          <Link href={`/explorer?${new URLSearchParams(Object.entries(areaToQuery(area)).filter(([, v]) => v) as Array<[string, string]>).toString()}#area`} className="link-ul self-center text-sm">Draw a polygon in the Explorer →</Link>
-        </div>
-        {sel && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]" role="group" aria-label="Month">
-            <select data-testid="report-month" value={sel.m} onChange={(e) => setYm({ y: sel.y, m: Number(e.target.value) })} className="field min-h-[36px] rounded-xl px-2 text-[var(--text-primary)]">
-              {MONTH_NAMES.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
-            </select>
-            <select data-testid="report-year" value={sel.y} onChange={(e) => setYm({ y: Number(e.target.value), m: sel.m })} className="field min-h-[36px] rounded-xl px-2 text-[var(--text-primary)]">
-              {Array.from({ length: LAST - FIRST + 1 }, (_, i) => FIRST + i).map((y) => <option key={y}>{y}</option>)}
-            </select>
-            {unusual && <button type="button" onClick={() => setYm(null)} className="link-ul">Most unusual month ({MONTH_NAMES[unusual.month - 1]} {unusual.year})</button>}
-            <span className="ml-auto flex flex-wrap gap-2">
-              <CopyLink />
-              <button type="button" onClick={exportReport} disabled={!ctx} data-testid="report-export" className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">Download report (HTML)</button>
-            </span>
-          </div>
-        )}
-        {inputErr && <p role="alert" className="mt-2 text-sm text-[var(--ember)]">{inputErr}</p>}
-      </Tile>
 
+      {!(data && ctx && sel) && inputs}
       {error && <div className="mt-6"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
       {!data && !error && <div className="mt-6 h-80 dot-skel" />}
       {data && !hasHarm && (
@@ -210,6 +214,11 @@ export function ReportPage() {
               ))}
             </dl>
           </Tile>
+          <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+            <CopyLink />
+            <button type="button" onClick={exportReport} disabled={!ctx} data-testid="report-export" className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">Download report (HTML)</button>
+          </div>
+          {inputs}
 
           {nowHarm && mtd && (
             <div className="mt-6" data-testid="report-now">
@@ -227,7 +236,7 @@ export function ReportPage() {
             <Tile className="min-w-0 p-5">
               <Eyebrow info={false}>{sel.y}, month by month · raw and harmonized</Eyebrow>
               <div className="mt-3" dangerouslySetInnerHTML={{ __html: pairBarsSvg(yearChart, `${sel.y} detections per month, raw and harmonized, one scale`, PAGE_COLORS) }} />
-              <p className="mt-2 text-xs text-[var(--text-muted)]">{sel.y >= 2012 ? "From 2012 raw is VIIRS; harmonized is its Aqua-MODIS-equivalent estimate." : "Before 2012 raw is MODIS Terra + Aqua; harmonized is observed Aqua alone."}</p>
+              <p className="mt-2 text-xs text-[var(--text-muted)]">{sel.y >= 2012 ? "From 2012 raw is VIIRS; harmonized is its estimate on the old satellite's scale (Aqua MODIS)." : "Before 2012 raw is MODIS Terra + Aqua; harmonized is observed Aqua alone."}</p>
             </Tile>
           </div>
 

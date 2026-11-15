@@ -14,6 +14,7 @@ import { DotDigits, Pill } from "@/components/ui";
 import { fmtInt, fmtNum, fmtRatio } from "@/lib/format";
 import { isPerfLow } from "@/lib/perf";
 import { NSW_REPORT } from "@/lib/reportLink";
+import { WhereBox } from "@/components/WhereBox";
 
 type Mode = "raw" | "harm";
 const [Y0, Y1] = hero.years;
@@ -122,7 +123,7 @@ function RecordWidget() {
       <p className="mt-3 text-[12.5px] leading-snug text-[#f4f4f2]/65">
         {mode === "raw"
           ? <>Joined naively (MODIS to 2011, VIIRS from 2012), {name}&apos;s fire count jumps {fmtRatio(c.step_raw)} in 2012. The sensor changed, not the fire.</>
-          : <>Harmonized to one unit (Aqua-MODIS-equivalent), the 2012 step is {fmtRatio(c.step_harm)}. Blue rings mark the raw splice.</>}
+          : <>Harmonized to one unit (the old satellite&apos;s scale), the 2012 step is {fmtRatio(c.step_harm)}. Blue rings mark the raw splice.</>}
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2" role="group" aria-label="Country">
@@ -229,7 +230,7 @@ export function NothingHero({ live24 }: { live24: number | null | undefined }) {
           <p className="inline-flex items-center gap-2.5 rounded-full border-[length:var(--stroke)] border-[var(--hairline)] bg-[var(--surface)] px-3.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
             <span className="live-dot" aria-hidden />NASA FIRMS · {Y0}–{Y1}
           </p>
-          <h1 id="hero-title" className="mt-7">
+          <h1 id="hero-title" className="hero-title-box mt-7">
             <span className="display block text-[clamp(1.5rem,1.1rem+1.6vw,2.4rem)] leading-tight">23 years of fire.</span>
             <span className="hero-dot-title mt-2 block text-[var(--red)]">One steady line</span>
           </h1>
@@ -247,12 +248,14 @@ export function NothingHero({ live24 }: { live24: number | null | undefined }) {
         </div>
       </div>
 
+      <WhereBox />
+
       <div className="mt-12"><Widgets live24={live24} /></div>
 
       <nav aria-label="The evidence" className="mt-12 grid gap-3 sm:gap-4 md:grid-cols-3" data-testid="hero-evidence">
         {[
           ["#repair", "Before and after", "The naively joined raw record against the harmonized one, Canada 2003–2025."],
-          ["/method", "The method", "How each VIIRS detection becomes an Aqua-MODIS-equivalent count."],
+          ["/method", "The method", "How each new-satellite detection is put on the old satellite's scale."],
           ["/method#headline", "The validation", "Four corrections scored on the same held-out years, 2019–2021."],
         ].map(([href, t, d2], i) => (
           <Link key={href} href={href} className="tile group flex items-start gap-4 p-5 no-ul sm:p-6">

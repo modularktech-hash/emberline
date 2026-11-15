@@ -35,9 +35,9 @@ export function fitTag(params: Params | null | undefined, key: string): FitTag |
   return fit.fit_source === "pooled" ? "pooled" : null;
 }
 
-export const TAG_LABEL: Record<FitTag, string> = { pooled: "pooled fit", "raw-only": "raw only" };
+export const TAG_LABEL: Record<FitTag, string> = { pooled: "shared correction", "raw-only": "raw only" };
 export const TAG_HINT: Record<FitTag, string> = {
-  pooled: "Too few training matches for its own curve: uses the pooled curve of the own-fit countries",
+  pooled: "Too few training matches for its own curve: uses the shared (pooled) curve of the own-fit countries",
   "raw-only": "No fit (not enough data of the kind the fit needs; reason on the Data page): the raw record only, uncorrected",
 };
 

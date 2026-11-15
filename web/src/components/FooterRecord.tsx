@@ -57,7 +57,7 @@ export function FooterRecord() {
             <p className="tabular display text-3xl">{shown ? fmtInt(shown.v) : "loading"}</p>
             <p className="tabular text-sm opacity-70">{shown ? shown.year : ""}</p>
           </div>
-          <p className="text-xs opacity-70">Aqua-MODIS-equivalent detections{names.length ? `, summed over ${names.length} countries, each corrected with its own fit` : ""}</p>
+          <p className="text-xs opacity-70">Detections on the old satellite&apos;s scale (Aqua MODIS){names.length ? `, summed over ${names.length} countries, each corrected with its own fit` : ""}</p>
           <div className="mt-3 flex h-16 items-end gap-[3px]" onMouseLeave={() => setHover(null)} role="img"
             aria-label={series.length ? `Harmonized yearly detections ${series[0].year} to ${series[series.length - 1].year}, peak ${fmtCompact(max)}` : "Loading the harmonized record"}>
             {(series.length ? series : Array.from({ length: 23 }, (_, i) => ({ year: i, v: 0 }))).map((s) => (

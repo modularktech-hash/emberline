@@ -82,7 +82,7 @@ export function HarmonizedVerdict({ h, monthLabel }: { h: HarmonizedMtd; monthLa
     <div className="rounded-2xl border border-[var(--hairline)] p-4" data-testid="mtd-harmonized">
       <BridgedBadge />
       <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
-        Harmonized · Aqua-MODIS-equivalent · vs {monthLabel} {y0}–{y1} <InfoDot k="bridge" align="start" />
+        Harmonized · on the old satellite&apos;s scale · vs {monthLabel} {y0}–{y1} <InfoDot k="bridge" align="start" />
       </p>
       <p className="tabular mt-2 text-2xl text-[var(--text-primary)]">{fmtInt(h.pace_full_month)} <span className="text-sm text-[var(--text-secondary)]">pace for the full month (range {fmtInt(h.pace_range[0])}–{fmtInt(h.pace_range[1])}, typical error ±{fmtNum(h.typical_error_pct, 0)}%)</span></p>
       <p className="tabular mt-1 text-sm text-[var(--text-secondary)]">

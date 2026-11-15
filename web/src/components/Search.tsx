@@ -76,7 +76,7 @@ export function SearchPalette() {
     if (!loaded.current) {
       loaded.current = true;
       getCountryTable().then((t) => setCountries([
-        ...t.countries.map((c) => ({ kind: "Country", label: prettyName(c.country), note: c.fit_source === "pooled" ? "harmonized · borrowed curve" : "harmonized · own fit", href: `/explorer?country=${encodeURIComponent(c.country)}` })),
+        ...t.countries.map((c) => ({ kind: "Country", label: prettyName(c.country), note: c.fit_source === "pooled" ? "harmonized · shared correction" : "harmonized · own correction", href: `/explorer?country=${encodeURIComponent(c.country)}` })),
         ...(t.not_fitted ?? []).filter((c) => c.has_raw_calendar).map((c) => ({ kind: "Country", label: prettyName(c.country), note: "uncorrected · raw only", href: `/explorer?country=${encodeURIComponent(c.country)}` })),
       ])).catch(() => { loaded.current = false; });
     }
