@@ -10,7 +10,7 @@
    "params_file": "params_global.json",
    "files": {
     "bridge.json": "fa4b8daab91ae047e7fb68b28665290a6bb72a8b0eb72b1695c7e19c8dd10ea6",
-    "calendar_2026.json": "1e4ecf3c44d37354357c379ac26190f1bb9099ff2074cde18295b6cc92d9f97f",
+    "calendar_2026.json": "db271ef7d5dc8e0752a8676560e74c367cc51a2785c815f01d3615c51184c05b",
     "calendar_harmonized_countries.csv": "1686e0e43558085f560d49a5f49c0ba37fec1c8bc377b4307e3b8f1bb354a6db",
     "calendar_harmonized_global.parquet": "62b545bd7170fee0399576493a556848bd27338091af9d2a6200e9672f8e2d63",
     "calendar_raw_global.parquet": "8123debe2f6dbc3d853ae2bf266081fb8ca68f7e64e459670185d7da2335fb0e",
@@ -116,8 +116,8 @@
    "dataset": "world",
    "purpose": "2026 so far on the harmonized scale, monthly, for countries whose NOAA-20 bridge passed held-out validation; provisional",
    "source": "NASA FIRMS area API, NOAA-20 VIIRS standard processing then near-real-time (scripts/build_2026.py), through the published fit and the bridge ratio in bridge.json",
-   "bytes": 30645,
-   "sha256": "1e4ecf3c44d37354357c379ac26190f1bb9099ff2074cde18295b6cc92d9f97f",
+   "bytes": 32794,
+   "sha256": "db271ef7d5dc8e0752a8676560e74c367cc51a2785c815f01d3615c51184c05b",
    "format": "json",
    "top_level_keys": [
     "generated_utc",
@@ -131,7 +131,7 @@
     "fit_version",
     "countries"
    ],
-   "rows": 28,
+   "rows": 30,
    "row_unit": "country",
    "scope_kind": "country",
    "fit_version": "v1-20261114T1240",
