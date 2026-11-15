@@ -697,10 +697,10 @@ Statuses describe the audit snapshot. `[ ]` means not implemented/verified by th
 
 ### E09 — Export an evidence brief and chart
 
-- [ ] **Status:** P1 · Observed gap · Export · effort M
+- [x] **Status:** P1 · Observed gap · Export · effort M
 - **Evidence:** MonthlyCSV verified; no end-to-end brief
 - **Acceptance:** Readable figure plus metadata, CSV and quality caveats
-- **Implementation / verification notes:** Not started in this handoff.
+- **Implementation / verification notes:** Reproduced: Explorer offered only the CSV; no brief. Implemented: "Download brief" button in Explorer; `web/src/lib/brief.ts` builds a self-contained deterministic HTML file client-side (Blob download, template text only, no AI): place, period, basis (raw vs harmonized estimate), calendar as inline SVG (same sqrt ramp and shared max as the page, hex colours, no-data hatching, legend), busiest month/year (same rule as the page), unusual months stated as not computed on this page (Explorer computes none), fit quality/origin/evaluation/interpretation from `lib/quality.ts`, E27 interval with its label, spatial coverage (E14 scope for boxes), limitations, FIRMS sources with LANCE acknowledgement, fit version and train/test years from params, generation time, reproducing URL. Verified (Playwright 390/1440, 0 console errors, 0 overflow; brief identical at both widths apart from timestamp): Canada 2023 harmonized — brief, page and CSV all Jul 2023 26,700 / 2023 100,295, interval 100,275–100,317; Spain (experimental, R² −7.2) — Aug 2025 3,638 / 2025 4,406 in all three, quality label and evaluation string equal the CSV header; box -9.5,37,-6.2,42.2 harmonized — Aug 2025 5,084 / 2025 6,128 in all three, 6 summed cells. Not verified: how the file prints.
 
 ### E10 — Evaluate training-only scalar calibration baseline
 

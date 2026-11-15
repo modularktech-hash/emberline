@@ -26,6 +26,7 @@ import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
 import { boxScope, scopeCsvHeader } from "@/lib/scope";
 import { ScopePanel } from "@/components/ScopePanel";
+import { buildBrief } from "@/lib/brief";
 import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/uncertainty";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
@@ -155,6 +156,25 @@ export function Explorer() {
     );
   };
 
+  // E09: deterministic, self-contained HTML brief built from the values on screen.
+  const exportBrief = () => {
+    if (!data || !cal || !view) return;
+    const html = buildBrief({
+      place: areaLabel(area), areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
+      rows: cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi), max: view.max,
+      annual: mode === "raw" ? view.raw : view.harm, params: data.params, fit,
+      noFitReason: unfitted ? covLabel : null, unc: uncRows, scope,
+      dataset: ds?.dataset === "world" ? "world files (calendar_*_global.parquet, params_global.json)" : "four-country fallback (calendar_raw.parquet, calendar_harmonized.parquet, params.json)",
+      url: reproducingUrl(viewQuery()), generated: new Date().toISOString(),
+    });
+    const href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = `emberline_brief_${areaLabel(area).replace(/[^a-z0-9]+/gi, "_")}_${mode}_${view.lo}-${view.hi}.html`;
+    a.click();
+    URL.revokeObjectURL(href);
+  };
+
   const years = data ? Array.from({ length: data.raw.years[1] - FIRST + 1 }, (_, i) => FIRST + i) : [];
 
   return (
@@ -210,6 +230,9 @@ export function Explorer() {
           <CopyLink className="ml-auto" />
           <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download CSV
+          </button>
+          <button type="button" onClick={exportBrief} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
+            Download brief
           </button>
         </div>
 
