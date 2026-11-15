@@ -11,7 +11,7 @@ import { getProof, type BenchSeries, type ProofBenchCounts, type ProofFile, type
 import { useParquet } from "@/lib/useParquet";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { prettyName } from "@/lib/names";
-import { Segmented } from "@/components/ui";
+import { InfoDot, Segmented } from "@/components/ui";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Eyebrow } from "@/components/Figure";
 
@@ -267,7 +267,7 @@ function RecordCounter({ p }: { p: ProofFile }) {
   const c: Partial<Record<RecordSeries, number>> = sel === "all" ? r.median_per_country : r.countries[sel] ?? {};
   return (
     <div className="mt-6" data-testid="record-counter">
-      <h3 className="display text-xl">False-Record Counter</h3>
+      <h3 className="display flex items-center gap-2.5 text-xl">False-Record Counter <InfoDot k="falseRecord" align="start" /></h3>
       <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         For {r.n_countries} own-fit countries, each calendar month of each year 2012–2021 is <em>flagged as a record</em> when its count is higher than every
         same-month count in 2003–2011. A sensor switch that sees more small fires makes most later months look like records; a consistent record should
@@ -309,7 +309,7 @@ function FindTheSeam({ p }: { p: ProofFile }) {
   const W = 560, H = 190, L = 8, B = 22, bw = (W - 2 * L) / s.candidates.length;
   return (
     <div className="mt-10" data-testid="find-the-seam">
-      <h3 className="display text-xl">Find the Seam: a blind test</h3>
+      <h3 className="display flex items-center gap-2.5 text-xl">Find the Seam: a blind test <InfoDot k="seam" align="start" /></h3>
       <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         Without being told where the sensor changed, look at each own-fit country&apos;s yearly series and find the year with the biggest jump between the
         three years before and the three years from it (largest |log ratio| of consecutive 3-year means), among the candidate years {s.candidates[0]}–{s.candidates[s.candidates.length - 1]} ({s.candidates.length} candidates).

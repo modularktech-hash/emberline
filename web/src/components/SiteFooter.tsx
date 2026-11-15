@@ -106,7 +106,7 @@ export function SiteFooter({ counts = null }: { counts?: { own: number; borrowed
         <div className="mt-10 border-t-[length:var(--stroke)] border-[var(--hairline)] pt-6"><StatusLine /></div>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-[12.5px] leading-relaxed text-[var(--text-muted)]">
           <p className="max-w-3xl">
-            NASA Space Apps Challenge 2026 · Harmonization of MODIS and VIIRS Hot Spots · Team Modulark, Tumkur, India. Active-fire data: NASA FIRMS. Globe imagery where shown: NASA Visible Earth. Not affiliated with or endorsed by NASA. Open source, MIT.
+            NASA Space Apps Challenge 2026 · Harmonization of MODIS and VIIRS Hot Spots · Team Modulark, Tumkur, India. Active-fire data: NASA FIRMS. Not affiliated with or endorsed by NASA. Open source, MIT.
           </p>
           <a href="https://modularktech.com" target="_blank" rel="noopener noreferrer" className="foot-maker glass-thin group inline-flex items-center gap-2 px-4 py-2 text-[13px] text-[var(--text-primary)]">
             <span className="opacity-60">Made by</span> <span className="font-semibold">Modulark</span><span aria-hidden className="foot-arrow">↗</span><span className="sr-only"> (modularktech.com, opens in a new tab)</span>

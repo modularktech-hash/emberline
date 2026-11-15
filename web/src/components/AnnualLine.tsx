@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useState } from "react";
 import { useChartScale } from "@/lib/useChartScale";
 import { fmtCompact, type YearTotal } from "@/lib/ember";
 import type { Series } from "@/lib/types";
@@ -18,9 +19,11 @@ function path(totals: YearTotal[], max: number): string {
     .join(" ");
 }
 
-/** Annual totals. The active series morphs between raw and harmonized — the only animation in the app. */
+/** Annual totals. The active series morphs between raw and harmonized; raw is always blue, harmonized always ember. Hover or tap for a year's values. */
 export function AnnualLine({ raw, harmonized, mode }: { raw: YearTotal[]; harmonized: YearTotal[]; mode: Series }) {
   const { ref, fs, narrow } = useChartScale(W);
+  const [hi, setHi] = useState<number | null>(null);
+  const tone = mode === "raw" ? "var(--c-raw)" : "var(--c-harm)", otherTone = mode === "raw" ? "var(--c-harm)" : "var(--c-raw)";
   const max = Math.max(1, ...raw.map((t) => t.value ?? 0), ...harmonized.map((t) => t.value ?? 0)) * 1.06;
   const active = mode === "raw" ? raw : harmonized;
   const years = raw.map((t) => t.year);
@@ -43,11 +46,17 @@ export function AnnualLine({ raw, harmonized, mode }: { raw: YearTotal[]; harmon
     );
   }
   return (
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible" role="img" aria-label={`Annual detections, ${mode}`}>
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="w-full touch-pan-y overflow-visible" role="img" aria-label={`Annual detections, ${mode}`}
+      onPointerMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        const vx = ((e.clientX - r.left) / r.width) * W;
+        setHi(Math.max(0, Math.min(years.length - 1, Math.round(((vx - L) / (W - L - R)) * (years.length - 1)))));
+      }}
+      onPointerLeave={() => setHi(null)}>
       <defs>
         <linearGradient id="glow" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="var(--ember)" stopOpacity="0.2" />
-          <stop offset="1" stopColor="var(--ember)" stopOpacity="0" />
+          <stop offset="0" stopColor={tone} stopOpacity="0.2" />
+          <stop offset="1" stopColor={tone} stopOpacity="0" />
         </linearGradient>
       </defs>
       {ticks.map((v) => {
@@ -68,7 +77,7 @@ export function AnnualLine({ raw, harmonized, mode }: { raw: YearTotal[]; harmon
           <text x={x(2011.5) + 6} y={T + 10} fontSize={fs(10)} fill="var(--text-secondary)">{narrow ? "2012" : "2012 · VIIRS record begins"}</text>
         </g>
       )}
-      <path d={path(mode === "raw" ? harmonized : raw, max)} fill="none" stroke="var(--text-muted)" strokeWidth="1.2" strokeDasharray="2 4" opacity="0.7" />
+      <path d={path(mode === "raw" ? harmonized : raw, max)} fill="none" stroke={otherTone} strokeWidth="1.5" strokeDasharray="1 5" strokeLinecap="round" opacity="0.8" />
       <motion.path
         key={`area-${years[0]}-${years.length}`}
         initial={false}
@@ -83,8 +92,25 @@ export function AnnualLine({ raw, harmonized, mode }: { raw: YearTotal[]; harmon
         d={path(active, max)}
         animate={{ d: path(active, max) }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        fill="none" stroke="var(--ember)" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round"
+        fill="none" stroke={tone} strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round"
       />
+      {hi != null && (() => {
+        const yr = years[hi], a = active[hi]?.value ?? null, o = (mode === "raw" ? harmonized : raw)[hi]?.value ?? null;
+        const yOf = (v: number) => T + (1 - v / max) * (H - T - B);
+        const left = x(yr) > W * 0.62;
+        return (
+          <g pointerEvents="none">
+            <line x1={x(yr)} x2={x(yr)} y1={T} y2={H - B} stroke="var(--text-primary)" strokeWidth="1" />
+            {o != null && <circle cx={x(yr)} cy={yOf(o)} r="3.5" fill="var(--surface)" stroke={otherTone} strokeWidth="1.5" />}
+            {a != null && <circle cx={x(yr)} cy={yOf(a)} r="4.5" fill={tone} stroke="var(--surface)" strokeWidth="1.5" />}
+            <g transform={`translate(${x(yr) + (left ? -10 : 10)} ${T + 4})`} textAnchor={left ? "end" : "start"} fontFamily="var(--font-code)" fontSize={fs(10.5)}>
+              <text fill="var(--text-primary)" fontWeight="700">{yr}</text>
+              <text y={fs(14)} fill={tone}>{mode === "raw" ? "raw" : "harmonized"} {a == null ? "no data" : fmtCompact(a)}</text>
+              <text y={fs(28)} fill={otherTone}>{mode === "raw" ? "harmonized" : "raw"} {o == null ? "no data" : fmtCompact(o)}</text>
+            </g>
+          </g>
+        );
+      })()}
     </svg>
   );
 }

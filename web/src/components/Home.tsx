@@ -32,12 +32,12 @@ import { useAreaData } from "@/lib/useArea";
 import { useParquet } from "@/lib/useParquet";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
-/** Still Earth shown until the interactive globe starts (same picture as the globe's own poster, without loading three.js). */
+/** Still globe shown until the interactive one starts (same picture as the globe's own poster, without loading three.js). */
 function GlobeStill({ height }: { height: number }) {
   const d = Math.round(height * 0.72);
   return (
     <div className="flex items-center justify-center" style={{ height }}>
-      <div aria-hidden className="rounded-full" style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,0.45) 74%), url(/globe/day-small.webp) 22% 50% / 200% 100% #1c3a5e", boxShadow: "0 0 0 1.5px var(--hairline), 0 0 40px 4px rgba(143,184,240,0.35)" }} />
+      <div aria-hidden className="rounded-full shadow-[0_0_60px_10px_rgba(242,165,107,0.35)]" style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(60,30,15,0.18) 72%), url(/geo/land-dots.png) 22% 50% / 200% 100% #f3ecdc", backgroundBlendMode: "normal, normal, multiply" }} />
     </div>
   );
 }
