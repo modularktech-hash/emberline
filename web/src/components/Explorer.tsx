@@ -247,7 +247,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
-        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. A detection is one active-fire hotspot seen by a satellite. Harmonized record 2003–2025, and 2026 so far through the tested NOAA-20 bridge for Canada, Australia, Brazil and the United States, with more countries being added." />
+        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. A detection is one active-fire hotspot seen by a satellite. Harmonized record 2003–2025, and 2026 so far for the 50 countries whose NOAA-20 bridge passed its test." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
