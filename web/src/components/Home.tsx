@@ -8,24 +8,22 @@
  * published data files.
  */
 import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { DataJourney } from "@/components/DataJourney";
 import { DotClock, useToday } from "@/components/DotMatrix";
 import { Stat } from "@/components/Figure";
-import { EASE } from "@/lib/motion";
 import { DriftClocks } from "@/components/DriftClocks";
 import { Eyebrow } from "@/components/Figure";
 import { MonthUnusualPanel } from "@/components/MonthToDate";
 import { TwoJoins } from "@/components/TwoJoins";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
-import { PaperCutout } from "@/components/PaperCutout";
+import { NothingHero } from "@/components/HeroRecord";
 import { HeadlineTable, StepCollapse } from "@/components/Proof";
 import { NSW_REPORT } from "@/lib/reportLink";
 import { CountUp, DotDigits, DotSkeleton, Expand, Failed, InfoDot, Pill, Reveal, SectionHead, StatTile, Tile } from "@/components/ui";
-import { getCountryTable, getDrift, getLive, getLiveSummary, getProof, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
+import { getCountryTable, getDrift, getLiveSummary, getProof, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { annualTotals, median } from "@/lib/ember";
 import { fmtAge, fmtClock, fmtInt, fmtNum, fmtR2, fmtRatio, fmtSigned, fmtUtc, parseUtc, span } from "@/lib/format";
 import { ALL } from "@/lib/nav";
@@ -34,17 +32,6 @@ import { getParams } from "@/lib/queries";
 import type { Params } from "@/lib/types";
 import { useAreaData } from "@/lib/useArea";
 import { useParquet } from "@/lib/useParquet";
-
-const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
-/** Still globe shown until the interactive one starts (same picture as the globe's own poster, without loading three.js). */
-function GlobeStill({ height }: { height: number }) {
-  const d = Math.round(height * 0.72);
-  return (
-    <div className="flex items-center justify-center" style={{ height }}>
-      <div aria-hidden className="rounded-full shadow-[0_0_60px_10px_rgba(242,165,107,0.35)]" style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(60,30,15,0.18) 72%), url(/geo/land-dots.png) 22% 50% / 200% 100% #f3ecdc", backgroundBlendMode: "normal, normal, multiply" }} />
-    </div>
-  );
-}
 
 /** Headline accuracy, computed from the fit: median over own-fit countries, and the single best country. */
 export function accuracySummary(p: Params | undefined) {
@@ -102,92 +89,16 @@ type HomeData = ReturnType<typeof useHomeData>;
 
 const FIRST = 2003, LAST = 2025;
 
-/** Splits a headline line into words that rise in one after another. */
-function Words({ text, delay = 0 }: { text: string; delay?: number }) {
-  return (
-    <>
-      {text.split(" ").map((w, i, a) => (
-        <span key={i} className="inline-block overflow-hidden pb-[0.12em] align-top">
-          <motion.span className="inline-block" initial={{ y: "105%", opacity: 0, rotate: 4 }} animate={{ y: "0%", opacity: 1, rotate: 0 }}
-            transition={{ duration: 0.45, ease: EASE, delay: delay + i * 0.04 }}>{w}{i < a.length - 1 ? "\u00a0" : ""}</motion.span>
-        </span>
-      ))}
-    </>
-  );
-}
-
-
 /* ------------------------------------------------------------------ hero */
 function Hero({ d }: { d: HomeData }) {
-  const sum = d.sum;
-  const live24 = sum ? Object.values(sum.windows["24h"].totals).reduce((a, b) => a + b, 0) : 0;
-  // The globe is the heaviest thing on the page: a still stands in until the page has loaded and gone idle.
-  const [spin, setSpin] = useState(false);
-  useEffect(() => {
-    let t = 0;
-    const go = () => { t = window.setTimeout(() => setSpin(true), 400); };
-    if (document.readyState === "complete") go(); else window.addEventListener("load", go, { once: true });
-    return () => { clearTimeout(t); window.removeEventListener("load", go); };
-  }, []);
-  const { data: live } = useParquet(() => (spin ? getLive() : new Promise<Awaited<ReturnType<typeof getLive>>>(() => {})), spin ? "home-live" : "home-live-wait");
-
+  const live24 = d.sum ? Object.values(d.sum.windows["24h"].totals).reduce((a, b) => a + b, 0) : d.sum;
   return (
-    <section className="relative pb-10 pt-12 sm:pt-20">
-      <div className="relative z-10 mx-auto max-w-3xl text-center">
-        <div className="glass-thin mx-auto inline-flex items-center gap-2.5 bg-[var(--surface)] px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
-          <span className="live-dot" aria-hidden />
-          {sum ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> near-real-time, raw detections in the 24 h to <span className="tabular">{fmtUtc(parseUtc(sum.fetched_utc))}</span></span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
-        </div>
-        <h1 className="display t-hero mt-8">
-          <span className="block"><Words text="23 years of fire." delay={0.05} /></span>
-          <span className="block text-[var(--red)] sm:whitespace-nowrap"><Words text="One steady line." delay={0.22} /></span>
-        </h1>
-        <p className="mx-auto mt-7 max-w-[34rem] text-[18px] leading-relaxed text-[var(--text-secondary)]">
-          In 2012 the fire satellites changed, and the counts jumped overnight. The fires did not. We repair that break, country by country, into one burning activity calendar, so a fire manager can see whether a month in their area is <span className="accent text-[1.15em] text-[var(--text-primary)]">really unusual.</span>
-        </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Pill href="/explorer" tone="red">Check your area</Pill>
-          <Pill href={NSW_REPORT} tone="ink">Get a report</Pill>
-          <Pill href="/globe" tone="line">Live globe →</Pill>
-        </div>
-        <nav aria-label="The evidence" className="mx-auto mt-7 grid max-w-3xl gap-3 text-left sm:grid-cols-3" data-testid="hero-evidence">
-          {[
-            ["#repair", "Before and after", "The naively joined raw record against the harmonized one, Canada 2003–2025."],
-            ["/method", "The method", "How each VIIRS detection becomes an Aqua-MODIS-equivalent count."],
-            ["/method#headline", "The validation", "Four corrections scored on the same held-out years, 2019–2021."],
-          ].map(([href, t, d2]) => (
-            <Link key={href} href={href} className="tile group block p-4">
-              <p className="text-[14px] font-medium">{t} <span aria-hidden className="inline-block text-[var(--red)] transition-transform group-hover:translate-x-1">{href.startsWith("#") ? "↓" : "→"}</span></p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--text-secondary)]">{d2}</p>
-            </Link>
-          ))}
-        </nav>
-        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
-          <a href="#story" className="no-ul hover:text-[var(--text-primary)]">The story ↓</a><a href="#proof" className="no-ul hover:text-[var(--text-primary)]">The proof ↓</a><a href="#area" className="no-ul hover:text-[var(--text-primary)]">Your area ↓</a><a href="#tools" className="no-ul hover:text-[var(--text-primary)]">The tools ↓</a>
-        </p>
-      </div>
-
-      <div className="relative mx-auto mt-4 max-w-[760px] cursor-grab active:cursor-grabbing">
-        {spin ? <FireGlobe live={live ?? null} tle={d.tle?.satellites ?? null} interactive allowZoom={false} showOrbits height={600} speed={60} maxPoints={5000} /> : <GlobeStill height={600} />}
-        <p className="pointer-events-none mt-1 text-center font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--text-muted)]">Drag to spin · hover a fire for details · live layer: NOAA-20 / NOAA-21 / MODIS, raw</p>
-      </div>
-
+    <>
+      <NothingHero live24={live24} />
       <Widgets d={d} />
-      <nav aria-label="Start here" className="mx-auto mt-4 grid max-w-5xl gap-4 sm:grid-cols-3">
-        {[
-          ["/explorer", "Explore a country", "Its month-by-month detections, raw or harmonized, as a calendar you can download."],
-          ["/compare", "Compare two regions", "Two countries side by side, in one unit, on one scale."],
-          ["/method", "Understand the correction", "How VIIRS detections become Aqua-equivalent, and how it was tested."],
-        ].map(([href, t, d2]) => (
-          <Link key={href} href={href} className="tile group block p-5">
-            <p className="text-[15px] font-medium">{t} <span aria-hidden className="inline-block text-[var(--red)] transition-transform group-hover:translate-x-1">→</span></p>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-secondary)]">{d2}</p>
-          </Link>
-        ))}
-      </nav>
       {d.table && <Ticker names={[...[...d.table.countries].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24).map((c) => prettyName(c.country)), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]}
         label={`The ${Math.min(24, d.table.countries.length)} fitted countries with the most fire, and the satellites`} />}
-    </section>
+    </>
   );
 }
 
@@ -694,9 +605,8 @@ export function Home() {
       {d.error && <div className="mx-auto my-8 max-w-3xl"><Failed error={d.error} retry={d.retry} what="the summary figures" /></div>}
 
       <section id="story" className="scroll-mt-24 pt-[var(--sec-lg)]">
-        <div className="grid items-end gap-8 md:grid-cols-[1.6fr_1fr]">
+        <div>
           <Reveal><SectionHead eyebrow="The story" title={<>How joining two satellite records <span className="italic">creates a jump.</span></>} lede="Four short steps, then the jump itself, then the repair. Scroll through, or skip to the proof." /></Reveal>
-          <PaperCutout className="mx-auto hidden w-full max-w-[20rem] md:block" />
         </div>
       </section>
       <div id="problem" className="scroll-mt-24"><OrbitChapter /></div>

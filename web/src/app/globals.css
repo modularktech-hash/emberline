@@ -243,3 +243,15 @@ html[data-perf=low] .live-dot { animation: none; }
 .conduit-auto { display: block; margin: 0 auto; width: 6px; height: 28px; background: radial-gradient(circle, var(--grey-2) 1.6px, transparent 2px) 50% 0 / 6px 10px repeat-y; animation: conduit-y 0.9s linear infinite; }
 @media (min-width: 1024px) { .conduit-auto { margin: 0; align-self: center; width: 36px; height: 6px; background: radial-gradient(circle, var(--grey-2) 1.6px, transparent 2px) 0 50% / 10px 6px repeat-x; animation-name: conduit-x; } }
 html[data-perf=low] .conduit-auto { animation: none; }
+
+/* Home hero (components/HeroRecord): dot-matrix headline, record widget morph, pop-up paper satellite. */
+.hero-dot-title { font-family: var(--font-dot); font-weight: 900; font-size: clamp(2.9rem, 1.4rem + 4.2vw, 4.4rem); line-height: 0.95; letter-spacing: -0.01em; }
+.hero-dot { transition: fill 420ms var(--ease-out), opacity 420ms var(--ease-out); }
+.hero-ghost { transition: cy 520ms var(--ease-out), y1 520ms var(--ease-out), y2 520ms var(--ease-out); }
+.hero-art { box-shadow: var(--shadow-paper); }
+:root[data-theme="dark"] .hero-art { outline: var(--stroke) solid var(--hairline); }
+@keyframes hero-readout { from { opacity: 0; transform: translateY(6px); } }
+.hero-readout { animation: hero-readout 380ms var(--ease-out) both; }
+.hero-pop { transform-origin: 50% 100%; animation: paper-unfold 900ms var(--ease-spring) 250ms both; }
+html[data-perf=low] :is(.hero-pop, .hero-readout) { animation: none; }
+html[data-perf=low] :is(.hero-dot, .hero-ghost) { transition: none; }

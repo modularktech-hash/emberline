@@ -8,6 +8,7 @@ import type { CoverageStatusFile, Params } from "@/lib/types";
 import { coverageSummary } from "@/lib/coverage";
 import { fmtCompact } from "@/lib/ember";
 import { fmtInt, span } from "@/lib/format";
+import { whenNearOrIdle } from "@/lib/whenNear";
 
 /**
  * Footer provenance: the harmonized yearly record as a small static bar chart
@@ -24,15 +25,12 @@ export function FooterRecord() {
     const el = box.current;
     if (!el) return;
     let live = true;
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
+    const stop = whenNearOrIdle(el, () => {
       Promise.all([getCountryTable(), getParams(), getCoverageStatus().catch(() => null)])
         .then(([table, params, coverage]) => { if (live) setD({ table, params, coverage }); })
         .catch(() => { if (live) setFailed(true); });
-    }, { rootMargin: "400px" });
-    io.observe(el);
-    return () => { live = false; io.disconnect(); };
+    }, "400px");
+    return () => { live = false; stop(); };
   }, []);
 
   const series = useMemo(() => {
