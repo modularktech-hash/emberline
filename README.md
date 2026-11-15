@@ -160,6 +160,21 @@ ratio lines them up with the harmonized Suomi-NPP record.
 - Not tested: near-real-time against standard processing of NOAA-20 itself (no near-real-time
   archive exists for the test years).
 
+## If NASA or another service is down
+
+Nothing a visitor sees waits on NASA. The calendar, the fire reports, the 2026 row, the proof
+and the live-fire globe are read from files published with the site (`web/public/data/`), built
+from NASA data in advance. If a NASA service is slow or down, the site shows the last good data,
+with its date, never a blank page or an endless loading screen.
+
+| What you see | Where it comes from | If NASA or another service fails |
+|---|---|---|
+| Calendar, fire report, critical periods, 2026 row, proof, method, this month vs median | Files on this site, built from NASA FIRMS in advance | Unaffected: the last good data, dated |
+| Live layer (last 24 h and 7 days) | A daily job reads NASA FIRMS and publishes `live.json` | If NASA errors, the job stops and the previous file stays up; a file is only replaced after it passes the data checks |
+| Map background | OpenFreeMap tiles | Falls back to a plain country-outline map; drawing still works |
+| Individual hotspots for chosen dates (download button) | NASA FIRMS, live, through the site's key | Gives up after 75 seconds with a clear message; the grid-cell hotspot CSVs, from the site's own files, still download |
+| Satellite imagery layer | NASA GIBS | Optional and off by default |
+
 ## Run it
 
 ```bash
