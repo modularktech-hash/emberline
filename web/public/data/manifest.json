@@ -17,6 +17,7 @@
     "coverage_status.json": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
     "dataset.json": "19cb0edfbddcd53d0876b31b224c765ba57195d6f7784ea2a29266e63fd503ea",
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
+    "events.json": "e65daf9bbe60b7a923ae2ed4c4a140997aa1fdac621d78b31d49b0911140df83",
     "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
     "heldout_errors.json": "891179ddafe62681636e930a8cc37e5a295683bfbc4547408cd9c295b5862133",
     "month_to_date.json": "6112cb650780987ea357a0d5d2b0f3c0a66be53b93f0b0c8516cc7280f032d81",
@@ -648,6 +649,23 @@
    ],
    "fetched_utc": "2026-11-15T03:22Z",
    "fit_version": null
+  },
+  {
+   "name": "events.json",
+   "dataset": "world",
+   "purpose": "Known fire disasters test: rank of documented extreme seasons in the harmonized record and the raw splice",
+   "source": "derived from calendar_harmonized_global.parquet, calendar_raw_global.parquet and params_global.json (scripts/build_events.py)",
+   "bytes": 8424,
+   "sha256": "e65daf9bbe60b7a923ae2ed4c4a140997aa1fdac621d78b31d49b0911140df83",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "generated_utc",
+    "definition",
+    "events",
+    "summary"
+   ],
+   "fit_version": "v1-20261114T1240"
   },
   {
    "name": "harmonized_uncertainty.json",

@@ -1,0 +1,539 @@
+{
+ "fit_version": "v1-20261114T1240",
+ "generated_utc": "2026-11-15T13:52:58Z",
+ "definition": "Each event's window total (sum of monthly detections over the listed months) is ranked against the same calendar window in every year of the pool; rank 1 = largest. Pool: windows starting 2003-2025 and ending by Dec 2025 (from 2002 for windows that cross New Year). harmonized = calendar_harmonized_global; raw_splice = MODIS (Terra+Aqua) to 2011 then VIIRS (Suomi-NPP) from 2012. Event list fixed before results were computed.",
+ "events": [
+  {
+   "group": "recent",
+   "event": "Australia Black Summer",
+   "country": "Australia",
+   "window": "Sep 2019 - Feb 2020",
+   "year": 2019,
+   "pool_years": [
+    2002,
+    2024
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 6,
+    "total": 90214.6,
+    "years_above": [
+     2002,
+     2004,
+     2011,
+     2012,
+     2023
+    ],
+    "recent_years_above": [
+     2012,
+     2023
+    ]
+   },
+   "raw_splice": {
+    "rank": 3,
+    "total": 466007.0,
+    "years_above": [
+     2012,
+     2023
+    ],
+    "recent_years_above": [
+     2012,
+     2023
+    ]
+   }
+  },
+  {
+   "group": "recent",
+   "event": "Canada record season",
+   "country": "Canada",
+   "window": "May-Sep 2023",
+   "year": 2023,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 1,
+    "total": 98734.5,
+    "years_above": [],
+    "recent_years_above": []
+   },
+   "raw_splice": {
+    "rank": 1,
+    "total": 674264.0,
+    "years_above": [],
+    "recent_years_above": []
+   }
+  },
+  {
+   "group": "recent",
+   "event": "Portugal fires",
+   "country": "Portugal",
+   "window": "Jun-Oct 2017",
+   "year": 2017,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 4,
+    "total": 1791.3,
+    "years_above": [
+     2003,
+     2005,
+     2025
+    ],
+    "recent_years_above": [
+     2025
+    ]
+   },
+   "raw_splice": {
+    "rank": 2,
+    "total": 5033.0,
+    "years_above": [
+     2025
+    ],
+    "recent_years_above": [
+     2025
+    ]
+   }
+  },
+  {
+   "group": "recent",
+   "event": "Brazil Amazon fires",
+   "country": "Brazil",
+   "window": "Aug-Sep 2019",
+   "year": 2019,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 11,
+    "total": 103159.7,
+    "years_above": [
+     2003,
+     2004,
+     2005,
+     2006,
+     2007,
+     2010,
+     2012,
+     2017,
+     2020,
+     2024
+    ],
+    "recent_years_above": [
+     2012,
+     2017,
+     2020,
+     2024
+    ]
+   },
+   "raw_splice": {
+    "rank": 5,
+    "total": 460481.0,
+    "years_above": [
+     2012,
+     2017,
+     2020,
+     2024
+    ],
+    "recent_years_above": [
+     2012,
+     2017,
+     2020,
+     2024
+    ]
+   }
+  },
+  {
+   "group": "recent",
+   "event": "Western US fires",
+   "country": "United States",
+   "window": "Aug-Oct 2020",
+   "year": 2020,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 1,
+    "total": 38939.6,
+    "years_above": [],
+    "recent_years_above": []
+   },
+   "raw_splice": {
+    "rank": 1,
+    "total": 140536.0,
+    "years_above": [],
+    "recent_years_above": []
+   }
+  },
+  {
+   "group": "recent",
+   "event": "Greece fires",
+   "country": "Greece",
+   "window": "Jul-Aug 2021",
+   "year": 2021,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 3,
+    "total": 673.0,
+    "years_above": [
+     2007,
+     2023
+    ],
+    "recent_years_above": [
+     2023
+    ]
+   },
+   "raw_splice": {
+    "rank": 3,
+    "total": 1693.0,
+    "years_above": [
+     2007,
+     2023
+    ],
+    "recent_years_above": [
+     2023
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Australia 2002-03 season",
+   "country": "Australia",
+   "window": "Sep 2002 - Feb 2003",
+   "year": 2002,
+   "pool_years": [
+    2002,
+    2024
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 4,
+    "total": 100957.0,
+    "years_above": [
+     2011,
+     2012,
+     2023
+    ],
+    "recent_years_above": [
+     2012,
+     2023
+    ]
+   },
+   "raw_splice": {
+    "rank": 13,
+    "total": 181449.0,
+    "years_above": [
+     2011,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2021,
+     2023,
+     2024
+    ],
+    "recent_years_above": [
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2021,
+     2023,
+     2024
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Russia 2003 (Siberia)",
+   "country": "Russian Federation",
+   "window": "Apr-Aug 2003",
+   "year": 2003,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 1,
+    "total": 225611.0,
+    "years_above": [],
+    "recent_years_above": []
+   },
+   "raw_splice": {
+    "rank": 9,
+    "total": 412241.0,
+    "years_above": [
+     2012,
+     2013,
+     2014,
+     2016,
+     2018,
+     2019,
+     2020,
+     2021
+    ],
+    "recent_years_above": [
+     2012,
+     2013,
+     2014,
+     2016,
+     2018,
+     2019,
+     2020,
+     2021
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Russia 2010 heat-wave fires",
+   "country": "Russian Federation",
+   "window": "Jul-Aug 2010",
+   "year": 2010,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 10,
+    "total": 42085.0,
+    "years_above": [
+     2003,
+     2012,
+     2013,
+     2014,
+     2016,
+     2018,
+     2019,
+     2020,
+     2021
+    ],
+    "recent_years_above": [
+     2012,
+     2013,
+     2014,
+     2016,
+     2018,
+     2019,
+     2020,
+     2021
+    ]
+   },
+   "raw_splice": {
+    "rank": 14,
+    "total": 78943.0,
+    "years_above": [
+     2003,
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2023,
+     2024
+    ],
+    "recent_years_above": [
+     2012,
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2023,
+     2024
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Portugal 2003",
+   "country": "Portugal",
+   "window": "Jun-Oct 2003",
+   "year": 2003,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 2,
+    "total": 2249.0,
+    "years_above": [
+     2005
+    ],
+    "recent_years_above": []
+   },
+   "raw_splice": {
+    "rank": 7,
+    "total": 3396.0,
+    "years_above": [
+     2005,
+     2013,
+     2016,
+     2017,
+     2024,
+     2025
+    ],
+    "recent_years_above": [
+     2013,
+     2016,
+     2017,
+     2024,
+     2025
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Portugal 2005",
+   "country": "Portugal",
+   "window": "Jun-Oct 2005",
+   "year": 2005,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 1,
+    "total": 2938.0,
+    "years_above": [],
+    "recent_years_above": []
+   },
+   "raw_splice": {
+    "rank": 4,
+    "total": 4470.0,
+    "years_above": [
+     2016,
+     2017,
+     2025
+    ],
+    "recent_years_above": [
+     2016,
+     2017,
+     2025
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Indonesia 2006 haze",
+   "country": "Indonesia",
+   "window": "Aug-Oct 2006",
+   "year": 2006,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 1,
+    "total": 66089.0,
+    "years_above": [],
+    "recent_years_above": []
+   },
+   "raw_splice": {
+    "rank": 8,
+    "total": 83078.0,
+    "years_above": [
+     2012,
+     2013,
+     2014,
+     2015,
+     2018,
+     2019,
+     2023
+    ],
+    "recent_years_above": [
+     2012,
+     2013,
+     2014,
+     2015,
+     2018,
+     2019,
+     2023
+    ]
+   }
+  },
+  {
+   "group": "early",
+   "event": "Greece 2007",
+   "country": "Greece",
+   "window": "Jul-Aug 2007",
+   "year": 2007,
+   "pool_years": [
+    2003,
+    2025
+   ],
+   "pool_size": 23,
+   "harmonized": {
+    "rank": 2,
+    "total": 1241.0,
+    "years_above": [
+     2023
+    ],
+    "recent_years_above": [
+     2023
+    ]
+   },
+   "raw_splice": {
+    "rank": 2,
+    "total": 2237.0,
+    "years_above": [
+     2023
+    ],
+    "recent_years_above": [
+     2023
+    ]
+   }
+  }
+ ],
+ "summary": {
+  "recent": {
+   "n": 6,
+   "median_rank_harmonized": 3.5,
+   "median_rank_raw_splice": 2.5,
+   "top3_harmonized": 3,
+   "top3_raw_splice": 5
+  },
+  "early": {
+   "n": 7,
+   "median_rank_harmonized": 2,
+   "median_rank_raw_splice": 8,
+   "top3_harmonized": 5,
+   "top3_raw_splice": 1
+  }
+ }
+}

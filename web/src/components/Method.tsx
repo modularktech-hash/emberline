@@ -16,6 +16,7 @@ import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 import { MethodNotes, ValidationPlot } from "@/components/ValidationPlot";
+import { EventsTest } from "@/components/EventsTest";
 import { Benchmark, CannotDo, HeadlineTable, ProofSection, StepCollapse } from "@/components/Proof";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
@@ -152,6 +153,7 @@ export function Method() {
         lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Countries with enough data get their own fitted curve; smaller ones borrow a shared (pooled) curve, counted and marked below. These are regional results, not a global correction." />
       <HeadlineTable />
       <div id="step-collapse" className="scroll-mt-24"><StepCollapse /></div>
+      <EventsTest />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
           ["01 · Match", "Each VIIRS detection gets a yes/no label: “seen by Aqua” if Aqua MODIS detected fire on the same UTC date in the same small grid cell (H3 resolution 7) or one of its 6 neighbours, about 3.5 km. Both satellites pass at about 13:30 local time in 2012–2021, so they look at nearly the same moment."],

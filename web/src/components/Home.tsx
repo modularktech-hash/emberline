@@ -21,6 +21,7 @@ import { TwoJoins } from "@/components/TwoJoins";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { NothingHero } from "@/components/HeroRecord";
 import { HeadlineTable, StepCollapse } from "@/components/Proof";
+import { EventsLine, getEvents } from "@/components/EventsTest";
 import { NSW_REPORT } from "@/lib/reportLink";
 import { CountUp, DotDigits, DotSkeleton, Expand, Failed, InfoDot, Pill, Reveal, SectionHead, StatTile, Tile } from "@/components/ui";
 import { getCountryTable, getDrift, getLiveSummary, getProof, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
@@ -420,6 +421,7 @@ function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
 function Proof({ d }: { d: HomeData }) {
   const { ref, near } = useNear<HTMLElement>();
   const { data: pf } = useParquet(() => (near ? getProof() : new Promise<Awaited<ReturnType<typeof getProof>>>(() => {})), near ? "home-proof" : "home-proof-wait");
+  const { data: ev } = useParquet(() => (near ? getEvents().catch(() => null) : new Promise<Awaited<ReturnType<typeof getEvents>> | null>(() => {})), near ? "home-events" : "home-events-wait");
   const pct = (v: number) => `${fmtNum(v * 100, 1)}%`;
   const s = pf?.step_collapse.all, r = pf?.records, seam = pf?.seam;
   const acc = accuracySummary(d.params ?? undefined);
@@ -435,6 +437,7 @@ function Proof({ d }: { d: HomeData }) {
         <Reveal delay={0.12}><StatTile size="lg" label="Find the Seam" info="seam" value={seam ? `${seam.harm_2012}/${seam.n_countries}` : undefined}
           note={seam ? <>countries where 2012 is still the biggest jump, down from <span className="dot-num">{seam.raw_2012}/{seam.n_countries}</span>. By chance alone: {fmtNum(seam.chance_2012, 1)}.</> : "Loading proof.json"} className="h-full" /></Reveal>
       </div>
+      {ev && <Reveal><p className="mt-6 max-w-[75ch] text-[14px] leading-relaxed text-[var(--text-secondary)]" data-testid="home-events"><EventsLine e={ev} /> <Link href="/method#events" className="link-ul text-[var(--text-primary)]">The disaster test →</Link></p></Reveal>}
       <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><HeadlineTable lazy compact /></Tile></Reveal>
       <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><StepCollapse lazy compact /></Tile></Reveal>
       <Reveal>
