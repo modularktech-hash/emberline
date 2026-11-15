@@ -4,6 +4,9 @@ import { fmtInt, fmtNum, fmtUtc, parseUtc } from "@/lib/format";
 import { Eyebrow } from "@/components/Figure";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { loadJson } from "@/lib/queries";
+
+interface Eonet { fetched_utc: string; label: string; n_events: number; date_range: [string, string] | null; events: Array<{ id: string; title: string | null; date: string | null; lat: number; lon: number; source: string | null }> }
 import { getLive, getTle } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { Chip, PageHead, Reveal, Segmented } from "@/components/ui";
@@ -34,6 +37,15 @@ export function GlobePage() {
   const [sats, setSats] = useState(true);
   const [orbits, setOrbits] = useState(true);
   const [spin, setSpin] = useState(true);
+  const [eonetOn, setEonetOn] = useState(false);
+  const [eonet, setEonet] = useState<Eonet | null>(null);
+  const [eonetErr, setEonetErr] = useState<string | null>(null);
+  useEffect(() => {
+    if (!eonetOn || eonet) return;
+    let on = true;
+    loadJson<Eonet>("eonet.json").then((d) => on && setEonet(d), (e: Error) => on && setEonetErr(e.message));
+    return () => { on = false; };
+  }, [eonetOn, eonet]);
   const [speed, setSpeed] = useState(60);
   const [paused, setPaused] = useState(false);
   const [played, setPlayed] = useState(false);
@@ -89,6 +101,7 @@ export function GlobePage() {
               <Chip on={sats} onClick={() => setSats(!sats)}>Satellites</Chip>
               <Chip on={orbits} onClick={() => setOrbits(!orbits)}>Orbits</Chip>
               <Chip on={spin} onClick={() => setSpin(!spin)}>Auto-spin</Chip>
+              <Chip on={eonetOn} onClick={() => setEonetOn(!eonetOn)}>EONET wildfire events</Chip>
               <div className="ml-auto flex items-center gap-2" role="group" aria-label="Simulated satellite time">
               <button type="button" onClick={() => { setPaused(!paused); if (paused) setPlayed(true); }} aria-pressed={paused} className="glass-thin min-h-[32px] px-3 text-xs font-medium">{paused ? "▶ Play" : "❚❚ Pause"}</button>
               <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
@@ -100,7 +113,7 @@ export function GlobePage() {
             <div className="bg-[radial-gradient(circle_at_50%_45%,rgba(255,214,150,0.35),transparent_60%)]">
               <FireGlobe live={data?.live ?? null} tle={data?.tle.satellites ?? null} window={win} showFires={fires} showSats={sats}
                 showOrbits={orbits} speed={paused ? 0 : speed} autoRotate={spin} onPick={setPicked} onSats={onSats} height={600} satLabels
-                focus={picked ? { lat: picked[0], lng: picked[1] } : null} motionOverride={played} />
+                focus={picked ? { lat: picked[0], lng: picked[1] } : null} motionOverride={played} events={eonetOn ? eonet?.events ?? null : null} />
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
               <span>Spike height = summed FRP in the window (Σ FRP, not instantaneous power) · width = number of detections · 0.5° cells</span>
@@ -125,6 +138,20 @@ export function GlobePage() {
               </p>
             </div>
           </Reveal>
+          {eonetOn && (
+            <div className="card p-5" data-testid="eonet-panel">
+              <Eyebrow>NASA EONET wildfire events</Eyebrow>
+              {eonetErr ? <p className="mt-2 text-sm text-[var(--text-secondary)]">Could not load eonet.json: {eonetErr}</p> : !eonet ? <p className="mt-2 text-sm text-[var(--text-muted)]">Loading…</p> : (
+                <>
+                  <p className="tabular mt-2 text-2xl">{fmtInt(eonet.n_events)} <span className="text-sm text-[var(--text-secondary)]">open events (blue markers)</span></p>
+                  <p className="tabular mt-1 text-xs text-[var(--text-secondary)]">{fmtInt(eonet.events.filter((e) => e.date && e.date >= eonet.events[0].date!.slice(0, 8) + "01").length)} with a latest report in {eonet.events[0]?.date?.slice(0, 7)} · reports {eonet.date_range?.[0].slice(0, 10)} to {eonet.date_range?.[1].slice(0, 10)}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">{eonet.label}. “Open” means EONET has not closed the event; many were last reported long ago. Fetched {eonet.fetched_utc}. Hover a blue marker for its title.</p>
+                  <ul className="mt-3 space-y-1.5 text-xs">{eonet.events.slice(0, 5).map((e) => (
+                    <li key={e.id}><a className="link-ul" href={`https://eonet.gsfc.nasa.gov/api/v3/events/${e.id}`} target="_blank" rel="noreferrer">{e.title}</a> <span className="text-[var(--text-muted)]">{e.date?.slice(0, 10)}</span></li>))}</ul>
+                </>
+              )}
+            </div>
+          )}
           {picked && (
             <div className="card border-[var(--ember)] p-5">
               <Eyebrow>Selected cell</Eyebrow>

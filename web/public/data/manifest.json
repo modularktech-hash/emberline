@@ -47,6 +47,7 @@
    "params_file": null,
    "files": {
     "current_month.json": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
+    "eonet.json": "17ba7cb0c51b5e98744741b6098d135afd6efeb8c7aacb2f61791034c58a982d",
     "live.json": "ad9db9c4c56d4aa9ab34bde30584d13fe8664e7066a0a5a438297b8d64f0703f",
     "tle.json": "c26a8153ebc3b57e61ea3a2474fdf8262e40b29ef09812572edd91d78e534533"
    },
@@ -574,6 +575,26 @@
    },
    "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
    "fit_version": "v1-20261114T1240"
+  },
+  {
+   "name": "eonet.json",
+   "dataset": "live",
+   "purpose": "Open NASA EONET wildfire events (curated; a different source from the FIRMS detections), latest point per event",
+   "source": "NASA EONET API v3, category wildfires, status open (scripts/build_eonet.py)",
+   "bytes": 1709479,
+   "sha256": "17ba7cb0c51b5e98744741b6098d135afd6efeb8c7aacb2f61791034c58a982d",
+   "format": "json",
+   "top_level_keys": [
+    "fetched_utc",
+    "source",
+    "label",
+    "definition",
+    "n_events",
+    "date_range",
+    "events"
+   ],
+   "fetched_utc": "2026-11-15T03:22Z",
+   "fit_version": null
   },
   {
    "name": "harmonized_uncertainty.json",

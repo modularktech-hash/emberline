@@ -64,6 +64,8 @@ interface Props {
   maxPoints?: number;
   onPick?: (c: Cell) => void;
   onSats?: (s: SatState[]) => void;
+  /** NASA EONET wildfire events, drawn as small blue markers merged with the fire points (detections = -1 marks them). */
+  events?: Array<{ lat: number; lon: number; title: string | null; date: string | null }> | null;
   /** Turn the globe to this point (e.g. a row of the hottest-cells list). */
   focus?: { lat: number; lng: number } | null;
   /** The viewer explicitly asked for satellite motion (pressed Play), so run the clock even under reduced motion. */
@@ -132,7 +134,7 @@ export default function FireGlobe(props: Props) {
 
 function GlobeInner({
   live, tle, window: win = "24h", showFires = true, showSats = true, showOrbits = true, speed = 60,
-  autoRotate = true, height = 560, interactive = true, allowZoom, satLabels = false, maxPoints = 12000, onPick, onSats, onLost, focus, motionOverride = false,
+  autoRotate = true, height = 560, interactive = true, allowZoom, satLabels = false, maxPoints = 12000, events = null, onPick, onSats, onLost, focus, motionOverride = false,
 }: Props & { onLost: () => void }) {
   const reduce = useReducedMotion();
   const ref = useRef<GlobeMethods | undefined>(undefined);
@@ -250,10 +252,11 @@ function GlobeInner({
   // Fires: one merged mesh (a single draw call), largest summed FRP first.
   const cells = useMemo(() => (showFires && live ? (live.windows[win].cells as Cell[]).slice(0, low ? Math.min(maxPoints, 4000) : maxPoints) : []), [live, win, showFires, low, maxPoints]);
   const maxFrp = useMemo(() => Math.max(1, ...cells.slice(0, 50).map((c) => c[3])), [cells]);
+  const pts = useMemo(() => (events?.length ? [...cells, ...events.map((e) => [e.lat, e.lon, -1, 0, 0, `${e.title ?? "EONET event"}${e.date ? ` · ${e.date.slice(0, 10)}` : ""}`] as Cell)] : cells), [cells, events]);
   const rings = useMemo(() => (still ? [] : cells.slice(0, 10)), [cells, still]);
-  const pointAltitude = useCallback((d: object) => Math.min(0.32, 0.006 + Math.sqrt((d as Cell)[3] / maxFrp) * 0.2), [maxFrp]);
-  const pointRadius = useCallback((d: object) => Math.min(0.55, 0.18 + Math.log10(1 + (d as Cell)[2]) * 0.12), []);
-  const pointColor = useCallback((d: object) => fireColor((d as Cell)[3], maxFrp), [maxFrp]);
+  const pointAltitude = useCallback((d: object) => ((d as Cell)[2] < 0 ? 0.03 : Math.min(0.32, 0.006 + Math.sqrt((d as Cell)[3] / maxFrp) * 0.2)), [maxFrp]);
+  const pointRadius = useCallback((d: object) => ((d as Cell)[2] < 0 ? 0.2 : Math.min(0.55, 0.18 + Math.log10(1 + (d as Cell)[2]) * 0.12)), []);
+  const pointColor = useCallback((d: object) => ((d as Cell)[2] < 0 ? "#2f6fd6" : fireColor((d as Cell)[3], maxFrp)), [maxFrp]);
   const ringColor = useCallback(() => (t: number) => `rgba(217,67,26,${1 - t})`, []);
   const pathColor = useCallback((d: object) => [(d as { color: string }).color + "00", (d as { color: string }).color], []);
   const objectLabel = useCallback((d: object) => `<div style="font:12px var(--font-ui,system-ui);background:#121715;color:#f7f3e8;padding:4px 8px;border-radius:8px">${(d as SatState).name} · ${(d as SatState).instrument}</div>`, []);
@@ -266,14 +269,14 @@ function GlobeInner({
   // Hover and click on merged points: map the pointer to lat/lng and find the nearest cell.
   const nearest = useCallback((x: number, y: number): Cell | null => {
     const g = ref.current;
-    if (!g || !cells.length) return null;
+    if (!g || !pts.length) return null;
     const ll = g.toGlobeCoords(x, y);
     if (!ll) return null;
     const alt = g.pointOfView().altitude;
     const lim = Math.max(0.6, alt * 1.2); // degrees; looser when zoomed out
     let best: Cell | null = null, bd = lim * lim;
     const k = Math.cos((ll.lat * Math.PI) / 180);
-    for (const c of cells) {
+    for (const c of pts) {
       const dl = c[0] - ll.lat;
       if (dl > lim || dl < -lim) continue;
       let dn = Math.abs(c[1] - ll.lng); if (dn > 180) dn = 360 - dn;
@@ -281,7 +284,7 @@ function GlobeInner({
       if (d2 < bd) { bd = d2; best = c; }
     }
     return best;
-  }, [cells]);
+  }, [pts]);
   useEffect(() => {
     const el = wrap.current;
     if (!el || !ready || !interactive) return;
@@ -297,7 +300,7 @@ function GlobeInner({
     const pdown = (e: PointerEvent) => { down = [e.clientX, e.clientY]; };
     const up = (e: PointerEvent) => {
       if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return; // a drag, not a click
-      const [x, y] = local(e); const n = nearest(x, y); if (n) onPick?.(n);
+      const [x, y] = local(e); const n = nearest(x, y); if (n && n[2] >= 0) onPick?.(n);
     };
     el.addEventListener("pointermove", move, { passive: true });
     el.addEventListener("pointerleave", leave);
@@ -374,7 +377,7 @@ function GlobeInner({
           atmosphereColor="#f2a56b"
           atmosphereAltitude={0.16}
           enablePointerInteraction={satLabels && showSats && !low}
-          pointsData={cells}
+          pointsData={pts}
           pointLat={latOf}
           pointLng={lngOf}
           pointAltitude={pointAltitude}
@@ -415,9 +418,14 @@ function GlobeInner({
       {interactive && hover && (
         <div className="tabular pointer-events-none absolute left-4 top-4 rounded-xl bg-[var(--ink)] px-3.5 py-2.5 text-xs leading-relaxed text-[#f7f3e8] shadow-xl">
           <p className="font-medium">{hover[0].toFixed(1)}°, {hover[1].toFixed(1)}°</p>
+          {hover[2] < 0 ? (<>
+            <p>{hover[5]}</p>
+            <p className="text-[#b8b2a2]">NASA EONET curated event, a different source from the FIRMS detections</p>
+          </>) : (<>
           <p>{hover[2].toLocaleString()} detections · {Math.round(hover[3]).toLocaleString()} MW Σ FRP</p>
           <p className="text-[#b8b2a2]">summed over detections in the window, not instantaneous power</p>
           <p className="text-[#b8b2a2]">peak {Math.round(hover[4])} MW · {hover[5]}</p>
+          </>)}
         </div>
       )}
     </div>

@@ -64,6 +64,9 @@ FILES = {
     "calendar_harmonized_countries.csv": dict(
         dataset="world", fit="params_global.json", source="country rows of calendar_harmonized_global.parquet (scripts/build_dataset_card.py)",
         purpose="CSV export: harmonized monthly Aqua-MODIS-equivalent counts per fitted country (country, year, month, n_harmonized)"),
+    "eonet.json": dict(
+        dataset="live", fit=None, source="NASA EONET API v3, category wildfires, status open (scripts/build_eonet.py)",
+        purpose="Open NASA EONET wildfire events (curated; a different source from the FIRMS detections), latest point per event"),
     "countries.json": dict(
         dataset="world", fit="self", source="derived from the world calendars and params_global.json",
         purpose="One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)"),
