@@ -306,7 +306,7 @@ Keep all range-read code behind `web/src/lib/queries.ts`. Do not let
 - [x] Survey the competitive field. **Done — six public repos, two serious.**
       Our earlier "nobody will pick this challenge" assumption was wrong. See
       `docs/research-findings.md` §4.
-- [ ] Pick the accessible colour ramp (R10) and write its name down.
+- [x] Accessible colour ramp (R10): "Ember" sequential ramp; checks in `docs/color-accessibility.md`.
 - [ ] Retrieve MDPI *Remote Sensing* 18(10) 1650 (FRP correction + MYD14/
       VNP14IMG fusion) — closest peer-reviewed analogue, blocked by 403.
 - [ ] Confirm the official MODIS end-of-science dates; NASA sources conflict
