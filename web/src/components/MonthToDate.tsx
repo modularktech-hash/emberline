@@ -20,7 +20,7 @@ interface Side { month_to_date: number; pace_full_month: number; history_platfor
 export interface MonthToDateFile {
   generated_utc: string; status: string; label: string; month: string; window_utc: [string, string]; days_covered: number; days_in_month: number;
   sources: Record<string, string>; filters: string; membership: string; pace_definition: string; percentile_definition: string; selection: string;
-  no_outline: string[]; countries: Record<string, Partial<Record<"MODIS" | "NOAA-20", Side>>>;
+  no_outline: string[]; incomplete?: string[]; countries: Record<string, Partial<Record<"MODIS" | "NOAA-20", Side>>>;
 }
 
 let cache: Promise<MonthToDateFile | null> | null = null;
@@ -168,6 +168,8 @@ export function MonthToDateCard({ country, area, range }: {
       <p className="mt-3 max-w-3xl text-xs leading-relaxed text-[var(--text-muted)]">
         Pace: {data.pace_definition}. Percentile: {data.percentile_definition}. Filters: {meta.filters}.{" "}
         {area ? <>Area: the {area.cells.length} grid cells of the selection, detections counted in the cell they fall in.</> : <>Membership: {data.membership}. Countries: {data.selection}.</>}
+        {data.incomplete && data.incomplete.length > 0 && <> Not recorded this run (a FIRMS request failed after retries): {data.incomplete.map(prettyName).join(", ")}.</>}
+        {data.no_outline.length > 0 && <> Not recorded (no 110 m outline): {data.no_outline.map(prettyName).join(", ")}.</>}
       </p>
     </section>
   );

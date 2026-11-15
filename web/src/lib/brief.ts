@@ -29,8 +29,8 @@ export interface BriefInput {
   generated: string; // ISO time
 }
 
-/** Hex values of the --seq-0..7 ramp in globals.css (the file must stand alone). */
-const HEX = ["#f0eadb", "#f8e8c0", "#f9c46b", "#f49b3f", "#e66a26", "#c93f1c", "#96221a", "#561114"];
+/** Hex values of the light --seq-0..7 ramp in styles/tokens.css, copied because the brief must stand alone. */
+const HEX = ["#e9e9e5", "#f6e3b8", "#f7c26a", "#f29a3e", "#e46a26", "#c63f1c", "#93221a", "#531114"];
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

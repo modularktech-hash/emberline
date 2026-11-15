@@ -6,10 +6,7 @@ Method: colour-vision deficiency simulated with Machado, Oliveira & Fernandes (2
 
 ## Failing items
 
-- **Satellite colours (globe, fleet, drift clocks)** (`lib/sats.ts SAT_COLORS`): minimum ΔE2000 5.4 under deuteranopia (closest pair Suomi-NPP / NOAA-20). Proposed replacement: separate the clashing pair in lightness (not only hue), or take the pair from a CVD-safe categorical set such as Okabe–Ito (#E69F00, #56B4E9, #009E73, #0072B2, #D55E00, #CC79A7). UI not changed.
-- **Method chart hues** (`Method.tsx HUES`): minimum ΔE2000 5.4 under deuteranopia (closest pair #d9431a / #b8860b). Proposed replacement: separate the clashing pair in lightness (not only hue), or take the pair from a CVD-safe categorical set such as Okabe–Ito (#E69F00, #56B4E9, #009E73, #0072B2, #D55E00, #CC79A7). UI not changed.
-
-Note (not a failure): `lib/brief.ts` says its HEX array mirrors `--seq-0..7`, but steps 0, 1, 2, 3, 4, 5, 6, 7 differ from the light tokens. Both pass; consider syncing them.
+None. Every ramp, palette and text pair passes.
 
 ## Ramps and palettes
 
@@ -19,12 +16,12 @@ Note (not a failure): `lib/brief.ts` says its HEX array mirrors `--seq-0..7`, bu
 |---|---|---|---|---|---|---|---|---|---|
 | Ember ramp, light (calendar, season rings) (`tokens.css --seq-0..7`) | sequential | 8 | yes/yes/yes/yes | 12.0 | 7.1 | 9.4 | 10.5 | PASS | [png](figures/ramp_ember_light.png) |
 | Ember ramp, dark (calendar, season rings) (`tokens.css dark --seq-0..7`) | sequential | 8 | yes/yes/yes/yes | 11.0 | 8.4 | 10.5 | 9.1 | PASS | [png](figures/ramp_ember_dark.png) |
-| Brief export ramp (standalone HTML) (`lib/brief.ts HEX`) | sequential | 8 | yes/yes/yes/yes | 8.1 | 7.2 | 8.2 | 6.1 | PASS | [png](figures/ramp_brief.png) |
+| Brief export ramp (standalone HTML) (`lib/brief.ts HEX`) | sequential | 8 | yes/yes/yes/yes | 12.0 | 7.1 | 9.4 | 10.5 | PASS | [png](figures/ramp_brief.png) |
 | Globe FRP ramp (`FireGlobe.tsx RAMP`) | sequential | 6 | yes/yes/yes/yes | 12.3 | 7.2 | 9.5 | 10.8 | PASS | [png](figures/ramp_globe.png) |
-| Raw vs harmonized series, light (`tokens.css --c-raw / --ember / --ink`) | categorical | 3 | n/a | 37.3 | 36.5 | 35.4 | 38.5 | PASS | [png](figures/ramp_series_light.png) |
+| Raw vs harmonized series, light (`tokens.css --c-raw / --ember / --ink`) | categorical | 3 | n/a | 37.3 | 36.5 | 30.8 | 38.5 | PASS | [png](figures/ramp_series_light.png) |
 | Raw vs harmonized series, dark (`tokens.css dark --c-raw / --ember / --ink`) | categorical | 3 | n/a | 26.8 | 28.1 | 25.3 | 27.5 | PASS | [png](figures/ramp_series_dark.png) |
-| Satellite colours (globe, fleet, drift clocks) (`lib/sats.ts SAT_COLORS`) | categorical | 5 | n/a | 25.8 | 5.4 | 12.2 | 5.5 | FAIL | [png](figures/ramp_satellites.png) |
-| Method chart hues (`Method.tsx HUES`) | categorical | 6 | n/a | 17.1 | 5.4 | 12.2 | 5.5 | FAIL | [png](figures/ramp_method_hues.png) |
+| Satellite colours (globe, fleet, drift clocks) (`lib/sats.ts SAT_COLORS`) | categorical | 5 | n/a | 27.8 | 15.9 | 11.7 | 12.4 | PASS | [png](figures/ramp_satellites.png) |
+| Method chart hues (`Method.tsx HUES`) | categorical | 6 | n/a | 27.8 | 15.9 | 11.7 | 12.4 | PASS | [png](figures/ramp_method_hues.png) |
 | AOI map: cells vs selection box (`AoiMap.tsx`) | categorical | 2 | n/a | 50.9 | 43.5 | 38.0 | 59.1 | PASS | [png](figures/ramp_aoi_map.png) |
 
 Each strip shows four rows: normal, deuteranopia, protanopia, tritanopia.
@@ -37,7 +34,7 @@ Each strip shows four rows: normal, deuteranopia, protanopia, tritanopia.
 
 ![ember_dark](figures/ramp_ember_dark.png)
 
-**Brief export ramp (standalone HTML)** — `#f0eadb`, `#f8e8c0`, `#f9c46b`, `#f49b3f`, `#e66a26`, `#c93f1c`, `#96221a`, `#561114`; L* 93, 92, 82, 72, 59, 47, 33, 18
+**Brief export ramp (standalone HTML)** — `#e9e9e5`, `#f6e3b8`, `#f7c26a`, `#f29a3e`, `#e46a26`, `#c63f1c`, `#93221a`, `#531114`; L* 92, 91, 82, 71, 59, 47, 33, 17
 
 ![brief](figures/ramp_brief.png)
 
@@ -45,7 +42,7 @@ Each strip shows four rows: normal, deuteranopia, protanopia, tritanopia.
 
 ![globe](figures/ramp_globe.png)
 
-**Raw vs harmonized series, light** — `#2f6db0`, `#d9431a`, `#0b0b0b`; L* 45, 51, 3
+**Raw vs harmonized series, light** — `#2f6db0`, `#bb3814`, `#0b0b0b`; L* 45, 43, 3
 
 ![series_light](figures/ramp_series_light.png)
 
@@ -53,11 +50,11 @@ Each strip shows four rows: normal, deuteranopia, protanopia, tritanopia.
 
 ![series_dark](figures/ramp_series_dark.png)
 
-**Satellite colours (globe, fleet, drift clocks)** — `#7a4fa0`, `#3f7f96`, `#d9431a`, `#b8860b`, `#2f8f5b`; L* 42, 50, 51, 59, 53
+**Satellite colours (globe, fleet, drift clocks)** — `#cc79a7`, `#0072b2`, `#d55e00`, `#6b5300`, `#009e73`; L* 61, 46, 54, 37, 58
 
 ![satellites](figures/ramp_satellites.png)
 
-**Method chart hues** — `#d9431a`, `#b8860b`, `#3f7f96`, `#7a4fa0`, `#2f8f5b`, `#96221a`; L* 51, 59, 50, 42, 53, 33
+**Method chart hues** — `#d55e00`, `#6b5300`, `#0072b2`, `#cc79a7`, `#009e73`, `#882255`; L* 54, 37, 46, 61, 58, 32
 
 ![method_hues](figures/ramp_method_hues.png)
 
@@ -80,8 +77,8 @@ Each strip shows four rows: normal, deuteranopia, protanopia, tritanopia.
 | light | `--text-muted` | `--surface-alt` | #6a6a66 on #eaeae7 | 4.51:1 | 4.5:1 | PASS |
 | light | `--red` | `--bg` | #d71921 on #f4f4f2 | 4.71:1 | 3:1 | PASS |
 | light | `--red` | `--surface` | #d71921 on #ffffff | 5.18:1 | 3:1 | PASS |
-| light | `--ember` | `--bg` | #d9431a on #f4f4f2 | 4.00:1 | 3:1 | PASS |
-| light | `--ember` | `--surface` | #d9431a on #ffffff | 4.40:1 | 3:1 | PASS |
+| light | `--ember` | `--bg` | #bb3814 on #f4f4f2 | 5.17:1 | 3:1 | PASS |
+| light | `--ember` | `--surface` | #bb3814 on #ffffff | 5.69:1 | 3:1 | PASS |
 | light | `--c-raw` | `--bg` | #2f6db0 on #f4f4f2 | 4.85:1 | 3:1 | PASS |
 | light | `--c-raw` | `--surface` | #2f6db0 on #ffffff | 5.34:1 | 3:1 | PASS |
 | light | `--on-ink` | `--ink` | #f4f4f2 on #0b0b0b | 17.87:1 | 4.5:1 | PASS |
