@@ -1,0 +1,384 @@
+{
+ "resolution": 4,
+ "exact": {
+  "countries": 232,
+  "staged_countries": 194,
+  "raw_mismatches_staged": 0,
+  "fitted_staged": 166,
+  "harmonized_max_rel_diff_staged": 3.5462963552725217e-09,
+  "rebuilt_small_places": 38,
+  "rebuilt_detections_published": 11313,
+  "rebuilt_detections_in_cells": 10963,
+  "rebuilt_mismatching": [
+   {
+    "country": "Aland_Islands",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 6,
+    "n_viirs": 0
+   },
+   {
+    "country": "Andorra",
+    "MODIS": 8,
+    "n_modis": 0,
+    "VIIRS": 2,
+    "n_viirs": 0
+   },
+   {
+    "country": "Anguilla",
+    "MODIS": 1,
+    "n_modis": 0,
+    "VIIRS": 2,
+    "n_viirs": 0
+   },
+   {
+    "country": "Antigua_and_Barbuda",
+    "MODIS": 42,
+    "n_modis": 42,
+    "VIIRS": 222,
+    "n_viirs": 201
+   },
+   {
+    "country": "Barbados",
+    "MODIS": 240,
+    "n_modis": 231,
+    "VIIRS": 565,
+    "n_viirs": 565
+   },
+   {
+    "country": "Cook_Islands",
+    "MODIS": 1,
+    "n_modis": 0,
+    "VIIRS": 24,
+    "n_viirs": 0
+   },
+   {
+    "country": "Estonia",
+    "MODIS": 1223,
+    "n_modis": 1204,
+    "VIIRS": 392,
+    "n_viirs": 392
+   },
+   {
+    "country": "Faeroe_Islands",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 2,
+    "n_viirs": 0
+   },
+   {
+    "country": "Federated_States_of_Micronesia",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 24,
+    "n_viirs": 0
+   },
+   {
+    "country": "French_Southern_and_Antarctic_Lands",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 12,
+    "n_viirs": 0
+   },
+   {
+    "country": "Guernsey",
+    "MODIS": 1,
+    "n_modis": 0,
+    "VIIRS": 7,
+    "n_viirs": 0
+   },
+   {
+    "country": "Isle_of_Man",
+    "MODIS": 10,
+    "n_modis": 0,
+    "VIIRS": 25,
+    "n_viirs": 0
+   },
+   {
+    "country": "Jersey",
+    "MODIS": 3,
+    "n_modis": 0,
+    "VIIRS": 10,
+    "n_viirs": 0
+   },
+   {
+    "country": "Liechtenstein",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 1,
+    "n_viirs": 0
+   },
+   {
+    "country": "Martinique",
+    "MODIS": 25,
+    "n_modis": 24,
+    "VIIRS": 100,
+    "n_viirs": 100
+   },
+   {
+    "country": "Mauritius",
+    "MODIS": 729,
+    "n_modis": 672,
+    "VIIRS": 2021,
+    "n_viirs": 2021
+   },
+   {
+    "country": "Montserrat",
+    "MODIS": 24,
+    "n_modis": 23,
+    "VIIRS": 22,
+    "n_viirs": 22
+   },
+   {
+    "country": "Nauru",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 8,
+    "n_viirs": 0
+   },
+   {
+    "country": "Norfolk_Island",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 4,
+    "n_viirs": 0
+   },
+   {
+    "country": "Saint-Barthelemy",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 3,
+    "n_viirs": 0
+   },
+   {
+    "country": "Saint_Helena",
+    "MODIS": 4,
+    "n_modis": 0,
+    "VIIRS": 7,
+    "n_viirs": 0
+   },
+   {
+    "country": "Sint_Maarten",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 7,
+    "n_viirs": 0
+   },
+   {
+    "country": "Saint_Pierre_and_Miquelon",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 6,
+    "n_viirs": 0
+   },
+   {
+    "country": "San_Marino",
+    "MODIS": 2,
+    "n_modis": 0,
+    "VIIRS": 0,
+    "n_viirs": 0
+   },
+   {
+    "country": "Seychelles",
+    "MODIS": 1,
+    "n_modis": 0,
+    "VIIRS": 5,
+    "n_viirs": 0
+   },
+   {
+    "country": "Singapore",
+    "MODIS": 16,
+    "n_modis": 15,
+    "VIIRS": 10,
+    "n_viirs": 10
+   },
+   {
+    "country": "Slovenia",
+    "MODIS": 591,
+    "n_modis": 560,
+    "VIIRS": 536,
+    "n_viirs": 536
+   },
+   {
+    "country": "Solomon_Islands",
+    "MODIS": 382,
+    "n_modis": 380,
+    "VIIRS": 2245,
+    "n_viirs": 2245
+   },
+   {
+    "country": "Svalbard_and_Jan_Mayen",
+    "MODIS": 1,
+    "n_modis": 0,
+    "VIIRS": 4,
+    "n_viirs": 0
+   },
+   {
+    "country": "Turks_and_Caicos_Islands",
+    "MODIS": 21,
+    "n_modis": 16,
+    "VIIRS": 68,
+    "n_viirs": 68
+   },
+   {
+    "country": "United_States_Virgin_Islands",
+    "MODIS": 18,
+    "n_modis": 16,
+    "VIIRS": 29,
+    "n_viirs": 29
+   },
+   {
+    "country": "Wallis_and_Futuna_Islands",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 10,
+    "n_viirs": 0
+   }
+  ]
+ },
+ "outline_tolerance": 0.1,
+ "outline_median_abs_rel_diff_harmonized": 0.011747802586316927,
+ "outline": [
+  {
+   "country": "Democratic_Republic_of_the_Congo",
+   "cells_in_outline": 1177,
+   "raw_modis_rel_diff": -0.014269573107324109,
+   "raw_viirs_rel_diff": -0.012426091978440574,
+   "harmonized_rel_diff": -0.013829191094912714
+  },
+  {
+   "country": "Angola",
+   "cells_in_outline": 625,
+   "raw_modis_rel_diff": -0.0066471990437281655,
+   "raw_viirs_rel_diff": -0.007225798612576426,
+   "harmonized_rel_diff": -0.006722269977773178
+  },
+  {
+   "country": "Brazil",
+   "cells_in_outline": 4495,
+   "raw_modis_rel_diff": -0.002736603287281076,
+   "raw_viirs_rel_diff": -0.003439147249540081,
+   "harmonized_rel_diff": -0.0031403384937303057
+  },
+  {
+   "country": "Australia",
+   "cells_in_outline": 4508,
+   "raw_modis_rel_diff": -0.035898716886631966,
+   "raw_viirs_rel_diff": -0.044932888214095856,
+   "harmonized_rel_diff": -0.04230028726442895
+  },
+  {
+   "country": "Russian_Federation",
+   "cells_in_outline": 9262,
+   "raw_modis_rel_diff": -0.005998965745111673,
+   "raw_viirs_rel_diff": -0.007878633681745708,
+   "harmonized_rel_diff": -0.006549695801911465
+  },
+  {
+   "country": "Zambia",
+   "cells_in_outline": 358,
+   "raw_modis_rel_diff": 0.010853453562085592,
+   "raw_viirs_rel_diff": 0.011908556370403323,
+   "harmonized_rel_diff": 0.012364209347039965
+  },
+  {
+   "country": "Mozambique",
+   "cells_in_outline": 396,
+   "raw_modis_rel_diff": -0.0006790170419963481,
+   "raw_viirs_rel_diff": -0.0025228792659446188,
+   "harmonized_rel_diff": -0.0032086111566121773
+  },
+  {
+   "country": "South_Sudan",
+   "cells_in_outline": 353,
+   "raw_modis_rel_diff": 0.009337623607840916,
+   "raw_viirs_rel_diff": 0.008135676127422867,
+   "harmonized_rel_diff": 0.009848273396581078
+  },
+  {
+   "country": "Central_African_Republic",
+   "cells_in_outline": 358,
+   "raw_modis_rel_diff": 0.0012032702074572213,
+   "raw_viirs_rel_diff": 0.004815983986367613,
+   "harmonized_rel_diff": 0.0036612906323814603
+  },
+  {
+   "country": "Tanzania",
+   "cells_in_outline": 459,
+   "raw_modis_rel_diff": -0.02498807639347743,
+   "raw_viirs_rel_diff": -0.03175767136520971,
+   "harmonized_rel_diff": -0.027157727037892786
+  },
+  {
+   "country": "India",
+   "cells_in_outline": 1750,
+   "raw_modis_rel_diff": -0.003677491423665182,
+   "raw_viirs_rel_diff": -0.003098590656362334,
+   "harmonized_rel_diff": -0.002798456256277835
+  },
+  {
+   "country": "United_States",
+   "cells_in_outline": 5295,
+   "raw_modis_rel_diff": -0.004800732960727208,
+   "raw_viirs_rel_diff": -0.005810824686788261,
+   "harmonized_rel_diff": -0.0063256752241331775
+  },
+  {
+   "country": "Nigeria",
+   "cells_in_outline": 550,
+   "raw_modis_rel_diff": -0.026375309726952043,
+   "raw_viirs_rel_diff": -0.030163922124595823,
+   "harmonized_rel_diff": -0.028505018905666066
+  },
+  {
+   "country": "Madagascar",
+   "cells_in_outline": 323,
+   "raw_modis_rel_diff": -0.02017437657844715,
+   "raw_viirs_rel_diff": -0.024812656888905067,
+   "harmonized_rel_diff": -0.024230029182482633
+  },
+  {
+   "country": "China",
+   "cells_in_outline": 5758,
+   "raw_modis_rel_diff": 0.011147676836896499,
+   "raw_viirs_rel_diff": 0.008372869303105563,
+   "harmonized_rel_diff": 0.011747802586316927
+  },
+  {
+   "country": "Guinea",
+   "cells_in_outline": 161,
+   "raw_modis_rel_diff": -0.05670155573558429,
+   "raw_viirs_rel_diff": -0.05124324236881829,
+   "harmonized_rel_diff": -0.05222734379929782
+  },
+  {
+   "country": "Myanmar",
+   "cells_in_outline": 339,
+   "raw_modis_rel_diff": -0.00018987269379024785,
+   "raw_viirs_rel_diff": -0.00642731038229103,
+   "harmonized_rel_diff": -0.004156508051058411
+  },
+  {
+   "country": "Canada",
+   "cells_in_outline": 5365,
+   "raw_modis_rel_diff": -0.00045884774740326744,
+   "raw_viirs_rel_diff": -0.0011162786493630922,
+   "harmonized_rel_diff": 0.0009482815166824545
+  },
+  {
+   "country": "Mexico",
+   "cells_in_outline": 961,
+   "raw_modis_rel_diff": -0.03846746530485193,
+   "raw_viirs_rel_diff": -0.04048337870665012,
+   "harmonized_rel_diff": -0.03960674673185755
+  },
+  {
+   "country": "Bolivia",
+   "cells_in_outline": 618,
+   "raw_modis_rel_diff": 0.011401987575884372,
+   "raw_viirs_rel_diff": 0.011788375195560741,
+   "harmonized_rel_diff": 0.012430094628585254
+  }
+ ],
+ "outline_note": "cells whose centre is inside the Natural Earth 110 m outline vs the FIRMS country file; differences come from the coarse outline and border cells, not from the data"
+}
