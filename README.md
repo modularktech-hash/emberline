@@ -2,7 +2,7 @@
 
 **A burning activity calendar on a fire record that holds still across the MODIS → VIIRS sensor change.**
 
-Live: **https://emberline-tan.vercel.app/**
+Live: **https://emberline-ten.vercel.app/**
 
 Built for the **NASA Space Apps Challenge 2026**, challenge *MODIS and VIIRS hot spots*.
 Not affiliated with or endorsed by NASA. No NASA logos or insignia are used.
@@ -19,7 +19,7 @@ Canada, mean yearly detections in 2012–14 divided by 2009–11:
 | Emberline, harmonized | **×1.68** |
 
 The same test for every fitted country, and where the correction is weakest, is on the
-[Method page](https://emberline-tan.vercel.app/method).
+[Method page](https://emberline-ten.vercel.app/method).
 
 ## Use it in three steps
 
