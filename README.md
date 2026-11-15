@@ -21,6 +21,18 @@ Canada, mean yearly detections in 2012–14 divided by 2009–11:
 The same test for every fitted country, and where the correction is weakest, is on the
 [Method page](https://emberline-ten.vercel.app/method).
 
+## Two joins, both fixed
+
+The fire record has been broken twice, and Emberline repairs both:
+
+1. **2012: MODIS → VIIRS (Suomi-NPP).** The sharper sensor sees small fires MODIS missed. Fixed by
+   per-country detection curves, tested on held-out 2019–2021.
+2. **Today: Suomi-NPP → NOAA-20.** Suomi-NPP is ageing, and the current data comes from NOAA-20.
+   Fixed by a per-country bridge, tested on held-out 2022–2023: 50 of 50 countries pass.
+
+So the calendar runs from 2003 to the present on one scale, and it keeps working as MODIS retires
+and VIIRS moves to newer satellites.
+
 ## Use it in three steps
 
 1. **Pick an area of interest.** A country, a one-click area (New South Wales worked
