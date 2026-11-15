@@ -230,7 +230,7 @@ export function NothingHero({ live24 }: { live24: number | null | undefined }) {
           <p className="inline-flex items-center gap-2.5 rounded-full border-[length:var(--stroke)] border-[var(--hairline)] bg-[var(--surface)] px-3.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--text-secondary)]">
             <span className="live-dot" aria-hidden />NASA FIRMS · {Y0}–{Y1}
           </p>
-          <h1 id="hero-title" className="mt-7">
+          <h1 id="hero-title" className="hero-title-box mt-7">
             <span className="display block text-[clamp(1.5rem,1.1rem+1.6vw,2.4rem)] leading-tight">23 years of fire.</span>
             <span className="hero-dot-title mt-2 block text-[var(--red)]">One steady line</span>
           </h1>

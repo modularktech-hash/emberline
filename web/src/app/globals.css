@@ -246,6 +246,9 @@ html[data-perf=low] .conduit-auto { animation: none; }
 
 /* Home hero (components/HeroRecord): dot-matrix headline, record widget morph, pop-up paper satellite. */
 .hero-dot-title { font-family: var(--font-dot); font-weight: 900; font-size: clamp(2.9rem, 1.4rem + 4.2vw, 4.4rem); line-height: 0.95; letter-spacing: -0.01em; }
+/* "One steady line" stays on one line: sized to its column (the text is ~8.9em wide). */
+.hero-title-box { container-type: inline-size; }
+.hero-title-box .hero-dot-title { font-size: min(4.4rem, 10.9cqi); white-space: nowrap; }
 .hero-dot { transition: fill 420ms var(--ease-out), opacity 420ms var(--ease-out); }
 .hero-ghost { transition: cy 520ms var(--ease-out), y1 520ms var(--ease-out), y2 520ms var(--ease-out); }
 .hero-art { box-shadow: var(--shadow-paper); }
