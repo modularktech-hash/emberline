@@ -28,7 +28,7 @@ export const INFO = {
   benchmark: { title: "Benchmark", text: "Our model against simpler corrections, scored on the same held-out years. We report where it wins and where it does not." },
   calendar: { title: "Burning calendar", text: "Months across, years down. A darker cell means more fire detections in that month." },
   percentile: { title: "Percentile", text: "Where this value sits among the same month in other years. The 90th percentile means higher than nine years in ten." },
-  monthToDate: { title: "This month so far", text: "Provisional raw counts for the current month from the live feeds. Not harmonized, and a different satellite from the long record." },
+  monthToDate: { title: "This month so far", text: "Provisional raw counts for the current month from the live feeds, not harmonized. NOAA-20 is compared with its own archive (from 2018) over the same days of the month; MODIS with the Terra and Aqua archive." },
   live: { title: "Live layer", text: "The last 24 hours and 7 days from NOAA-20, NOAA-21 and MODIS. Raw, and a different platform from the historical Suomi-NPP record." },
   eonet: { title: "EONET", text: "NASA's curated list of natural events. Wildfire events here are named by people, a separate source from the satellite detections." },
   gibs: { title: "GIBS", text: "NASA's satellite imagery service. The Explorer can show its true-colour view as an optional map layer." },

@@ -16,7 +16,7 @@ import { InfoDot } from "@/components/ui";
 import { getCountryMonthHistory, loadJson } from "@/lib/queries";
 import type { AreaRow } from "@/lib/types";
 
-interface Side { month_to_date: number; pace_full_month: number; history_platform: string; history_years: [number, number]; history_median: number | null; history_max: number | null; percentile_of_pace: number | null; years_below_pace: number }
+interface Side { month_to_date: number; pace_full_month: number; history_platform: string; history_years: [number, number]; history_median: number | null; history_max: number | null; percentile_of_pace: number | null; years_below_pace: number; window_by_year?: Record<string, number> }
 export interface MonthToDateFile {
   generated_utc: string; status: string; label: string; month: string; window_utc: [string, string]; days_covered: number; days_in_month: number;
   sources: Record<string, string>; filters: string; membership: string; pace_definition: string; percentile_definition: string; selection: string;
@@ -64,7 +64,7 @@ function compare(n: number, daysCovered: number, daysInMonth: number, hist: Map<
 
 const SIDES = [
   { key: "MODIS" as const, title: "MODIS NRT (Terra + Aqua)", history: "MODIS Terra+Aqua archive", sensor: "MODIS" as const, first: 2003 },
-  { key: "NOAA-20" as const, title: "NOAA-20 VIIRS NRT", history: "Suomi-NPP VIIRS archive (a different satellite)", sensor: "VIIRS" as const, first: 2012 },
+  { key: "NOAA-20" as const, title: "NOAA-20 VIIRS NRT", history: "NOAA-20's own archive, same days", sensor: "VIIRS" as const, first: 2018 },
 ];
 
 /**
@@ -136,7 +136,7 @@ export function MonthToDateCard({ country, area, range }: {
       <ul className="mt-2 max-w-3xl list-disc pl-5 text-xs leading-relaxed text-[var(--text-secondary)]" data-testid="mtd-caveats">
         <li><strong className="font-medium text-[var(--text-primary)]">Not a harmonized anomaly.</strong> Raw counts compared platform by platform; the correction is not applied to near-real-time data.</li>
         <li><strong className="font-medium text-[var(--text-primary)]">No vegetation-type filter.</strong> Near-real-time files carry no fire type, so volcanoes, gas flares and industrial heat sources may be counted; the history excludes them.</li>
-        <li><strong className="font-medium text-[var(--text-primary)]">Different satellites.</strong> NOAA-20 is not the Suomi-NPP platform of the VIIRS history, and Terra and Aqua have drifted from their original overpass times since 2022.</li>
+        <li><strong className="font-medium text-[var(--text-primary)]">Same satellite where it can be.</strong> NOAA-20 is compared with its own standard archive (from 2018) over the same days of the month, with the same filters and the same outline. Terra and Aqua have drifted from their original overpass times since 2022, so the MODIS side mixes orbits.</li>
       </ul>
       {!area && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -151,16 +151,31 @@ export function MonthToDateCard({ country, area, range }: {
         {SIDES.map((sd) => {
           const years: number[] = [];
           for (let y = Math.max(sd.first, r0); y <= Math.min(2025, r1); y += 1) years.push(y);
+          const same = sd.key === "NOAA-20";
+          if (same && area) return (
+            <div key={sd.key} className="rounded-2xl border border-[var(--hairline)] p-4">
+              <p className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">{sd.title} · vs {sd.history}</p>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">NOAA-20&apos;s own history is kept per country only, so this side is not recorded for drawn areas.</p>
+            </div>);
+          const wb = same ? c?.["NOAA-20"]?.window_by_year : undefined;
           const now = area ? (areaNow && areaNow.complete ? (sd.key === "MODIS" ? areaNow.modis : areaNow.noaa) : null) : c?.[sd.key]?.month_to_date ?? null;
-          const r = now != null && h && years.length ? compare(now, meta.days_covered, meta.days_in_month, h[sd.sensor], years) : null;
+          const r = same
+            ? (now != null && wb && years.length ? compare(now, 1, 1, new Map(Object.entries(wb).map(([y, v]) => [Number(y), v])), years) : null)
+            : now != null && h && years.length ? compare(now, meta.days_covered, meta.days_in_month, h[sd.sensor], years) : null;
+          const win = `${mn} 1–${meta.days_covered}`;
           return (
           <div key={sd.key} className="rounded-2xl border border-[var(--hairline)] p-4">
             <p className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">{sd.title} · vs {sd.history}</p>
             {r ? (
               <>
                 <p className="tabular mt-2 text-2xl text-[var(--text-primary)]">{fmtInt(r.n)} <span className="text-sm text-[var(--text-secondary)]">detections so far</span></p>
+                {same ? (<>
+                <p className="tabular mt-1 text-sm text-[var(--text-secondary)]">{win} median {years[0]}–{years[years.length - 1]}: <span className="text-[var(--text-primary)]">{r.median == null ? "not recorded" : fmtInt(r.median)}</span> (same days, no extrapolation)</p>
+                <p className="tabular mt-1 text-sm text-[var(--text-secondary)]">Above {r.below} of {r.years} past {win} windows (percentile {r.percentile == null ? "not recorded" : fmtNum(r.percentile, 0)}).</p>
+                </>) : (<>
                 <p className="tabular mt-1 text-sm text-[var(--text-secondary)]">Pace for the full month ≈ <span className="text-[var(--text-primary)]">{fmtInt(r.pace)}</span> · {mn} median {years[0]}–{years[years.length - 1]}: <span className="text-[var(--text-primary)]">{r.median == null ? "not recorded" : fmtInt(r.median)}</span></p>
                 <p className="tabular mt-1 text-sm text-[var(--text-secondary)]">Pace is above {r.below} of {r.years} past {mn}s (percentile {r.percentile == null ? "not recorded" : fmtNum(r.percentile, 0)}).</p>
+                </>)}
               </>
             ) : <p className="mt-2 text-sm text-[var(--text-muted)]">{years.length ? "Not recorded for this selection." : `No ${sd.key === "MODIS" ? "MODIS" : "VIIRS"} history years inside the date range.`}</p>}
           </div>); })}

@@ -19,12 +19,15 @@ sources and volcanoes are NOT removed here (the history is type 0 only).
 History, from web/public/data/calendar_raw_global.parquet (FIRMS archive,
 country rows, the same calendar month):
   * MODIS rows (Terra + Aqua) 2003-2025 for the MODIS comparison;
-  * VIIRS rows (Suomi-NPP) 2012-2025 for the NOAA-20 comparison.
-pace = month-to-date count x days in month / days covered (a straight-line
-extrapolation). percentile = 100 x (years below pace + 0.5 x ties) / years.
+  * NOAA-20's own standard archive 2018-2025, days 1..D of the same month, from
+    web/public/data/noaa20_history.json (scripts/build_noaa20_history.py): same
+    platform, same filters, same outline, same days, so no extrapolation.
+MODIS: pace = month-to-date count x days in month / days covered (a straight-line
+extrapolation). percentile = 100 x (years below + 0.5 x ties) / years.
 
 Usage:
   FIRMS_MAP_KEY=... python3 scripts/build_month_to_date.py [--countries N] [--end YYYY-MM-DD]
+  python3 scripts/build_month_to_date.py --rescore   (no key: re-attach the NOAA-20 history only)
   --countries N : only the N fitted countries with the most filtered detections.
 """
 from __future__ import annotations
@@ -129,11 +132,49 @@ def keep(df: pl.DataFrame, source: str, d0: date, d1: date) -> pl.DataFrame:
     )
 
 
+def attach_noaa20(out: dict) -> None:
+    """Score each NOAA-20 count against NOAA-20's own archive over the same days."""
+    month = out["month"][5:7]
+    hist = json.loads((DATA / "noaa20_history.json").read_text()).get(month) if (DATA / "noaa20_history.json").exists() else None
+    ok = hist is not None and hist["window_days"] == out["days_covered"]
+    for c, row in out["countries"].items():
+        side = row.get("NOAA-20")
+        if not side:
+            continue
+        h = hist["countries"].get(c) if ok else None
+        if h is None:
+            row.pop("NOAA-20")
+            continue
+        vals = sorted(h["window"].values())
+        n, m = side["month_to_date"], len(vals)
+        below, ties = sum(v < n for v in vals), sum(v == n for v in vals)
+        row["NOAA-20"] = {
+            "month_to_date": n,
+            "pace_full_month": side.get("pace_full_month"),
+            "history_platform": "NOAA-20 VIIRS (standard archive), same days of the month",
+            "history_years": [min(map(int, h["window"])), max(map(int, h["window"]))],
+            "window_by_year": h["window"],
+            "history_median": (vals[m // 2] if m % 2 else (vals[m // 2 - 1] + vals[m // 2]) / 2) if m else None,
+            "history_max": vals[-1] if m else None,
+            "percentile_of_pace": round(100 * (below + 0.5 * ties) / m, 1) if m else None,
+            "years_below_pace": below,
+        }
+    out["sources"]["NOAA-20"] = "FIRMS VIIRS_NOAA20_NRT, against NOAA-20's own standard archive (2018-2025) over the same days of the month: same platform, same filters (no type filter on either side), same outline"
+    out["percentile_definition"] = "100 x (history years below + 0.5 x ties) / history years; MODIS compares the straight-line pace with full months, NOAA-20 compares the count with the same days in each year"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--countries", type=int, default=None, help="only the N fitted countries with the most filtered detections")
     ap.add_argument("--end", type=str, default=None, help="last complete UTC day (default: yesterday UTC)")
+    ap.add_argument("--rescore", action="store_true", help="re-attach the NOAA-20 history to the existing file; no key, no fetch")
     a = ap.parse_args()
+    if a.rescore:
+        out = json.loads(OUT.read_text())
+        attach_noaa20(out)
+        OUT.write_text(json.dumps(out, separators=(",", ":"), ensure_ascii=False))
+        print(f"rescored {OUT.relative_to(ROOT)}", file=sys.stderr)
+        return 0
     key = os.environ.get("FIRMS_MAP_KEY", "").strip()
     if not key:
         print("FIRMS_MAP_KEY is not set; nothing fetched, nothing written.", file=sys.stderr)
@@ -240,6 +281,7 @@ def main() -> int:
         "incomplete": sorted(incomplete),
         "countries": out_countries,
     }
+    attach_noaa20(out)
     OUT.write_text(json.dumps(out, separators=(",", ":"), ensure_ascii=False))
     print(f"wrote {OUT.relative_to(ROOT)}: {len(out_countries)} countries in {time.time() - t0:.0f}s", file=sys.stderr)
     return 0
