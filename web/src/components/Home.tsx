@@ -32,6 +32,15 @@ import { useAreaData } from "@/lib/useArea";
 import { useParquet } from "@/lib/useParquet";
 
 const FireGlobe = dynamic(() => import("@/components/FireGlobe"), { ssr: false });
+/** Still Earth shown until the interactive globe starts (same picture as the globe's own poster, without loading three.js). */
+function GlobeStill({ height }: { height: number }) {
+  const d = Math.round(height * 0.72);
+  return (
+    <div className="flex items-center justify-center" style={{ height }}>
+      <div aria-hidden className="rounded-full" style={{ width: d, maxWidth: "100%", aspectRatio: "1 / 1", background: "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.25), transparent 45%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,0.45) 74%), url(/globe/day-small.webp) 22% 50% / 200% 100% #1c3a5e", boxShadow: "0 0 0 1.5px var(--hairline), 0 0 40px 4px rgba(143,184,240,0.35)" }} />
+    </div>
+  );
+}
 
 /** Headline accuracy, computed from the fit: median over own-fit countries, and the single best country. */
 export function accuracySummary(p: Params | undefined) {
@@ -65,6 +74,20 @@ function useNear<T extends HTMLElement>(margin = "500px") {
     return () => io.disconnect();
   }, [near, margin]);
   return { ref, near };
+}
+
+/** True once the element has stayed in view for `ms`: a heavy visual starts when the reader stops at it, not while they scroll past. */
+function useDwell<T extends HTMLElement>(ms = 600) {
+  const ref = useRef<T | null>(null);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (on || !ref.current) return;
+    let t = 0;
+    const io = new IntersectionObserver(([e]) => { clearTimeout(t); if (e.isIntersecting) t = window.setTimeout(() => { setOn(true); io.disconnect(); }, ms); }, { threshold: 0.35 });
+    io.observe(ref.current);
+    return () => { clearTimeout(t); io.disconnect(); };
+  }, [on, ms]);
+  return { ref, on };
 }
 
 /** The home page's data, each file on its own: undefined while loading, null if it could not be loaded. */
@@ -419,8 +442,8 @@ const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateStrin
 
 function Now({ d }: { d: HomeData }) {
   const now = useToday();
-  const { ref, near } = useNear<HTMLElement>("300px");
-  const { data: live } = useParquet(() => (near ? getLive() : new Promise<Awaited<ReturnType<typeof getLive>>>(() => {})), near ? "home-live" : "home-live-wait");
+  const { ref: globeRef, on: spin } = useDwell<HTMLDivElement>();
+  const { data: live } = useParquet(() => (spin ? getLive() : new Promise<Awaited<ReturnType<typeof getLive>>>(() => {})), spin ? "home-live" : "home-live-wait");
   const w = d.sum?.windows["24h"];
   const feeds = w ? Object.entries(w.totals) : [];
   const live24 = feeds.length ? feeds.reduce((a, [, v]) => a + v, 0) : null;
@@ -429,7 +452,7 @@ function Now({ d }: { d: HomeData }) {
   const dates = w?.dates ?? [];
   const sats = d.tle?.satellites ?? [];
   return (
-    <section id="now" ref={ref} className="scroll-mt-24 py-[var(--sec-lg)]">
+    <section id="now" className="scroll-mt-24 py-[var(--sec-lg)]">
       <Reveal><SectionHead eyebrow="05 · Now" info="live" title={<>And this month, <span className="italic">so far.</span></>}
         lede="The live feeds are raw and come from different satellites than the long record. They are shown beside it, labelled, never mixed into it." /></Reveal>
       <Reveal><div className="mt-6 flex flex-wrap gap-2"><SourceChip name="FIRMS NRT" detail="NOAA-20 · NOAA-21 · MODIS" /><SourceChip name="FIRMS area API" detail="this month" /><SourceChip name="NASA EONET" detail="wildfire events" /><SourceChip name="CelesTrak" detail="TLEs" /></div></Reveal>
@@ -489,8 +512,8 @@ function Now({ d }: { d: HomeData }) {
               <p className="mt-3 max-w-[46ch] text-[15px] leading-relaxed text-[var(--text-secondary)]">Drag to spin. The globe also carries the satellites’ orbits and NASA EONET wildfire events, a separate, curated source.</p>
               <div className="mt-6"><Pill href="/globe" tone="ink">Open the live globe →</Pill></div>
             </div>
-            <div className="relative mx-auto w-full max-w-[520px] cursor-grab active:cursor-grabbing">
-              {near ? <FireGlobe live={live ?? null} tle={d.tle?.satellites ?? null} interactive allowZoom={false} showOrbits height={440} speed={60} maxPoints={5000} /> : <DotSkeleton h={440} className="!rounded-full" label="Loading the globe" />}
+            <div ref={globeRef} className="relative mx-auto w-full max-w-[520px] cursor-grab active:cursor-grabbing">
+              {spin ? <FireGlobe live={live ?? null} tle={d.tle?.satellites ?? null} interactive allowZoom={false} showOrbits height={440} speed={60} maxPoints={5000} /> : <GlobeStill height={440} />}
             </div>
           </div>
         </Tile>
