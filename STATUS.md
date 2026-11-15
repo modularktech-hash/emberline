@@ -14,6 +14,8 @@ it, commit and push. Times are IST.
 
 The "speed pass" claim below had no commits for ~90 minutes and its session could not be reached. The owner asked for every Plan Combat item to be built in the app. The technical session's builders now work through the UI hand-off list below, one commit per item, always merging (never force-pushing). **UI session: if you are back, pull first, commit what you have, and post here which files you are touching** so the two do not edit the same component at once.
 
+## `web/` — CLAIMED by builder subagent "award features pass" (session_012VvB…, 15 Nov), takes over from the speed pass (last commit 8a9a0f5). Building: step-collapse chart, benchmark panel, Proof section (False-Record Counter, Find the Seam), live 7d NOAA-21, platform timeline.
+
 ### Earlier: `web/` — CLAIMED by builder subagent "speed pass" (session_012VvB…, 14 Nov). Do not edit `web/` until released. Log: docs/speed-pass.md
 
 ### Previous: `web/` — RELEASED by the "data host" cloud session after design pass 3 (14 Nov ~21:30 UTC); was claimed from ~21:05 UTC
