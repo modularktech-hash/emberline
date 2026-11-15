@@ -31,9 +31,20 @@ const KB = (b: number) => `${fmtNum(b / 1024, 0)} KB`;
 const MB = (b: number) => `${fmtNum(b / 1e6, 1)} MB`;
 const M = (n: number) => `${fmtNum(n / 1e6, 1)} M`;
 
+/** The parts of bridge.json (scripts/build_bridge.py) this page reads. */
+interface Bridge { n_countries: number; n_pass: number; test_years: [number, number]; summary: { bridged: { median_of_country_median_ape_pct: number | null } } }
+
 interface Stage { key: string; short?: string; title: string; what: string; num: string; numLabel: string; sources: string[]; detail: string; inputs: string[]; outputs: string[]; scripts: string[]; sample?: { columns: string[]; rows: unknown[][] } | null; link?: [string, string] }
 
-function stages(p: Pipeline): Stage[] {
+function bridgeStage(b: Bridge): Stage {
+  const e = b.summary.bridged.median_of_country_median_ape_pct;
+  return { key: "bridge", title: "Bridge", what: "NOAA-20 → Suomi-NPP, so the current month can be harmonized", sources: ["FIRMS archive"],
+    num: `${fmtInt(b.n_pass)} / ${fmtInt(b.n_countries)}`, numLabel: `countries pass the ${b.test_years[0]}–${b.test_years[1]} held-out test`,
+    detail: `Per country, the published correction applied to NOAA-20 detections and scaled by one ratio fitted on 2018–2021, when both satellites flew. Held-out ${b.test_years[0]}–${b.test_years[1]}: median of the country median monthly misses ${e == null ? "not recorded" : `${fmtNum(e, 1)}%`}. Passing countries get a harmonized month to date; the rest stay raw.`,
+    inputs: ["viirs-jpss1 archive 2018-2023", "calendar_harmonized_countries.csv", "params_global.json"], outputs: ["bridge.json", "month_to_date.json"], scripts: ["scripts/fetch_noaa20_archive.sh", "scripts/build_bridge.py"], link: ["/method#bridge", "See the bridge test"] };
+}
+
+function stages(p: Pipeline, b?: Bridge | null): Stage[] {
   const cal = p.rebuild.calendars;
   const calRows = Object.values(cal).reduce((s, c) => s + (c.rows ?? 0), 0), calBytes = Object.values(cal).reduce((s, c) => s + c.bytes, 0);
   const f = p.samples.fit_canada;
@@ -66,6 +77,7 @@ function stages(p: Pipeline): Stage[] {
       num: KB(p.serve.canada_gzip_bytes), numLabel: `≈ compressed, first data for a country view (${KB(p.serve.canada_bytes)} uncompressed)`,
       detail: `${p.serve.note}. Files: ${p.serve.country_view_first_files.join(", ")}.`,
       inputs: ["web/public/data/"], outputs: ["manifest.json", "slices/"], scripts: ["scripts/build_manifest.py", "web/scripts/build-slices.mjs"] },
+    ...(b ? [bridgeStage(b)] : []),
     { key: "use", title: "Use", what: "Calendar, seasons, this month, downloads, code", sources: ["FIRMS NRT / API", "NASA GIBS", "NASA EONET", "TLEs", "Natural Earth"],
       num: "Explore", numLabel: "calendar, seasons, trends, compare, globe, data",
       detail: "The Explorer calendar, Seasons, Trends and Compare read the calendars; the live globe adds FIRMS near-real-time data, satellite orbits (TLEs) and NASA EONET events; the current-month card uses the FIRMS area API; Natural Earth outlines assign recent hotspots to countries; NASA GIBS imagery is an optional map layer.",
@@ -77,7 +89,7 @@ const fileHref = (f: string) => (/^[\w.-]+\.(json|parquet|csv)$/.test(f) ? `/dat
 /** One short label per stage (six words at most); the full wording is in the stage's sheet. */
 const SHORT: Record<string, string> = {
   archive: "NASA country-year files", filters: "detections kept after filters", match: "VIIRS detections matched to Aqua", learn: "own + borrowed fits",
-  test: "median held-out R²", rebuild: "in two calendar files", serve: "to open a country", use: "calendar, seasons, globe, downloads",
+  test: "median held-out R²", rebuild: "in two calendar files", serve: "to open a country", bridge: "pass the NOAA-20 bridge test", use: "calendar, seasons, globe, downloads",
 };
 const SOURCE_HREF: Record<string, string> = {
   "FIRMS archive": "https://firms.modaps.eosdis.nasa.gov/country/", "FIRMS NRT / API": "https://firms.modaps.eosdis.nasa.gov/api/", "NASA GIBS": "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
@@ -91,10 +103,11 @@ const SOURCE_HREF: Record<string, string> = {
  */
 export function DataJourney({ compact = false }: { compact?: boolean }) {
   const { data, error } = useParquet(() => loadJson<Pipeline>("pipeline.json"), "pipeline");
+  const { data: bridge } = useParquet(() => loadJson<Bridge>("bridge.json").catch(() => null), "bridge");
   const [open, setOpen] = useState<string | null>(null);
   if (error) return <p className="mt-6 text-sm text-[var(--text-secondary)]">Could not load pipeline.json: {error.message}</p>;
   if (!data) return <DotSkeleton h={compact ? 220 : 320} className="mt-6" label="Loading the data journey" />;
-  const st = stages(data);
+  const st = stages(data, bridge);
   const sel = st.find((s) => s.key === open);
   return (
     <section id={compact ? undefined : "journey"} className={compact ? "min-w-0" : "mt-8 min-w-0 scroll-mt-24"} data-testid={compact ? "journey-teaser" : "data-journey"}>
@@ -105,7 +118,7 @@ export function DataJourney({ compact = false }: { compact?: boolean }) {
         </div>
         {compact
           ? <Link href="/data#journey" className="glass-thin px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em]">Every step, with files and code →</Link>
-          : <p className="max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">Eight stages, each with its real number. Tap a stage for its files, its script and sample rows.</p>}
+          : <p className="max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">{st.length === 8 ? "Eight" : "Nine"} stages, each with its real number. Tap a stage for its files, its script and sample rows.</p>}
       </div>
       <ol className="mt-6 flex snap-x snap-mandatory flex-col gap-0 pb-3 lg:flex-row lg:items-stretch lg:overflow-x-auto lg:pt-10" aria-label="Pipeline stages">
         {st.map((s, i) => (

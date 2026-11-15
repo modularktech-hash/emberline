@@ -2,10 +2,10 @@
 
 import { fmtClock, fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { Eyebrow } from "@/components/Figure";
-import { getParams, getParamsFull } from "@/lib/queries";
+import { getParams, getParamsFull, loadJson } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
-import { Failed, Loading, PageHead, Reveal } from "@/components/ui";
+import { Failed, InfoDot, Loading, PageHead, Reveal } from "@/components/ui";
 import { useMemo, useState } from "react";
 import { median } from "@/lib/ember";
 import { fitTag, prettyName } from "@/lib/names";
@@ -37,6 +37,65 @@ type DriftCol = "name" | "fit" | "y0" | "y1" | "y2" | "y3";
 
 const FitBadge = ({ c }: { c: CountryFit }) =>
   c.fit_source === "pooled" ? <span title="Too few training matches for its own curve: uses the pooled curve of the own-fit countries" className="ml-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">pooled</span> : null;
+
+interface BridgeScore { n_months: number; median_ape_pct: number | null; p80_ape_pct: number | null; bias_pct: number | null; r2: number | null }
+interface BridgeSummary { median_of_country_median_ape_pct: number | null; median_bias_pct: number | null; median_r2: number | null; pooled_log10_r2: number | null; countries_median_ape_le_threshold: number }
+interface BridgeFile {
+  train_years: [number, number]; test_years: [number, number]; n_countries: number; n_pass: number; pass_rule: string; score_definition: string;
+  typical_error_definition: string; type_filter_note: string; input_filters: string; untested: string; fit_version: string;
+  summary: { bridged: BridgeSummary; unbridged: BridgeSummary }; current_month?: { month: string; n_countries_harmonized: number };
+  countries: Record<string, { ratio: number; test_bridged: BridgeScore; test_unbridged: BridgeScore; typical_error_pct: number | null; pass: boolean }>;
+}
+
+/** "Bridging to today": the NOAA-20 to Suomi-NPP bridge and its held-out test, read from bridge.json (scripts/build_bridge.py). */
+function BridgeSection() {
+  const { data: b } = useParquet(() => loadJson<BridgeFile>("bridge.json").catch(() => null), "bridge");
+  if (!b) return null;
+  const rows = Object.entries(b.countries).sort((x, y) => prettyName(x[0]).localeCompare(prettyName(y[0])));
+  const [t0, t1] = b.test_years;
+  const ape = (v: number | null) => (v == null ? "—" : `${fmtNum(v, 1)}%`);
+  const summ = (s: BridgeSummary) => `${ape(s.median_of_country_median_ape_pct)} median miss · bias ${s.median_bias_pct == null ? "not recorded" : fmtPct(s.median_bias_pct)} · R² ${fmtR2(s.median_r2)} · ${s.countries_median_ape_le_threshold} of ${b.n_countries} within 25%`;
+  return (
+    <Reveal><section id="bridge" className="card mt-6 min-w-0 scroll-mt-24 p-5 sm:p-6" data-testid="method-bridge">
+      <h2 className="display flex items-center gap-2.5 text-2xl">Bridging to today: NOAA-20 → Suomi-NPP <InfoDot k="bridge" align="start" /></h2>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
+        The record from 2012 is built from Suomi-NPP. The current month is only available from NOAA-20, the same VIIRS design on another satellite.
+        Per country, the published correction is applied to NOAA-20 detections and scaled by one ratio r = harmonized Suomi-NPP ÷ harmonized NOAA-20 over {b.train_years[0]}–{b.train_years[1]}.
+        It is then scored on {t0}–{t1}, which it never saw, against the harmonized Suomi-NPP months. Suomi-NPP has not drifted, so those years are a valid target.
+      </p>
+      <dl className="tabular mt-4 grid gap-3 sm:grid-cols-3">
+        <div><dt className="text-xs text-[var(--text-muted)]">Countries passing</dt><dd className="text-2xl text-[var(--text-primary)]">{b.n_pass} / {b.n_countries}</dd></div>
+        <div><dt className="text-xs text-[var(--text-muted)]">Bridged, held-out {t0}–{t1}</dt><dd className="text-sm text-[var(--text-primary)]">{summ(b.summary.bridged)}</dd></div>
+        <div><dt className="text-xs text-[var(--text-muted)]">Without the bridge (r = 1)</dt><dd className="text-sm text-[var(--text-primary)]">{summ(b.summary.unbridged)}</dd></div>
+      </dl>
+      <ScrollBox label="Bridge validation table">
+        <table className="tabular mt-4 w-full min-w-[640px] text-sm">
+          <thead><tr className="text-left text-xs text-[var(--text-muted)]">
+            <th className="py-2 pr-3 font-normal">Country</th><th className="px-3 font-normal">r</th><th className="px-3 font-normal">Median miss, no bridge</th><th className="px-3 font-normal">Median miss, bridged</th>
+            <th className="px-3 font-normal">Bias, bridged</th><th className="px-3 font-normal">R², bridged</th><th className="px-3 font-normal">Months</th><th className="px-3 font-normal">Typical error now</th>
+          </tr></thead>
+          <tbody>{rows.map(([n, c]) => (
+            <tr key={n} className="border-t border-[var(--hairline)]">
+              <td className="py-2 pr-3">{prettyName(n)}{!c.pass && <span className="ml-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">raw only</span>}</td>
+              <td className="px-3">{fmtNum(c.ratio, 3)}</td>
+              <td className="px-3">{ape(c.test_unbridged.median_ape_pct)}</td>
+              <td className="px-3">{ape(c.test_bridged.median_ape_pct)}</td>
+              <td className="px-3">{c.test_bridged.bias_pct == null ? "—" : fmtPct(c.test_bridged.bias_pct)}</td>
+              <td className="px-3">{fmtR2(c.test_bridged.r2)}</td>
+              <td className="px-3">{c.test_bridged.n_months}</td>
+              <td className="px-3">{c.typical_error_pct == null ? "—" : `±${fmtNum(c.typical_error_pct, 0)}%`}</td>
+            </tr>))}</tbody>
+        </table>
+      </ScrollBox>
+      <ul className="mt-3 max-w-3xl list-disc space-y-1 pl-5 text-xs leading-relaxed text-[var(--text-muted)]">
+        <li>Pass rule: {b.pass_rule}. Scores: {b.score_definition}.</li>
+        <li>Input: {b.input_filters}. {b.type_filter_note}</li>
+        <li>Typical error: {b.typical_error_definition}.</li>
+        <li>Not tested: {b.untested}. Fit {b.fit_version}.{b.current_month && <> Applied to {b.current_month.month}: {b.current_month.n_countries_harmonized} countries carry a harmonized month to date; every other country stays raw and uncorrected.</>}</li>
+      </ul>
+    </section></Reveal>
+  );
+}
 
 export function Method() {
   // The small fit file draws everything but the drift table, which waits for the full one (it alone reads the per-year drift fields).
@@ -273,6 +332,8 @@ export function Method() {
             <p className="mt-3 text-xs text-[var(--text-muted)]">Source: scripts/fit_harmonization.py, step 3. The logistic curve&apos;s intervals come from 50 bootstrap refits on up to 200,000 resampled training detections. Countries on the borrowed (pooled) curve have no coefficient interval: their curve is a detection-weighted average of the own-fit countries&apos; coefficients, which was not resampled, so its uncertainty is not estimated (not zero). Their held-out score intervals above are computed as for every other country.</p>
           </section></Reveal>
 
+          <BridgeSection />
+
           <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6">
             <h2 className="display text-2xl">The record is still shifting: orbital drift</h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
@@ -308,7 +369,7 @@ export function Method() {
                 <li>Fitted per country, standing in for region. No land-cover split yet. {names.length} countries harmonized: {summary.own} with their own fit, {summary.pooled} with a pooled fit (marked); {failed.length} shown raw (too few detections to fit).</li>
                 <li>Matching is by UTC day and ~3.5 km proximity, not exact pixel footprints; in dense fire areas a neighbouring fire can make a VIIRS detection count as seen (see the matching section).</li>
                 <li>Scores are per small cell and month, which is noisy where fires are few and small. {summary.below0} of the {names.length} fitted countries score below 0 on held-out R² (worse than guessing the average); sort the table above by R² to see them. Treat those countries&apos; corrected records with caution.</li>
-                <li>Daytime vegetation fires only; volcanoes, gas flares and offshore sources are excluded from the archive. The 2026 near-real-time data has no such type filter.</li>
+                <li>Daytime vegetation fires only; volcanoes, gas flares and offshore sources are excluded from the archive. The 2026 near-real-time data has no such type filter; the NOAA-20 bridge is fitted without it for that reason.</li>
                 <li>Claims are regional. We do not claim a corrected global total.</li>
               </ul>
             </div>

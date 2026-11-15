@@ -22,7 +22,8 @@ const DATASETS: Hit[] = [
   ["calendar_harmonized_global.parquet", "Harmonized monthly calendar, every fitted country and grid cell", "/data"],
   ["calendar_raw_global.parquet", "Raw monthly calendar", "/data"], ["params_global.json", "The fit: detection curves, κ and held-out scores", "/data"],
   ["countries.json", "One row per country: totals, 2012 step, held-out R²", "/data"], ["proof.json", "Step collapse, benchmark and blind tests", "/method#proof"],
-  ["season.json", "Season onset, peak and end per country and year", "/trends"], ["month_to_date.json", "This month so far, provisional and raw", "/seasons"],
+  ["season.json", "Season onset, peak and end per country and year", "/trends"], ["month_to_date.json", "This month so far, provisional; harmonized where the NOAA-20 bridge passed", "/seasons"],
+  ["bridge.json", "NOAA-20 to Suomi-NPP bridge and its held-out test", "/method#bridge"],
   ["manifest.json", "Every published file with hash, columns and units", "/data"], ["CITATION.cff", "How to cite Emberline", "https://github.com/modularktech-hash/emberline/blob/main/CITATION.cff"],
 ].map(([label, note, href]) => ({ kind: "Dataset", label, note, href }));
 

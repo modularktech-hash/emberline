@@ -12,6 +12,7 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { CopyLink } from "@/components/CopyLink";
 import { Eyebrow } from "@/components/Figure";
 import { Failed, InfoDot, PageHead, Tile } from "@/components/ui";
+import { HarmonizedVerdict, monthName, useMonthToDate } from "@/components/MonthToDate";
 import { validateBoxInput } from "@/lib/aoi";
 import { NSW_BOX } from "@/lib/reportLink";
 import { buildReport, pairBarsSvg, type BarPoint } from "@/lib/brief";
@@ -61,6 +62,8 @@ export function ReportPage() {
   }, () => ({ ...areaToQuery(area), y: ym?.y, m: ym?.m, mode: "harmonized", fit: data?.params.fit_version }), [areaKey(area), ym?.y, ym?.m, data?.params.fit_version]);
 
   const proof = useParquet(() => getProof(), "proof");
+  const mtd = useMonthToDate().data;
+  const nowHarm = area.kind === "country" && mtd ? mtd.countries[area.name]?.harmonized : undefined;
   const harm = data?.harmonized, raw = data?.raw;
   const hasHarm = !!harm && harm.keys.length > 0;
   const unusual = useMemo(() => (hasHarm ? mostUnusualMonth(harm!.rows, [FIRST, LAST]) : null), [hasHarm, harm]);
@@ -94,7 +97,7 @@ export function ReportPage() {
   if (data?.cells && data.cells.uncorrected.detections > 0) caveats.push(`${fmt(data.cells.uncorrected.detections)} raw detections here are in countries without a fit (${data.cells.uncorrected.countries.map(prettyName).join(", ")}) and are left out of the harmonized series.`);
   if (sel && sel.y >= 2022) caveats.push(`${sel.y} is in the orbital-drift era (2022 onward): Aqua's overpass time moved, and the harmonized value extends the 2012–2018 fit outside its frozen-orbit years.`);
   if (sel && sel.y < 2012) caveats.push(`${sel.y} is before VIIRS: the harmonized value is the observed Aqua MODIS count, not an estimate.`);
-  if (asked2026) caveats.push("2026 is not in the harmonized record (it ends December 2025). 2026 months exist only as provisional raw counts in the Explorer's “This month so far” card.");
+  if (asked2026) caveats.push(`2026 is not in the harmonized record (it ends December 2025). The current month exists only as a provisional month to date in the Explorer's “This month so far” card: harmonized through the NOAA-20 bridge where it passed validation${nowHarm ? " (shown below for this country)" : ""}, raw elsewhere.`);
   if (linkFit && data && linkFit !== data.params.fit_version) caveats.push(`This link was made with fit ${linkFit}; the page now shows fit ${data.params.fit_version}, so numbers may differ.`);
   if (!caveats.length) caveats.push("No selection-specific caveat applies beyond the general limits below.");
 
@@ -203,6 +206,13 @@ export function ReportPage() {
               ))}
             </dl>
           </Tile>
+
+          {nowHarm && mtd && (
+            <div className="mt-6" data-testid="report-now">
+              <Eyebrow info={false}>This month so far · {monthName(mtd.month)} {mtd.month.slice(0, 4)}, {mtd.window_utc[0]} to {mtd.window_utc[1]}</Eyebrow>
+              <div className="mt-3"><HarmonizedVerdict h={nowHarm} monthLabel={monthName(mtd.month)} /></div>
+            </div>
+          )}
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <Tile className="min-w-0 p-5">
