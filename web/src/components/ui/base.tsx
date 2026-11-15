@@ -80,13 +80,13 @@ export function PageHead({ eyebrow, title, italic, lede, compact = false, info }
   return (
     <header className={compact ? "pb-8 pt-8 sm:pb-10 sm:pt-14" : "pb-12 pt-20 sm:pb-16 sm:pt-28"}>
       <Reveal><Eyebrow info={info}>{eyebrow}</Eyebrow></Reveal>
-      <Reveal delay={0.06}>
+      <Reveal delay={0.03}>
         <h1 className={`display ${compact ? "t-tool" : "t-d1"} mt-3 max-w-4xl`}>
           {title}{italic && <> <span className="italic">{italic}</span></>}
         </h1>
       </Reveal>
-      <Reveal delay={0.12}><p className={`${compact ? "mt-3 text-base" : "mt-6 text-lg"} max-w-2xl leading-relaxed text-[var(--text-primary)]/80`}>{lede}</p></Reveal>
-      {!compact && <Reveal delay={0.18}><DotRule className="mt-10" /></Reveal>}
+      <Reveal delay={0.06}><p className={`${compact ? "mt-3 text-base" : "mt-6 text-lg"} max-w-2xl leading-relaxed text-[var(--text-primary)]/80`}>{lede}</p></Reveal>
+      {!compact && <Reveal delay={0.09}><DotRule className="mt-10" /></Reveal>}
     </header>
   );
 }

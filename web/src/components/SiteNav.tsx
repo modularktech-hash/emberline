@@ -93,7 +93,7 @@ export function SiteNav() {
           {(() => {
             // Contextual call to action: never a link to the page you are on.
             const cta = pathname === "/explorer" ? { href: "/method", label: "See the proof" } : { href: "/explorer", label: "Your area" };
-            return <Link href={cta.href} className="pill-dark hidden px-4 py-2 font-mono text-[11.5px] uppercase tracking-[0.14em] sm:inline-block">{cta.label}</Link>;
+            return <Link href={cta.href} className="pill-red hidden px-4 py-2 font-mono text-[11.5px] uppercase tracking-[0.14em] sm:inline-block">{cta.label}</Link>;
           })()}
           <button ref={toggle} type="button" className="glass-thin flex h-10 w-10 items-center justify-center lg:hidden" aria-label="Menu" aria-expanded={mobile} onClick={() => setMobile(!mobile)}>
             <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden><path d={mobile ? "M2 1l12 10M14 1 2 11" : "M1 1h14M1 6h14M1 11h14"} stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>

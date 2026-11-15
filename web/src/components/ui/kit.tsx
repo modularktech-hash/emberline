@@ -20,7 +20,7 @@
  * ChartFrame    title, "i", legend, source line and actions around a chart.
  */
 import Link from "next/link";
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import type { InfoKey } from "@/content/info";
 import { InfoDot } from "./info-dot";
 export { InfoDot, Popover, Tooltip } from "./info-dot";
