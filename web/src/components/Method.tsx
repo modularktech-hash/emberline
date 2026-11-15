@@ -41,7 +41,7 @@ const FitBadge = ({ c }: { c: CountryFit }) =>
 interface BridgeScore { n_months: number; median_ape_pct: number | null; p80_ape_pct: number | null; bias_pct: number | null; r2: number | null }
 interface BridgeSummary { median_of_country_median_ape_pct: number | null; median_bias_pct: number | null; median_r2: number | null; pooled_log10_r2: number | null; countries_median_ape_le_threshold: number }
 interface BridgeFile {
-  train_years: [number, number]; test_years: [number, number]; n_countries: number; n_pass: number; pass_rule: string; score_definition: string;
+  train_years: [number, number]; train_start_note?: string; test_years: [number, number]; n_countries: number; n_pass: number; pass_rule: string; score_definition: string;
   typical_error_definition: string; type_filter_note: string; input_filters: string; untested: string; fit_version: string;
   summary: { bridged: BridgeSummary; unbridged: BridgeSummary }; current_month?: { month: string; n_countries_harmonized: number };
   countries: Record<string, { ratio: number; test_bridged: BridgeScore; test_unbridged: BridgeScore; typical_error_pct: number | null; pass: boolean }>;
@@ -88,7 +88,7 @@ function BridgeSection() {
         </table>
       </ScrollBox>
       <ul className="mt-3 max-w-3xl list-disc space-y-1 pl-5 text-xs leading-relaxed text-[var(--text-muted)]">
-        <li>Pass rule: {b.pass_rule}. Scores: {b.score_definition}.</li>
+        <li>Pass rule: {b.pass_rule}. Scores: {b.score_definition}.{b.train_start_note && <> Training: {b.train_start_note}.</>}</li>
         <li>Input: {b.input_filters}. {b.type_filter_note}</li>
         <li>Typical error: {b.typical_error_definition}.</li>
         <li>Not tested: {b.untested}. Fit {b.fit_version}.{b.current_month && <> Applied to {b.current_month.month}: {b.current_month.n_countries_harmonized} countries carry a harmonized month to date; every other country stays raw and uncorrected.</>}</li>

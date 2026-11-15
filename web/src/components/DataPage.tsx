@@ -49,6 +49,8 @@ const FILES = [
   ["calendar_raw.parquet", "The first four countries: raw fallback copy"],
   ["params.json", "The first four countries' fit (same numbers as in params_global.json)"],
   ["cell_day.parquet", "Per H3 res-5 cell × UTC day × satellite: counts, FRP, pixel area, local solar time (the first four countries only)"],
+  ["bridge.json", "NOAA-20 to Suomi-NPP bridge per country (source: NASA FIRMS NOAA-20 VIIRS 375 m archive, viirs-jpss1, 2018–2023): training ratio, held-out 2022–2023 misses with and without the bridge, pass flag, typical error"],
+  ["month_to_date.json", "This month so far per country: raw for every country, harmonized through the bridge where it passed"],
   ["live.json", "Last 24 h and 7 days of fires worldwide, 0.5° cells"],
   ["tle.json", "Orbital elements of the five fire satellites"],
 ];

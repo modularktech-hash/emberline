@@ -38,7 +38,7 @@ interface Stage { key: string; short?: string; title: string; what: string; num:
 
 function bridgeStage(b: Bridge): Stage {
   const e = b.summary.bridged.median_of_country_median_ape_pct;
-  return { key: "bridge", title: "Bridge", what: "NOAA-20 → Suomi-NPP, so the current month can be harmonized", sources: ["FIRMS archive"],
+  return { key: "bridge", title: "Bridge", what: "NOAA-20 → Suomi-NPP, so the current month can be harmonized", sources: ["NOAA-20 VIIRS archive"],
     num: `${fmtInt(b.n_pass)} / ${fmtInt(b.n_countries)}`, numLabel: `countries pass the ${b.test_years[0]}–${b.test_years[1]} held-out test`,
     detail: `Per country, the published correction applied to NOAA-20 detections and scaled by one ratio fitted on 2018–2021, when both satellites flew. Held-out ${b.test_years[0]}–${b.test_years[1]}: median of the country median monthly misses ${e == null ? "not recorded" : `${fmtNum(e, 1)}%`}. Passing countries get a harmonized month to date; the rest stay raw.`,
     inputs: ["viirs-jpss1 archive 2018-2023", "calendar_harmonized_countries.csv", "params_global.json"], outputs: ["bridge.json", "month_to_date.json"], scripts: ["scripts/fetch_noaa20_archive.sh", "scripts/build_bridge.py"], link: ["/method#bridge", "See the bridge test"] };
@@ -93,7 +93,7 @@ const SHORT: Record<string, string> = {
 };
 const SOURCE_HREF: Record<string, string> = {
   "FIRMS archive": "https://firms.modaps.eosdis.nasa.gov/country/", "FIRMS NRT / API": "https://firms.modaps.eosdis.nasa.gov/api/", "NASA GIBS": "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
-  "NASA EONET": "https://eonet.gsfc.nasa.gov/", TLEs: "https://celestrak.org/", "Natural Earth": "https://www.naturalearthdata.com/",
+  "NASA EONET": "https://eonet.gsfc.nasa.gov/", "NOAA-20 VIIRS archive": "https://firms.modaps.eosdis.nasa.gov/country/", TLEs: "https://celestrak.org/", "Natural Earth": "https://www.naturalearthdata.com/",
 };
 
 /**

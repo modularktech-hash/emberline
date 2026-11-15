@@ -126,15 +126,16 @@ def score(obs: np.ndarray, pred: np.ndarray) -> dict:
     }
 
 
-def fit_variant(m: pl.DataFrame, target: pl.DataFrame) -> dict | None:
+def fit_variant(m: pl.DataFrame, target: pl.DataFrame, start: tuple[int, int]) -> dict | None:
     j = target.join(m, on=["year", "month"], how="left").with_columns(pl.col("h_n20").fill_null(0.0))
-    tr = j.filter(pl.col("year").is_between(*TRAIN))
+    # Months before the NOAA-20 archive begins are missing data, not zero fire.
+    tr = j.filter(pl.col("year").is_between(*TRAIN) & ((pl.col("year") * 100 + pl.col("month")) >= start[0] * 100 + start[1]))
     te = j.filter(pl.col("year").is_between(*TEST))
     if tr["h_n20"].sum() <= 0 or tr["target"].sum() <= 0:
         return None
     ratio = float(tr["target"].sum() / tr["h_n20"].sum())
     o, h = te["target"].to_numpy(), te["h_n20"].to_numpy()
-    return {"ratio": round(ratio, 5), "train_target_total": round(float(tr["target"].sum()), 1),
+    return {"ratio": round(ratio, 5), "train_target_total": round(float(tr["target"].sum()), 1), "train_months": tr.height,
             "test_bridged": score(o, ratio * h), "test_unbridged": score(o, h),
             "_pairs": (o, h, ratio)}
 
@@ -206,6 +207,11 @@ def main() -> int:
              and all((N20 / f"viirs-jpss1_{y}_{c}.csv.gz").exists() for y in range(TRAIN[0], TEST[1] + 1))]
     print(f"{len(ready)} countries with a complete NOAA-20 archive {TRAIN[0]}-{TEST[1]}", file=sys.stderr)
 
+    # First month of the NOAA-20 archive, from the files themselves (its standard processing starts in 2018).
+    first = min(pl.read_csv(f, columns=["acq_date"])["acq_date"].min() for c in ready for f in [N20 / f"viirs-jpss1_{TRAIN[0]}_{c}.csv.gz"]
+                if pl.read_csv(f, columns=["acq_date"]).height)
+    start = (int(first[:4]), int(first[5:7]))
+    print(f"NOAA-20 archive starts {first}; training months from {start[0]}-{start[1]:02d}", file=sys.stderr)
     countries, pairs = {}, {"bridged": [], "unbridged": []}
     for c in ready:
         p = params["countries"][c]
@@ -218,8 +224,8 @@ def main() -> int:
         target = months.join(cal.filter(pl.col("country") == c).select(pl.col("year").cast(pl.Int32), pl.col("month").cast(pl.Int32),
                                                                        pl.col("n_harmonized").alias("target")), on=["year", "month"], how="left").with_columns(pl.col("target").fill_null(0.0))
         m = monthly_n20(c, g, lg["b0"], lg["b1"], kappa)
-        a = fit_variant(m["nrt_like"], target)
-        b = fit_variant(m["archive_like"], target)
+        a = fit_variant(m["nrt_like"], target, start)
+        b = fit_variant(m["archive_like"], target, start)
         if a is None:
             continue
         o, h, ratio = a.pop("_pairs")
@@ -231,7 +237,7 @@ def main() -> int:
         ok = tb["median_ape_pct"] is not None and tb["median_ape_pct"] <= PASS_MEDIAN_APE and tb["n_months"] >= MIN_TEST_MONTHS
         fit_err = held.get(c, {}).get("country_month", {}).get("model", {}).get("median_ape_pct")
         typical = math.hypot(tb["median_ape_pct"], fit_err) if ok and fit_err is not None else None
-        countries[c] = {"ratio": a["ratio"], "train_target_total": a["train_target_total"],
+        countries[c] = {"ratio": a["ratio"], "train_target_total": a["train_target_total"], "train_months": a["train_months"],
                         "test_bridged": tb, "test_unbridged": a["test_unbridged"],
                         "archive_like": ({"ratio": b["ratio"], "test_bridged": b["test_bridged"]} if b else None),
                         "fit_heldout_median_ape_pct": fit_err,
@@ -250,7 +256,8 @@ def main() -> int:
         "method": "per country: harmonized NOAA-20 (kappa x sum P(FRP), published logistic and kappa unchanged) x r, r = sum of harmonized Suomi-NPP / sum of harmonized NOAA-20 over the training months",
         "input_filters": "NOAA-20: daytime, confidence nominal or high, FRP > 0, all fire types, inside the Natural Earth 110 m outline (as the near-real-time month); target: the published harmonized Suomi-NPP series (vegetation fires, FIRMS country files)",
         "type_filter_note": "Near-real-time files carry no fire type, so the bridge is fitted without the type filter; r absorbs the average non-vegetation share. The type-0 variant (archive_like) is scored for reference only.",
-        "train_years": list(TRAIN), "test_years": list(TEST),
+        "train_years": list(TRAIN), "train_start_month": f"{start[0]}-{start[1]:02d}", "test_years": list(TEST),
+        "train_start_note": f"the NOAA-20 archive begins {first}; earlier training months are missing data and are left out",
         "score_definition": f"held-out months with target >= {MIN_TARGET:g} Aqua-equivalent detections; ape = 100 x |pred - target| / target; bias = 100 x (sum pred - sum target) / sum target; r2 on monthly values",
         "pass_rule": f"held-out median monthly miss <= {PASS_MEDIAN_APE:g}% over >= {MIN_TEST_MONTHS} months",
         "typical_error_definition": "sqrt(bridge held-out median miss^2 + published fit held-out country-month median miss^2) (quadrature, treated as independent)",

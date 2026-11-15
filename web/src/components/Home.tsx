@@ -19,6 +19,7 @@ import { EASE } from "@/lib/motion";
 import { DriftClocks } from "@/components/DriftClocks";
 import { Eyebrow } from "@/components/Figure";
 import { MonthUnusualPanel } from "@/components/MonthToDate";
+import { TwoJoins } from "@/components/TwoJoins";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { PaperCutout } from "@/components/PaperCutout";
 import { HeadlineTable, StepCollapse } from "@/components/Proof";
@@ -688,6 +689,7 @@ export function Home() {
   return (
     <div>
       <Hero d={d} />
+      <TwoJoins />
       <div id="now" className="scroll-mt-24"><MonthUnusualPanel /></div>
       {d.error && <div className="mx-auto my-8 max-w-3xl"><Failed error={d.error} retry={d.retry} what="the summary figures" /></div>}
 

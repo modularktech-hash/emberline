@@ -49,6 +49,10 @@ export function useMonthToDate() {
 
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 export const monthName = (m: string) => MONTH[Number(m.slice(5, 7)) - 1] ?? m;
+/** Shown wherever a current month is on the harmonized scale (its country passed the bridge test). */
+export function BridgedBadge() {
+  return <span className="rounded-full border border-[var(--ember)] px-2.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--ember)]" data-testid="bridged-badge">NOAA-20 · bridged &amp; validated</span>;
+}
 const BADGE = "rounded-full border border-[var(--red)] px-2.5 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--red)]";
 
 interface CellsFile {
@@ -76,7 +80,8 @@ export function HarmonizedVerdict({ h, monthLabel }: { h: HarmonizedMtd; monthLa
   const [y0, y1] = h.history_years;
   return (
     <div className="rounded-2xl border border-[var(--hairline)] p-4" data-testid="mtd-harmonized">
-      <p className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+      <BridgedBadge />
+      <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
         Harmonized · Aqua-MODIS-equivalent · vs {monthLabel} {y0}–{y1} <InfoDot k="bridge" align="start" />
       </p>
       <p className="tabular mt-2 text-2xl text-[var(--text-primary)]">{fmtInt(h.pace_full_month)} <span className="text-sm text-[var(--text-secondary)]">pace for the full month (range {fmtInt(h.pace_range[0])}–{fmtInt(h.pace_range[1])}, typical error ±{fmtNum(h.typical_error_pct, 0)}%)</span></p>
@@ -235,7 +240,7 @@ export function MonthUnusualPanel() {
       </p>
       {harm.length > 0 && (
         <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[var(--text-secondary)]" data-testid="month-unusual-harmonized">
-          On the harmonized scale, <span className="tabular text-[var(--text-primary)]">{harm.length}</span> countries pass the NOAA-20 bridge test <InfoDot k="bridge" align="start" />: <span className="tabular text-[var(--ember)]">{hAbove}</span> are on pace above their {mn} median {harm[0].history_years.join("–")} beyond the typical error, <span className="tabular text-[var(--ember)]">{hBelow}</span> below it, and the rest are within it.
+          <BridgedBadge /> On the harmonized scale, <span className="tabular text-[var(--text-primary)]">{harm.length}</span> countries pass the NOAA-20 bridge test <InfoDot k="bridge" align="start" />: <span className="tabular text-[var(--ember)]">{hAbove}</span> are on pace above their {mn} median {harm[0].history_years.join("–")} beyond the typical error, <span className="tabular text-[var(--ember)]">{hBelow}</span> below it, and the rest are within it.
         </p>
       )}
       <p className="mt-2 text-sm text-[var(--text-muted)]">
