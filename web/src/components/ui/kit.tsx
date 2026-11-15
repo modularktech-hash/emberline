@@ -218,7 +218,7 @@ export function SourceChip({ name, detail, href }: { name: string; detail?: stri
     <>
       <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--text-primary)]" />
       <span className="font-bold">{name}</span>
-      {detail && <span className="opacity-60">{detail}</span>}
+      {detail && <span>{detail}</span>}
     </>
   );
   const cls = "inline-flex items-center gap-2 rounded-full border-[length:var(--stroke)] border-[var(--hairline)] bg-[var(--surface)] px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--text-secondary)]";

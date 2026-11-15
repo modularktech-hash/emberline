@@ -419,7 +419,7 @@ export function Explorer() {
       <section id="area" className="mt-10 grid scroll-mt-24 gap-6 lg:grid-cols-[1fr_20rem]">
         <div ref={mapSlot}>
           {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} ring={area.kind === "polygon" ? area.ring : null} cells={area.kind !== "country" ? data?.raw.keys : undefined} onSelect={selectBox} onPolygon={selectPolygon} className="h-[340px]" />
-            : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" aria-label="Map loading" />}
+            : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" role="status" aria-label="Map loading" />}
         </div>
         <div className="card p-5">
           <Eyebrow>Choose your own area</Eyebrow>
