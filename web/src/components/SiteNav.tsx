@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/Logo";
 import { SearchButton } from "@/components/Search";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { NAV } from "@/lib/nav";
 
 /**
@@ -89,7 +88,6 @@ export function SiteNav() {
 
         <div className="flex items-center gap-1.5">
           <SearchButton />
-          <ThemeToggle />
           {(() => {
             // Contextual call to action: never a link to the page you are on.
             const cta = pathname === "/explorer" ? { href: "/method", label: "See the proof" } : { href: "/explorer", label: "Your area" };
