@@ -53,7 +53,7 @@ const FIRST = 2003; // Aqua's first full year; the harmonized unit is Aqua-equiv
 
 export function Explorer() {
   const [area, setArea] = useState<Area>({ kind: "country", name: "Canada" });
-  const [mode, setMode] = useState<Series>("raw");
+  const [mode, setMode] = useState<Series>("harmonized");
   const [from, setFrom] = useState(FIRST);
   const [to, setTo] = useState(2025);
   // R8: the range runs from a start month to an end month (inclusive), not only whole years.
@@ -76,7 +76,7 @@ export function Explorer() {
     const sm = /^(\d{4})-(\d{1,2})$/.exec(q.get("sel") ?? "");
     setSelCell(sm && Number(sm[1]) >= FIRST && Number(sm[1]) <= 2025 && Number(sm[2]) >= 1 && Number(sm[2]) <= 12 ? { year: Number(sm[1]), month: Number(sm[2]) } : null);
     const m = q.get("mode");
-    setMode(m === "harmonized" ? "harmonized" : "raw");
+    setMode(m === "raw" ? "raw" : "harmonized");
     const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
     const fm = intParam(q, "fm", 1, 12) ?? 1, tm = intParam(q, "tm", 1, 12) ?? 12;
     if (f * 12 + fm <= t * 12 + tm) { setFrom(f); setTo(t); setFromM(fm); setToM(tm); } else { setFrom(FIRST); setTo(2025); setFromM(1); setToM(12); }
@@ -296,7 +296,7 @@ export function Explorer() {
             </label>
           </div>
           <div className="glass-thin flex p-1" role="group" aria-label="Series">
-            {(["raw", "harmonized"] as const).map((m) => (
+            {(["harmonized", "raw"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
                 className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {m === "raw" ? "Raw (as recorded)" : "Harmonized (corrected)"}
