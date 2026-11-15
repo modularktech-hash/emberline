@@ -50,7 +50,7 @@ observation, not assumed.
 
 ## 2. The core claim
 
-> **Pre-event design, partly superseded.** Sections 2 and 3 below are the plan
+> **Initial design, partly superseded.** Sections 2 and 3 below are the plan
 > written before the event. The published fit (`v1-20261114T1240`) uses a
 > per-country logistic co-detection model instead of land-cover FRP censoring;
 > section 2a describes exactly what the code does.

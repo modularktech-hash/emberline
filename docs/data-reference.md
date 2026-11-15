@@ -205,7 +205,7 @@ The archive ends at 2025. NRT serves only **24h and 7d** windows. So **nothing
 keyless covers Jan–early Nov 2026.** R5 asks for "the current month against the
 historical median", and that span is unreachable without a MAP_KEY.
 
-Two ways out, decided in [`gameplan.md`](gameplan.md):
+Two ways out:
 - **Reframe (recommended, no key):** compare the **last 7 days** against the
   climatology for those same days of year. Defensible, and arguably closer to
   what an emergency responder actually wants.

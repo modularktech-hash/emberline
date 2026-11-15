@@ -33,7 +33,7 @@ const SOURCES: Array<[string, string, Array<[string, string]>]> = [
   ["Basemap", "OpenFreeMap / OpenMapTiles, © OpenStreetMap contributors", [["OpenFreeMap", "https://openfreemap.org/"], ["OpenStreetMap", "https://www.openstreetmap.org/copyright"]]],
 ];
 
-/** Same wording as README.md and docs/submission.md (plan-combat E19, facts confirmed by the owner). */
+/** Same wording as README.md. */
 const AI_DISCLOSURE =
   "Shishir Bhat and Ridhan Teli have worked on this problem for about a year. Every scientific choice — the method, what to fit, the validation design and how to interpret the results — was made by the team. We used Claude, by Anthropic, through Claude Code to build it under our direction: during the event it wrote the code, ran the data pipeline and the fit we specified, tested the results and drafted documentation; before the event it also assisted with literature research and planning. Before the event we prepared planning and research documents, verified data schemas, the FIRMS ingest package and download scripts, and an empty app scaffold; these were imported into this repository in its first commit at the start of the event. The harmonization, the fit, the validation and the web app were built during the event, 14–15 Nov, as the git history shows. No AI-generated images, video or audio are used.";
 

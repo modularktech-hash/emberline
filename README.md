@@ -81,7 +81,7 @@ cd packages/firms-ingest && pip install -e ".[dev]" && pytest
 
 Rebuilding the data (no API key needed): `scripts/stage_global.sh` downloads the FIRMS
 country archive, `scripts/run_global.py` builds per-country detection tables and calendars,
-`scripts/fit_harmonization.py` fits (see `STATUS.md` for the exact environment variables),
+`scripts/fit_harmonization.py` fits (`EMBERLINE_DATA=data/global_public EMBERLINE_PARAMS=params_global.json EMBERLINE_CAL=calendar_harmonized_global.parquet`),
 `scripts/build_insights.py` builds `countries.json`, `season.json` and `drift.json`.
 
 Read path: static Parquet over HTTP range requests (hyparquet). No database, no API server.

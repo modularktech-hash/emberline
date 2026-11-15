@@ -32,7 +32,7 @@ FIRST_YEAR="${FIRST_YEAR:-2001}"
 LAST_YEAR="${LAST_YEAR:-2025}"
 JOBS="${JOBS:-3}"
 
-# Defaults chosen for the demo. Rationale in docs/gameplan.md:
+# Defaults chosen for the demo:
 #   Chile     - characterised already; real volcano detections for the type filter
 #   Portugal  - narrow longitude, so the cleanest overpass-drift demonstration
 #   Australia - large counts, tests performance at scale

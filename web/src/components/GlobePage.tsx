@@ -24,7 +24,7 @@ import { SAT_COLORS } from "@/lib/sats";
 /**
  * Stale-snapshot threshold (E37): the page describes "the last 24 hours before the snapshot".
  * Once the snapshot is older than 24 h, even the 24 h window no longer overlaps the present day,
- * so the page says the snapshot is stale and gives its age. Documented in plan combat.md E37.
+ * so the page says the snapshot is stale and gives its age. 
  */
 export const STALE_AFTER_HOURS = 24;
 

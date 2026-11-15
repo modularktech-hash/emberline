@@ -1,6 +1,6 @@
 # Handoff: where to pick up
 
-Written for someone — a teammate or a fresh Claude session — opening this
+Written for someone — a teammate — opening this
 repository with no prior context. Read this first, then the three documents it
 points at. Last updated 2026-10-29.
 
@@ -33,9 +33,6 @@ in `docs/priorities.md` instead.
 
 | Document | What it gives you |
 |---|---|
-| [`docs/gameplan-2person.md`](gameplan-2person.md) | **Our actual event plan:** two people, four AI budgets, who does what when |
-| [`docs/ai-briefs.md`](ai-briefs.md) | Paste-ready brief for each AI session |
-| [`docs/gameplan.md`](gameplan.md) | **The event schedule.** Hour by hour, roles, the 3-minute demo script, and a table of traps already paid for |
 | [`docs/research-findings.md`](research-findings.md) | **Read §1.** The orbital-drift finding that breaks our original premise, the diurnal-cycle correction that fixes it, the real data-access picture, and the competitive field |
 | [`docs/challenge-statement.md`](challenge-statement.md) | The official ask, R1–R12 as checkable requirements, and the five things it changed about our plan |
 | [`docs/priorities.md`](priorities.md) | Tiered build order, what we deliberately won't build, degradation order, open decisions |

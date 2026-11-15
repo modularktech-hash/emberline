@@ -45,7 +45,7 @@ No page exposed a retry button in any case, so "preserved inputs after retry" co
 
 ## Verdict
 
-E48 not passed. Defects handed to the UI session in `STATUS.md`.
+E48 not passed. Defects fixed in the web app.
 
 ## Re-run after the E16 fix (14 Nov, local build)
 

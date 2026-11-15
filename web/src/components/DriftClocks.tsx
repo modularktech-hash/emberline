@@ -13,7 +13,7 @@ const PLATS = [
   { name: "Aqua", sensor: "MODIS", nominal: "13:30" },
   { name: "Suomi-NPP", sensor: "VIIRS", nominal: "13:30" },
 ];
-const FROZEN: [number, number] = [2012, 2021]; // the frozen-orbit era the harmonization is fitted on (CLAUDE.md)
+const FROZEN: [number, number] = [2012, 2021]; // the frozen-orbit era the harmonization is fitted on
 const FIRST = 2012;
 
 /** Angle of a 24-hour dial with noon at the top. */
