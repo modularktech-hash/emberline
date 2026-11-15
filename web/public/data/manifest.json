@@ -17,6 +17,7 @@
     "dataset.json": "19cb0edfbddcd53d0876b31b224c765ba57195d6f7784ea2a29266e63fd503ea",
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
     "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
+    "month_to_date.json": "a432b75781a9f6ed05af608594907a137d94d416aa147868a1cba5aebb72c5de",
     "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
     "proof.json": "57a9a6d55b9d15b6853c22eafdfcd3579cfbb10f374bfe7fac2e9ab72295717f",
     "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
@@ -639,6 +640,36 @@
     "hottest_cells_rank_by"
    ],
    "fetched_utc": "2026-11-15T02:52Z",
+   "fit_version": null
+  },
+  {
+   "name": "month_to_date.json",
+   "dataset": "world",
+   "purpose": "Provisional, raw month-to-date counts per country against the raw history of the same calendar month; not harmonized",
+   "source": "NASA FIRMS near-real-time area API (MODIS_NRT, VIIRS_NOAA20_NRT) and calendar_raw_global.parquet (scripts/build_month_to_date.py)",
+   "bytes": 19393,
+   "sha256": "a432b75781a9f6ed05af608594907a137d94d416aa147868a1cba5aebb72c5de",
+   "format": "json",
+   "top_level_keys": [
+    "generated_utc",
+    "status",
+    "label",
+    "month",
+    "window_utc",
+    "days_covered",
+    "days_in_month",
+    "sources",
+    "filters",
+    "membership",
+    "pace_definition",
+    "percentile_definition",
+    "selection",
+    "no_outline",
+    "countries"
+   ],
+   "rows": 40,
+   "row_unit": "country",
+   "scope_kind": "country",
    "fit_version": null
   },
   {
