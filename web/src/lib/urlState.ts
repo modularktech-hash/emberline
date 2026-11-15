@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { bboxToParents, validateBoxInput, type BoxField } from "@/lib/aoi";
-import type { Area } from "@/lib/useArea";
+import { ringFromParam, ringToParam, validateBoxInput, validateRing, type BoxField } from "@/lib/aoi";
+import { makeArea, type Area } from "@/lib/useArea";
 
 /**
  * E08: page selections in the query string, restored on load, refresh and
@@ -59,7 +59,9 @@ export function intParam(q: URLSearchParams, k: string, lo: number, hi: number):
 
 /** Area as query params: `country=Canada`, or `box=west,south,east,north` at full precision, so a link rebuilds the exact cell set (west > east crosses the antimeridian). */
 export function areaToQuery(a: Area): Record<string, string | null> {
-  return a.kind === "country" ? { country: a.name, box: null } : { country: null, box: a.bbox.map((v) => String(v)).join(",") };
+  if (a.kind === "country") return { country: a.name, box: null, poly: null };
+  if (a.kind === "polygon") return { country: null, box: null, poly: ringToParam(a.ring) };
+  return { country: null, box: a.bbox.map((v) => String(v)).join(","), poly: null };
 }
 
 /** Absolute URL that reproduces a view: current origin and path plus the given query (E15). */
@@ -83,7 +85,12 @@ export function areaFromQuery(q: URLSearchParams): AreaFromQuery {
     while (fields.length < 4) fields.push("");
     const check = validateBoxInput(fields.slice(0, 4));
     if (!check.ok) return { ok: false, fields: fields.slice(0, 4), fieldErrors: check.fieldErrors, message: `Link: ${check.message}` };
-    return { ok: true, area: { kind: "box", bbox: check.bbox, parents: bboxToParents(check.bbox) }, fields: fields.slice(0, 4) };
+    return { ok: true, area: makeArea({ kind: "box", bbox: check.bbox }), fields: fields.slice(0, 4) };
+  }
+  const poly = q.get("poly");
+  if (poly != null) {
+    const check = validateRing(ringFromParam(poly));
+    if (check.ok) return { ok: true, area: makeArea({ kind: "polygon", ring: check.ring }) };
   }
   const c = q.get("country");
   if (c && /^[^\u0000-\u001f<>]{1,80}$/.test(c)) return { ok: true, area: { kind: "country", name: c } };

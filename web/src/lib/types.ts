@@ -12,7 +12,8 @@ export type Sensor = "MODIS" | "VIIRS";
 export type Series = "raw" | "harmonized";
 
 /** How calendar rows are keyed: by country name or by H3 res-2 parent cell id. */
-export type CalendarScope = "country" | "h3_parent";
+/** `h3_cell`: the drawn-area files (web/public/data/area/, H3 res-4 cells). */
+export type CalendarScope = "country" | "h3_parent" | "h3_cell";
 
 /* ------------------------------------------------------------------ */
 /* params.json -- the published fit (scripts/fit_harmonization.py)    */
@@ -201,6 +202,50 @@ export interface CalendarResult {
   rows: CalendarRow[];
   /** The (year, month) cells whose value is null. */
   missing: Array<{ year: number; month: number }>;
+}
+
+/* ------------------------------------------------------------------ */
+/* area/*.parquet -- H3 res-4 cell x country x month, every country    */
+/* ------------------------------------------------------------------ */
+
+export interface AreaIndex {
+  resolution: number;
+  cell_area_km2_mean: number;
+  fit_version: string;
+  harmonized_first_ym: string; // "YYYY-MM"
+  first_year: number;
+  last_year: number;
+  viirs_first_year: number;
+  files: Array<{ file: string; res1: string; rows: number; bytes: number }>;
+  total_bytes: number;
+}
+
+/** One stored row: a cell's detections from one country's file in one month. */
+export interface AreaRow {
+  cell: string;
+  country: string;
+  year: number;
+  month: number;
+  n_modis: number;
+  n_aqua: number;
+  n_viirs: number;
+  /** Null: the country has no fit, so this row has no harmonized value (uncorrected). */
+  n_harm: number | null;
+}
+
+export interface AreaData {
+  raw: CalendarResult;
+  harmonized: CalendarResult;
+  /** Matched rows (for the cell-level CSV). */
+  rows: AreaRow[];
+  /** Cells requested (centre inside the area). */
+  requested: string[];
+  /** Raw detections in cells of countries without a fit: in the raw series, left out of the harmonized one. */
+  uncorrected: { detections: number; countries: string[] };
+  /** Countries contributing rows, with their raw detections. */
+  countries: Array<{ country: string; detections: number; fitted: boolean }>;
+  fetched: { files: number; bytes: number };
+  index: AreaIndex;
 }
 
 /* ------------------------------------------------------------------ */

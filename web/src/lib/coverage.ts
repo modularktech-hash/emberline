@@ -84,3 +84,7 @@ export function coverageSummary(f: CoverageStatusFile): CoverageSummary {
 }
 
 export const NOT_A_FAILURE = "This is a data-sufficiency outcome traced to the fit code, not a processing failure.";
+
+/** G: what a missing fit means in practice, for someone working in that country. */
+export const UNFITTED_MEANING =
+  "What this means if you work there: only the raw record is shown. Counts up to 2011 are MODIS and from 2012 are VIIRS, a more sensitive sensor, so a jump at 2012 is the sensor change, not more fire. Compare years within 2001–2011 or within 2012–2025, not across them; the shape of the fire season within one era is still usable. The harmonized views, the 2012-step check and the R² score do not exist for it.";

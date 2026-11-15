@@ -11,7 +11,7 @@ import type { CalendarRow, CountryFit, Params } from "@/lib/types";
  */
 export interface BriefInput {
   place: string;
-  areaKind: "country" | "box";
+  areaKind: "country" | "box" | "polygon";
   from: number;
   to: number;
   mode: "raw" | "harmonized";
@@ -29,8 +29,8 @@ export interface BriefInput {
   generated: string; // ISO time
 }
 
-/** Hex values of the --seq-0..7 ramp in globals.css (the file must stand alone). */
-const HEX = ["#f0eadb", "#f8e8c0", "#f9c46b", "#f49b3f", "#e66a26", "#c93f1c", "#96221a", "#561114"];
+/** Hex values of the light --seq-0..7 ramp in styles/tokens.css, copied because the brief must stand alone. */
+const HEX = ["#e9e9e5", "#f6e3b8", "#f7c26a", "#f29a3e", "#e46a26", "#c63f1c", "#93221a", "#531114"];
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -42,12 +42,12 @@ export function busiest(rows: CalendarRow[], annual: YearTotal[]) {
   return { peak, best };
 }
 
-function calendarSvg(b: BriefInput): string {
+export function calendarSvg(b: Pick<BriefInput, "place" | "from" | "to" | "rows" | "max">): string {
   const years: number[] = [];
   for (let y = b.from; y <= b.to; y += 1) years.push(y);
   const cw = 34, ch = 16, left = 44, top = 20;
   const w = left + 12 * cw + 4, h = top + years.length * ch + 40;
-  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" role="img" aria-label="Detections per month, ${esc(b.place)}, ${b.from}–${b.to}">`];
+  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Detections per month, ${esc(b.place)}, ${b.from}–${b.to}">`, `<rect width="${w}" height="${h}" fill="#ffffff"/>`];
   out.push(`<defs><pattern id="nd" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#bbb" stroke-width="1.5"/></pattern></defs>`);
   MONTHS.forEach((m, i) => out.push(`<text x="${left + i * cw + cw / 2}" y="${top - 6}" font-size="10" text-anchor="middle" fill="#555">${m}</text>`));
   years.forEach((y, j) => {
@@ -93,18 +93,18 @@ export function buildBrief(b: BriefInput): string {
 
   const unc = b.unc && b.unc.length
     ? `<ul>${b.unc.map((r) => `<li>${esc(r.label)}: ${esc(fmtUnc(r.u))}</li>`).join("")}</ul><p class="note">${esc(UNC_LABEL)} ${esc(UNC_NOT_TOTAL)} 2.5th–97.5th percentile over bootstrap draws (harmonized_uncertainty.json).</p>`
-    : `<p>${b.mode === "raw" ? "Not applicable: raw record." : b.areaKind === "box" ? "Not estimated for custom areas (intervals are published per country)." : "Not available."}</p>`;
+    : `<p>${b.mode === "raw" ? "Not applicable: raw record." : b.areaKind !== "country" ? "Not estimated for custom areas (intervals are published per country)." : "Not available."}</p>`;
 
   const s = b.scope;
   const coverage = s
     ? kv([
-        ["Requested bounds (W, S, E, N)", esc(fmtBounds(s.requested)) + (s.antimeridian ? " — crosses the 180° meridian" : "")],
+        [s.ring ? "Polygon bounding box (W, S, E, N)" : "Requested bounds (W, S, E, N)", esc(fmtBounds(s.requested)) + (s.antimeridian ? " — crosses the 180° meridian" : "")],
         ["Effective bounds of summed cells", s.effective ? esc(fmtBounds(s.effective, 2)) : "none"],
         ["Selection", esc(SELECTION_RULE)],
         ["Grid", `H3 resolution ${s.resolution} (${CELL_SIZE_NOTE})`],
         ["Cells", `${s.touched.length} touched · ${s.withRaw.length} with data · ${s.summed.length} summed`],
-        ["Summed cell IDs", `<code>${esc(s.summed.join(" ") || "none")}</code>`],
-      ]) + `<p class="warn">Whole cells are summed, so activity outside the box — possibly across national borders — is included.</p>`
+        ["Contributing country files", esc(s.countries.map((c) => `${c.country}${c.fitted ? "" : " (no fit, uncorrected)"}`).join(", ") || "none")],
+      ]) + `<p class="warn">Whole cells are summed, so the result follows the cells, not the exact outline. Cell IDs are in the cell-level CSV.</p>`
     : `<p>Country total: every detection assigned to ${esc(b.place)} in the processed FIRMS record (dataset: ${esc(b.dataset)}).</p>`;
 
   return `<!doctype html>

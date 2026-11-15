@@ -29,6 +29,21 @@ const gibsTiles = (date: string) => `https://gibs.earthdata.nasa.gov/wmts/epsg38
 
 const BOX_SOURCE = "aoi-box";
 const CELL_SOURCE = "aoi-cells";
+/**
+ * Fallback when the tile server does not answer: country outlines from this
+ * site's own /geo/countries.geojson, no external requests, so drawing an area
+ * still works offline or behind a blocking network.
+ */
+const OUTLINE_STYLE = {
+  version: 8 as const,
+  sources: { countries: { type: "geojson" as const, data: "/geo/countries.geojson" } },
+  layers: [
+    { id: "bg", type: "background" as const, paint: { "background-color": "#eef2f3" } },
+    { id: "land", type: "fill" as const, source: "countries", paint: { "fill-color": "#f7f5ef" } },
+    { id: "borders", type: "line" as const, source: "countries", paint: { "line-color": "#9a9a92", "line-width": 0.6 } },
+  ],
+};
+
 /** A basemap that has not loaded by then is treated as failed (with a retry). */
 const LOAD_TIMEOUT_MS = 15000;
 
@@ -36,6 +51,9 @@ export type Bbox = [number, number, number, number];
 
 interface Props {
   bbox: Bbox | null;
+  /** A drawn polygon ([lon, lat] corners, open ring), shown instead of the box. */
+  ring?: Array<[number, number]> | null;
+  onPolygon?: (ring: Array<[number, number]>) => void;
   /** H3 cells actually summed for the box (effective coverage), drawn as outlines. */
   cells?: string[];
   onSelect: (bbox: Bbox) => void;
@@ -79,12 +97,24 @@ function cellsToFeatures(cells: string[]): GeoJSON.FeatureCollection<GeoJSON.Pol
   };
 }
 
-export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
+function ringFeature(ring: Array<[number, number]>, closed: boolean): GeoJSON.Feature {
+  return closed && ring.length >= 3
+    ? { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[...ring, ring[0]]] } }
+    : { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: ring } };
+}
+
+export function AoiMap({ bbox, ring, onPolygon, cells, onSelect, styleUrl, className }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [ready, setReady] = useState(false);
   const [drawing, setDrawing] = useState(false);
+  const [poly, setPoly] = useState(false);
+  const [corners, setCorners] = useState(0);
+  const onPolygonRef = useRef(onPolygon);
+  useEffect(() => { onPolygonRef.current = onPolygon; }, [onPolygon]);
   const [failed, setFailed] = useState(false);
+  // After the tile basemap fails once, the outline map is used (and drawing keeps working).
+  const [outline, setOutline] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [satView, setSatView] = useState(false);
   const [satDate, setSatDate] = useState<string | null>(null);
@@ -108,7 +138,7 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
 
         const map = new maplibregl.Map({
           container: containerRef.current,
-          style: styleUrl ?? DARK_STYLE,
+          style: outline ? OUTLINE_STYLE : styleUrl ?? DARK_STYLE,
           center: [20, 10],
           zoom: 0.9,
           attributionControl: { compact: true },
@@ -120,9 +150,14 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
         // are individual tiles timing out, and replacing a working map with an
         // error panel because one tile 404'd would be worse than the gap.
         let loaded = false;
-        const slow = window.setTimeout(() => { if (!loaded && !cancelled) setFailed(true); }, LOAD_TIMEOUT_MS);
+        const fail = () => {
+          if (loaded || cancelled) return;
+          if (!outline) { cancelled = true; setReady(false); setOutline(true); return; }
+          setFailed(true);
+        };
+        const slow = window.setTimeout(fail, LOAD_TIMEOUT_MS);
         map.on("error", () => {
-          if (!loaded) setFailed(true);
+          if (!loaded) fail();
         });
         map.on("load", () => {
           loaded = true;
@@ -160,7 +195,7 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [styleUrl, attempt]);
+  }, [styleUrl, attempt, outline]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -176,11 +211,16 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
     const source = map.getSource<GeoJSONSource>(BOX_SOURCE);
     if (!source) return;
     source.setData(
-      bbox
+      ring && ring.length >= 3
+        ? { type: "FeatureCollection", features: [ringFeature(ring, true)] }
+        : bbox
         ? { type: "FeatureCollection", features: [bboxToFeature(bbox)] }
         : { type: "FeatureCollection", features: [] },
     );
-    if (bbox) {
+    if (ring && ring.length >= 3) {
+      const xs = ring.map((p) => p[0]), ys = ring.map((p) => p[1]);
+      map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]], { padding: 48, duration: 600, maxZoom: 8 });
+    } else if (bbox) {
       map.fitBounds(
         [
           [bbox[0], bbox[1]],
@@ -189,7 +229,46 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
         { padding: 48, duration: 600, maxZoom: 8 },
       );
     }
-  }, [bbox, ready]);
+  }, [bbox, ring, ready]);
+
+  // Polygon drawing: click to add corners, double-click or Enter to finish,
+  // Backspace removes the last corner, Escape cancels.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !poly) return;
+    map.doubleClickZoom.disable();
+    map.getCanvas().style.cursor = "crosshair";
+    const pts: Array<[number, number]> = [];
+    const show = (extra?: [number, number]) => {
+      const r = extra ? [...pts, extra] : pts;
+      map.getSource<GeoJSONSource>(BOX_SOURCE)?.setData({ type: "FeatureCollection", features: r.length >= 2 ? [ringFeature(r, r.length >= 3)] : [] });
+    };
+    const finish = () => {
+      setPoly(false);
+      if (pts.length >= 3) onPolygonRef.current?.(pts.slice());
+    };
+    const onClick = (e: MapMouseEvent) => { pts.push([e.lngLat.lng, e.lngLat.lat]); setCorners(pts.length); show(); };
+    const onMove = (e: MapMouseEvent) => { if (pts.length) show([e.lngLat.lng, e.lngLat.lat]); };
+    const onDbl = (e: MapMouseEvent) => { e.preventDefault(); finish(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") { e.preventDefault(); finish(); }
+      else if (e.key === "Escape") { setPoly(false); }
+      else if (e.key === "Backspace" && pts.length) { e.preventDefault(); pts.pop(); setCorners(pts.length); show(); }
+    };
+    map.on("click", onClick);
+    map.on("mousemove", onMove);
+    map.on("dblclick", onDbl);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      map.off("click", onClick);
+      map.off("mousemove", onMove);
+      map.off("dblclick", onDbl);
+      window.removeEventListener("keydown", onKey);
+      map.doubleClickZoom.enable();
+      map.getCanvas().style.cursor = "";
+      setCorners(0);
+    };
+  }, [poly, ready]);
 
   // Drag to draw. Pan is disabled only while drawing, so the map still behaves
   // normally the rest of the time.
@@ -236,7 +315,8 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
     };
   }, [drawing, ready]);
 
-  const toggleDraw = useCallback(() => setDrawing((d) => !d), []);
+  const toggleDraw = useCallback(() => { setPoly(false); setDrawing((d) => !d); }, []);
+  const togglePoly = useCallback(() => { setDrawing(false); setPoly((d) => !d); }, []);
 
   // Satellite view: the GIBS raster is added on first use (no tile requests until then) and kept under the area layers.
   useEffect(() => {
@@ -265,14 +345,18 @@ export function AoiMap({ bbox, cells, onSelect, styleUrl, className }: Props) {
           <button type="button" onClick={() => { setFailed(false); setReady(false); setAttempt((a) => a + 1); }} className="glass-thin px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)]">Retry the map</button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={toggleDraw}
-          aria-pressed={drawing}
-          className="absolute left-3 top-3 z-10 glass-thin px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-sm"
-        >
-          {drawing ? "Drag to draw · cancel" : "Draw area"}
-        </button>
+        <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
+          <button type="button" onClick={toggleDraw} aria-pressed={drawing} data-testid="draw-box"
+            className="glass-thin px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-sm">
+            {drawing ? "Drag to draw · cancel" : "Draw box"}
+          </button>
+          {onPolygon && (
+            <button type="button" onClick={togglePoly} aria-pressed={poly} data-testid="draw-polygon"
+              className="glass-thin px-3.5 py-1.5 text-sm font-medium text-[var(--text-primary)] shadow-sm">
+              {poly ? `Click corners (${corners}) · double-click or Enter to finish · Esc cancels` : "Draw polygon"}
+            </button>
+          )}
+        </div>
       )}
       {ready && !failed && (
         <button type="button" onClick={() => setSatView((v) => !v)} aria-pressed={satView}

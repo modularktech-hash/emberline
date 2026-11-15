@@ -81,21 +81,33 @@ def boxes(geom) -> list[tuple[float, float, float, float]]:
     return out
 
 
-def fetch(key: str, source: str, box, start: date, days: int) -> str:
+CACHE = ROOT / "data" / "mtd_cache"
+
+
+def fetch(key: str, source: str, box, start: date, days: int) -> str | None:
+    """One area request. Responses for complete past days are cached under
+    data/mtd_cache/ (gitignored), so a re-run after a network failure resumes.
+    Returns None when the request still fails after every retry; the caller
+    then marks that country as incomplete instead of guessing."""
     w, s, e, n = (round(v, 3) for v in box)
+    tag = f"{source}_{w}_{s}_{e}_{n}_{days}_{start.isoformat()}.csv"
+    hit = CACHE / tag
+    if hit.exists():
+        return hit.read_text()
     url = f"{API}/{key}/{source}/{w},{s},{e},{n}/{days}/{start.isoformat()}"
     import subprocess
-    for attempt in range(8):
-        r = subprocess.run(["curl", "-sS", "--connect-timeout", "10", "-m", "240", url], capture_output=True, text=True)
+    for attempt in range(12):
+        r = subprocess.run(["curl", "-sS", "--connect-timeout", "20", "-m", "300", url], capture_output=True, text=True)
         body = r.stdout
-        if r.returncode == 0 and body.startswith("latitude,"):
+        if r.returncode == 0 and (body.startswith("latitude,") or body.strip() == ""):
+            CACHE.mkdir(parents=True, exist_ok=True)
+            hit.write_text(body)
             return body
-        if r.returncode == 0 and body.strip() == "":
-            return ""
         if r.returncode == 0 and body.startswith("Invalid"):
             raise RuntimeError(f"FIRMS rejected the request: {body[:120]!r}")
-        time.sleep(3 + attempt * 3)
-    raise RuntimeError(f"FIRMS request failed after retries: {source} {box} {start} ({(r.stdout or r.stderr)[:120]!r})")
+        time.sleep(min(60, 5 + attempt * 5))
+    print(f"  giving up: {source} {box} {start} ({(r.stdout or r.stderr)[:100]!r})", file=sys.stderr)
+    return None
 
 
 def chunks(d0: date, d1: date):
@@ -160,10 +172,14 @@ def main() -> int:
         return job, fetch(key, src, b, s, n)
 
     frames: dict[tuple[str, str], list[pl.DataFrame]] = {}
+    incomplete: set[str] = set()
     t0 = time.time()
     with ThreadPoolExecutor(max_workers=3) as ex:
         for i, (job, body) in enumerate(ex.map(run, jobs), 1):
             c, src = job[0], job[1]
+            if body is None:
+                incomplete.add(c)
+                continue
             if body:
                 df = pl.read_csv(io.StringIO(body), infer_schema_length=0)
                 df = keep(df, src, d0, d1)
@@ -177,7 +193,7 @@ def main() -> int:
 
     out_countries = {}
     for c in selected:
-        if c in no_outline:
+        if c in no_outline or c in incomplete:
             continue
         row = {}
         for src, label in SOURCES.items():
@@ -221,6 +237,7 @@ def main() -> int:
         "percentile_definition": "100 x (history years below pace + 0.5 x ties) / history years",
         "selection": (f"top {a.countries} fitted countries by filtered detections (countries.json)" if a.countries else f"all {len(fitted)} fitted countries"),
         "no_outline": no_outline,
+        "incomplete": sorted(incomplete),
         "countries": out_countries,
     }
     OUT.write_text(json.dumps(out, separators=(",", ":"), ensure_ascii=False))

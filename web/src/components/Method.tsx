@@ -19,7 +19,8 @@ import { MethodNotes, ValidationPlot } from "@/components/ValidationPlot";
 import { Benchmark, ProofSection, StepCollapse } from "@/components/Proof";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
-const HUES = ["#d9431a", "#b8860b", "#3f7f96", "#7a4fa0", "#2f8f5b", "#96221a"];
+// Okabe–Ito based: every pair stays apart under deuteranopia, protanopia and tritanopia (scripts/check_color_access.py).
+const HUES = ["#d55e00", "#6b5300", "#0072b2", "#cc79a7", "#009e73", "#882255"];
 
 function Bar({ value, tone }: { value: number; tone: "good" | "bad" }) {
   const w = Math.max(2, Math.min(100, Math.abs(value) * 100));

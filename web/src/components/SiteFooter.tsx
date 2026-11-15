@@ -60,7 +60,7 @@ function StatusLine() {
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  const cell = (k: string, v?: string) => <span className="inline-flex items-center gap-2"><span className="opacity-60">{k}</span><span className="tabular text-[var(--text-primary)]">{v ?? "not recorded"}</span></span>;
+  const cell = (k: string, v?: string) => <span className="inline-flex items-center gap-2"><span>{k}</span><span className="tabular text-[var(--text-primary)]">{v ?? "not recorded"}</span></span>;
   return (
     <p ref={ref} className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--text-muted)]" data-testid="status-line">
       <span className="live-dot" aria-hidden />{cell("Fit", s.fit)}{cell("Month-to-date data", s.data)}{cell("Live feed", s.live)}

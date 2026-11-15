@@ -13,13 +13,13 @@ import { STATUS_LABEL } from "@/lib/coverage";
 import { FitQualityCard } from "@/components/FitQuality";
 import { qualityCsvHeader } from "@/lib/quality";
 import { MonthYearCalendar, type CellRef } from "@/components/MonthYearCalendar";
-import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
+import { BOX_FIELDS, bboxCrossesAntimeridian, cellsExtent, geomBbox, normalizeDrawnBbox, validateBoxInput, validateRing, type Bbox, type BoxField, type Ring } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
 import { MonthToDateCard } from "@/components/MonthToDate";
 import { HotspotDownload } from "@/components/HotspotDownload";
-import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
+import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio, type YearTotal } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
-import { areaKey, areaLabel, useAreaData, type Area } from "@/lib/useArea";
+import { areaKey, areaLabel, geomOf, makeArea, useAreaData, type Area } from "@/lib/useArea";
 import { areaFromQuery, areaToQuery, intParam, reproducingUrl, useUrlState } from "@/lib/urlState";
 import { CopyLink } from "@/components/CopyLink";
 import { prettyName } from "@/lib/names";
@@ -28,6 +28,7 @@ import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
 import { boxScope, scopeCsvHeader } from "@/lib/scope";
 import { ScopePanel } from "@/components/ScopePanel";
+import { ViewExports } from "@/components/ViewExports";
 import { buildBrief } from "@/lib/brief";
 import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/uncertainty";
 
@@ -40,13 +41,16 @@ export function Explorer() {
   const [mode, setMode] = useState<Series>("raw");
   const [from, setFrom] = useState(FIRST);
   const [to, setTo] = useState(2025);
+  // R8: the range runs from a start month to an end month (inclusive), not only whole years.
+  const [fromM, setFromM] = useState(1);
+  const [toM, setToM] = useState(12);
   const [box, setBox] = useState(["", "", "", ""]);
   // Selected calendar month: kept across raw/harmonized and year changes.
   const [selCell, setSelCell] = useState<CellRef | null>(null);
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
-  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to });
+  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to, fm: fromM === 1 ? null : fromM, tm: toM === 12 ? null : toM });
   useUrlState((q) => {
     const a = areaFromQuery(q);
     if (a?.ok) {
@@ -57,8 +61,9 @@ export function Explorer() {
     const m = q.get("mode");
     setMode(m === "harmonized" ? "harmonized" : "raw");
     const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
-    if (f <= t) { setFrom(f); setTo(t); } else { setFrom(FIRST); setTo(2025); }
-  }, () => viewQuery(), [areaKey(area), mode, from, to]);
+    const fm = intParam(q, "fm", 1, 12) ?? 1, tm = intParam(q, "tm", 1, 12) ?? 12;
+    if (f * 12 + fm <= t * 12 + tm) { setFrom(f); setTo(t); setFromM(fm); setToM(tm); } else { setFrom(FIRST); setTo(2025); setFromM(1); setToM(12); }
+  }, () => viewQuery(), [areaKey(area), mode, from, to, fromM, toM]);
   const { data, error, loading, retry } = useAreaData(area);
   const ds = useDataset();
   const coverageState = useCoverageState();
@@ -80,22 +85,33 @@ export function Explorer() {
     if (!data) return null;
     const lo = Math.max(from, data.raw.years[0]);
     const hi = Math.min(to, data.raw.years[1]);
-    const raw = annualTotals(data.raw, lo, hi);
-    const harm = annualTotals(data.harmonized, lo, hi);
-    const inRange = (r: { year: number }) => r.year >= lo && r.year <= hi;
+    const loYm = lo * 12 + (from >= data.raw.years[0] ? fromM : 1) - 1, hiYm = hi * 12 + (to <= data.raw.years[1] ? toM : 12) - 1;
+    const inRange = (r: { year: number; month: number }) => { const t = r.year * 12 + r.month - 1; return t >= loYm && t <= hiYm; };
+    const raw = rangeAnnual(data.raw.rows, lo, hi, inRange);
+    const harm = rangeAnnual(data.harmonized.rows, lo, hi, inRange);
     const max = Math.max(1, ...data.raw.rows.filter(inRange).map((r) => r.value ?? 0), ...data.harmonized.rows.filter(inRange).map((r) => r.value ?? 0));
+    const fm = MONTHS[(loYm % 12)], tm = MONTHS[hiYm % 12];
     return {
-      lo, hi, raw, harm, max,
+      lo, hi, raw, harm, max, inRange, loYm, hiYm,
+      label: `${fm} ${lo} – ${tm} ${hi}`, partial: loYm % 12 !== 0 || hiYm % 12 !== 11,
       stepRaw: stepRatio(annualTotals(data.raw, 2009, 2014)),
       stepHarm: stepRatio(annualTotals(data.harmonized, 2009, 2014)),
     };
-  }, [data, from, to]);
+  }, [data, from, to, fromM, toM]);
 
   const selectBox = (drawn: Bbox) => {
     const bbox = normalizeDrawnBbox(drawn);
     setBoxErr(null);
     setBox(bbox.map((v) => v.toFixed(2)));
-    setArea({ kind: "box", bbox, parents: bboxToParents(bbox) });
+    setArea(makeArea({ kind: "box", bbox }));
+  };
+  const selectPolygon = (drawn: Ring) => {
+    const check = validateRing(drawn);
+    if (!check.ok) { setBoxErr({ fields: {}, message: check.message }); return; }
+    setBoxErr(null);
+    const bb = geomBbox({ kind: "polygon", ring: check.ring });
+    setBox(bb.map((v) => v.toFixed(2)));
+    setArea(makeArea({ kind: "polygon", ring: check.ring }));
   };
   // Invalid or blank bounds never reach the query: the user's entry stays in
   // the fields, each bad field is marked, and the message is announced.
@@ -103,7 +119,7 @@ export function Explorer() {
     const check = validateBoxInput(box);
     if (!check.ok) { setBoxErr({ fields: check.fieldErrors, message: check.message }); return; }
     setBoxErr(null);
-    setArea({ kind: "box", bbox: check.bbox, parents: bboxToParents(check.bbox) });
+    setArea(makeArea({ kind: "box", bbox: check.bbox }));
   };
 
   const cal = data ? (mode === "raw" ? data.raw : data.harmonized) : null;
@@ -113,7 +129,7 @@ export function Explorer() {
   const fit = data && area.kind === "country" ? data.params.countries[area.name] : undefined;
   const unfitted = !!(data && area.kind === "country" && !fit);
   const flags = fit ? fitFlags(fit) : [];
-  const boxCells = area.kind === "box" ? area.parents.length : 0;
+  const boxCells = area.kind !== "country" ? area.cells.length : 0;
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
   const covLabel = cov && unfitted ? STATUS_LABEL[cov.status] : null;
   const unc = useUncertainty();
@@ -126,23 +142,25 @@ export function Explorer() {
       { label: `Selected month ${MONTHS[selCell.month - 1]} ${selCell.year}`, u: uncFor(unc.data, data.params.fit_version, area.name, selCell.year, selCell.month) },
     ] : []),
   ] : null;
-  const scope = useMemo(() => (area.kind === "box" && data && cal ? boxScope(area.bbox, area.parents, data.raw, cal) : null), [area, data, cal]);
+  const scope = useMemo(() => (area.kind !== "country" && data && cal ? boxScope(area.kind === "box" ? area : { ...area, bbox: undefined }, data.cells, data.raw, cal) : null), [area, data, cal]);
+
+  const mtdArea = useMemo(() => (area.kind !== "country" && data?.cells ? { label: areaLabel(area), cells: area.cells, rows: data.cells.rows } : null), [area, data]);
 
   const exportCsv = () => {
     if (!data || !cal || !view) return;
     downloadCsv(
-      `emberline_${areaLabel(area).replace(/[^a-z0-9]+/gi, "_")}_${mode}_${view.lo}-${view.hi}.csv`,
+      `emberline_calendar_${areaLabel(area).replace(/[^a-z0-9]+/gi, "_")}_${mode}_${ymTag(view.loYm)}_${ymTag(view.hiYm)}.csv`,
       {
-        product: "Emberline burning activity calendar",
+        product: `Emberline burning activity calendar: monthly ${mode === "raw" ? "RAW (uncorrected)" : "HARMONIZED"} detection counts summed over the area (aggregated, not individual hotspots)`,
         area: areaLabel(area),
-        years: `${view.lo}-${view.hi}`,
+        date_range: `${ymTag(view.loYm)} to ${ymTag(view.hiYm)} (inclusive, whole months)`,
         series: mode,
         unit: cal.unit,
         fit_version: mode === "harmonized" ? data.params.fit_version : "n/a (raw record, uncorrected)",
         ...(fit ? { ...qualityCsvHeader(fit, data.params), ...(mode === "raw" ? { fit_quality_note: "applies to the harmonized series; this file is the raw record" } : {}) } : {}),
         ...(unfitted && cov ? { fit_status: `no fit: ${STATUS_LABEL[cov.status]}` } : {}),
         ...(mode === "harmonized" && flags.length ? { fit_flags: `suspicious (docs/results.md): ${flags.join("; ")}` } : {}),
-        ...(area.kind === "box" ? { h3_res2_cells: `${cal.keys.length} with data of ${boxCells} touched` } : {}),
+        ...(area.kind !== "country" ? { h3_res4_cells: `${cal.keys.length} with data of ${boxCells} selected` } : {}),
         ...(scope ? scopeCsvHeader(scope) : {}),
         ...(mode === "harmonized" && cal.uncorrectedKeys.length ? { excluded_uncorrected: `${cal.uncorrectedKeys.length} cells with a raw record but no fit are not included` } : {}),
         source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
@@ -154,7 +172,7 @@ export function Explorer() {
         reproduce: reproducingUrl(viewQuery()),
       },
       ["year", "month", "detections", "basis"],
-      cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi).map((r) => [r.year, r.month, r.value == null ? "" : Math.round(r.value * 100) / 100, r.basis]),
+      cal.rows.filter(view.inRange).map((r) => [r.year, r.month, r.value == null ? "" : Math.round(r.value * 100) / 100, r.basis]),
     );
   };
 
@@ -163,7 +181,7 @@ export function Explorer() {
     if (!data || !cal || !view) return;
     const html = buildBrief({
       place: areaLabel(area), areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
-      rows: cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi), max: view.max,
+      rows: cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi).map((r) => (view.inRange(r) ? r : { ...r, value: null })), max: view.max,
       annual: mode === "raw" ? view.raw : view.harm, params: data.params, fit,
       noFitReason: unfitted ? covLabel : null, unc: uncRows, scope,
       dataset: ds?.dataset === "world" ? "world files (calendar_*_global.parquet, params_global.json)" : "four-country fallback (calendar_raw.parquet, calendar_harmonized.parquet, params.json)",
@@ -172,7 +190,7 @@ export function Explorer() {
     const href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     const a = document.createElement("a");
     a.href = href;
-    a.download = `emberline_brief_${areaLabel(area).replace(/[^a-z0-9]+/gi, "_")}_${mode}_${view.lo}-${view.hi}.html`;
+    a.download = `emberline_brief_${areaLabel(area).replace(/[^a-z0-9]+/gi, "_")}_${mode}_${ymTag(view.loYm)}_${ymTag(view.hiYm)}.html`;
     a.click();
     URL.revokeObjectURL(href);
   };
@@ -191,32 +209,42 @@ export function Explorer() {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-3" role="toolbar" aria-label="Calendar controls">
           <div className="glass-thin flex p-1" role="group" aria-label="Area type">
             {(["country", "box"] as const).map((k) => (
-              <button key={k} type="button" aria-pressed={area.kind === k}
+              <button key={k} type="button" aria-pressed={k === "country" ? area.kind === "country" : area.kind !== "country"}
                 onClick={() => {
-                  if (k === "country") { if (area.kind === "box") setArea({ kind: "country", name: lastCountry.current }); }
+                  if (k === "country") { if (area.kind !== "country") setArea({ kind: "country", name: lastCountry.current }); }
                   else { document.getElementById("area")?.scrollIntoView({ behavior: "smooth", block: "center" }); document.getElementById("box-west")?.focus({ preventScroll: true }); }
                 }}
-                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${area.kind === k ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
+                className={`min-h-[36px] rounded-full px-3.5 text-sm font-medium transition-colors ${(k === "country") === (area.kind === "country") ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
                 {k === "country" ? "Country" : "Draw area"}
               </button>
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Area">
-            <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind === "box" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => { lastCountry.current = c; setArea({ kind: "country", name: c }); }} />
+            <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind !== "country" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => { lastCountry.current = c; setArea({ kind: "country", name: c }); }} />
             {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}
             {fit && fit.fit_source !== "pooled" && flags.length === 0 && <span className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">own fit · R² {fmtR2(fit.validation_test.model.r2)}</span>}
             {flags.length > 0 && <span title={`Flagged as suspicious (docs/results.md): ${flags.join("; ")}`} className="self-center rounded-full border border-[var(--ember)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">check this fit</span>}
             {unfitted && <span title={covLabel ? `No fit: ${covLabel}` : undefined} className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected{covLabel && ` · ${covLabel}`}</span>}
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)]" role="group" aria-label="Years">
-            <label className="flex items-center gap-1.5"><span className="sr-only">From year</span>
-              <select value={from} onChange={(e) => setFrom(Math.min(Number(e.target.value), to))} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
+          <div className="flex flex-wrap items-center gap-1.5 text-sm text-[var(--text-secondary)]" role="group" aria-label="Date range">
+            <label className="flex items-center gap-1"><span className="sr-only">From month</span>
+              <select data-testid="from-month" value={fromM} onChange={(e) => { const m = Number(e.target.value); if (from * 12 + m <= to * 12 + toM) setFromM(m); }} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
+                {MONTHS.map((mm, i) => <option key={mm} value={i + 1}>{mm}</option>)}
+              </select>
+            </label>
+            <label className="flex items-center gap-1"><span className="sr-only">From year</span>
+              <select data-testid="from-year" value={from} onChange={(e) => { const y = Number(e.target.value); if (y * 12 + fromM <= to * 12 + toM) setFrom(y); else { setFrom(y); setTo(y); setToM(Math.max(fromM, toM)); } }} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
                 {years.map((y) => <option key={y}>{y}</option>)}
               </select>
             </label>
             <span aria-hidden>–</span>
-            <label className="flex items-center gap-1.5"><span className="sr-only">To year</span>
-              <select value={to} onChange={(e) => setTo(Math.max(Number(e.target.value), from))} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
+            <label className="flex items-center gap-1"><span className="sr-only">To month</span>
+              <select data-testid="to-month" value={toM} onChange={(e) => { const m = Number(e.target.value); if (from * 12 + fromM <= to * 12 + m) setToM(m); }} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
+                {MONTHS.map((mm, i) => <option key={mm} value={i + 1}>{mm}</option>)}
+              </select>
+            </label>
+            <label className="flex items-center gap-1"><span className="sr-only">To year</span>
+              <select data-testid="to-year" value={to} onChange={(e) => { const y = Number(e.target.value); if (from * 12 + fromM <= y * 12 + toM) setTo(y); else { setTo(y); setFrom(y); setFromM(Math.min(fromM, toM)); } }} className="field min-h-[36px] rounded-xl px-2 py-1 text-[var(--text-primary)]">
                 {years.map((y) => <option key={y}>{y}</option>)}
               </select>
             </label>
@@ -231,7 +259,7 @@ export function Explorer() {
           </div>
           <CopyLink className="ml-auto" />
           <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
-            Download CSV
+            Calendar CSV
           </button>
           <button type="button" onClick={exportBrief} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download brief
@@ -248,8 +276,8 @@ export function Explorer() {
               <>
                 <p className="text-[var(--text-primary)]">No processed data in this area.</p>
                 <p className="mt-1">
-                  {area.kind === "box"
-                    ? <>None of the {boxCells} ~300 km grid cells this box touches has a detection in the processed FIRMS record (every FIRMS country, {data.countries.length} with detections). Open ocean, ice and deserts often have none.</>
+                  {area.kind !== "country"
+                    ? <>None of the {boxCells} grid cells (~45 km) whose centre is in this area has a detection in the processed FIRMS record (every FIRMS country, {data.countries.length} with detections). Open ocean, ice and deserts often have none.</>
                     : <>{areaLabel(area)} has no calendar in the processed FIRMS record.</>}
                   {" "}No data is not the same as no fire, so nothing is shown.
                 </p>
@@ -271,9 +299,9 @@ export function Explorer() {
             </p>
           </div>
         )}
-        {data && cal && !notProcessed && !rawOnly && (cal.unknownKeys.length > 0 || cal.uncorrectedKeys.length > 0) && area.kind === "box" && (
+        {data && cal && !notProcessed && !rawOnly && (cal.unknownKeys.length > 0 || cal.uncorrectedKeys.length > 0) && area.kind !== "country" && (
           <p className="mt-6 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)]">
-            This box touches {boxCells} grid cells; {cal.keys.length} {cal.keys.length === 1 ? "has" : "have"} {mode === "raw" ? "a raw record" : "a harmonized record"} and {cal.keys.length === 1 ? "is" : "are"} summed here.
+            This area selects {boxCells} grid cells; {cal.keys.length} {cal.keys.length === 1 ? "has" : "have"} {mode === "raw" ? "a raw record" : "a harmonized record"} and {cal.keys.length === 1 ? "is" : "are"} summed here.
             {cal.unknownKeys.length > 0 && <> {cal.unknownKeys.length} {cal.unknownKeys.length === 1 ? "has" : "have"} no processed data (no detections).</>}
             {cal.uncorrectedKeys.length > 0 && <> {cal.uncorrectedKeys.length} {cal.uncorrectedKeys.length === 1 ? "has" : "have"} only a raw, uncorrected record (in a country without a fit, or with none of the Aqua/VIIRS detections the fit uses) and {cal.uncorrectedKeys.length === 1 ? "is" : "are"} left out of the harmonized series.</>}
           </p>
@@ -287,19 +315,21 @@ export function Explorer() {
                 <Eyebrow>Burning activity calendar · {areaLabel(area)} · detections per month</Eyebrow>
                 <p className={`rounded-full px-3 py-1 text-xs font-medium ${mode === "raw" ? "bg-[var(--surface-2)] text-[var(--text-primary)]" : "bg-[var(--ember-soft)] text-[var(--text-primary)]"}`}>
                   {mode === "raw" ? "Raw detections · uncorrected · MODIS to 2011, VIIRS from 2012" : `Harmonized · ${cal.unit} · fit ${data.params.fit_version}`}
-                  <span className="text-[var(--text-muted)]"> · historical record {view.lo}–{view.hi}</span>
+                  <span className="text-[var(--text-muted)]"> · {view.label}</span>
                 </p>
               </div>
-              <MonthYearCalendar cal={cal} from={view.lo} to={view.hi} max={view.max} selected={selCell} onSelect={setSelCell} areaName={areaLabel(area)} />
+              <MonthYearCalendar cal={cal} from={view.lo} to={view.hi} max={view.max} selected={selCell} onSelect={setSelCell} areaName={areaLabel(area)} inRange={view.partial ? view.inRange : undefined} />
               {(() => {
-                const rows = cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi && r.value !== null);
+                const rows = cal.rows.filter((r) => view.inRange(r) && r.value !== null);
                 if (!rows.length) return null;
                 const peak = rows.reduce((a, b) => ((b.value ?? 0) > (a.value ?? 0) ? b : a));
                 const best = [...(mode === "raw" ? view.raw : view.harm)].sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0];
+                const partialYear = view.partial && (best.year === view.lo || best.year === view.hi);
                 return (
                   <p className="mt-4 text-sm text-[var(--text-secondary)]">
                     Busiest month: <span className="text-[var(--text-primary)]">{MONTHS[peak.month - 1]} {peak.year}</span> ({fmt(peak.value)}).
-                    Busiest year: <span className="text-[var(--text-primary)]">{best.year}</span> ({fmt(best.value)}).
+                    Busiest year: <span className="text-[var(--text-primary)]">{best.year}</span> ({fmt(best.value)}{partialYear ? ", months inside the range only" : ""}).
+                    {" "}Total {view.label}: <span className="text-[var(--text-primary)]">{fmt(rows.reduce((a, r) => a + (r.value ?? 0), 0))}</span>.
                   </p>
                 );
               })()}
@@ -317,6 +347,18 @@ export function Explorer() {
               <div>
                 <Eyebrow>Detections per year · {areaLabel(area)}</Eyebrow>
                 <AnnualLine raw={view.raw} harmonized={view.harm} mode={mode} />
+                <ViewExports v={{
+                  name: areaLabel(area).replace(/[^a-z0-9]+/gi, "_"), place: areaLabel(area), mode, unit: cal.unit, fitVersion: data.params.fit_version,
+                  range: view, rows: cal.rows, max: view.max, raw: view.raw, harm: view.harm, step: { raw: view.stepRaw, harmonized: view.stepHarm },
+                  extra: {
+                    ...(scope ? scopeCsvHeader(scope) : {}),
+                    ...(data.cells && data.cells.uncorrected.detections ? { uncorrected_raw_detections_left_out_of_harmonized: String(data.cells.uncorrected.detections), uncorrected_countries: data.cells.uncorrected.countries.join("; ") } : {}),
+                    ...(unfitted ? { fit_status: `no fit${covLabel ? `: ${covLabel}` : ""}; raw only, uncorrected` } : {}),
+                    source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
+                    reproduce: reproducingUrl(viewQuery()),
+                  },
+                  cells: data.cells ? { rows: data.cells.rows, resolution: data.cells.index.resolution } : null,
+                }} />
               </div>
               <div className="flex flex-col justify-center gap-5 border-t border-[var(--hairline)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                 <div>
@@ -370,19 +412,19 @@ export function Explorer() {
         )}
         </div>
       </section></Reveal>
-      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} />
-      <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "box", bbox: area.bbox }} />
+      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
+      <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} />
 
       <Reveal>
       <section id="area" className="mt-10 grid scroll-mt-24 gap-6 lg:grid-cols-[1fr_20rem]">
         <div ref={mapSlot}>
-          {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} cells={area.kind === "box" ? data?.raw.keys : undefined} onSelect={selectBox} className="h-[340px]" />
-            : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" aria-label="Map loading" />}
+          {showMap ? <AoiMap bbox={area.kind === "box" ? area.bbox : null} ring={area.kind === "polygon" ? area.ring : null} cells={area.kind !== "country" ? data?.raw.keys : undefined} onSelect={selectBox} onPolygon={selectPolygon} className="h-[340px]" />
+            : <div className="h-[340px] rounded-2xl border border-[var(--hairline)] bg-[var(--surface-2)]" role="status" aria-label="Map loading" />}
         </div>
         <div className="card p-5">
           <Eyebrow>Choose your own area</Eyebrow>
           <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
-            Press <span className="text-[var(--text-primary)]">Draw area</span> and drag a box on the map, or type bounds in degrees.
+            On the map, press <span className="text-[var(--text-primary)]">Draw box</span> and drag, or <span className="text-[var(--text-primary)]">Draw polygon</span> and click the corners (double-click or Enter to finish). Or type bounds in degrees.
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {["West", "South", "East", "North"].map((l, i) => {
@@ -412,12 +454,12 @@ export function Explorer() {
           </div>
           <button type="button" onClick={applyTyped} className="mt-3 w-full rounded-lg pill-dark px-3 py-2.5 text-sm font-medium">Show this area</button>
           <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
-            {area.kind === "box" && data && (() => { const ex = cellsExtent(data.raw.keys); return (
+            {area.kind !== "country" && data && (() => { const ex = cellsExtent(data.raw.keys); const bb = area.kind === "box" ? area.bbox : geomBbox(geomOf(area)); return (
               <span className="mb-2 block rounded-lg bg-[var(--surface-2)] p-2 text-[var(--text-secondary)]">
-                <span className="block">Requested: {area.bbox.map((v) => v.toFixed(2)).join(", ")} (W, S, E, N){bboxCrossesAntimeridian(area.bbox) && " — crosses the 180° meridian"}</span>
-                <span className="block">Effective coverage: {data.raw.keys.length} of {area.parents.length} touched cells have data{ex ? <>, spanning {ex.map((v) => v.toFixed(1)).join(", ")}</> : ""} — dashed blue on the map.</span>
+                <span className="block">{area.kind === "polygon" ? `Polygon, ${area.ring.length} corners, bounds` : "Requested"}: {bb.map((v) => v.toFixed(2)).join(", ")} (W, S, E, N){area.kind === "box" && bboxCrossesAntimeridian(area.bbox) && " — crosses the 180° meridian"}</span>
+                <span className="block">Effective coverage: {data.raw.keys.length} of {area.cells.length} selected cells have data{ex ? <>, spanning {ex.map((v) => v.toFixed(1)).join(", ")}</> : ""} — dashed blue on the map.</span>
               </span>); })()}
-            Areas resolve to the ~300 km grid cells (H3 resolution 2) they touch, anywhere in the processed FIRMS record, so a small box reports its surrounding cell. Every touched cell is included, up to the whole globe: the cells are enumerated exactly, not sampled, and none is dropped. A cell is summed whole: it can straddle a border.
+            Areas resolve to the ~45 km grid cells (H3 resolution 4, ~1,770 km²) whose centre lies inside them, anywhere in the processed FIRMS record; an area smaller than one cell uses the cell under its centre. Only the files holding those cells are downloaded (a few hundred KB each), never individual detections. Border cells keep each country&apos;s own fit; cells of countries without a fit stay raw and are left out of the harmonized series.
           </p>
         </div>
       </section>
@@ -445,4 +487,17 @@ function Coverage() {
       {ds?.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );
+}
+
+const ymTag = (t: number) => `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}`;
+
+/** Yearly totals over the months inside the range; a year with no known month is null. */
+function rangeAnnual(rows: Array<{ year: number; month: number; value: number | null }>, lo: number, hi: number,
+  inRange: (r: { year: number; month: number }) => boolean): YearTotal[] {
+  const out: YearTotal[] = [];
+  for (let y = lo; y <= hi; y += 1) {
+    const ys = rows.filter((r) => r.year === y && inRange(r) && r.value !== null);
+    out.push({ year: y, value: ys.length ? ys.reduce((a, r) => a + (r.value ?? 0), 0) : null });
+  }
+  return out;
 }

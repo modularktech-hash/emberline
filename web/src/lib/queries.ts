@@ -2,6 +2,9 @@ import type { AsyncBuffer, FileMetaData } from "hyparquet";
 // Type-only imports, relative, so this module also runs under plain Node
 // (web/scripts/verify-queries.ts) without the "@/" path alias.
 import type {
+  AreaData,
+  AreaIndex,
+  AreaRow,
   CalendarBasis,
   CalendarResult,
   CalendarRow,
@@ -76,6 +79,8 @@ export function setDataBaseUrl(url: string): void {
   datasetPromise = null;
   coveragePromise = null;
   cellDayParentsPromise = null;
+  areaIndexPromise = null;
+  areaFiles.clear();
 }
 
 /**
@@ -196,7 +201,7 @@ function openParquet(name: string): Promise<OpenFile> {
     entry = (async () => {
       const url = dataUrl(name);
       const { hp: { asyncBufferFromUrl, cachedAsyncBuffer, parquetMetadataAsync } } = await parquet();
-      if (WHOLE_FILES.has(name)) {
+      if (WHOLE_FILES.has(name) || name.startsWith("area/")) {
         const file = await fetch(url).then((r) => {
           if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
           return r.arrayBuffer();
@@ -1047,4 +1052,128 @@ export async function cellDayRowGroups(): Promise<RowGroupInfo[]> {
       parentMax: typeof max === "string" ? max : null,
     };
   });
+}
+
+/* ------------------------------------------------------------------ */
+/* area/*.parquet -- drawn areas on the H3 res-4 grid                  */
+/* ------------------------------------------------------------------ */
+
+let areaIndexPromise: Promise<AreaIndex> | null = null;
+const areaFiles = new Map<string, Promise<AreaRow[]>>();
+
+export function getAreaIndex(): Promise<AreaIndex> {
+  if (!areaIndexPromise) {
+    areaIndexPromise = fetchJson<AreaIndex>("area/index.json");
+    areaIndexPromise.catch(() => { areaIndexPromise = null; });
+  }
+  return areaIndexPromise;
+}
+
+/** Every row of one res-1 file (each is under ~0.6 MB), read once and kept. */
+function areaFile(name: string): Promise<AreaRow[]> {
+  let p = areaFiles.get(name);
+  if (!p) {
+    p = (async () => {
+      const [{ file, metadata }, { hp, compressors }] = await Promise.all([openParquet(name), parquet()]);
+      const rows = await hp.parquetReadObjects({ file, metadata, compressors,
+        columns: ["cell", "country", "year", "month", "n_modis", "n_aqua", "n_viirs", "n_harm"] });
+      return rows.map((r) => ({
+        cell: r.cell as string, country: r.country as string, year: num(r.year), month: num(r.month),
+        n_modis: num(r.n_modis), n_aqua: num(r.n_aqua), n_viirs: num(r.n_viirs),
+        n_harm: r.n_harm == null ? null : num(r.n_harm),
+      }));
+    })();
+    p.catch(() => areaFiles.delete(name));
+    areaFiles.set(name, p);
+  }
+  return p;
+}
+
+const AREA_RAW_UNIT = RAW_UNIT;
+
+/**
+ * Raw and harmonized calendars for a drawn area, from the cells whose centre
+ * lies inside it (`cells`, H3 res-4, see lib/aoi.ts geomCells) and the res-1
+ * files that hold them (`files`, lib/aoi.ts res1Of). Only those files are
+ * fetched; nothing point-level is loaded.
+ *
+ * raw        -- MODIS Terra+Aqua before 2012, Suomi-NPP VIIRS from 2012, as
+ *               the country calendars. Zero-filled over the record years once
+ *               the area has any cell with data.
+ * harmonized -- the stored n_harm (that country's own or pooled fit) over the
+ *               harmonized coverage. Rows of countries without a fit have no
+ *               harmonized value: they stay in the raw series, are left out of
+ *               this one, and are counted in `uncorrected` (never shown as corrected).
+ */
+export async function getAreaData(cells: string[], res1: string[]): Promise<AreaData> {
+  const [index, params] = await Promise.all([getAreaIndex(), getParams()]);
+  const have = new Set(index.files.map((f) => f.res1));
+  const names = res1.filter((r) => have.has(r));
+  const sets = await Promise.all(names.map((r) => areaFile(`area/${r}.parquet`)));
+  const want = new Set(cells);
+  const rows: AreaRow[] = [];
+  for (const set of sets) for (const r of set) if (want.has(r.cell)) rows.push(r);
+
+  const rawBy = new Map<number, number>(), harmBy = new Map<number, number>();
+  const withRaw = new Set<string>(), withHarm = new Set<string>();
+  const byCountry = new Map<string, number>();
+  let uncorrected = 0;
+  const uncCountries = new Set<string>();
+  for (const r of rows) {
+    const t = ym(r.year, r.month);
+    const rawV = r.year >= index.viirs_first_year ? r.n_viirs : r.n_modis;
+    rawBy.set(t, (rawBy.get(t) ?? 0) + rawV);
+    withRaw.add(r.cell);
+    byCountry.set(r.country, (byCountry.get(r.country) ?? 0) + rawV);
+    if (r.n_harm == null) { uncorrected += rawV; if (rawV) uncCountries.add(r.country); }
+    else { harmBy.set(t, (harmBy.get(t) ?? 0) + r.n_harm); withHarm.add(r.cell); }
+  }
+  const [hy, hm] = index.harmonized_first_ym.split("-").map(Number);
+  const harmFirst = ym(hy, hm);
+  const build = (mode: Series): CalendarResult => {
+    const keys = mode === "raw" ? [...withRaw] : [...withHarm];
+    const out: CalendarRow[] = [], missing: Array<{ year: number; month: number }> = [];
+    for (let year = index.first_year; year <= index.last_year; year += 1) {
+      const viirsEra = year >= index.viirs_first_year;
+      for (let month = 1; month <= 12; month += 1) {
+        const t = ym(year, month);
+        let value: number | null = null;
+        if (mode === "raw") value = keys.length ? rawBy.get(t) ?? 0 : null;
+        else value = keys.length && t >= harmFirst ? harmBy.get(t) ?? 0 : null;
+        out.push({ year, month, value, basis: mode === "raw" ? (viirsEra ? "VIIRS" : "MODIS") : viirsEra ? "predicted_from_viirs" : "observed_aqua" });
+        if (value === null) missing.push({ year, month });
+      }
+    }
+    return {
+      scope: "h3_cell", mode, unit: mode === "raw" ? AREA_RAW_UNIT : params.unit, keys: keys.sort(),
+      unknownKeys: cells.filter((c) => !withRaw.has(c)),
+      uncorrectedKeys: mode === "raw" ? [] : [...withRaw].filter((c) => !withHarm.has(c)).sort(),
+      dataset: "world", years: [index.first_year, index.last_year], rows: out, missing,
+    };
+  };
+  return {
+    raw: build("raw"), harmonized: build("harmonized"), rows, requested: cells,
+    uncorrected: { detections: uncorrected, countries: [...uncCountries].sort() },
+    countries: [...byCountry].map(([country, detections]) => ({ country, detections, fitted: !!params.countries[country] }))
+      .sort((a, b) => b.detections - a.detections),
+    fetched: { files: names.length, bytes: index.files.filter((f) => names.includes(f.res1)).reduce((a, f) => a + f.bytes, 0) },
+    index,
+  };
+}
+
+/**
+ * One calendar month's raw counts per year for a country, by sensor family
+ * (MODIS = Terra+Aqua, VIIRS = Suomi-NPP), from the country slice: the history
+ * the month-to-date comparison is measured against. Years without a row are 0
+ * inside the sensor's record (the slices are zero-filled like the calendars).
+ */
+export async function getCountryMonthHistory(country: string, month: number): Promise<Record<Sensor, Map<number, number>>> {
+  const s = await countrySlice(country);
+  const out: Record<Sensor, Map<number, number>> = { MODIS: new Map(), VIIRS: new Map() };
+  for (const [k, v] of s.raw) {
+    const [sensor, t] = k.split("|");
+    const tt = Number(t);
+    if (tt % 12 === month - 1 && (sensor === "MODIS" || sensor === "VIIRS")) out[sensor].set(Math.floor(tt / 12), v);
+  }
+  return out;
 }

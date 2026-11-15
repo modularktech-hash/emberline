@@ -43,14 +43,14 @@ const BRIEF: Array<[string, string, string, string, "done" | "partial", string?]
   ["R2", "A burning activity calendar from active-fire hotspots", "/explorer", "Explorer: month × year calendar", "done"],
   ["R3", "Number of hotspots from the early 2000s to the present", "/explorer", "Explorer: raw 2001–2025, harmonized 2003–2025", "partial", "2026 only as provisional raw counts in “This month so far”, for the countries loaded"],
   ["R4", "Which months and years had the highest activity", "/explorer", "Explorer: calendar and busiest-year readout", "done"],
-  ["R5", "Current month against the historical median", "/seasons#this-month", "Seasons and Explorer: “This month so far”", "partial", "provisional, raw, different satellites (NOAA-20 vs Suomi-NPP; drifting MODIS), not harmonized; loaded countries only"],
+  ["R5", "Current month against the historical median", "/explorer#this-month", "Explorer and Seasons: “This month so far” for 166 of 171 fitted countries and any drawn area, against the median of the chosen years", "done", "provisional, raw, near-real-time, no vegetation-type filter, platform by platform (NOAA-20 vs Suomi-NPP; drifting MODIS); never a harmonized anomaly"],
   ["R6", "Historical patterns, unusual conditions, critical periods", "/seasons", "Seasons (each month against its history), Trends (season timing)", "done"],
-  ["R7", "Select an area of interest", "/explorer", "Explorer: any fitted country or a drawn box", "done", "a box resolves to whole ~300 km grid cells (shown)"],
-  ["R8", "Select a specific date range", "/explorer", "Explorer: from/to year", "partial", "years, not arbitrary dates"],
-  ["R9", "Downloadable CSV of hotspots from a search", "/explorer", "Explorer: calendar CSV and recent-hotspot CSV (last 7 days)", "partial", "recent hotspots are 0.5° cells; full point-level history links to NASA FIRMS"],
-  ["R10", "Accessible colour ramps", "/explorer", "Calendar ramp and patterned no-data cells", "done"],
-  ["R11", "Draw the area on a map or enter latitude and longitude", "/explorer", "Explorer: draw on the map or type the four bounds", "done"],
-  ["R12", "Download analytics and visualizations", "/data", "CSV, HTML evidence brief, open Parquet and JSON files", "done"],
+  ["R7", "Select an area of interest", "/explorer", "Explorer: any country, a drawn box or polygon, or typed bounds", "done", "an area resolves to the ~45 km grid cells whose centre lies inside it (shown, with the country files they come from)"],
+  ["R8", "Select a specific date range", "/explorer", "Explorer: start and end month; points download by day", "done", "calendar, totals, this-month median and every download follow the range"],
+  ["R9", "Downloadable CSV of hotspots from a search", "/explorer", "Explorer: individual detections for the area and any dates (up to 31 days per file, archive or near-real-time), cell-level CSV for any month range, 7-day cells", "done", "points come from NASA FIRMS through this site's server; each file says points or cells, raw or harmonized"],
+  ["R10", "Accessible colour ramps", "/explorer", "Every ramp and palette checked for colour-vision deficiency, lightness order and text contrast (scripts/check_color_access.py, docs/color-accessibility.md)", "done"],
+  ["R11", "Draw the area on a map or enter latitude and longitude", "/explorer", "Explorer: draw a box or polygon on the map, or type the four bounds", "done"],
+  ["R12", "Download analytics and visualizations", "/data", "Explorer: calendar and chart as SVG or PNG, analytics JSON, calendar and cell CSV, HTML brief; open Parquet and JSON files on Data", "done"],
 ];
 
 export function AboutPage() {
@@ -134,6 +134,7 @@ export function AboutPage() {
             <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">A small lab in Tumkur, Karnataka. Emberline is open source under the MIT license.</p>
             <ul className="mt-4 space-y-1 text-sm">
               <li>Project: <a href="https://github.com/modularktech-hash/emberline" target="_blank" rel="noopener noreferrer" className="link-ul break-all">github.com/modularktech-hash/emberline</a></li>
+              <li>Colour accessibility evidence: <a href="https://github.com/modularktech-hash/emberline/blob/main/docs/color-accessibility.md" target="_blank" rel="noopener noreferrer" className="link-ul">docs/color-accessibility.md</a></li>
               <li>Challenge: <a href="https://www.spaceappschallenge.org/2026/challenges/harmonization-of-modis-and-viirs-hot-spots/" target="_blank" rel="noopener noreferrer" className="link-ul">Harmonization of MODIS and VIIRS hot spots</a> (NASA Space Apps 2026)</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">

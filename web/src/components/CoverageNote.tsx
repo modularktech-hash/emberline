@@ -2,7 +2,7 @@
 
 import { Fragment } from "react";
 import { Eyebrow } from "@/components/Figure";
-import { NOT_A_FAILURE, STATUS_LABEL, coverageCounts, coverageReason, coverageSummary } from "@/lib/coverage";
+import { NOT_A_FAILURE, STATUS_LABEL, UNFITTED_MEANING, coverageCounts, coverageReason, coverageSummary } from "@/lib/coverage";
 import { prettyName } from "@/lib/names";
 import { getCoverageStatus } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
@@ -43,6 +43,7 @@ export function CoverageNote({ country, coverage, className = "" }: { country: s
         {e.has_raw_calendar ? "Its raw record is shown, uncorrected (it keeps the 2012 sensor step)." : "It has no calendar at all in the processed record."}
         {" "}{NOT_A_FAILURE}
       </p>
+      {e.has_raw_calendar && <p className="mt-2 text-xs text-[var(--text-primary)]" data-testid="unfitted-meaning">{UNFITTED_MEANING}</p>}
       <details className="mt-2 text-xs">
         <summary className="cursor-pointer text-[var(--text-primary)]">The counts behind this</summary>
         <dl className="tabular mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">

@@ -19,9 +19,11 @@ export type CellRef = { year: number; month: number };
  * detail strip keeps showing the selection (controlled by `selected` /
  * `onSelect` when given, so it survives a raw/harmonized switch).
  */
-export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, areaName }: {
+export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, areaName, inRange }: {
   cal: CalendarResult; from: number; to: number; max: number;
   selected?: CellRef | null; onSelect?: (c: CellRef | null) => void; areaName?: string;
+  /** R8: months outside a month-level date range are shown faded and say so. */
+  inRange?: (c: CellRef) => boolean;
 }) {
   const [hover, setHover] = useState<CellRef | null>(null);
   const [ownSel, setOwnSel] = useState<CellRef | null>(null);
@@ -56,7 +58,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
   const unit = cal.mode === "raw" ? "raw detections (uncorrected)" : "harmonized Aqua-equivalent detections";
   const cellName = (y: number, m: number) => {
     const row = at(y, m);
-    return `${MONTHS[m - 1]} ${y}: ${row?.value == null ? "no data" : `${fmt(row.value)} ${unit}`}${row ? `, basis ${BASIS[row.basis] ?? row.basis}` : ""}`;
+    return `${MONTHS[m - 1]} ${y}: ${row?.value == null ? "no data" : `${fmt(row.value)} ${unit}`}${row ? `, basis ${BASIS[row.basis] ?? row.basis}` : ""}${inRange && !inRange({ year: y, month: m }) ? ", outside the selected date range" : ""}`;
   };
   const focusCell = (c: CellRef) => {
     setCursor(c);
@@ -133,6 +135,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
                   className={`h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-2 sm:h-[22px] ${scrub != null && y !== scrub ? "opacity-35" : ""} ${sel && sel.year === y && sel.month === mi + 1 ? "ring-2 ring-[var(--ink)]" : ""}`}
                   style={{
                     background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, var(--hairline) 3px 4px)" : RAMP[idx],
+                    opacity: inRange && !inRange({ year: y, month: mi + 1 }) ? 0.18 : undefined,
                     transition: `background-color 600ms cubic-bezier(0.22,1,0.36,1) ${yi * 14}ms`,
                     ["--ci" as string]: yi + mi,
                   }}

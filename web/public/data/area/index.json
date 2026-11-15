@@ -1,0 +1,2455 @@
+{
+ "resolution": 4,
+ "cell_area_km2_mean": 1770.3,
+ "file_key": "H3 res-1 ancestor of the cell",
+ "row_order": "h3_parent (res 3), cell, year, month, country",
+ "columns": {
+  "cell": "H3 res-4 cell",
+  "h3_parent": "H3 res-3 parent of the cell",
+  "country": "FIRMS country file the detections came from (a border cell has one row per country)",
+  "n_modis": "raw MODIS Terra+Aqua detections",
+  "n_aqua": "raw Aqua detections",
+  "n_viirs": "raw Suomi-NPP VIIRS detections",
+  "n_harm": "harmonized Aqua-equivalent detections (observed Aqua before 2012, predicted from VIIRS after); null = country has no fit, uncorrected"
+ },
+ "fit_version": "v1-20261114T1240",
+ "harmonized_first_ym": "2002-07",
+ "first_year": 2001,
+ "last_year": 2025,
+ "viirs_first_year": 2012,
+ "filters": "same filtered detections as the country calendars (run_global.py / build_tables.py)",
+ "files": [
+  {
+   "file": "area/8100bffffffffff.parquet",
+   "res1": "8100bffffffffff",
+   "rows": 8,
+   "bytes": 3436
+  },
+  {
+   "file": "area/81013ffffffffff.parquet",
+   "res1": "81013ffffffffff",
+   "rows": 117,
+   "bytes": 4408
+  },
+  {
+   "file": "area/8101bffffffffff.parquet",
+   "res1": "8101bffffffffff",
+   "rows": 23,
+   "bytes": 3592
+  },
+  {
+   "file": "area/81023ffffffffff.parquet",
+   "res1": "81023ffffffffff",
+   "rows": 2,
+   "bytes": 3255
+  },
+  {
+   "file": "area/81027ffffffffff.parquet",
+   "res1": "81027ffffffffff",
+   "rows": 8,
+   "bytes": 3395
+  },
+  {
+   "file": "area/8102bffffffffff.parquet",
+   "res1": "8102bffffffffff",
+   "rows": 4,
+   "bytes": 3316
+  },
+  {
+   "file": "area/8102fffffffffff.parquet",
+   "res1": "8102fffffffffff",
+   "rows": 15,
+   "bytes": 3422
+  },
+  {
+   "file": "area/81037ffffffffff.parquet",
+   "res1": "81037ffffffffff",
+   "rows": 11,
+   "bytes": 3316
+  },
+  {
+   "file": "area/81043ffffffffff.parquet",
+   "res1": "81043ffffffffff",
+   "rows": 34,
+   "bytes": 3871
+  },
+  {
+   "file": "area/8104bffffffffff.parquet",
+   "res1": "8104bffffffffff",
+   "rows": 4457,
+   "bytes": 32354
+  },
+  {
+   "file": "area/8104fffffffffff.parquet",
+   "res1": "8104fffffffffff",
+   "rows": 1296,
+   "bytes": 12579
+  },
+  {
+   "file": "area/81053ffffffffff.parquet",
+   "res1": "81053ffffffffff",
+   "rows": 5,
+   "bytes": 3427
+  },
+  {
+   "file": "area/8105bffffffffff.parquet",
+   "res1": "8105bffffffffff",
+   "rows": 932,
+   "bytes": 10634
+  },
+  {
+   "file": "area/81063ffffffffff.parquet",
+   "res1": "81063ffffffffff",
+   "rows": 25,
+   "bytes": 3398
+  },
+  {
+   "file": "area/8106bffffffffff.parquet",
+   "res1": "8106bffffffffff",
+   "rows": 10,
+   "bytes": 3315
+  },
+  {
+   "file": "area/8106fffffffffff.parquet",
+   "res1": "8106fffffffffff",
+   "rows": 79,
+   "bytes": 3691
+  },
+  {
+   "file": "area/81077ffffffffff.parquet",
+   "res1": "81077ffffffffff",
+   "rows": 88,
+   "bytes": 3908
+  },
+  {
+   "file": "area/8107bffffffffff.parquet",
+   "res1": "8107bffffffffff",
+   "rows": 4,
+   "bytes": 3247
+  },
+  {
+   "file": "area/81083ffffffffff.parquet",
+   "res1": "81083ffffffffff",
+   "rows": 453,
+   "bytes": 6160
+  },
+  {
+   "file": "area/8108bffffffffff.parquet",
+   "res1": "8108bffffffffff",
+   "rows": 2990,
+   "bytes": 17281
+  },
+  {
+   "file": "area/8108fffffffffff.parquet",
+   "res1": "8108fffffffffff",
+   "rows": 1696,
+   "bytes": 12393
+  },
+  {
+   "file": "area/81097ffffffffff.parquet",
+   "res1": "81097ffffffffff",
+   "rows": 14,
+   "bytes": 3401
+  },
+  {
+   "file": "area/8109bffffffffff.parquet",
+   "res1": "8109bffffffffff",
+   "rows": 1109,
+   "bytes": 9453
+  },
+  {
+   "file": "area/810a3ffffffffff.parquet",
+   "res1": "810a3ffffffffff",
+   "rows": 2827,
+   "bytes": 22298
+  },
+  {
+   "file": "area/810a7ffffffffff.parquet",
+   "res1": "810a7ffffffffff",
+   "rows": 312,
+   "bytes": 6099
+  },
+  {
+   "file": "area/810abffffffffff.parquet",
+   "res1": "810abffffffffff",
+   "rows": 14211,
+   "bytes": 80973
+  },
+  {
+   "file": "area/810afffffffffff.parquet",
+   "res1": "810afffffffffff",
+   "rows": 2789,
+   "bytes": 25615
+  },
+  {
+   "file": "area/810b3ffffffffff.parquet",
+   "res1": "810b3ffffffffff",
+   "rows": 9728,
+   "bytes": 50620
+  },
+  {
+   "file": "area/810b7ffffffffff.parquet",
+   "res1": "810b7ffffffffff",
+   "rows": 2701,
+   "bytes": 19493
+  },
+  {
+   "file": "area/810bbffffffffff.parquet",
+   "res1": "810bbffffffffff",
+   "rows": 17291,
+   "bytes": 87946
+  },
+  {
+   "file": "area/810c3ffffffffff.parquet",
+   "res1": "810c3ffffffffff",
+   "rows": 1754,
+   "bytes": 16315
+  },
+  {
+   "file": "area/810c7ffffffffff.parquet",
+   "res1": "810c7ffffffffff",
+   "rows": 496,
+   "bytes": 7208
+  },
+  {
+   "file": "area/810cbffffffffff.parquet",
+   "res1": "810cbffffffffff",
+   "rows": 7,
+   "bytes": 3438
+  },
+  {
+   "file": "area/810cfffffffffff.parquet",
+   "res1": "810cfffffffffff",
+   "rows": 130,
+   "bytes": 4899
+  },
+  {
+   "file": "area/810d3ffffffffff.parquet",
+   "res1": "810d3ffffffffff",
+   "rows": 145,
+   "bytes": 4649
+  },
+  {
+   "file": "area/810d7ffffffffff.parquet",
+   "res1": "810d7ffffffffff",
+   "rows": 2669,
+   "bytes": 21834
+  },
+  {
+   "file": "area/810dbffffffffff.parquet",
+   "res1": "810dbffffffffff",
+   "rows": 128,
+   "bytes": 4717
+  },
+  {
+   "file": "area/810e3ffffffffff.parquet",
+   "res1": "810e3ffffffffff",
+   "rows": 40,
+   "bytes": 3660
+  },
+  {
+   "file": "area/810e7ffffffffff.parquet",
+   "res1": "810e7ffffffffff",
+   "rows": 1144,
+   "bytes": 11570
+  },
+  {
+   "file": "area/810ebffffffffff.parquet",
+   "res1": "810ebffffffffff",
+   "rows": 1416,
+   "bytes": 12690
+  },
+  {
+   "file": "area/810efffffffffff.parquet",
+   "res1": "810efffffffffff",
+   "rows": 1441,
+   "bytes": 12701
+  },
+  {
+   "file": "area/810f3ffffffffff.parquet",
+   "res1": "810f3ffffffffff",
+   "rows": 8,
+   "bytes": 3375
+  },
+  {
+   "file": "area/810f7ffffffffff.parquet",
+   "res1": "810f7ffffffffff",
+   "rows": 47,
+   "bytes": 3793
+  },
+  {
+   "file": "area/810fbffffffffff.parquet",
+   "res1": "810fbffffffffff",
+   "rows": 78,
+   "bytes": 4005
+  },
+  {
+   "file": "area/81103ffffffffff.parquet",
+   "res1": "81103ffffffffff",
+   "rows": 11233,
+   "bytes": 50999
+  },
+  {
+   "file": "area/81107ffffffffff.parquet",
+   "res1": "81107ffffffffff",
+   "rows": 2917,
+   "bytes": 19604
+  },
+  {
+   "file": "area/8110bffffffffff.parquet",
+   "res1": "8110bffffffffff",
+   "rows": 40941,
+   "bytes": 171233
+  },
+  {
+   "file": "area/8110fffffffffff.parquet",
+   "res1": "8110fffffffffff",
+   "rows": 18746,
+   "bytes": 81084
+  },
+  {
+   "file": "area/81113ffffffffff.parquet",
+   "res1": "81113ffffffffff",
+   "rows": 8979,
+   "bytes": 45377
+  },
+  {
+   "file": "area/81117ffffffffff.parquet",
+   "res1": "81117ffffffffff",
+   "rows": 1103,
+   "bytes": 9510
+  },
+  {
+   "file": "area/8111bffffffffff.parquet",
+   "res1": "8111bffffffffff",
+   "rows": 44286,
+   "bytes": 210563
+  },
+  {
+   "file": "area/81123ffffffffff.parquet",
+   "res1": "81123ffffffffff",
+   "rows": 9527,
+   "bytes": 60187
+  },
+  {
+   "file": "area/81127ffffffffff.parquet",
+   "res1": "81127ffffffffff",
+   "rows": 11801,
+   "bytes": 66956
+  },
+  {
+   "file": "area/8112bffffffffff.parquet",
+   "res1": "8112bffffffffff",
+   "rows": 6543,
+   "bytes": 37996
+  },
+  {
+   "file": "area/8112fffffffffff.parquet",
+   "res1": "8112fffffffffff",
+   "rows": 18634,
+   "bytes": 91467
+  },
+  {
+   "file": "area/81133ffffffffff.parquet",
+   "res1": "81133ffffffffff",
+   "rows": 1393,
+   "bytes": 14354
+  },
+  {
+   "file": "area/81137ffffffffff.parquet",
+   "res1": "81137ffffffffff",
+   "rows": 1367,
+   "bytes": 13554
+  },
+  {
+   "file": "area/8113bffffffffff.parquet",
+   "res1": "8113bffffffffff",
+   "rows": 1705,
+   "bytes": 15305
+  },
+  {
+   "file": "area/81143ffffffffff.parquet",
+   "res1": "81143ffffffffff",
+   "rows": 9668,
+   "bytes": 58882
+  },
+  {
+   "file": "area/81147ffffffffff.parquet",
+   "res1": "81147ffffffffff",
+   "rows": 3721,
+   "bytes": 26932
+  },
+  {
+   "file": "area/8114bffffffffff.parquet",
+   "res1": "8114bffffffffff",
+   "rows": 37627,
+   "bytes": 189815
+  },
+  {
+   "file": "area/8114fffffffffff.parquet",
+   "res1": "8114fffffffffff",
+   "rows": 6354,
+   "bytes": 37245
+  },
+  {
+   "file": "area/81153ffffffffff.parquet",
+   "res1": "81153ffffffffff",
+   "rows": 8623,
+   "bytes": 52997
+  },
+  {
+   "file": "area/81157ffffffffff.parquet",
+   "res1": "81157ffffffffff",
+   "rows": 8343,
+   "bytes": 55563
+  },
+  {
+   "file": "area/8115bffffffffff.parquet",
+   "res1": "8115bffffffffff",
+   "rows": 17025,
+   "bytes": 95185
+  },
+  {
+   "file": "area/81163ffffffffff.parquet",
+   "res1": "81163ffffffffff",
+   "rows": 716,
+   "bytes": 7364
+  },
+  {
+   "file": "area/8116bffffffffff.parquet",
+   "res1": "8116bffffffffff",
+   "rows": 20,
+   "bytes": 3609
+  },
+  {
+   "file": "area/81173ffffffffff.parquet",
+   "res1": "81173ffffffffff",
+   "rows": 2436,
+   "bytes": 18182
+  },
+  {
+   "file": "area/81177ffffffffff.parquet",
+   "res1": "81177ffffffffff",
+   "rows": 910,
+   "bytes": 10196
+  },
+  {
+   "file": "area/8117bffffffffff.parquet",
+   "res1": "8117bffffffffff",
+   "rows": 71,
+   "bytes": 4027
+  },
+  {
+   "file": "area/81183ffffffffff.parquet",
+   "res1": "81183ffffffffff",
+   "rows": 1670,
+   "bytes": 11984
+  },
+  {
+   "file": "area/81187ffffffffff.parquet",
+   "res1": "81187ffffffffff",
+   "rows": 5883,
+   "bytes": 29388
+  },
+  {
+   "file": "area/81193ffffffffff.parquet",
+   "res1": "81193ffffffffff",
+   "rows": 1136,
+   "bytes": 9535
+  },
+  {
+   "file": "area/81197ffffffffff.parquet",
+   "res1": "81197ffffffffff",
+   "rows": 9519,
+   "bytes": 44207
+  },
+  {
+   "file": "area/811abffffffffff.parquet",
+   "res1": "811abffffffffff",
+   "rows": 71,
+   "bytes": 3976
+  },
+  {
+   "file": "area/811b3ffffffffff.parquet",
+   "res1": "811b3ffffffffff",
+   "rows": 3,
+   "bytes": 3270
+  },
+  {
+   "file": "area/811bbffffffffff.parquet",
+   "res1": "811bbffffffffff",
+   "rows": 334,
+   "bytes": 5887
+  },
+  {
+   "file": "area/811d3ffffffffff.parquet",
+   "res1": "811d3ffffffffff",
+   "rows": 1,
+   "bytes": 3288
+  },
+  {
+   "file": "area/811e3ffffffffff.parquet",
+   "res1": "811e3ffffffffff",
+   "rows": 29556,
+   "bytes": 123009
+  },
+  {
+   "file": "area/811e7ffffffffff.parquet",
+   "res1": "811e7ffffffffff",
+   "rows": 51364,
+   "bytes": 239827
+  },
+  {
+   "file": "area/811ebffffffffff.parquet",
+   "res1": "811ebffffffffff",
+   "rows": 21336,
+   "bytes": 95601
+  },
+  {
+   "file": "area/811efffffffffff.parquet",
+   "res1": "811efffffffffff",
+   "rows": 44441,
+   "bytes": 207480
+  },
+  {
+   "file": "area/811f3ffffffffff.parquet",
+   "res1": "811f3ffffffffff",
+   "rows": 11079,
+   "bytes": 48680
+  },
+  {
+   "file": "area/811f7ffffffffff.parquet",
+   "res1": "811f7ffffffffff",
+   "rows": 20118,
+   "bytes": 90505
+  },
+  {
+   "file": "area/811fbffffffffff.parquet",
+   "res1": "811fbffffffffff",
+   "rows": 19495,
+   "bytes": 80440
+  },
+  {
+   "file": "area/81203ffffffffff.parquet",
+   "res1": "81203ffffffffff",
+   "rows": 19298,
+   "bytes": 94395
+  },
+  {
+   "file": "area/81207ffffffffff.parquet",
+   "res1": "81207ffffffffff",
+   "rows": 19905,
+   "bytes": 96036
+  },
+  {
+   "file": "area/8120bffffffffff.parquet",
+   "res1": "8120bffffffffff",
+   "rows": 15592,
+   "bytes": 76554
+  },
+  {
+   "file": "area/8120fffffffffff.parquet",
+   "res1": "8120fffffffffff",
+   "rows": 11991,
+   "bytes": 58161
+  },
+  {
+   "file": "area/81213ffffffffff.parquet",
+   "res1": "81213ffffffffff",
+   "rows": 24544,
+   "bytes": 112742
+  },
+  {
+   "file": "area/81217ffffffffff.parquet",
+   "res1": "81217ffffffffff",
+   "rows": 34056,
+   "bytes": 164037
+  },
+  {
+   "file": "area/8121bffffffffff.parquet",
+   "res1": "8121bffffffffff",
+   "rows": 15311,
+   "bytes": 74593
+  },
+  {
+   "file": "area/8122fffffffffff.parquet",
+   "res1": "8122fffffffffff",
+   "rows": 12,
+   "bytes": 3477
+  },
+  {
+   "file": "area/81243ffffffffff.parquet",
+   "res1": "81243ffffffffff",
+   "rows": 430,
+   "bytes": 6334
+  },
+  {
+   "file": "area/81247ffffffffff.parquet",
+   "res1": "81247ffffffffff",
+   "rows": 1911,
+   "bytes": 15188
+  },
+  {
+   "file": "area/8124bffffffffff.parquet",
+   "res1": "8124bffffffffff",
+   "rows": 4646,
+   "bytes": 24597
+  },
+  {
+   "file": "area/8124fffffffffff.parquet",
+   "res1": "8124fffffffffff",
+   "rows": 18055,
+   "bytes": 83746
+  },
+  {
+   "file": "area/81253ffffffffff.parquet",
+   "res1": "81253ffffffffff",
+   "rows": 6784,
+   "bytes": 36848
+  },
+  {
+   "file": "area/81257ffffffffff.parquet",
+   "res1": "81257ffffffffff",
+   "rows": 16285,
+   "bytes": 85902
+  },
+  {
+   "file": "area/8125bffffffffff.parquet",
+   "res1": "8125bffffffffff",
+   "rows": 5661,
+   "bytes": 30346
+  },
+  {
+   "file": "area/81263ffffffffff.parquet",
+   "res1": "81263ffffffffff",
+   "rows": 28611,
+   "bytes": 126103
+  },
+  {
+   "file": "area/81267ffffffffff.parquet",
+   "res1": "81267ffffffffff",
+   "rows": 52490,
+   "bytes": 217136
+  },
+  {
+   "file": "area/8126bffffffffff.parquet",
+   "res1": "8126bffffffffff",
+   "rows": 11693,
+   "bytes": 55657
+  },
+  {
+   "file": "area/8126fffffffffff.parquet",
+   "res1": "8126fffffffffff",
+   "rows": 50295,
+   "bytes": 214975
+  },
+  {
+   "file": "area/81273ffffffffff.parquet",
+   "res1": "81273ffffffffff",
+   "rows": 17324,
+   "bytes": 86045
+  },
+  {
+   "file": "area/81277ffffffffff.parquet",
+   "res1": "81277ffffffffff",
+   "rows": 12607,
+   "bytes": 56565
+  },
+  {
+   "file": "area/8127bffffffffff.parquet",
+   "res1": "8127bffffffffff",
+   "rows": 16894,
+   "bytes": 81115
+  },
+  {
+   "file": "area/81283ffffffffff.parquet",
+   "res1": "81283ffffffffff",
+   "rows": 15103,
+   "bytes": 76251
+  },
+  {
+   "file": "area/8128bffffffffff.parquet",
+   "res1": "8128bffffffffff",
+   "rows": 22370,
+   "bytes": 112618
+  },
+  {
+   "file": "area/8128fffffffffff.parquet",
+   "res1": "8128fffffffffff",
+   "rows": 8857,
+   "bytes": 46029
+  },
+  {
+   "file": "area/81293ffffffffff.parquet",
+   "res1": "81293ffffffffff",
+   "rows": 405,
+   "bytes": 5766
+  },
+  {
+   "file": "area/8129bffffffffff.parquet",
+   "res1": "8129bffffffffff",
+   "rows": 15639,
+   "bytes": 75064
+  },
+  {
+   "file": "area/812a3ffffffffff.parquet",
+   "res1": "812a3ffffffffff",
+   "rows": 3498,
+   "bytes": 17522
+  },
+  {
+   "file": "area/812a7ffffffffff.parquet",
+   "res1": "812a7ffffffffff",
+   "rows": 2,
+   "bytes": 3195
+  },
+  {
+   "file": "area/812abffffffffff.parquet",
+   "res1": "812abffffffffff",
+   "rows": 30432,
+   "bytes": 118010
+  },
+  {
+   "file": "area/812afffffffffff.parquet",
+   "res1": "812afffffffffff",
+   "rows": 9969,
+   "bytes": 45515
+  },
+  {
+   "file": "area/812b3ffffffffff.parquet",
+   "res1": "812b3ffffffffff",
+   "rows": 1979,
+   "bytes": 13511
+  },
+  {
+   "file": "area/812bbffffffffff.parquet",
+   "res1": "812bbffffffffff",
+   "rows": 6193,
+   "bytes": 31500
+  },
+  {
+   "file": "area/812c3ffffffffff.parquet",
+   "res1": "812c3ffffffffff",
+   "rows": 35854,
+   "bytes": 169124
+  },
+  {
+   "file": "area/812c7ffffffffff.parquet",
+   "res1": "812c7ffffffffff",
+   "rows": 9572,
+   "bytes": 50088
+  },
+  {
+   "file": "area/812cbffffffffff.parquet",
+   "res1": "812cbffffffffff",
+   "rows": 31835,
+   "bytes": 140717
+  },
+  {
+   "file": "area/812cfffffffffff.parquet",
+   "res1": "812cfffffffffff",
+   "rows": 11173,
+   "bytes": 50642
+  },
+  {
+   "file": "area/812d3ffffffffff.parquet",
+   "res1": "812d3ffffffffff",
+   "rows": 19555,
+   "bytes": 84580
+  },
+  {
+   "file": "area/812d7ffffffffff.parquet",
+   "res1": "812d7ffffffffff",
+   "rows": 49464,
+   "bytes": 225397
+  },
+  {
+   "file": "area/812dbffffffffff.parquet",
+   "res1": "812dbffffffffff",
+   "rows": 19119,
+   "bytes": 92401
+  },
+  {
+   "file": "area/812e3ffffffffff.parquet",
+   "res1": "812e3ffffffffff",
+   "rows": 3497,
+   "bytes": 16040
+  },
+  {
+   "file": "area/812e7ffffffffff.parquet",
+   "res1": "812e7ffffffffff",
+   "rows": 6093,
+   "bytes": 25080
+  },
+  {
+   "file": "area/812ebffffffffff.parquet",
+   "res1": "812ebffffffffff",
+   "rows": 773,
+   "bytes": 7347
+  },
+  {
+   "file": "area/812efffffffffff.parquet",
+   "res1": "812efffffffffff",
+   "rows": 9972,
+   "bytes": 54011
+  },
+  {
+   "file": "area/812f7ffffffffff.parquet",
+   "res1": "812f7ffffffffff",
+   "rows": 1687,
+   "bytes": 10666
+  },
+  {
+   "file": "area/81303ffffffffff.parquet",
+   "res1": "81303ffffffffff",
+   "rows": 18080,
+   "bytes": 84322
+  },
+  {
+   "file": "area/8130bffffffffff.parquet",
+   "res1": "8130bffffffffff",
+   "rows": 38250,
+   "bytes": 151041
+  },
+  {
+   "file": "area/8130fffffffffff.parquet",
+   "res1": "8130fffffffffff",
+   "rows": 9117,
+   "bytes": 37592
+  },
+  {
+   "file": "area/81313ffffffffff.parquet",
+   "res1": "81313ffffffffff",
+   "rows": 22858,
+   "bytes": 110780
+  },
+  {
+   "file": "area/81317ffffffffff.parquet",
+   "res1": "81317ffffffffff",
+   "rows": 21355,
+   "bytes": 103508
+  },
+  {
+   "file": "area/8131bffffffffff.parquet",
+   "res1": "8131bffffffffff",
+   "rows": 42158,
+   "bytes": 181403
+  },
+  {
+   "file": "area/81343ffffffffff.parquet",
+   "res1": "81343ffffffffff",
+   "rows": 84,
+   "bytes": 3924
+  },
+  {
+   "file": "area/81347ffffffffff.parquet",
+   "res1": "81347ffffffffff",
+   "rows": 347,
+   "bytes": 5660
+  },
+  {
+   "file": "area/81353ffffffffff.parquet",
+   "res1": "81353ffffffffff",
+   "rows": 13,
+   "bytes": 3396
+  },
+  {
+   "file": "area/8135bffffffffff.parquet",
+   "res1": "8135bffffffffff",
+   "rows": 4,
+   "bytes": 3297
+  },
+  {
+   "file": "area/81383ffffffffff.parquet",
+   "res1": "81383ffffffffff",
+   "rows": 7645,
+   "bytes": 39157
+  },
+  {
+   "file": "area/81387ffffffffff.parquet",
+   "res1": "81387ffffffffff",
+   "rows": 10915,
+   "bytes": 55763
+  },
+  {
+   "file": "area/8138bffffffffff.parquet",
+   "res1": "8138bffffffffff",
+   "rows": 233,
+   "bytes": 5040
+  },
+  {
+   "file": "area/8138fffffffffff.parquet",
+   "res1": "8138fffffffffff",
+   "rows": 2250,
+   "bytes": 15216
+  },
+  {
+   "file": "area/81393ffffffffff.parquet",
+   "res1": "81393ffffffffff",
+   "rows": 26451,
+   "bytes": 108053
+  },
+  {
+   "file": "area/81397ffffffffff.parquet",
+   "res1": "81397ffffffffff",
+   "rows": 13066,
+   "bytes": 57329
+  },
+  {
+   "file": "area/8139bffffffffff.parquet",
+   "res1": "8139bffffffffff",
+   "rows": 3198,
+   "bytes": 18072
+  },
+  {
+   "file": "area/813c3ffffffffff.parquet",
+   "res1": "813c3ffffffffff",
+   "rows": 20159,
+   "bytes": 103183
+  },
+  {
+   "file": "area/813c7ffffffffff.parquet",
+   "res1": "813c7ffffffffff",
+   "rows": 9718,
+   "bytes": 50677
+  },
+  {
+   "file": "area/813cbffffffffff.parquet",
+   "res1": "813cbffffffffff",
+   "rows": 31906,
+   "bytes": 160124
+  },
+  {
+   "file": "area/813cfffffffffff.parquet",
+   "res1": "813cfffffffffff",
+   "rows": 37550,
+   "bytes": 207743
+  },
+  {
+   "file": "area/813d3ffffffffff.parquet",
+   "res1": "813d3ffffffffff",
+   "rows": 16177,
+   "bytes": 88897
+  },
+  {
+   "file": "area/813d7ffffffffff.parquet",
+   "res1": "813d7ffffffffff",
+   "rows": 375,
+   "bytes": 5275
+  },
+  {
+   "file": "area/813dbffffffffff.parquet",
+   "res1": "813dbffffffffff",
+   "rows": 38148,
+   "bytes": 185819
+  },
+  {
+   "file": "area/813e3ffffffffff.parquet",
+   "res1": "813e3ffffffffff",
+   "rows": 2741,
+   "bytes": 17464
+  },
+  {
+   "file": "area/813e7ffffffffff.parquet",
+   "res1": "813e7ffffffffff",
+   "rows": 8760,
+   "bytes": 42731
+  },
+  {
+   "file": "area/813ebffffffffff.parquet",
+   "res1": "813ebffffffffff",
+   "rows": 50,
+   "bytes": 3781
+  },
+  {
+   "file": "area/813efffffffffff.parquet",
+   "res1": "813efffffffffff",
+   "rows": 791,
+   "bytes": 8044
+  },
+  {
+   "file": "area/813f3ffffffffff.parquet",
+   "res1": "813f3ffffffffff",
+   "rows": 6638,
+   "bytes": 35374
+  },
+  {
+   "file": "area/813f7ffffffffff.parquet",
+   "res1": "813f7ffffffffff",
+   "rows": 10833,
+   "bytes": 51607
+  },
+  {
+   "file": "area/813fbffffffffff.parquet",
+   "res1": "813fbffffffffff",
+   "rows": 2752,
+   "bytes": 17373
+  },
+  {
+   "file": "area/81403ffffffffff.parquet",
+   "res1": "81403ffffffffff",
+   "rows": 47345,
+   "bytes": 200464
+  },
+  {
+   "file": "area/81407ffffffffff.parquet",
+   "res1": "81407ffffffffff",
+   "rows": 46724,
+   "bytes": 234377
+  },
+  {
+   "file": "area/8140bffffffffff.parquet",
+   "res1": "8140bffffffffff",
+   "rows": 38812,
+   "bytes": 165120
+  },
+  {
+   "file": "area/8140fffffffffff.parquet",
+   "res1": "8140fffffffffff",
+   "rows": 14367,
+   "bytes": 61860
+  },
+  {
+   "file": "area/81413ffffffffff.parquet",
+   "res1": "81413ffffffffff",
+   "rows": 18715,
+   "bytes": 78395
+  },
+  {
+   "file": "area/81417ffffffffff.parquet",
+   "res1": "81417ffffffffff",
+   "rows": 50560,
+   "bytes": 256078
+  },
+  {
+   "file": "area/8141bffffffffff.parquet",
+   "res1": "8141bffffffffff",
+   "rows": 49430,
+   "bytes": 190154
+  },
+  {
+   "file": "area/81423ffffffffff.parquet",
+   "res1": "81423ffffffffff",
+   "rows": 2952,
+   "bytes": 18052
+  },
+  {
+   "file": "area/81427ffffffffff.parquet",
+   "res1": "81427ffffffffff",
+   "rows": 34759,
+   "bytes": 179318
+  },
+  {
+   "file": "area/8142fffffffffff.parquet",
+   "res1": "8142fffffffffff",
+   "rows": 19880,
+   "bytes": 92529
+  },
+  {
+   "file": "area/81433ffffffffff.parquet",
+   "res1": "81433ffffffffff",
+   "rows": 10172,
+   "bytes": 45241
+  },
+  {
+   "file": "area/81437ffffffffff.parquet",
+   "res1": "81437ffffffffff",
+   "rows": 6934,
+   "bytes": 36328
+  },
+  {
+   "file": "area/8143bffffffffff.parquet",
+   "res1": "8143bffffffffff",
+   "rows": 4556,
+   "bytes": 25637
+  },
+  {
+   "file": "area/81443ffffffffff.parquet",
+   "res1": "81443ffffffffff",
+   "rows": 6298,
+   "bytes": 32590
+  },
+  {
+   "file": "area/81447ffffffffff.parquet",
+   "res1": "81447ffffffffff",
+   "rows": 51848,
+   "bytes": 225471
+  },
+  {
+   "file": "area/8144bffffffffff.parquet",
+   "res1": "8144bffffffffff",
+   "rows": 8716,
+   "bytes": 43908
+  },
+  {
+   "file": "area/8144fffffffffff.parquet",
+   "res1": "8144fffffffffff",
+   "rows": 63305,
+   "bytes": 272974
+  },
+  {
+   "file": "area/81453ffffffffff.parquet",
+   "res1": "81453ffffffffff",
+   "rows": 36637,
+   "bytes": 194600
+  },
+  {
+   "file": "area/81457ffffffffff.parquet",
+   "res1": "81457ffffffffff",
+   "rows": 2847,
+   "bytes": 18323
+  },
+  {
+   "file": "area/8145bffffffffff.parquet",
+   "res1": "8145bffffffffff",
+   "rows": 15156,
+   "bytes": 77739
+  },
+  {
+   "file": "area/81467ffffffffff.parquet",
+   "res1": "81467ffffffffff",
+   "rows": 268,
+   "bytes": 4975
+  },
+  {
+   "file": "area/8147bffffffffff.parquet",
+   "res1": "8147bffffffffff",
+   "rows": 1,
+   "bytes": 3448
+  },
+  {
+   "file": "area/81483ffffffffff.parquet",
+   "res1": "81483ffffffffff",
+   "rows": 21520,
+   "bytes": 105260
+  },
+  {
+   "file": "area/81487ffffffffff.parquet",
+   "res1": "81487ffffffffff",
+   "rows": 6858,
+   "bytes": 36254
+  },
+  {
+   "file": "area/8148bffffffffff.parquet",
+   "res1": "8148bffffffffff",
+   "rows": 36633,
+   "bytes": 162834
+  },
+  {
+   "file": "area/8148fffffffffff.parquet",
+   "res1": "8148fffffffffff",
+   "rows": 18419,
+   "bytes": 87347
+  },
+  {
+   "file": "area/8149bffffffffff.parquet",
+   "res1": "8149bffffffffff",
+   "rows": 49357,
+   "bytes": 235223
+  },
+  {
+   "file": "area/814a3ffffffffff.parquet",
+   "res1": "814a3ffffffffff",
+   "rows": 57,
+   "bytes": 3704
+  },
+  {
+   "file": "area/814a7ffffffffff.parquet",
+   "res1": "814a7ffffffffff",
+   "rows": 5,
+   "bytes": 3273
+  },
+  {
+   "file": "area/814abffffffffff.parquet",
+   "res1": "814abffffffffff",
+   "rows": 23,
+   "bytes": 3502
+  },
+  {
+   "file": "area/814b3ffffffffff.parquet",
+   "res1": "814b3ffffffffff",
+   "rows": 3539,
+   "bytes": 17513
+  },
+  {
+   "file": "area/814b7ffffffffff.parquet",
+   "res1": "814b7ffffffffff",
+   "rows": 2873,
+   "bytes": 15328
+  },
+  {
+   "file": "area/814bbffffffffff.parquet",
+   "res1": "814bbffffffffff",
+   "rows": 3442,
+   "bytes": 16863
+  },
+  {
+   "file": "area/814cbffffffffff.parquet",
+   "res1": "814cbffffffffff",
+   "rows": 6662,
+   "bytes": 35339
+  },
+  {
+   "file": "area/814cfffffffffff.parquet",
+   "res1": "814cfffffffffff",
+   "rows": 7924,
+   "bytes": 40763
+  },
+  {
+   "file": "area/814d7ffffffffff.parquet",
+   "res1": "814d7ffffffffff",
+   "rows": 22,
+   "bytes": 3340
+  },
+  {
+   "file": "area/814e7ffffffffff.parquet",
+   "res1": "814e7ffffffffff",
+   "rows": 25,
+   "bytes": 3497
+  },
+  {
+   "file": "area/814f7ffffffffff.parquet",
+   "res1": "814f7ffffffffff",
+   "rows": 204,
+   "bytes": 4010
+  },
+  {
+   "file": "area/81523ffffffffff.parquet",
+   "res1": "81523ffffffffff",
+   "rows": 2938,
+   "bytes": 17598
+  },
+  {
+   "file": "area/81527ffffffffff.parquet",
+   "res1": "81527ffffffffff",
+   "rows": 316,
+   "bytes": 5545
+  },
+  {
+   "file": "area/8152bffffffffff.parquet",
+   "res1": "8152bffffffffff",
+   "rows": 26954,
+   "bytes": 138842
+  },
+  {
+   "file": "area/8152fffffffffff.parquet",
+   "res1": "8152fffffffffff",
+   "rows": 2283,
+   "bytes": 14611
+  },
+  {
+   "file": "area/81533ffffffffff.parquet",
+   "res1": "81533ffffffffff",
+   "rows": 3130,
+   "bytes": 17898
+  },
+  {
+   "file": "area/81537ffffffffff.parquet",
+   "res1": "81537ffffffffff",
+   "rows": 5596,
+   "bytes": 28196
+  },
+  {
+   "file": "area/8153bffffffffff.parquet",
+   "res1": "8153bffffffffff",
+   "rows": 2599,
+   "bytes": 17278
+  },
+  {
+   "file": "area/81543ffffffffff.parquet",
+   "res1": "81543ffffffffff",
+   "rows": 22081,
+   "bytes": 118087
+  },
+  {
+   "file": "area/81547ffffffffff.parquet",
+   "res1": "81547ffffffffff",
+   "rows": 66356,
+   "bytes": 350622
+  },
+  {
+   "file": "area/8154bffffffffff.parquet",
+   "res1": "8154bffffffffff",
+   "rows": 1133,
+   "bytes": 9349
+  },
+  {
+   "file": "area/8154fffffffffff.parquet",
+   "res1": "8154fffffffffff",
+   "rows": 31389,
+   "bytes": 178453
+  },
+  {
+   "file": "area/81553ffffffffff.parquet",
+   "res1": "81553ffffffffff",
+   "rows": 145,
+   "bytes": 4442
+  },
+  {
+   "file": "area/81557ffffffffff.parquet",
+   "res1": "81557ffffffffff",
+   "rows": 1416,
+   "bytes": 11692
+  },
+  {
+   "file": "area/8155bffffffffff.parquet",
+   "res1": "8155bffffffffff",
+   "rows": 74,
+   "bytes": 3867
+  },
+  {
+   "file": "area/81577ffffffffff.parquet",
+   "res1": "81577ffffffffff",
+   "rows": 72,
+   "bytes": 3573
+  },
+  {
+   "file": "area/81583ffffffffff.parquet",
+   "res1": "81583ffffffffff",
+   "rows": 19668,
+   "bytes": 106318
+  },
+  {
+   "file": "area/81587ffffffffff.parquet",
+   "res1": "81587ffffffffff",
+   "rows": 22498,
+   "bytes": 116791
+  },
+  {
+   "file": "area/8158bffffffffff.parquet",
+   "res1": "8158bffffffffff",
+   "rows": 52444,
+   "bytes": 285442
+  },
+  {
+   "file": "area/8158fffffffffff.parquet",
+   "res1": "8158fffffffffff",
+   "rows": 53557,
+   "bytes": 287877
+  },
+  {
+   "file": "area/81593ffffffffff.parquet",
+   "res1": "81593ffffffffff",
+   "rows": 412,
+   "bytes": 6331
+  },
+  {
+   "file": "area/81597ffffffffff.parquet",
+   "res1": "81597ffffffffff",
+   "rows": 189,
+   "bytes": 4735
+  },
+  {
+   "file": "area/8159bffffffffff.parquet",
+   "res1": "8159bffffffffff",
+   "rows": 33686,
+   "bytes": 178919
+  },
+  {
+   "file": "area/815afffffffffff.parquet",
+   "res1": "815afffffffffff",
+   "rows": 1,
+   "bytes": 3448
+  },
+  {
+   "file": "area/815d3ffffffffff.parquet",
+   "res1": "815d3ffffffffff",
+   "rows": 473,
+   "bytes": 6214
+  },
+  {
+   "file": "area/815e7ffffffffff.parquet",
+   "res1": "815e7ffffffffff",
+   "rows": 1052,
+   "bytes": 7122
+  },
+  {
+   "file": "area/815f3ffffffffff.parquet",
+   "res1": "815f3ffffffffff",
+   "rows": 15763,
+   "bytes": 82836
+  },
+  {
+   "file": "area/815f7ffffffffff.parquet",
+   "res1": "815f7ffffffffff",
+   "rows": 39168,
+   "bytes": 187392
+  },
+  {
+   "file": "area/81603ffffffffff.parquet",
+   "res1": "81603ffffffffff",
+   "rows": 14734,
+   "bytes": 71623
+  },
+  {
+   "file": "area/8160bffffffffff.parquet",
+   "res1": "8160bffffffffff",
+   "rows": 44941,
+   "bytes": 214460
+  },
+  {
+   "file": "area/8160fffffffffff.parquet",
+   "res1": "8160fffffffffff",
+   "rows": 285,
+   "bytes": 5000
+  },
+  {
+   "file": "area/81613ffffffffff.parquet",
+   "res1": "81613ffffffffff",
+   "rows": 6947,
+   "bytes": 37363
+  },
+  {
+   "file": "area/8161bffffffffff.parquet",
+   "res1": "8161bffffffffff",
+   "rows": 13028,
+   "bytes": 64047
+  },
+  {
+   "file": "area/81633ffffffffff.parquet",
+   "res1": "81633ffffffffff",
+   "rows": 382,
+   "bytes": 5672
+  },
+  {
+   "file": "area/8163bffffffffff.parquet",
+   "res1": "8163bffffffffff",
+   "rows": 33,
+   "bytes": 3639
+  },
+  {
+   "file": "area/81643ffffffffff.parquet",
+   "res1": "81643ffffffffff",
+   "rows": 6383,
+   "bytes": 34382
+  },
+  {
+   "file": "area/8164bffffffffff.parquet",
+   "res1": "8164bffffffffff",
+   "rows": 55552,
+   "bytes": 307102
+  },
+  {
+   "file": "area/8164fffffffffff.parquet",
+   "res1": "8164fffffffffff",
+   "rows": 774,
+   "bytes": 7994
+  },
+  {
+   "file": "area/81653ffffffffff.parquet",
+   "res1": "81653ffffffffff",
+   "rows": 31486,
+   "bytes": 131990
+  },
+  {
+   "file": "area/81657ffffffffff.parquet",
+   "res1": "81657ffffffffff",
+   "rows": 4959,
+   "bytes": 27142
+  },
+  {
+   "file": "area/8165bffffffffff.parquet",
+   "res1": "8165bffffffffff",
+   "rows": 47955,
+   "bytes": 254288
+  },
+  {
+   "file": "area/81663ffffffffff.parquet",
+   "res1": "81663ffffffffff",
+   "rows": 40476,
+   "bytes": 189268
+  },
+  {
+   "file": "area/81667ffffffffff.parquet",
+   "res1": "81667ffffffffff",
+   "rows": 49653,
+   "bytes": 236279
+  },
+  {
+   "file": "area/8166bffffffffff.parquet",
+   "res1": "8166bffffffffff",
+   "rows": 5478,
+   "bytes": 31014
+  },
+  {
+   "file": "area/8166fffffffffff.parquet",
+   "res1": "8166fffffffffff",
+   "rows": 29782,
+   "bytes": 142416
+  },
+  {
+   "file": "area/81673ffffffffff.parquet",
+   "res1": "81673ffffffffff",
+   "rows": 3418,
+   "bytes": 20209
+  },
+  {
+   "file": "area/81677ffffffffff.parquet",
+   "res1": "81677ffffffffff",
+   "rows": 28774,
+   "bytes": 138492
+  },
+  {
+   "file": "area/8167bffffffffff.parquet",
+   "res1": "8167bffffffffff",
+   "rows": 8044,
+   "bytes": 46073
+  },
+  {
+   "file": "area/81683ffffffffff.parquet",
+   "res1": "81683ffffffffff",
+   "rows": 9981,
+   "bytes": 48422
+  },
+  {
+   "file": "area/81687ffffffffff.parquet",
+   "res1": "81687ffffffffff",
+   "rows": 17493,
+   "bytes": 81555
+  },
+  {
+   "file": "area/8168bffffffffff.parquet",
+   "res1": "8168bffffffffff",
+   "rows": 36140,
+   "bytes": 176809
+  },
+  {
+   "file": "area/8168fffffffffff.parquet",
+   "res1": "8168fffffffffff",
+   "rows": 11321,
+   "bytes": 54150
+  },
+  {
+   "file": "area/81693ffffffffff.parquet",
+   "res1": "81693ffffffffff",
+   "rows": 6455,
+   "bytes": 36281
+  },
+  {
+   "file": "area/81697ffffffffff.parquet",
+   "res1": "81697ffffffffff",
+   "rows": 13832,
+   "bytes": 67146
+  },
+  {
+   "file": "area/8169bffffffffff.parquet",
+   "res1": "8169bffffffffff",
+   "rows": 1653,
+   "bytes": 11781
+  },
+  {
+   "file": "area/816a3ffffffffff.parquet",
+   "res1": "816a3ffffffffff",
+   "rows": 69046,
+   "bytes": 388557
+  },
+  {
+   "file": "area/816a7ffffffffff.parquet",
+   "res1": "816a7ffffffffff",
+   "rows": 62110,
+   "bytes": 348104
+  },
+  {
+   "file": "area/816abffffffffff.parquet",
+   "res1": "816abffffffffff",
+   "rows": 65050,
+   "bytes": 340518
+  },
+  {
+   "file": "area/816afffffffffff.parquet",
+   "res1": "816afffffffffff",
+   "rows": 58747,
+   "bytes": 318709
+  },
+  {
+   "file": "area/816b3ffffffffff.parquet",
+   "res1": "816b3ffffffffff",
+   "rows": 23871,
+   "bytes": 126885
+  },
+  {
+   "file": "area/816b7ffffffffff.parquet",
+   "res1": "816b7ffffffffff",
+   "rows": 32559,
+   "bytes": 166932
+  },
+  {
+   "file": "area/816bbffffffffff.parquet",
+   "res1": "816bbffffffffff",
+   "rows": 68238,
+   "bytes": 383966
+  },
+  {
+   "file": "area/816c7ffffffffff.parquet",
+   "res1": "816c7ffffffffff",
+   "rows": 138,
+   "bytes": 4052
+  },
+  {
+   "file": "area/816d3ffffffffff.parquet",
+   "res1": "816d3ffffffffff",
+   "rows": 32306,
+   "bytes": 155014
+  },
+  {
+   "file": "area/816d7ffffffffff.parquet",
+   "res1": "816d7ffffffffff",
+   "rows": 16641,
+   "bytes": 84594
+  },
+  {
+   "file": "area/8172bffffffffff.parquet",
+   "res1": "8172bffffffffff",
+   "rows": 5699,
+   "bytes": 30419
+  },
+  {
+   "file": "area/8172fffffffffff.parquet",
+   "res1": "8172fffffffffff",
+   "rows": 11079,
+   "bytes": 57131
+  },
+  {
+   "file": "area/81733ffffffffff.parquet",
+   "res1": "81733ffffffffff",
+   "rows": 28,
+   "bytes": 3332
+  },
+  {
+   "file": "area/8173bffffffffff.parquet",
+   "res1": "8173bffffffffff",
+   "rows": 2469,
+   "bytes": 15085
+  },
+  {
+   "file": "area/81743ffffffffff.parquet",
+   "res1": "81743ffffffffff",
+   "rows": 1016,
+   "bytes": 9083
+  },
+  {
+   "file": "area/81753ffffffffff.parquet",
+   "res1": "81753ffffffffff",
+   "rows": 58628,
+   "bytes": 314360
+  },
+  {
+   "file": "area/81757ffffffffff.parquet",
+   "res1": "81757ffffffffff",
+   "rows": 1048,
+   "bytes": 9151
+  },
+  {
+   "file": "area/8175bffffffffff.parquet",
+   "res1": "8175bffffffffff",
+   "rows": 32567,
+   "bytes": 185186
+  },
+  {
+   "file": "area/8176bffffffffff.parquet",
+   "res1": "8176bffffffffff",
+   "rows": 796,
+   "bytes": 7526
+  },
+  {
+   "file": "area/8176fffffffffff.parquet",
+   "res1": "8176fffffffffff",
+   "rows": 14,
+   "bytes": 3446
+  },
+  {
+   "file": "area/8177bffffffffff.parquet",
+   "res1": "8177bffffffffff",
+   "rows": 1120,
+   "bytes": 9460
+  },
+  {
+   "file": "area/817a3ffffffffff.parquet",
+   "res1": "817a3ffffffffff",
+   "rows": 5190,
+   "bytes": 27444
+  },
+  {
+   "file": "area/817a7ffffffffff.parquet",
+   "res1": "817a7ffffffffff",
+   "rows": 26430,
+   "bytes": 128859
+  },
+  {
+   "file": "area/817abffffffffff.parquet",
+   "res1": "817abffffffffff",
+   "rows": 957,
+   "bytes": 9268
+  },
+  {
+   "file": "area/817afffffffffff.parquet",
+   "res1": "817afffffffffff",
+   "rows": 13723,
+   "bytes": 69447
+  },
+  {
+   "file": "area/817b7ffffffffff.parquet",
+   "res1": "817b7ffffffffff",
+   "rows": 15909,
+   "bytes": 83210
+  },
+  {
+   "file": "area/817e3ffffffffff.parquet",
+   "res1": "817e3ffffffffff",
+   "rows": 1,
+   "bytes": 3194
+  },
+  {
+   "file": "area/81803ffffffffff.parquet",
+   "res1": "81803ffffffffff",
+   "rows": 51276,
+   "bytes": 272629
+  },
+  {
+   "file": "area/81807ffffffffff.parquet",
+   "res1": "81807ffffffffff",
+   "rows": 31718,
+   "bytes": 159877
+  },
+  {
+   "file": "area/8180bffffffffff.parquet",
+   "res1": "8180bffffffffff",
+   "rows": 257,
+   "bytes": 4811
+  },
+  {
+   "file": "area/81813ffffffffff.parquet",
+   "res1": "81813ffffffffff",
+   "rows": 67772,
+   "bytes": 318223
+  },
+  {
+   "file": "area/81817ffffffffff.parquet",
+   "res1": "81817ffffffffff",
+   "rows": 64823,
+   "bytes": 338130
+  },
+  {
+   "file": "area/8181bffffffffff.parquet",
+   "res1": "8181bffffffffff",
+   "rows": 23671,
+   "bytes": 111436
+  },
+  {
+   "file": "area/81823ffffffffff.parquet",
+   "res1": "81823ffffffffff",
+   "rows": 16762,
+   "bytes": 85703
+  },
+  {
+   "file": "area/8182bffffffffff.parquet",
+   "res1": "8182bffffffffff",
+   "rows": 41295,
+   "bytes": 217200
+  },
+  {
+   "file": "area/8182fffffffffff.parquet",
+   "res1": "8182fffffffffff",
+   "rows": 8041,
+   "bytes": 43535
+  },
+  {
+   "file": "area/81833ffffffffff.parquet",
+   "res1": "81833ffffffffff",
+   "rows": 25562,
+   "bytes": 152561
+  },
+  {
+   "file": "area/8183bffffffffff.parquet",
+   "res1": "8183bffffffffff",
+   "rows": 92092,
+   "bytes": 518520
+  },
+  {
+   "file": "area/8188fffffffffff.parquet",
+   "res1": "8188fffffffffff",
+   "rows": 7,
+   "bytes": 3276
+  },
+  {
+   "file": "area/81893ffffffffff.parquet",
+   "res1": "81893ffffffffff",
+   "rows": 31,
+   "bytes": 3457
+  },
+  {
+   "file": "area/818a3ffffffffff.parquet",
+   "res1": "818a3ffffffffff",
+   "rows": 29539,
+   "bytes": 160625
+  },
+  {
+   "file": "area/818a7ffffffffff.parquet",
+   "res1": "818a7ffffffffff",
+   "rows": 12566,
+   "bytes": 64281
+  },
+  {
+   "file": "area/818abffffffffff.parquet",
+   "res1": "818abffffffffff",
+   "rows": 33751,
+   "bytes": 181147
+  },
+  {
+   "file": "area/818afffffffffff.parquet",
+   "res1": "818afffffffffff",
+   "rows": 19980,
+   "bytes": 100772
+  },
+  {
+   "file": "area/818b3ffffffffff.parquet",
+   "res1": "818b3ffffffffff",
+   "rows": 58750,
+   "bytes": 307627
+  },
+  {
+   "file": "area/818b7ffffffffff.parquet",
+   "res1": "818b7ffffffffff",
+   "rows": 38253,
+   "bytes": 206958
+  },
+  {
+   "file": "area/818bbffffffffff.parquet",
+   "res1": "818bbffffffffff",
+   "rows": 65521,
+   "bytes": 299687
+  },
+  {
+   "file": "area/818c3ffffffffff.parquet",
+   "res1": "818c3ffffffffff",
+   "rows": 4337,
+   "bytes": 22384
+  },
+  {
+   "file": "area/818cbffffffffff.parquet",
+   "res1": "818cbffffffffff",
+   "rows": 24120,
+   "bytes": 119879
+  },
+  {
+   "file": "area/818cfffffffffff.parquet",
+   "res1": "818cfffffffffff",
+   "rows": 15584,
+   "bytes": 74683
+  },
+  {
+   "file": "area/818dbffffffffff.parquet",
+   "res1": "818dbffffffffff",
+   "rows": 9979,
+   "bytes": 47345
+  },
+  {
+   "file": "area/818e7ffffffffff.parquet",
+   "res1": "818e7ffffffffff",
+   "rows": 10252,
+   "bytes": 53442
+  },
+  {
+   "file": "area/818f3ffffffffff.parquet",
+   "res1": "818f3ffffffffff",
+   "rows": 10251,
+   "bytes": 54094
+  },
+  {
+   "file": "area/818f7ffffffffff.parquet",
+   "res1": "818f7ffffffffff",
+   "rows": 37248,
+   "bytes": 181862
+  },
+  {
+   "file": "area/818fbffffffffff.parquet",
+   "res1": "818fbffffffffff",
+   "rows": 4,
+   "bytes": 3301
+  },
+  {
+   "file": "area/81943ffffffffff.parquet",
+   "res1": "81943ffffffffff",
+   "rows": 10444,
+   "bytes": 57786
+  },
+  {
+   "file": "area/81947ffffffffff.parquet",
+   "res1": "81947ffffffffff",
+   "rows": 18043,
+   "bytes": 103603
+  },
+  {
+   "file": "area/8194bffffffffff.parquet",
+   "res1": "8194bffffffffff",
+   "rows": 13816,
+   "bytes": 80048
+  },
+  {
+   "file": "area/8194fffffffffff.parquet",
+   "res1": "8194fffffffffff",
+   "rows": 31094,
+   "bytes": 171158
+  },
+  {
+   "file": "area/81953ffffffffff.parquet",
+   "res1": "81953ffffffffff",
+   "rows": 16505,
+   "bytes": 79858
+  },
+  {
+   "file": "area/81957ffffffffff.parquet",
+   "res1": "81957ffffffffff",
+   "rows": 4607,
+   "bytes": 25433
+  },
+  {
+   "file": "area/8195bffffffffff.parquet",
+   "res1": "8195bffffffffff",
+   "rows": 2605,
+   "bytes": 16920
+  },
+  {
+   "file": "area/81963ffffffffff.parquet",
+   "res1": "81963ffffffffff",
+   "rows": 72194,
+   "bytes": 418549
+  },
+  {
+   "file": "area/81967ffffffffff.parquet",
+   "res1": "81967ffffffffff",
+   "rows": 70666,
+   "bytes": 417348
+  },
+  {
+   "file": "area/8196bffffffffff.parquet",
+   "res1": "8196bffffffffff",
+   "rows": 56903,
+   "bytes": 311763
+  },
+  {
+   "file": "area/8196fffffffffff.parquet",
+   "res1": "8196fffffffffff",
+   "rows": 78561,
+   "bytes": 446665
+  },
+  {
+   "file": "area/81973ffffffffff.parquet",
+   "res1": "81973ffffffffff",
+   "rows": 56096,
+   "bytes": 306754
+  },
+  {
+   "file": "area/81977ffffffffff.parquet",
+   "res1": "81977ffffffffff",
+   "rows": 36325,
+   "bytes": 207849
+  },
+  {
+   "file": "area/8197bffffffffff.parquet",
+   "res1": "8197bffffffffff",
+   "rows": 59646,
+   "bytes": 338442
+  },
+  {
+   "file": "area/819a3ffffffffff.parquet",
+   "res1": "819a3ffffffffff",
+   "rows": 206,
+   "bytes": 3853
+  },
+  {
+   "file": "area/819b3ffffffffff.parquet",
+   "res1": "819b3ffffffffff",
+   "rows": 261,
+   "bytes": 3905
+  },
+  {
+   "file": "area/819b7ffffffffff.parquet",
+   "res1": "819b7ffffffffff",
+   "rows": 2648,
+   "bytes": 17378
+  },
+  {
+   "file": "area/819bbffffffffff.parquet",
+   "res1": "819bbffffffffff",
+   "rows": 36,
+   "bytes": 3349
+  },
+  {
+   "file": "area/819c3ffffffffff.parquet",
+   "res1": "819c3ffffffffff",
+   "rows": 17056,
+   "bytes": 96115
+  },
+  {
+   "file": "area/819c7ffffffffff.parquet",
+   "res1": "819c7ffffffffff",
+   "rows": 19861,
+   "bytes": 111246
+  },
+  {
+   "file": "area/819cbffffffffff.parquet",
+   "res1": "819cbffffffffff",
+   "rows": 17095,
+   "bytes": 83880
+  },
+  {
+   "file": "area/819cfffffffffff.parquet",
+   "res1": "819cfffffffffff",
+   "rows": 12857,
+   "bytes": 69489
+  },
+  {
+   "file": "area/819d3ffffffffff.parquet",
+   "res1": "819d3ffffffffff",
+   "rows": 17016,
+   "bytes": 83863
+  },
+  {
+   "file": "area/819d7ffffffffff.parquet",
+   "res1": "819d7ffffffffff",
+   "rows": 11592,
+   "bytes": 62030
+  },
+  {
+   "file": "area/819dbffffffffff.parquet",
+   "res1": "819dbffffffffff",
+   "rows": 536,
+   "bytes": 6453
+  },
+  {
+   "file": "area/819e3ffffffffff.parquet",
+   "res1": "819e3ffffffffff",
+   "rows": 910,
+   "bytes": 6363
+  },
+  {
+   "file": "area/819ebffffffffff.parquet",
+   "res1": "819ebffffffffff",
+   "rows": 13,
+   "bytes": 3453
+  },
+  {
+   "file": "area/819efffffffffff.parquet",
+   "res1": "819efffffffffff",
+   "rows": 626,
+   "bytes": 6920
+  },
+  {
+   "file": "area/819f3ffffffffff.parquet",
+   "res1": "819f3ffffffffff",
+   "rows": 59,
+   "bytes": 3416
+  },
+  {
+   "file": "area/819f7ffffffffff.parquet",
+   "res1": "819f7ffffffffff",
+   "rows": 1617,
+   "bytes": 11747
+  },
+  {
+   "file": "area/81a0fffffffffff.parquet",
+   "res1": "81a0fffffffffff",
+   "rows": 32,
+   "bytes": 3468
+  },
+  {
+   "file": "area/81a17ffffffffff.parquet",
+   "res1": "81a17ffffffffff",
+   "rows": 1,
+   "bytes": 3267
+  },
+  {
+   "file": "area/81a23ffffffffff.parquet",
+   "res1": "81a23ffffffffff",
+   "rows": 28357,
+   "bytes": 146306
+  },
+  {
+   "file": "area/81a27ffffffffff.parquet",
+   "res1": "81a27ffffffffff",
+   "rows": 604,
+   "bytes": 6324
+  },
+  {
+   "file": "area/81a2bffffffffff.parquet",
+   "res1": "81a2bffffffffff",
+   "rows": 10194,
+   "bytes": 54768
+  },
+  {
+   "file": "area/81a33ffffffffff.parquet",
+   "res1": "81a33ffffffffff",
+   "rows": 18776,
+   "bytes": 98892
+  },
+  {
+   "file": "area/81a37ffffffffff.parquet",
+   "res1": "81a37ffffffffff",
+   "rows": 3308,
+   "bytes": 21714
+  },
+  {
+   "file": "area/81a3bffffffffff.parquet",
+   "res1": "81a3bffffffffff",
+   "rows": 16066,
+   "bytes": 86498
+  },
+  {
+   "file": "area/81a5bffffffffff.parquet",
+   "res1": "81a5bffffffffff",
+   "rows": 1793,
+   "bytes": 12090
+  },
+  {
+   "file": "area/81a63ffffffffff.parquet",
+   "res1": "81a63ffffffffff",
+   "rows": 1179,
+   "bytes": 10744
+  },
+  {
+   "file": "area/81a6bffffffffff.parquet",
+   "res1": "81a6bffffffffff",
+   "rows": 1283,
+   "bytes": 10388
+  },
+  {
+   "file": "area/81a73ffffffffff.parquet",
+   "res1": "81a73ffffffffff",
+   "rows": 7821,
+   "bytes": 43776
+  },
+  {
+   "file": "area/81a7bffffffffff.parquet",
+   "res1": "81a7bffffffffff",
+   "rows": 10887,
+   "bytes": 60393
+  },
+  {
+   "file": "area/81a83ffffffffff.parquet",
+   "res1": "81a83ffffffffff",
+   "rows": 61710,
+   "bytes": 261867
+  },
+  {
+   "file": "area/81a87ffffffffff.parquet",
+   "res1": "81a87ffffffffff",
+   "rows": 62798,
+   "bytes": 299880
+  },
+  {
+   "file": "area/81a8bffffffffff.parquet",
+   "res1": "81a8bffffffffff",
+   "rows": 46393,
+   "bytes": 206470
+  },
+  {
+   "file": "area/81a8fffffffffff.parquet",
+   "res1": "81a8fffffffffff",
+   "rows": 69180,
+   "bytes": 309348
+  },
+  {
+   "file": "area/81a93ffffffffff.parquet",
+   "res1": "81a93ffffffffff",
+   "rows": 22325,
+   "bytes": 100683
+  },
+  {
+   "file": "area/81a97ffffffffff.parquet",
+   "res1": "81a97ffffffffff",
+   "rows": 84117,
+   "bytes": 404121
+  },
+  {
+   "file": "area/81ab3ffffffffff.parquet",
+   "res1": "81ab3ffffffffff",
+   "rows": 4,
+   "bytes": 3305
+  },
+  {
+   "file": "area/81ac3ffffffffff.parquet",
+   "res1": "81ac3ffffffffff",
+   "rows": 42,
+   "bytes": 3605
+  },
+  {
+   "file": "area/81acbffffffffff.parquet",
+   "res1": "81acbffffffffff",
+   "rows": 22621,
+   "bytes": 129420
+  },
+  {
+   "file": "area/81acfffffffffff.parquet",
+   "res1": "81acfffffffffff",
+   "rows": 2,
+   "bytes": 3238
+  },
+  {
+   "file": "area/81ad3ffffffffff.parquet",
+   "res1": "81ad3ffffffffff",
+   "rows": 1896,
+   "bytes": 12811
+  },
+  {
+   "file": "area/81adbffffffffff.parquet",
+   "res1": "81adbffffffffff",
+   "rows": 6379,
+   "bytes": 38851
+  },
+  {
+   "file": "area/81b0bffffffffff.parquet",
+   "res1": "81b0bffffffffff",
+   "rows": 74,
+   "bytes": 3832
+  },
+  {
+   "file": "area/81b23ffffffffff.parquet",
+   "res1": "81b23ffffffffff",
+   "rows": 5094,
+   "bytes": 27230
+  },
+  {
+   "file": "area/81b27ffffffffff.parquet",
+   "res1": "81b27ffffffffff",
+   "rows": 46640,
+   "bytes": 205252
+  },
+  {
+   "file": "area/81b2fffffffffff.parquet",
+   "res1": "81b2fffffffffff",
+   "rows": 18856,
+   "bytes": 89595
+  },
+  {
+   "file": "area/81b33ffffffffff.parquet",
+   "res1": "81b33ffffffffff",
+   "rows": 13760,
+   "bytes": 69762
+  },
+  {
+   "file": "area/81b37ffffffffff.parquet",
+   "res1": "81b37ffffffffff",
+   "rows": 43141,
+   "bytes": 202906
+  },
+  {
+   "file": "area/81b4bffffffffff.parquet",
+   "res1": "81b4bffffffffff",
+   "rows": 5,
+   "bytes": 3333
+  },
+  {
+   "file": "area/81b83ffffffffff.parquet",
+   "res1": "81b83ffffffffff",
+   "rows": 2893,
+   "bytes": 21191
+  },
+  {
+   "file": "area/81b87ffffffffff.parquet",
+   "res1": "81b87ffffffffff",
+   "rows": 6593,
+   "bytes": 40145
+  },
+  {
+   "file": "area/81b8bffffffffff.parquet",
+   "res1": "81b8bffffffffff",
+   "rows": 10867,
+   "bytes": 62058
+  },
+  {
+   "file": "area/81b8fffffffffff.parquet",
+   "res1": "81b8fffffffffff",
+   "rows": 12575,
+   "bytes": 71777
+  },
+  {
+   "file": "area/81b93ffffffffff.parquet",
+   "res1": "81b93ffffffffff",
+   "rows": 3866,
+   "bytes": 23561
+  },
+  {
+   "file": "area/81b97ffffffffff.parquet",
+   "res1": "81b97ffffffffff",
+   "rows": 90,
+   "bytes": 4402
+  },
+  {
+   "file": "area/81b9bffffffffff.parquet",
+   "res1": "81b9bffffffffff",
+   "rows": 1883,
+   "bytes": 14666
+  },
+  {
+   "file": "area/81ba3ffffffffff.parquet",
+   "res1": "81ba3ffffffffff",
+   "rows": 43,
+   "bytes": 3665
+  },
+  {
+   "file": "area/81bb3ffffffffff.parquet",
+   "res1": "81bb3ffffffffff",
+   "rows": 2970,
+   "bytes": 17011
+  },
+  {
+   "file": "area/81bb7ffffffffff.parquet",
+   "res1": "81bb7ffffffffff",
+   "rows": 2718,
+   "bytes": 15791
+  },
+  {
+   "file": "area/81bc3ffffffffff.parquet",
+   "res1": "81bc3ffffffffff",
+   "rows": 3526,
+   "bytes": 20927
+  },
+  {
+   "file": "area/81bc7ffffffffff.parquet",
+   "res1": "81bc7ffffffffff",
+   "rows": 17137,
+   "bytes": 80466
+  },
+  {
+   "file": "area/81bcbffffffffff.parquet",
+   "res1": "81bcbffffffffff",
+   "rows": 3851,
+   "bytes": 23405
+  },
+  {
+   "file": "area/81bcfffffffffff.parquet",
+   "res1": "81bcfffffffffff",
+   "rows": 62547,
+   "bytes": 296380
+  },
+  {
+   "file": "area/81be3ffffffffff.parquet",
+   "res1": "81be3ffffffffff",
+   "rows": 10520,
+   "bytes": 50143
+  },
+  {
+   "file": "area/81be7ffffffffff.parquet",
+   "res1": "81be7ffffffffff",
+   "rows": 30354,
+   "bytes": 149036
+  },
+  {
+   "file": "area/81bebffffffffff.parquet",
+   "res1": "81bebffffffffff",
+   "rows": 6572,
+   "bytes": 34417
+  },
+  {
+   "file": "area/81befffffffffff.parquet",
+   "res1": "81befffffffffff",
+   "rows": 42018,
+   "bytes": 198932
+  },
+  {
+   "file": "area/81bf7ffffffffff.parquet",
+   "res1": "81bf7ffffffffff",
+   "rows": 4645,
+   "bytes": 26993
+  },
+  {
+   "file": "area/81c23ffffffffff.parquet",
+   "res1": "81c23ffffffffff",
+   "rows": 6857,
+   "bytes": 30926
+  },
+  {
+   "file": "area/81c2bffffffffff.parquet",
+   "res1": "81c2bffffffffff",
+   "rows": 5,
+   "bytes": 3299
+  },
+  {
+   "file": "area/81c2fffffffffff.parquet",
+   "res1": "81c2fffffffffff",
+   "rows": 37555,
+   "bytes": 161587
+  },
+  {
+   "file": "area/81c33ffffffffff.parquet",
+   "res1": "81c33ffffffffff",
+   "rows": 2614,
+   "bytes": 16519
+  },
+  {
+   "file": "area/81c37ffffffffff.parquet",
+   "res1": "81c37ffffffffff",
+   "rows": 27036,
+   "bytes": 113011
+  },
+  {
+   "file": "area/81c9bffffffffff.parquet",
+   "res1": "81c9bffffffffff",
+   "rows": 10597,
+   "bytes": 58483
+  },
+  {
+   "file": "area/81ce3ffffffffff.parquet",
+   "res1": "81ce3ffffffffff",
+   "rows": 26,
+   "bytes": 3510
+  },
+  {
+   "file": "area/81cebffffffffff.parquet",
+   "res1": "81cebffffffffff",
+   "rows": 12505,
+   "bytes": 62108
+  },
+  {
+   "file": "area/81cf3ffffffffff.parquet",
+   "res1": "81cf3ffffffffff",
+   "rows": 47,
+   "bytes": 3714
+  },
+  {
+   "file": "area/81cfbffffffffff.parquet",
+   "res1": "81cfbffffffffff",
+   "rows": 2077,
+   "bytes": 13930
+  },
+  {
+   "file": "area/81d47ffffffffff.parquet",
+   "res1": "81d47ffffffffff",
+   "rows": 7,
+   "bytes": 3382
+  },
+  {
+   "file": "area/81d8bffffffffff.parquet",
+   "res1": "81d8bffffffffff",
+   "rows": 558,
+   "bytes": 6768
+  },
+  {
+   "file": "area/81dabffffffffff.parquet",
+   "res1": "81dabffffffffff",
+   "rows": 5730,
+   "bytes": 30878
+  },
+  {
+   "file": "area/81de7ffffffffff.parquet",
+   "res1": "81de7ffffffffff",
+   "rows": 163,
+   "bytes": 4082
+  },
+  {
+   "file": "area/81df7ffffffffff.parquet",
+   "res1": "81df7ffffffffff",
+   "rows": 378,
+   "bytes": 5653
+  },
+  {
+   "file": "area/81e0bffffffffff.parquet",
+   "res1": "81e0bffffffffff",
+   "rows": 1,
+   "bytes": 3376
+  }
+ ],
+ "total_bytes": 31669732,
+ "total_rows": 6212570
+}

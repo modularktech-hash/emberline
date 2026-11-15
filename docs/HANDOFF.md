@@ -110,7 +110,9 @@ contiguous map area are *not* a contiguous range. Sort by coarse H3 parent
 cell (res 2–3) then day, and filter on the parent. Don't partition by
 continent/country.
 
-### 2. Pick the accessible colour ramp (R10)
+### 2. Accessible colour ramp (R10): settled
+
+The calendar uses the "Ember" sequential ramp (`--seq-0..7` in `web/src/styles/tokens.css`). Evidence and per-ramp checks: `docs/color-accessibility.md`, produced by `scripts/check_color_access.py`.
 
 ### 3. Nothing else is blocking
 
