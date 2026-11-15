@@ -28,6 +28,7 @@ import { useParquet } from "@/lib/useParquet";
 import type { Series } from "@/lib/types";
 import { boxScope, scopeCsvHeader } from "@/lib/scope";
 import { ScopePanel } from "@/components/ScopePanel";
+import { ViewExports } from "@/components/ViewExports";
 import { buildBrief } from "@/lib/brief";
 import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/uncertainty";
 
@@ -143,6 +144,8 @@ export function Explorer() {
   ] : null;
   const scope = useMemo(() => (area.kind !== "country" && data && cal ? boxScope(area.kind === "box" ? area : { ...area, bbox: undefined }, data.cells, data.raw, cal) : null), [area, data, cal]);
 
+  const mtdArea = useMemo(() => (area.kind !== "country" && data?.cells ? { label: areaLabel(area), cells: area.cells, rows: data.cells.rows } : null), [area, data]);
+
   const exportCsv = () => {
     if (!data || !cal || !view) return;
     downloadCsv(
@@ -256,7 +259,7 @@ export function Explorer() {
           </div>
           <CopyLink className="ml-auto" />
           <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
-            Download CSV
+            Calendar CSV
           </button>
           <button type="button" onClick={exportBrief} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download brief
@@ -344,6 +347,18 @@ export function Explorer() {
               <div>
                 <Eyebrow>Detections per year · {areaLabel(area)}</Eyebrow>
                 <AnnualLine raw={view.raw} harmonized={view.harm} mode={mode} />
+                <ViewExports v={{
+                  name: areaLabel(area).replace(/[^a-z0-9]+/gi, "_"), place: areaLabel(area), mode, unit: cal.unit, fitVersion: data.params.fit_version,
+                  range: view, rows: cal.rows, max: view.max, raw: view.raw, harm: view.harm, step: { raw: view.stepRaw, harmonized: view.stepHarm },
+                  extra: {
+                    ...(scope ? scopeCsvHeader(scope) : {}),
+                    ...(data.cells && data.cells.uncorrected.detections ? { uncorrected_raw_detections_left_out_of_harmonized: String(data.cells.uncorrected.detections), uncorrected_countries: data.cells.uncorrected.countries.join("; ") } : {}),
+                    ...(unfitted ? { fit_status: `no fit${covLabel ? `: ${covLabel}` : ""}; raw only, uncorrected` } : {}),
+                    source: "NASA FIRMS: MODIS C6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP); daytime, vegetation fires, nominal+ confidence",
+                    reproduce: reproducingUrl(viewQuery()),
+                  },
+                  cells: data.cells ? { rows: data.cells.rows, resolution: data.cells.index.resolution } : null,
+                }} />
               </div>
               <div className="flex flex-col justify-center gap-5 border-t border-[var(--hairline)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                 <div>
@@ -397,7 +412,7 @@ export function Explorer() {
         )}
         </div>
       </section></Reveal>
-      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} />
+      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
       <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} />
 
       <Reveal>

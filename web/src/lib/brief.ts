@@ -42,12 +42,12 @@ export function busiest(rows: CalendarRow[], annual: YearTotal[]) {
   return { peak, best };
 }
 
-function calendarSvg(b: BriefInput): string {
+export function calendarSvg(b: Pick<BriefInput, "place" | "from" | "to" | "rows" | "max">): string {
   const years: number[] = [];
   for (let y = b.from; y <= b.to; y += 1) years.push(y);
   const cw = 34, ch = 16, left = 44, top = 20;
   const w = left + 12 * cw + 4, h = top + years.length * ch + 40;
-  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" role="img" aria-label="Detections per month, ${esc(b.place)}, ${b.from}–${b.to}">`];
+  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Detections per month, ${esc(b.place)}, ${b.from}–${b.to}">`, `<rect width="${w}" height="${h}" fill="#ffffff"/>`];
   out.push(`<defs><pattern id="nd" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#bbb" stroke-width="1.5"/></pattern></defs>`);
   MONTHS.forEach((m, i) => out.push(`<text x="${left + i * cw + cw / 2}" y="${top - 6}" font-size="10" text-anchor="middle" fill="#555">${m}</text>`));
   years.forEach((y, j) => {

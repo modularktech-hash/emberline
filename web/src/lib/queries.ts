@@ -1160,3 +1160,20 @@ export async function getAreaData(cells: string[], res1: string[]): Promise<Area
     index,
   };
 }
+
+/**
+ * One calendar month's raw counts per year for a country, by sensor family
+ * (MODIS = Terra+Aqua, VIIRS = Suomi-NPP), from the country slice: the history
+ * the month-to-date comparison is measured against. Years without a row are 0
+ * inside the sensor's record (the slices are zero-filled like the calendars).
+ */
+export async function getCountryMonthHistory(country: string, month: number): Promise<Record<Sensor, Map<number, number>>> {
+  const s = await countrySlice(country);
+  const out: Record<Sensor, Map<number, number>> = { MODIS: new Map(), VIIRS: new Map() };
+  for (const [k, v] of s.raw) {
+    const [sensor, t] = k.split("|");
+    const tt = Number(t);
+    if (tt % 12 === month - 1 && (sensor === "MODIS" || sensor === "VIIRS")) out[sensor].set(Math.floor(tt / 12), v);
+  }
+  return out;
+}
