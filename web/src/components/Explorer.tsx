@@ -298,6 +298,8 @@ export function Explorer() {
           <FireReport place={areaLabel(area)} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
             err={errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null} errCountry={errCountry} pooled={!!errPooled} fitVersion={data.params.fit_version} picked={!!selCell} />
         )}
+        <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
+        <div id="hotspots" className="scroll-mt-24"><HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} /></div>
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
@@ -466,8 +468,6 @@ export function Explorer() {
         )}
         </div>
       </section></Reveal>
-      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
-      <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} />
 
       <Reveal>
       <section id="area" className="mt-10 grid scroll-mt-24 gap-6 lg:grid-cols-[1fr_20rem]">
