@@ -79,9 +79,3 @@ Live: https://emberline-tan.vercel.app/ — deploys `modularktech-hash/emberline
 - [ ] `CLAUDE.md` says "fit on 2012–2021"; the fit trains 2012–2018 and tests
       2019–2021. Keep (and reword `CLAUDE.md`) or refit?
 - [x] Public submission repo: `modularktech-hash/emberline` (owner, 14 Nov)
-
-## Pre-submission repo sweep (do last, before final submit)
-- [ ] Remove any ideation/brainstorm content (award-ideas, "ideas" notes, `plan combat.md` backlog) from the repo
-- [ ] Remove anything that reads against the event guidelines (pre-event build references, private-planning-archive notes)
-- [ ] Remove AI-tooling traces (CLAUDE.md, .claude/, AGENTS.md, ai-briefs.md, gameplan AI budgets) — AI use is still declared honestly in the submission's "Use of SI" field
-- [ ] grep sweep: `ideation|brainstorm|Claude|Opus|Fable|Codex|AI session|pre-event`; rebuild, deploy, verify live
