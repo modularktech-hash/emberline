@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { isPerfLow } from "@/lib/perf";
 
 /**
  * The EMBERLINE wordmark as a field of dots, full width. Dots near the pointer or a touch are
- * pushed away, glow ember, and spring back. Drawn on a canvas, at most one frame per display
- * refresh, only while visible and only while something is moving; static under reduced motion
- * and in low-power mode.
+ * pushed away, glow ember, and spring back. The first time it scrolls into view the dots fly in
+ * from a scatter and settle into the letters. Drawn on a canvas, at most one frame per display
+ * refresh, only while visible and only while something is moving; static under reduced motion.
  */
 const GLYPH: Record<string, string[]> = {
   E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
@@ -29,7 +28,7 @@ export function DotWordmark({ className = "" }: { className?: string }) {
     if (!ctx) return;
     const cols = [...WORD].reduce((n, ch) => n + GLYPH[ch][0].length + 1, -1);
     type Dot = { hx: number; hy: number; x: number; y: number; vx: number; vy: number; heat: number };
-    let dots: Dot[] = [], step = 0, rad = 0, W = 0, H = 0, raf = 0, visible = false, moving = false;
+    let intro = false, dots: Dot[] = [], step = 0, rad = 0, W = 0, H = 0, raf = 0, visible = false, moving = false;
     let px = -9999, py = -9999, ink = "#000", ember = "#d9431a";
     const colours = () => { const cs = getComputedStyle(document.documentElement); ink = cs.getPropertyValue("--text-primary").trim() || ink; ember = cs.getPropertyValue("--ember").trim() || ember; };
     const layout = () => {
@@ -71,10 +70,17 @@ export function DotWordmark({ className = "" }: { className?: string }) {
       if (moving && visible) raf = requestAnimationFrame(tick);
     };
     const kick = () => { if (!raf && visible) raf = requestAnimationFrame(tick); };
-    const still = () => isPerfLow() || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Scatter every dot, then let the springs pull them home: the wordmark assembles itself.
+    const assemble = () => {
+      if (intro || still() || !dots.length) return;
+      intro = true;
+      for (const d of dots) { const a = Math.random() * 6.2832, r = step * (3 + Math.random() * 9); d.x = d.hx + Math.cos(a) * r; d.y = d.hy + Math.sin(a) * r * 0.5; d.vx = d.vy = 0; d.heat = 1; }
+      kick();
+    };
     const move = (e: PointerEvent) => { if (still()) return; const r = cv.getBoundingClientRect(); px = e.clientX - r.left; py = e.clientY - r.top; kick(); };
     const leave = () => { px = py = -9999; kick(); };
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (!visible) { cancelAnimationFrame(raf); raf = 0; } });
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) assemble(); if (!visible) { cancelAnimationFrame(raf); raf = 0; } });
     io.observe(cv);
     const ro = new ResizeObserver(layout);
     ro.observe(cv);
