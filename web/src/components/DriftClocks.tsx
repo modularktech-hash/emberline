@@ -33,11 +33,11 @@ function Dial({ name, sensor, color, lst }: { name: string; sensor: string; colo
     <div className="relative mx-auto aspect-square w-full max-w-[150px]" role="img"
       aria-label={`${name} ${sensor}: mean overpass ${lst == null ? "not available" : fmtClock(lst)} local solar time`}>
       <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden>
-      <circle cx="60" cy="60" r="54" fill="var(--surface-1)" stroke="var(--hairline)" />
+      <circle cx="60" cy="60" r="54" fill="var(--surface-1)" stroke="var(--hairline)" strokeWidth="1.5" />
       {/* Typical daily fire peak, ~12:00–14:00 local solar time. */}
       <path d={arc(12, 14, 47)} fill="none" stroke="var(--seq-2)" strokeWidth="9" strokeOpacity="0.75" />
       {Array.from({ length: 24 }, (_, i) => (
-        <line key={i} x1="60" y1="7" x2="60" y2={i % 6 ? 10.5 : 14} stroke="var(--ink)" strokeOpacity={i % 6 ? 0.3 : 0.6} strokeWidth={i % 6 ? 0.8 : 1.2} transform={`rotate(${i * 15} 60 60)`} />
+        <circle key={i} cx="60" cy="10" r={i % 6 ? 1.1 : 2} fill="var(--text-primary)" opacity={i % 6 ? 0.35 : 0.9} transform={`rotate(${i * 15} 60 60)`} />
       ))}
       {[[12, "12"], [18, "18"], [0, "0"], [6, "6"]].map(([h, t]) => {
         const [x, y] = polar(h as number, 30);
@@ -139,7 +139,7 @@ export function DriftClocks({ drift, country, onCountry, picker = true }: {
             <div key={p.name} className="h-full rounded-2xl border border-[var(--hairline)] bg-[var(--surface-1)] p-2.5 text-center sm:p-4">
               <Dial name={p.name} sensor={p.sensor} color={color} lst={now} />
               <p className="mt-2 text-[13px] font-medium leading-tight sm:text-sm" style={{ color }}>{p.name} <span className="block text-[var(--text-muted)] sm:inline"><span className="hidden sm:inline">· </span>{p.sensor}</span></p>
-              <p className="tabular display text-xl sm:text-2xl">{fmtClock(now)}</p>
+              <p className="dot-num text-2xl sm:text-3xl">{fmtClock(now)}</p>
               <dl className="tabular mx-auto mt-2 grid max-w-[13rem] grid-cols-[auto_auto] justify-between gap-x-1.5 text-left [&>*]:whitespace-nowrap text-[11px] leading-relaxed text-[var(--text-secondary)] sm:text-xs">
                 <dt>{span(FROZEN[0], FROZEN[1] % 100)}</dt><dd className="text-right text-[var(--text-primary)]">{fmtClock(base)}</dd>
                 <dt>{last}</dt><dd className="text-right text-[var(--text-primary)]">{fmtClock(end)}</dd>
