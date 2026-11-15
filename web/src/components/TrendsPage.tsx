@@ -199,7 +199,7 @@ export function TrendsPage() {
           <Reveal>
             <section className="card mt-8 min-w-0 p-5 sm:p-6">
               <h2 className="display text-3xl">Every fitted country, side by side</h2>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">Descriptive least-squares trend over usable fire years, days per decade; the 95% interval and usable-year count sit under each onset slope (hover a slope for endpoint sensitivity). The interval assumes independent years; one that spans zero is not a shift. Negative = earlier. {nDaily} at daily resolution, {names.length - nDaily} at monthly resolution (marked). Click a row to open it above.</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Descriptive least-squares trend over usable fire years, days per decade; the 95% interval and usable-year count sit under each onset slope (hover a slope for endpoint sensitivity). The interval assumes independent years; one that spans zero is not a shift. Negative = earlier. {nDaily} at daily resolution, {names.length - nDaily} at monthly resolution (marked). Click a row, or a country name (keyboard: Tab, then Enter), to open it above.</p>
               <div className="mt-4"><TableSearch q={tbl.q} setQ={tbl.setQ} shown={tbl.shown.length} total={names.length} /></div>
               <ScrollBox>
               <table className="tabular w-full min-w-[720px] text-sm">
@@ -217,7 +217,7 @@ export function TrendsPage() {
                     const mon = data!.countries[n].resolution === "monthly";
                     return (
                       <tr key={n} onClick={() => { setCountry(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} className={`cursor-pointer border-t border-[var(--hairline)] hover:bg-[var(--ember-soft)] ${n === country ? "bg-[var(--ember-soft)]" : ""}`}>
-                        <td className="py-2.5 pr-3">{prettyName(n)}{data!.pooled.has(n) && <span className="ml-1.5 font-mono text-[10px] uppercase text-[var(--ember)]">pooled</span>}</td>
+                        <td className="py-2.5 pr-3"><button type="button" data-row-select onClick={(e) => { e.stopPropagation(); setCountry(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-pressed={n === country} aria-label={`Open ${prettyName(n)} above`} className="rounded text-left font-medium underline decoration-[var(--hairline)] underline-offset-2 hover:text-[var(--ember)]">{prettyName(n)}</button>{data!.pooled.has(n) && <span className="ml-1.5 font-mono text-[10px] uppercase text-[var(--ember)]">pooled</span>}</td>
                         <td className="px-3 text-xs text-[var(--text-muted)]">{mon ? "monthly" : "daily"}</td>
                         <td className="px-3 text-[var(--seq-5)]" title={sensText(data!.countries[n].trend_stats?.raw_onset)}>{fmt(t.raw_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.raw_onset)}</span></td>
                         <td className="px-3" title={sensText(data!.countries[n].trend_stats?.harm_onset)}>{fmt(t.harm_onset)}<span className="block text-[10px] text-[var(--text-muted)]">{ciText(data!.countries[n].trend_stats?.harm_onset)}</span></td>
