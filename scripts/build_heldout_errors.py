@@ -170,7 +170,8 @@ def main() -> int:
         "test_years": list(fh.TEST),
         "definition": "Published fit re-evaluated on held-out 2019-2021, no refit. cell_month: H3 res-5 cell x month, same join "
                       "for every method (mae = mean |obs - pred| in Aqua detections per cell-month). country_month: predictions "
-                      "summed to the whole country per month; ape = 100*|pred - obs|/obs over months with obs > 0. "
+                      "summed to the whole country per month; ape = 100*|pred - obs|/obs over months with obs > 0 "
+                      "(median and 80th percentile: typical and tail held-out misses, not confidence intervals). "
                       "step_2012: mean annual count 2012-2014 under each method / mean annual Aqua count 2009-2011 "
                       "(aqua = Aqua alone, the unchanged-sensor reference; model and aqua reproduce params_global null_control).",
         "countries": {c: rnd({k: v for k, v in out[c].items() if k != "country"}) for c in sorted(out)},

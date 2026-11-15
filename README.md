@@ -60,8 +60,8 @@ reference observations, per H3 resolution-5 cell (~250 km²) and month. 2022–2
   **0.81** ratio, **0.82** FRP cut-off, **4.21** raw VIIRS; lowest MAE in **90**, **15**, **66** and
   **0** countries. The 2012 step lands within ×1.25 of Aqua alone in **146** countries for
   Emberline and **161** for the ratio: the simple ratio removes the step too.
-- Typical held-out monthly error of a country's harmonized total: **±31%** (median over
-  countries); **±48%** in the third of countries with the fewest fires, **±22%** in the third with
+- Typical held-out error of a country's harmonized monthly total (median monthly miss,
+  2019–2021; not a confidence interval): **±31%** (median over countries); **±48%** in the third of countries with the fewest fires, **±22%** in the third with
   the most; **±54%** for pooled-fit countries against **±26%** for own-fit ones.
 - Canada, the demo example: the raw record steps up **×6.60** from 2009–11 to 2012–14.
   Aqua alone shows **×1.43** over the same years; the harmonized record shows **×1.68**.

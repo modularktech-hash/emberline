@@ -180,7 +180,7 @@ export interface HeadlineRow {
   median_country_month_ape_pct: number | null; step_within_1_25: number; best_mae: number; best_r2: number;
 }
 export interface LimitStats { n: number; heldout_aqua_min: number; heldout_aqua_max: number; median_country_month_ape_pct: number | null; median_abs_bias_pct: number | null; median_r2: number | null; r2_below_zero: number }
-export interface UnusualMonth { year: number; month: number; value: number; median: number; min: number; max: number; next_highest: number; rank: number; n_years: number; times_median: number | null }
+export interface UnusualMonth { year: number; month: number; value: number; median: number; min: number; max: number; next_highest: number; rank: number; n_years: number; n_reference_years: number; times_median: number | null }
 export interface ProofFile {
   fit_version: string;
   headline: { definition: string; test_years: [number, number]; n_countries: number; n_own: number; n_pooled: number; n_unfitted: number; n_cell_months: number; within_factor: number; model_lower_mae_than_ratio: number; methods: Record<HeadlineMethod, HeadlineRow> };

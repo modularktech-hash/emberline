@@ -220,7 +220,8 @@ def limits(params: dict, he: dict) -> dict:
     return {
         "definition": "Model only, held-out 2019-2021. Countries ranked by their held-out Aqua MODIS total (2019-2021 daytime vegetation "
                       "detections) and split into three equal-count groups. country_month_ape = |predicted - observed| / observed for a "
-                      "whole-country monthly total, median over months with observed > 0, then median over countries.",
+                      "whole-country monthly total, median over months with observed > 0, then median over countries. A typical held-out "
+                      "miss, not a confidence interval and with no coverage guarantee.",
         "terciles": [stats(x) for x in cuts],
         "per_country_fields": ["median_ape_pct", "p80_ape_pct", "tercile (0 = fewest fires)", "heldout_aqua_total"],
         "per_country": {c: [r(cs[c]["country_month"]["model"]["median_ape_pct"], 1), r(cs[c]["country_month"]["model"]["p80_ape_pct"], 1),
@@ -247,7 +248,9 @@ def _densify(ring: list[tuple[float, float]], step: float = 1.0) -> list[tuple[f
 def unusual_month(series: dict[tuple[int, int], float], years: tuple[int, int]) -> dict:
     """The month whose value has the highest percentile within its own calendar month over `years`
     (share of those years with a strictly lower value); ties broken by the excess over that calendar
-    month's median. Same rule as web/src/lib/unusual.ts."""
+    month's median. The reported reference (median, range, next highest, times median) uses the
+    other years of that calendar month only, excluding the month itself. Same rule as
+    web/src/lib/unusual.ts."""
     best = None
     for (y, m), v in series.items():
         if not years[0] <= y <= years[1]:
@@ -257,9 +260,10 @@ def unusual_month(series: dict[tuple[int, int], float], years: tuple[int, int]) 
         key = (sum(x < v for x in same) / len(same), v - med)
         if best is None or key > best[0]:
             others = sorted(x for yy, x in zip(range(years[0], years[1] + 1), same) if yy != y)
-            best = (key, {"year": y, "month": m, "value": r(v, 1), "median": r(med, 1), "min": r(min(same), 1), "max": r(max(same), 1),
+            om = median(others)
+            best = (key, {"year": y, "month": m, "value": r(v, 1), "median": r(om, 1), "min": r(min(others), 1), "max": r(max(others), 1),
                           "next_highest": r(others[-1], 1), "rank": 1 + sum(x > v for x in same), "n_years": len(same),
-                          "times_median": r(v / med, 1) if med else None})
+                          "n_reference_years": len(others), "times_median": r(v / om, 1) if om else None})
     return best[1]
 
 
@@ -283,7 +287,8 @@ def worked_example(params: dict) -> dict:
         "definition": "A drawn box (H3 res-4 cells whose centre is inside it, as the Explorer selects them) summed from "
                       "web/public/data/area/*.parquet. Most unusual month: highest percentile within its own calendar month over "
                       f"{EXAMPLE_YEARS[0]}-{EXAMPLE_YEARS[1]} (share of years with a lower value), ties broken by the excess over that "
-                      "month's median. Historical context, not a prediction.",
+                      "month's median. The reference (median, range, next highest) is the other years of that calendar month, the month itself "
+                      "excluded, from the same cells and the same harmonized series. Historical context, not a prediction.",
         "label": "New South Wales, Australia (it also clips the edges of Victoria, Queensland and South Australia)",
         "bbox": list(EXAMPLE_BOX),
         "years": list(EXAMPLE_YEARS),

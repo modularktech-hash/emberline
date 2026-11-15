@@ -202,7 +202,7 @@ export function HeadlineTable({ compact = false, lazy = false }: { compact?: boo
                 <th className="px-3 font-normal">Median R²</th>
                 <th className="px-3 font-normal" title="Mean |observed − predicted| per cell-month, Aqua detections">Median MAE</th>
                 <th className="px-3 font-normal" title="(predicted − observed) ÷ observed, held-out total">Median bias</th>
-                {!compact && <th className="px-3 font-normal" title="Median over months of |predicted − observed| ÷ observed for the whole-country monthly total">Typical monthly error</th>}
+                {!compact && <th className="px-3 font-normal" title="Median monthly miss of the whole-country total, held-out 2019–2021; not a confidence interval">Typical held-out error</th>}
                 <th className="px-3 font-normal">Lowest MAE in</th>
                 <th className="px-3 font-normal" title={`2012 step within ×${h.within_factor} of Aqua alone`}>2012 step removed</th>
               </tr></thead>
@@ -220,6 +220,11 @@ export function HeadlineTable({ compact = false, lazy = false }: { compact?: boo
               </tbody>
             </table>
           </div>
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]" data-testid="metric-guide">
+            What each column measures. MAE: the typical size of a monthly miss. R²: how well the month-to-month ups and downs are tracked; it is dominated by the biggest months.
+            Bias: a systematic over- or under-count. 2012 step: whether the long record stays continuous across the sensor change.
+            Comparing this season with seasons before 2012 needs a continuous series, so the step matters for that task; the other three still matter for trusting any individual month.
+          </p>
           <div className="mt-3 max-w-3xl rounded-2xl border border-[var(--ember)] p-4 text-sm leading-relaxed text-[var(--text-secondary)]" data-testid="headline-honest">
             <p className="font-medium text-[var(--text-primary)]">Read it honestly</p>
             <ul className="mt-1 list-disc space-y-1 pl-5">
@@ -233,7 +238,7 @@ export function HeadlineTable({ compact = false, lazy = false }: { compact?: boo
               {compact && <> · <Link className="link-ul" href="/method#headline">full table on the Method page →</Link></>}
             </p>
           </div>
-          {!compact && <Note>{h.definition} Typical monthly error: {data.limits.definition.split(". ").slice(2).join(". ")} Source: proof.json (scripts/build_proof.py, scripts/build_heldout_errors.py).</Note>}
+          {!compact && <Note>{h.definition} Typical held-out error: {data.limits.definition.split(". ").slice(2).join(". ")} Source: proof.json (scripts/build_proof.py, scripts/build_heldout_errors.py).</Note>}
         </>
       )}
     </div>
@@ -252,12 +257,12 @@ export function CannotDo() {
       {!L ? (!error && <div className="mt-4 h-56 dot-skel" />) : (
         <ul className="mt-3 max-w-3xl list-disc space-y-2.5 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
           <li><span className="text-[var(--text-primary)]">It is an estimate, not an observation.</span> From 2012 a harmonized count is our estimate of what Aqua MODIS would have recorded, computed from VIIRS detections. It is not an actual MODIS observation.</li>
-          <li><span className="text-[var(--text-primary)]">It has an error, and we show it.</span> Held-out 2019–2021, a country&apos;s harmonized monthly total was typically ±{fmtNum(data.headline.methods.model.median_country_month_ape_pct, 0)}% from what Aqua recorded (median over countries of each country&apos;s median monthly error).
-            The Explorer shows each country&apos;s own figure next to its harmonized series. <InfoDot k="typicalError" align="start" /></li>
+          <li><span className="text-[var(--text-primary)]">It has an error, and we show it.</span> Held-out 2019–2021, the median monthly miss of a country&apos;s harmonized total was ±{fmtNum(data.headline.methods.model.median_country_month_ape_pct, 0)}% from what Aqua recorded (median over countries; not a confidence interval).
+            The Explorer shows each country&apos;s own figure, and the miss that 1 month in 5 exceeds, next to its harmonized series. <InfoDot k="typicalError" align="start" /></li>
           <li><span className="text-[var(--text-primary)]">Few fires, bigger error.</span> Countries ranked by held-out Aqua detections, in three equal groups:
             <span className="mt-2 block overflow-x-auto" tabIndex={0} role="region" aria-label="Held-out error by fire-count tercile">
               <table className="tabular w-full min-w-[480px] text-xs">
-                <thead><tr className="text-left text-[var(--text-muted)]"><th className="py-1 pr-3 font-normal">Group</th><th className="px-2 font-normal">Held-out Aqua detections</th><th className="px-2 font-normal">Typical monthly error</th><th className="px-2 font-normal">Median |bias|</th><th className="px-2 font-normal">Median R²</th><th className="px-2 font-normal">R² below 0</th></tr></thead>
+                <thead><tr className="text-left text-[var(--text-muted)]"><th className="py-1 pr-3 font-normal">Group</th><th className="px-2 font-normal">Held-out Aqua detections</th><th className="px-2 font-normal">Typical held-out error</th><th className="px-2 font-normal">Median |bias|</th><th className="px-2 font-normal">Median R²</th><th className="px-2 font-normal">R² below 0</th></tr></thead>
                 <tbody>
                   {[...L.terciles.map((t, i) => [["Fewest fires", "Middle", "Most fires"][i], t] as const), ["Own fit", L.own] as const, ["Pooled fit", L.pooled] as const].map(([label, t]) => (
                     <tr key={label} className="border-t border-[var(--hairline)]">
@@ -272,8 +277,8 @@ export function CannotDo() {
                 </tbody>
               </table>
             </span>
-            In the third of countries with the fewest fires the typical monthly error is ±{fmtNum(L.terciles[0].median_country_month_ape_pct, 0)}%, against ±{fmtNum(L.terciles[2].median_country_month_ape_pct, 0)}% where fires are many.</li>
-          <li><span className="text-[var(--text-primary)]">Pooled fits are less reliable.</span> The {L.pooled.n} countries on the shared (pooled) curve have a typical monthly error of ±{fmtNum(L.pooled.median_country_month_ape_pct, 0)}% and median held-out R² {fmtR2(L.pooled.median_r2)}, against ±{fmtNum(L.own.median_country_month_ape_pct, 0)}% and {fmtR2(L.own.median_r2)} for the {L.own.n} own-fit countries. They are also the low-fire countries, so the two effects overlap. Every pooled country is marked wherever it is shown. <InfoDot k="pooled" align="start" /></li>
+            In the third of countries with the fewest fires the typical held-out error is ±{fmtNum(L.terciles[0].median_country_month_ape_pct, 0)}%, against ±{fmtNum(L.terciles[2].median_country_month_ape_pct, 0)}% where fires are many.</li>
+          <li><span className="text-[var(--text-primary)]">Pooled fits are less reliable.</span> The {L.pooled.n} countries on the shared (pooled) curve have a typical held-out error of ±{fmtNum(L.pooled.median_country_month_ape_pct, 0)}% and median held-out R² {fmtR2(L.pooled.median_r2)}, against ±{fmtNum(L.own.median_country_month_ape_pct, 0)}% and {fmtR2(L.own.median_r2)} for the {L.own.n} own-fit countries. They are also the low-fire countries, so the two effects overlap. Every pooled country is marked wherever it is shown. <InfoDot k="pooled" align="start" /></li>
           <li><span className="text-[var(--text-primary)]">Some countries are not corrected at all.</span> {data.headline.n_countries} countries are harmonized: {data.headline.n_own} with their own fit, {data.headline.n_pooled} with a pooled fit; {data.headline.n_unfitted} are shown raw (too few detections to fit), always flagged uncorrected.</li>
           <li><span className="text-[var(--text-primary)]">Vegetation fires in the archive, everything in the live data.</span> The 2001–2025 archive keeps daytime vegetation fires only (no volcanoes, gas flares or other static sources). The 2026 near-real-time feeds have no fire-type filter, so they can include those sources and false alarms.</li>
           <li><span className="text-[var(--text-primary)]">No forecasting.</span> The calendar describes the past and the present. It does not predict individual fires or next season.</li>

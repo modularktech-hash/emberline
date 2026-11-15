@@ -348,14 +348,14 @@ export function Explorer() {
                     <p data-testid="unusual-month">
                       <span className="font-medium text-[var(--text-primary)]">Most unusual month, {FIRST}–2025:</span>{" "}
                       <span className="tabular text-[var(--text-primary)]">{MONTHS[unusual.month - 1]} {unusual.year}</span>, {fmt(unusual.value)} harmonized detections,
-                      {" "}rank {unusual.rank} of {unusual.nYears} years for that month. Median {MONTHS[unusual.month - 1]}: <span className="tabular">{fmt(unusual.median)}</span>; range <span className="tabular">{fmt(unusual.min)}–{fmt(unusual.max)}</span>{unusual.rank === 1 && <>; next highest <span className="tabular">{fmt(unusual.nextHighest)}</span></>}.
+                      {" "}rank {unusual.rank} of {unusual.nYears} years for that month. The other {unusual.nRef} {MONTHS[unusual.month - 1]}s, same area and series: median <span className="tabular">{fmt(unusual.median)}</span>, range <span className="tabular">{fmt(unusual.min)}–{fmt(unusual.max)}</span>.
                       {" "}Historical context, not a forecast. <InfoDot k="unusualMonth" align="start" />
                     </p>
                   )}
                   {errCountry && (
                     <p data-testid="typical-error" className={unusual ? "mt-1" : ""}>
-                      <span className="font-medium text-[var(--text-primary)]">Typical error {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
-                      {errRow?.[0] != null && <> per month (80% of months within ±{fmtNum(errRow[1], 0)}%)</>}: held-out 2019–2021 error of {prettyName(errCountry)}&apos;s harmonized monthly total against what Aqua recorded{area.kind !== "country" && ", the fitted country with most detections in this area; not computed for the drawn area itself"}.
+                      <span className="font-medium text-[var(--text-primary)]">Typical held-out error: {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
+                      {errRow?.[0] != null && <> (median monthly miss, 2019–2021; not a confidence interval). 1 month in 5 missed by more than ±{fmtNum(errRow[1], 0)}%</>}. Held-out error of {prettyName(errCountry)}&apos;s harmonized monthly total against what Aqua recorded{area.kind !== "country" && ", the fitted country with most detections in this area; not computed for the drawn area itself"}.
                       {errPooled && <span className="text-[var(--ember)]"> Pooled fit: less reliable than an own fit.</span>}
                       {errRow && errRow[2] === 0 && " Few fires here, so errors are larger."}
                       {" "}<InfoDot k="typicalError" align="start" />

@@ -559,9 +559,10 @@ function WorkedExample() {
   const steps: Array<[string, React.ReactNode]> = w && u ? [
     ["Select an area", <>A box over {w.label}: {fmtInt(w.n_cells)} grid cells of about 45 km, {fmtInt(w.n_cells_with_data)} with detections, all in {w.countries.map(prettyName).join(", ")} ({w.main_country_fit_source === "pooled" ? "pooled fit" : "own fit"}).</>],
     ["Find its most unusual month", <>In the harmonized record, {w.years[0]}–{w.years[1]}: <span className="text-[var(--text-primary)]">{mo} {u.year}</span>, {fmtInt(u.value)} detections, rank {u.rank} of {u.n_years} {mo}s.</>],
-    ["Compare it with history", <>Median {mo}: {fmtInt(u.median)}. Range {fmtInt(u.min)}–{fmtInt(u.max)}; the next-highest {mo} had {fmtInt(u.next_highest)}.</>],
-    ["Read the result", <>{mo} {u.year} had about {u.times_median != null ? `${fmtNum(u.times_median, 0)} times` : "far more than"} a typical {mo}&apos;s fire detections here, and {fmtNum(u.value / u.next_highest, 1)} times the next-highest {mo} in {u.n_years} years.
-      {err?.[0] != null && <> {prettyName(w.main_country)}&apos;s typical monthly error is ±{fmtNum(err[0], 0)}% (held-out 2019–2021), far smaller than that gap.</>}
+    ["Compare it with history", <>The other {u.n_reference_years} {mo}s, {w.years[0]}–{w.years[1]} ({mo} {u.year} itself excluded): median {fmtInt(u.median)}, range {fmtInt(u.min)}–{fmtInt(u.max)}.
+      Same box (the same {fmtInt(w.n_cells)} cells), same calendar month, same harmonized series ({prettyName(w.main_country)}&apos;s {w.main_country_fit_source === "pooled" ? "pooled" : "own"} fit).</>],
+    ["Read the result", <>{mo} {u.year} had about {u.times_median != null ? `${fmtNum(u.times_median, 0)} times` : "far more than"} the median of the other {mo}s here, and {fmtNum(u.value / u.next_highest, 1)} times the highest of them ({fmtInt(u.next_highest)}).
+      {err?.[0] != null && <> {prettyName(w.main_country)}&apos;s typical held-out error is ±{fmtNum(err[0], 0)}% (median monthly miss, 2019–2021; not a confidence interval; 1 month in 5 missed by more than ±{fmtNum(err[1], 0)}%), far smaller than that gap.</>}
       {" "}The raw record shows {fmtInt(w.raw_same_month)} that month, but raw VIIRS counts cannot be compared with MODIS months before 2012.</>],
     ["Download it", <>In the Explorer, <span className="text-[var(--text-primary)]">Calendar CSV</span> saves the monthly series with its unit, fit version and a link that rebuilds the view.</>],
   ] : [];
@@ -581,7 +582,7 @@ function WorkedExample() {
           </ol>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Pill href={href} tone="red">Open this area in the Explorer →</Pill>
-            <p className="text-[12px] text-[var(--text-muted)]">Most unusual month: the highest rank among the same calendar month in every year, ties broken by the gap to its median. <InfoDot k="unusualMonth" align="start" /></p>
+            <p className="text-[12px] text-[var(--text-muted)]">Most unusual month: the highest rank among the same calendar month in every year, ties broken by the gap to its median; median and range are the other years of that month. <InfoDot k="unusualMonth" align="start" /></p>
           </div>
         </Reveal>
       )}
