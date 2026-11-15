@@ -57,7 +57,7 @@ html[data-perf=low] .backdrop-cream { background-image: none; }
 .tabular, code, kbd, pre, samp { font-variant-numeric: tabular-nums; }
 .font-mono, code, kbd, pre, samp { font-family: var(--font-code); }
 /* Headline numbers are dot-matrix everywhere. */
-.dot-num, .stat-value { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.dot-num, .stat-value, .display.tabular:is(.text-4xl, .text-5xl, .text-6xl, .text-7xl) { font-family: var(--font-dot); font-weight: 900; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
 
 /* Labels: one mono, all caps, tracked. */
 .eyebrow { font-family: var(--font-code); font-size: 11px; line-height: 1.5; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; }

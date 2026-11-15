@@ -117,7 +117,7 @@ export function LabPage() {
   }, [cal, ay, am]);
 
   const W = 640, H = 200;
-  const lx = (f: number) => 30 + (Math.log10(f) + 0.3) / 3.3 * (W - 50);
+  const lx = (f: number) => Math.round((30 + (Math.log10(f) + 0.3) / 3.3 * (W - 50)) * 100) / 100; // rounded: identical on server and browser
   const ly = (p: number) => 10 + (1 - p) * (H - 36);
 
   return (
