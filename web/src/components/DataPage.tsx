@@ -72,7 +72,7 @@ export function DataPage() {
     py: `import polars as pl\nurl = "${origin}/data/calendar_harmonized_global.parquet"\ncal = pl.read_parquet(url)\nprint(cal.filter((pl.col("scope") == "country") & (pl.col("key") == "Canada")))`,
     js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nimport { compressors } from "hyparquet-compressors"; // the files are ZSTD-compressed\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized_global.parquet" });\nconst rows = await parquetReadObjects({ file, compressors });\nconsole.log(rows.filter(r => r.scope === "country" && r.key === "Canada"));`,
     pd: `import pandas as pd  # needs pyarrow\ncsv = pd.read_csv("${origin}/data/calendar_harmonized_countries.csv", comment="#")\nprint(csv[csv.country == "Canada"].groupby("year").n_harmonized.sum())`,
-    r: `library(arrow)  # R; reads the CSV export, or download the Parquet first\ncal <- read_csv_arrow("${origin}/data/calendar_harmonized_countries.csv", skip = 3)\nsubset(cal, country == "Canada")`,
+    r: `# R, base only (no packages): the CSV export; for the Parquet files use the arrow package\ncal <- read.csv("${origin}/data/calendar_harmonized_countries.csv", comment.char = "#")\naggregate(n_harmonized ~ year, data = subset(cal, country == "Canada"), FUN = sum)`,
     sql: `-- DuckDB\nSELECT year, SUM(n_harmonized) AS detections\nFROM '${origin}/data/calendar_harmonized_global.parquet'\nWHERE scope = 'country' AND key = 'Canada'\nGROUP BY year ORDER BY year;`,
   }[lang];
 
