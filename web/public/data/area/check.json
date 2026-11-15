@@ -158,13 +158,6 @@
     "n_viirs": 0
    },
    {
-    "country": "Sint_Maarten",
-    "MODIS": 0,
-    "n_modis": 0,
-    "VIIRS": 7,
-    "n_viirs": 0
-   },
-   {
     "country": "Saint_Pierre_and_Miquelon",
     "MODIS": 0,
     "n_modis": 0,
@@ -191,6 +184,13 @@
     "n_modis": 15,
     "VIIRS": 10,
     "n_viirs": 10
+   },
+   {
+    "country": "Sint_Maarten",
+    "MODIS": 0,
+    "n_modis": 0,
+    "VIIRS": 7,
+    "n_viirs": 0
    },
    {
     "country": "Slovenia",
