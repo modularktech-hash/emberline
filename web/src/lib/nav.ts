@@ -4,6 +4,7 @@ export interface NavGroup { label: string; items: NavItem[] }
 /** The site, grouped the way the story runs: the story, your area, live, the proof, the data. */
 export const NAV: NavGroup[] = [
   { label: "Explore", items: [
+    { href: "/report", label: "Fire report", blurb: "One area, one month: how unusual it was, how far to trust it, as a downloadable report" },
     { href: "/explorer", label: "Calendar explorer", blurb: "Month × year burning calendar for every fitted country or a drawn box, raw or harmonized" },
     { href: "/seasons", label: "Seasonal anomalies", blurb: "Is this year normal? Each month against its history" },
     { href: "/trends", label: "Season shift", blurb: "Is the fire season starting earlier, or is that the sensor?" },
@@ -26,6 +27,6 @@ export const ALL = NAV.flatMap((g) => g.items);
 
 /** Dot-matrix name of a route, shown on the page curtain. */
 export const ROUTE_NAME: Record<string, string> = {
-  "/": "STORY", "/explorer": "EXPLORER", "/seasons": "SEASONS", "/trends": "SEASON SHIFT", "/compare": "COMPARE",
+  "/": "STORY", "/explorer": "EXPLORER", "/report": "REPORT", "/seasons": "SEASONS", "/trends": "SEASON SHIFT", "/compare": "COMPARE",
   "/globe": "LIVE GLOBE", "/satellites": "SATELLITES", "/method": "PROOF", "/data": "DATA", "/lab": "LAB", "/about": "ABOUT",
 };

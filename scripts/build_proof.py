@@ -198,6 +198,22 @@ def headline(params: dict, he: dict) -> dict:
     }
 
 
+def calibration(cs: dict, params: dict) -> dict:
+    """Does the typical error describe unseen months? Typical error from 2019-2020 only; share of 2021 months within it."""
+    def agg(sub):
+        rows = [cs[c]["country_month"]["calibration"] for c in sub]
+        rows = [x for x in rows if x["n_2021_within"] is not None]
+        n, k = sum(x["n_2021"] for x in rows), sum(x["n_2021_within"] for x in rows)
+        return {"n_countries": len(rows), "n_months_2021": n, "n_within": k, "share_within": r(k / n, 3) if n else None,
+                "median_country_share": r(median(x["n_2021_within"] / x["n_2021"] for x in rows), 3) if rows else None}
+    own = [c for c in cs if params["countries"][c]["fit_source"] == "own"]
+    pooled = [c for c in cs if params["countries"][c]["fit_source"] == "pooled"]
+    return {"definition": "Each country's median monthly miss over its 2019-2020 held-out months, then the share of its 2021 "
+                          "country-months whose miss is within that median. About 0.5 means the typical error carries over to "
+                          "unseen months; well below 0.5 means it understates the error.",
+            "all": agg(list(cs)), "own": agg(own), "pooled": agg(pooled)}
+
+
 def limits(params: dict, he: dict) -> dict:
     cs = he["countries"]
     names = sorted(cs, key=lambda c: cs[c]["country_month"]["obs_total"])
@@ -222,6 +238,7 @@ def limits(params: dict, he: dict) -> dict:
                       "detections) and split into three equal-count groups. country_month_ape = |predicted - observed| / observed for a "
                       "whole-country monthly total, median over months with observed > 0, then median over countries. A typical held-out "
                       "miss, not a confidence interval and with no coverage guarantee.",
+        "calibration": calibration(cs, params),
         "terciles": [stats(x) for x in cuts],
         "per_country_fields": ["median_ape_pct", "p80_ape_pct", "tercile (0 = fewest fires)", "heldout_aqua_total"],
         "per_country": {c: [r(cs[c]["country_month"]["model"]["median_ape_pct"], 1), r(cs[c]["country_month"]["model"]["p80_ape_pct"], 1),

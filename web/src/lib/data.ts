@@ -179,12 +179,13 @@ export interface HeadlineRow {
   median_r2: number | null; median_mae: number | null; median_bias_pct: number | null; median_abs_bias_pct: number | null;
   median_country_month_ape_pct: number | null; step_within_1_25: number; best_mae: number; best_r2: number;
 }
+export interface CalibStats { n_countries: number; n_months_2021: number; n_within: number; share_within: number | null; median_country_share: number | null }
 export interface LimitStats { n: number; heldout_aqua_min: number; heldout_aqua_max: number; median_country_month_ape_pct: number | null; median_abs_bias_pct: number | null; median_r2: number | null; r2_below_zero: number }
 export interface UnusualMonth { year: number; month: number; value: number; median: number; min: number; max: number; next_highest: number; rank: number; n_years: number; n_reference_years: number; times_median: number | null }
 export interface ProofFile {
   fit_version: string;
   headline: { definition: string; test_years: [number, number]; n_countries: number; n_own: number; n_pooled: number; n_unfitted: number; n_cell_months: number; within_factor: number; model_lower_mae_than_ratio: number; methods: Record<HeadlineMethod, HeadlineRow> };
-  limits: { definition: string; terciles: LimitStats[]; own: LimitStats; pooled: LimitStats; per_country_fields: string[]; per_country: Record<string, [number | null, number | null, number, number]> };
+  limits: { definition: string; calibration: { definition: string; all: CalibStats; own: CalibStats; pooled: CalibStats }; terciles: LimitStats[]; own: LimitStats; pooled: LimitStats; per_country_fields: string[]; per_country: Record<string, [number | null, number | null, number, number]> };
   worked_example: { definition: string; label: string; bbox: [number, number, number, number]; years: [number, number]; n_cells: number; n_cells_with_data: number; countries: string[]; uncorrected_rows: number; main_country: string; main_country_fit_source: "own" | "pooled"; unusual: UnusualMonth; raw_same_month: number };
   step_collapse: { definition: string; within_factor: number; all: ProofStepSummary; own: ProofStepSummary; pooled: ProofStepSummary; countries: ProofStepRow[] };
   benchmark: { definition: string; ratio_definition: string; all: ProofBenchCounts; own: ProofBenchCounts; pooled: ProofBenchCounts; countries: ProofBenchRow[] };

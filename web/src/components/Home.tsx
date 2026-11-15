@@ -22,6 +22,7 @@ import { MonthUnusualPanel } from "@/components/MonthToDate";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { PaperCutout } from "@/components/PaperCutout";
 import { HeadlineTable, StepCollapse } from "@/components/Proof";
+import { NSW_REPORT } from "@/lib/reportLink";
 import { CountUp, DotDigits, DotSkeleton, Expand, Failed, InfoDot, Pill, Reveal, SectionHead, StatTile, Tile } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getLiveSummary, getProof, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { annualTotals, median } from "@/lib/ember";
@@ -144,7 +145,8 @@ function Hero({ d }: { d: HomeData }) {
           Naively joining the MODIS and VIIRS fire records makes 2012 look like a jump in fire. We remove that step, country by country, so you can see whether your fire season is <span className="accent text-[1.15em] text-[var(--text-primary)]">really unusual.</span>
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Pill href="/explorer" tone="red">Open the calendar</Pill>
+          <Pill href={NSW_REPORT} tone="red">Get a report</Pill>
+          <Pill href="/explorer" tone="ink">Open the calendar</Pill>
           <Pill href="/globe" tone="line">Live globe →</Pill>
         </div>
         <nav aria-label="The evidence" className="mx-auto mt-7 grid max-w-3xl gap-3 text-left sm:grid-cols-3" data-testid="hero-evidence">
@@ -581,7 +583,8 @@ function WorkedExample() {
             ))}
           </ol>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Pill href={href} tone="red">Open this area in the Explorer →</Pill>
+            <Pill href={NSW_REPORT} tone="red">Open the full report →</Pill>
+            <Pill href={href} tone="line">Open this area in the Explorer →</Pill>
             <p className="text-[12px] text-[var(--text-muted)]">Most unusual month: the highest rank among the same calendar month in every year, ties broken by the gap to its median; median and range are the other years of that month. <InfoDot k="unusualMonth" align="start" /></p>
           </div>
         </Reveal>
@@ -705,7 +708,7 @@ export function Home() {
       <div ref={journeyRef} className="py-[var(--sec-sm)]">{journeyNear ? <DataJourney compact /> : <DotSkeleton h={220} label="Loading the data journey" />}</div>
 
       <section id="tools" className="scroll-mt-24 py-[var(--sec-md)]">
-        <Reveal><SectionHead eyebrow="Everything inside" title={<>One record. <span className="italic">Nine ways in.</span></>} /></Reveal>
+        <Reveal><SectionHead eyebrow="Everything inside" title={<>One record. <span className="italic">Ten ways in.</span></>} /></Reveal>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ALL.map((t, i) => (
             <Reveal key={t.href} delay={(i % 3) * 0.04}>

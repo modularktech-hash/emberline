@@ -258,7 +258,8 @@ export function CannotDo() {
         <ul className="mt-3 max-w-3xl list-disc space-y-2.5 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
           <li><span className="text-[var(--text-primary)]">It is an estimate, not an observation.</span> From 2012 a harmonized count is our estimate of what Aqua MODIS would have recorded, computed from VIIRS detections. It is not an actual MODIS observation.</li>
           <li><span className="text-[var(--text-primary)]">It has an error, and we show it.</span> Held-out 2019–2021, the median monthly miss of a country&apos;s harmonized total was ±{fmtNum(data.headline.methods.model.median_country_month_ape_pct, 0)}% from what Aqua recorded (median over countries; not a confidence interval).
-            The Explorer shows each country&apos;s own figure, and the miss that 1 month in 5 exceeds, next to its harmonized series. <InfoDot k="typicalError" align="start" /></li>
+            The Explorer shows each country&apos;s own figure, and the miss that 1 month in 5 exceeds, next to its harmonized series. <InfoDot k="typicalError" align="start" />
+            <span className="mt-1 block" data-testid="calibration">Does it hold for unseen months? With each country&apos;s typical error taken from 2019–2020 only, {fmtNum(L.calibration.all.n_within)} of {fmtNum(L.calibration.all.n_months_2021)} country-months in 2021 ({pct(L.calibration.all.share_within, 0)}) fell within it, where a calibrated median gives about 50% (own fit {pct(L.calibration.own.share_within, 0)}, pooled {pct(L.calibration.pooled.share_within, 0)}).</span></li>
           <li><span className="text-[var(--text-primary)]">Few fires, bigger error.</span> Countries ranked by held-out Aqua detections, in three equal groups:
             <span className="mt-2 block overflow-x-auto" tabIndex={0} role="region" aria-label="Held-out error by fire-count tercile">
               <table className="tabular w-full min-w-[480px] text-xs">

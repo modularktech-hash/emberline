@@ -88,6 +88,14 @@ def evaluate(args: tuple[str, dict, float]) -> dict:
     cm = j.group_by("year", "month").agg([pl.col(c).cast(pl.Float64).sum() for c in ["obs", *set(cols.values())]]).sort("year", "month")
     cm = cm.filter(pl.col("obs") > 0)
     country_month = {"n_months": cm.height, "obs_total": float(cm["obs"].sum())}
+    # Calibration of the "typical error": median model miss from 2019-2020 months only, then the
+    # share of 2021 months whose miss is within it (about 0.5 if the median carries over to new months).
+    ape_m = np.abs(cm["model"].to_numpy() - cm["obs"].to_numpy()) / cm["obs"].to_numpy() if cm.height else np.array([])
+    yrs = cm["year"].to_numpy()
+    early, late = ape_m[yrs <= 2020], ape_m[yrs == 2021]
+    country_month["calibration"] = {"median_ape_2019_2020_pct": float(100 * np.median(early)) if len(early) else None,
+                                    "n_2021": int(len(late)),
+                                    "n_2021_within": int((late <= np.median(early)).sum()) if len(early) and len(late) else None}
     for m, col in cols.items():
         ape = (np.abs(cm[col].to_numpy() - cm["obs"].to_numpy()) / cm["obs"].to_numpy()) if cm.height else np.array([])
         country_month[m] = {"median_ape_pct": float(100 * np.median(ape)) if len(ape) else None,
@@ -172,6 +180,7 @@ def main() -> int:
                       "for every method (mae = mean |obs - pred| in Aqua detections per cell-month). country_month: predictions "
                       "summed to the whole country per month; ape = 100*|pred - obs|/obs over months with obs > 0 "
                       "(median and 80th percentile: typical and tail held-out misses, not confidence intervals). "
+                      "calibration: median model miss over 2019-2020 months, and how many 2021 months fall within it. "
                       "step_2012: mean annual count 2012-2014 under each method / mean annual Aqua count 2009-2011 "
                       "(aqua = Aqua alone, the unchanged-sensor reference; model and aqua reproduce params_global null_control).",
         "countries": {c: rnd({k: v for k, v in out[c].items() if k != "country"}) for c in sorted(out)},

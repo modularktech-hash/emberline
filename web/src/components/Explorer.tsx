@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { AnnualLine } from "@/components/AnnualLine";
 import { useDataset } from "@/components/DatasetBanner";
 import { Failed, CountUp, PageHead, Reveal } from "@/components/ui";
@@ -266,7 +267,8 @@ export function Explorer() {
               </button>
             ))}
           </div>
-          <CopyLink className="ml-auto" />
+          <Link href={`/report?${new URLSearchParams(Object.entries(areaToQuery(area)).filter(([, v]) => v) as Array<[string, string]>).toString()}${selCell ? `&y=${selCell.year}&m=${selCell.month}` : ""}`} className="glass-thin ml-auto inline-flex min-h-[36px] items-center px-3.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Get a report</Link>
+          <CopyLink />
           <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Calendar CSV
           </button>

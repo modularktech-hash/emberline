@@ -253,6 +253,35 @@ def main() -> int:
             check((pairs(got["h"]) if got["h"] is not None else None) == want_harm.get(key), f"calendar slice {key}: harmonized rows differ from the Parquet calendar")
         print(f"slices: params_core, live_summary, season ({len(season['countries'])} countries) and {len(idx['countries'])} country calendars equal their sources")
 
+    # 4. Report / worked example (New South Wales box): proof.json worked_example equals a direct sum of the
+    # published area cells (the files the Explorer and Report read), and those cells agree with the country calendar.
+    import math as _m
+    from statistics import median as _median
+    import h3
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import build_proof as bp
+    we = json.loads((DATA / "proof.json").read_text())["worked_example"]
+    u = we["unusual"]
+    w_, s_, e_, n_ = we["bbox"]
+    cells = sorted(h3.polygon_to_cells(h3.LatLngPoly([(y, x) for x, y in bp._densify([(w_, s_), (e_, s_), (e_, n_), (w_, n_)])]), 4))
+    check(len(cells) == we["n_cells"], f"worked example: {len(cells)} cells != proof.json {we['n_cells']}")
+    files = {h3.cell_to_parent(c, 1) for c in cells}
+    area = pl.concat([pl.read_parquet(DATA / "area" / f"{f}.parquet") for f in files if (DATA / "area" / f"{f}.parquet").exists()], how="vertical_relaxed")
+    box = area.filter(pl.col("cell").is_in(cells) & pl.col("n_harm").is_not_null() & (pl.col("month") == u["month"]))
+    dec = {y: float(box.filter(pl.col("year") == y)["n_harm"].sum()) for y in range(we["years"][0], we["years"][1] + 1)}
+    others = [v for y, v in dec.items() if y != u["year"]]
+    check(abs(dec[u["year"]] - u["value"]) < 0.06, f"worked example value {dec[u['year']]} != proof.json {u['value']}")
+    check(abs(_median(others) - u["median"]) < 0.06, f"worked example median {_median(others)} != proof.json {u['median']}")
+    check(abs(min(others) - u["min"]) < 0.06 and abs(max(others) - u["max"]) < 0.06, "worked example range != proof.json")
+    check(abs(max(others) - u["next_highest"]) < 0.06, "worked example next highest != proof.json")
+    check(1 + sum(v > dec[u["year"]] for v in dec.values()) == u["rank"], "worked example rank != proof.json")
+    au = pl.concat([pl.read_parquet(f) for f in sorted((DATA / "area").glob("*.parquet"))], how="vertical_relaxed").filter(
+        (pl.col("country") == we["main_country"]) & (pl.col("year") == u["year"]) & (pl.col("month") == u["month"]))
+    cal = harm.filter((pl.col("key") == we["main_country"]) & (pl.col("year") == u["year"]) & (pl.col("month") == u["month"]))["n_harmonized"].sum()
+    check(abs(float(au["n_harm"].sum()) - float(cal)) <= max(1.0, 1e-4 * float(cal)), f"area cells {we['main_country']} {u['year']}-{u['month']} {au['n_harm'].sum()} != country calendar {cal}")
+    print(f"worked example: {we['label'][:24]}... {u['year']}-{u['month']:02d} = {dec[u['year']]:.1f}, median of other {len(others)} = {_median(others):.1f}; "
+          f"area cells for {we['main_country']} {float(au['n_harm'].sum()):.1f} vs calendar {float(cal):.1f}")
+
     print(f"{passes} checks passed, {len(failures)} failed")
     for f in failures[:40]:
         print("FAIL", f)

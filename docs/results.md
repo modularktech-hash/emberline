@@ -543,3 +543,28 @@ Not available from published files: the FRP distribution of each country's detec
 fitted 50%-detection FRP and the cut-off are published). Testing a different model for these
 countries would need a validation split separate from 2019–2021; it has not been done, and the
 published results stand as they are.
+
+## Matching radius: ring 0 / 1 / 2 (analysis only, not the published model)
+
+`MS_RULES=published,same_cell,kring2 python3 scripts/matching_sensitivity.py <10 largest own-fit countries>`.
+Each rule relabels the 2012–2018 VIIRS detections (Aqua on the same UTC date within 0, 1 or 2 H3 res-7 rings),
+refits the logistic and κ on 2012–2018, and scores held-out 2019–2021 cell-months. Ring 1 is the published rule;
+its refit reproduces the published held-out R² and 2012 step in all ten countries. Published parameters are unchanged.
+
+| Country | MAE ring 0 | ring 1 | ring 2 | 2012 step ring 0 | ring 1 | ring 2 | Aqua alone |
+|---|---|---|---|---|---|---|---|
+| Tanzania | 1.707 | 1.718 | 1.728 | ×0.873 | ×0.872 | ×0.872 | ×0.882 |
+| South Sudan | 2.604 | 2.590 | 2.588 | ×1.033 | ×1.031 | ×1.031 | ×1.056 |
+| Central African Republic | 2.632 | 2.612 | 2.612 | ×0.955 | ×0.957 | ×0.958 | ×0.978 |
+| Mozambique | 2.656 | 2.666 | 2.678 | ×1.059 | ×1.059 | ×1.059 | ×1.078 |
+| Zambia | 2.927 | 2.905 | 2.891 | ×1.011 | ×1.011 | ×1.011 | ×1.022 |
+| Australia | 1.914 | 1.917 | 1.920 | ×1.079 | ×1.078 | ×1.078 | ×1.073 |
+| Russian Federation | 2.098 | 2.060 | 2.049 | ×1.084 | ×1.086 | ×1.087 | ×1.102 |
+| Angola | 3.204 | 3.175 | 3.164 | ×0.960 | ×0.960 | ×0.959 | ×0.964 |
+| Brazil | 1.241 | 1.233 | 1.230 | ×0.821 | ×0.822 | ×0.822 | ×0.822 |
+| Democratic Republic of the Congo | 2.577 | 2.564 | 2.570 | ×0.968 | ×0.967 | ×0.967 | ×0.975 |
+
+Largest change against ring 1: held-out MAE 1.8%, 2012 step 0.002. The match rate and the
+50% FRP point move a lot with the radius (see the E29 section), but κ rescales the total, so the held-out error and
+the continuity across 2012 barely move in these countries. The ten are large own-fit countries; small and pooled
+countries were not tested.

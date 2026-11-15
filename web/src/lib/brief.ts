@@ -144,3 +144,94 @@ table{border-collapse:collapse;width:100%}th{text-align:left;font-weight:500;col
 </body></html>
 `;
 }
+
+/* ------------------------------------------------------------ fire intelligence report */
+export interface BarPoint { label: string; raw: number | null; harm: number | null; boundaryBefore?: boolean; selected?: boolean }
+export interface BarColors { raw: string; harm: string; text: string; grid: string; mark: string; bg: string }
+export const REPORT_HEX: BarColors = { raw: "#3b6ea5", harm: "#d9431a", text: "#555555", grid: "#e2e2de", mark: "#1d1a16", bg: "#ffffff" };
+
+/**
+ * Raw and harmonized bars side by side on ONE y scale, with the 2012 sensor
+ * boundary drawn before the first VIIRS-era point. Used by the report page
+ * (with CSS-variable colours) and its HTML export (with REPORT_HEX).
+ */
+export function pairBarsSvg(points: BarPoint[], title: string, c: BarColors): string {
+  const L = 52, R = 8, T = 14, B = 34, W = 640, H = 230;
+  const max = Math.max(1, ...points.flatMap((p) => [p.raw ?? 0, p.harm ?? 0]));
+  const bw = (W - L - R) / Math.max(1, points.length);
+  const y = (v: number) => T + (1 - v / max) * (H - T - B);
+  const out: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="${esc(title)}">`];
+  out.push(`<rect width="${W}" height="${H}" fill="${c.bg}"/>`);
+  [0, 0.5, 1].forEach((f) => {
+    const v = max * f;
+    out.push(`<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${c.grid}"/><text x="${L - 6}" y="${y(v) + 3.5}" font-size="10" text-anchor="end" fill="${c.text}">${fmt(v)}</text>`);
+  });
+  points.forEach((p, i) => {
+    const x = L + i * bw;
+    if (p.boundaryBefore) out.push(`<line x1="${x}" x2="${x}" y1="${T - 6}" y2="${H - B}" stroke="${c.mark}" stroke-dasharray="3 3"/><text x="${x + 4}" y="${T + 2}" font-size="9.5" fill="${c.text}">2012 · VIIRS begins</text>`);
+    if (p.selected) out.push(`<rect x="${x + 0.5}" y="${T - 2}" width="${bw - 1}" height="${H - B - T + 2}" fill="none" stroke="${c.mark}" stroke-width="1.2"/>`);
+    const w = Math.max(1, bw * 0.38);
+    if (p.raw != null) out.push(`<rect x="${x + bw * 0.1}" y="${y(p.raw)}" width="${w}" height="${H - B - y(p.raw)}" fill="${c.raw}"><title>${esc(p.label)} raw: ${fmt(p.raw)}</title></rect>`);
+    if (p.harm != null) out.push(`<rect x="${x + bw * 0.52}" y="${y(p.harm)}" width="${w}" height="${H - B - y(p.harm)}" fill="${c.harm}"><title>${esc(p.label)} harmonized: ${fmt(p.harm)}</title></rect>`);
+    if (points.length <= 12 || i % 2 === 0 || p.selected) out.push(`<text x="${x + bw / 2}" y="${H - B + 13}" font-size="9.5" text-anchor="middle" fill="${p.selected ? c.mark : c.text}">${esc(p.label)}</text>`);
+  });
+  out.push(`<rect x="${L}" y="${H - 12}" width="10" height="8" fill="${c.raw}"/><text x="${L + 14}" y="${H - 5}" font-size="10" fill="${c.text}">raw (MODIS to 2011, VIIRS from 2012)</text>`);
+  out.push(`<rect x="${L + 230}" y="${H - 12}" width="10" height="8" fill="${c.harm}"/><text x="${L + 244}" y="${H - 5}" font-size="10" fill="${c.text}">harmonized (Aqua-MODIS-equivalent) · one shared scale</text>`);
+  out.push("</svg>");
+  return out.join("");
+}
+
+export interface ReportInput {
+  place: string;
+  geometry: string; // exact area: country name, bounds or polygon vertices
+  year: number; month: number;
+  sentence: string;
+  facts: Array<[string, string]>;
+  trust: Array<[string, string]>;
+  caveats: string[];
+  monthChart: BarPoint[]; // the same calendar month across years
+  yearChart: BarPoint[]; // the 12 months of the selected year
+  params: Params;
+  url: string;
+  generated: string;
+}
+
+export function buildReport(r: ReportInput): string {
+  const mo = MONTHS[r.month - 1];
+  const kv = (rows: Array<[string, string]>) => `<table>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</table>`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emberline fire report · ${esc(r.place)} · ${mo} ${r.year}</title>
+<style>
+body{font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;color:#1d1a16;background:#fbf8f1;max-width:760px;margin:0 auto;padding:24px 16px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:22px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
+table{border-collapse:collapse;width:100%}th{text-align:left;font-weight:500;color:#555;padding:2px 10px 2px 0;vertical-align:top;width:38%}td{padding:2px 0;word-break:break-word}
+.lead{font-size:16px}.note{color:#555;font-size:12px}svg{max-width:100%;height:auto}
+</style></head><body>
+<h1>Fire report: ${esc(r.place)}, ${mo} ${r.year}</h1>
+<p class="note">Emberline · fit ${esc(r.params.fit_version)} · generated ${esc(r.generated)}</p>
+<h2>Finding</h2><p class="lead">${esc(r.sentence)}</p>
+<p class="note">Observed historical anomaly, not a forecast or burned-area estimate.</p>
+${kv(r.facts)}
+<h2>${mo} in every year, raw and harmonized</h2>${pairBarsSvg(r.monthChart, `${mo} detections per year, raw and harmonized`, REPORT_HEX)}
+<h2>${r.year}, month by month</h2>${pairBarsSvg(r.yearChart, `${r.year} detections per month, raw and harmonized`, REPORT_HEX)}
+<h2>How far to trust it</h2>${kv(r.trust)}
+<h2>Caveats for this selection</h2><ul>${r.caveats.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
+<h2>Method in brief</h2><p>Each Suomi-NPP VIIRS detection is weighted by the fitted chance that Aqua MODIS would also have detected it, given its fire radiative power, and scaled per country by κ, so the record from 2012 is in Aqua-MODIS-equivalent detections. Before 2012 the harmonized series is observed Aqua MODIS. Fitted on ${r.params.train_years[0]}–${r.params.train_years[1]}, tested on held-out ${r.params.test_years[0]}–${r.params.test_years[1]}.</p>
+<h2>Limitations</h2><ul>
+<li>Counts are satellite active-fire detections, not burned area or numbers of fires. No data is not the same as no fire.</li>
+<li>From 2012 a harmonized count is an estimate of what Aqua MODIS would have recorded, not an actual MODIS observation.</li>
+<li>Daytime vegetation fires only. Regional use only; no global correction is claimed.</li>
+<li>Terra and Aqua drifted from 2022; 2022–2025 harmonized values extend the frozen-orbit fit outside its era.</li>
+</ul>
+<h2>Area, dates and sources</h2>${kv([
+    ["Area", r.geometry],
+    ["Month", `${mo} ${r.year}; reference: the same calendar month in the other years of the harmonized record`],
+    ["Model version", `${r.params.fit_version} · trained ${r.params.train_years[0]}–${r.params.train_years[1]}, tested ${r.params.test_years[0]}–${r.params.test_years[1]}`],
+    ["Data", "NASA FIRMS archive: MODIS Collection 6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP). We acknowledge the use of data and imagery from LANCE FIRMS operated by NASA's Earth Science Data and Information System (ESDIS)."],
+    ["Citations", "Giglio, L., Schroeder, W., Justice, C. O. (2016). The Collection 6 MODIS Active Fire Detection Algorithm and Fire Products. Remote Sensing of Environment, 178, 31–41. Schroeder, W., Oliva, P., Giglio, L., Csiszar, I. A. (2014). The New VIIRS 375 m active fire detection data product: Algorithm description and initial assessment. Remote Sensing of Environment, 143, 85–96."],
+  ])}
+<p>Reproduce: <a href="${esc(r.url)}">${esc(r.url)}</a></p>
+</body></html>
+`;
+}

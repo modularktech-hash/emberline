@@ -35,6 +35,8 @@ import fit_harmonization as fh  # noqa: E402
 
 OUT = Path(os.environ.get("MS_OUT", ROOT / "data" / "matching_sensitivity.json"))
 RULES = {"published": (1, 0), "same_cell": (0, 0), "kring2": (2, 0), "pm1day": (1, 1)}
+if os.environ.get("MS_RULES"):  # e.g. MS_RULES=published,same_cell,kring2
+    RULES = {k: RULES[k] for k in os.environ["MS_RULES"].split(",")}
 KEY = ["h3_5", "year", "month"]
 
 
@@ -57,7 +59,9 @@ def label(v: pl.DataFrame, aqua: pl.DataFrame, k: int, days: int) -> np.ndarray:
 
 
 def run(country: str, pub: dict) -> dict:
-    d = fh.load(country).filter(pl.col("year").is_between(fh.TRAIN[0], fh.TEST[1]))
+    d = fh.load(country).filter(pl.col("year").is_between(2009, fh.TEST[1]))
+    aqua_before = d.filter((pl.col("platform") == "Aqua") & pl.col("year").is_between(2009, 2011)).group_by("year").len()["len"].mean()
+    d = d.filter(pl.col("year").is_between(fh.TRAIN[0], fh.TEST[1]))
     v = d.filter(pl.col("platform") == "Suomi-NPP")
     aqua = d.filter(pl.col("platform") == "Aqua")
     del d
@@ -79,10 +83,15 @@ def run(country: str, pub: dict) -> dict:
         model = fh.cell_month(fh.years(vv, fh.TEST), "m", "model")
         j = obs.join(model, on=KEY, how="full", coalesce=True).fill_null(0)
         m = fh.metrics(j["model"].to_numpy(), j["obs"].to_numpy().astype(float))
+        mae = float(np.abs(j["model"].to_numpy() - j["obs"].to_numpy().astype(float)).mean())
+        # 2012 step as in fit_harmonization's null control: mean annual 2012-2014 / mean annual Aqua 2009-2011
+        after = vv.filter(pl.col("year").is_between(2012, 2014)).group_by("year").agg(pl.col("m").sum())["m"].mean()
+        step = float(after / aqua_before) if aqua_before else None
         out["rules"][name] = {"k_ring": k, "days": days, "b0": b0, "b1": b1,
                               "frp50_mw": float(np.exp(-b0 / b1)) if b1 > 0 else None,
                               "kappa": kappa, "train_match_rate": float(seen[tr_mask].mean()),
-                              "test_r2": m["r2"], "test_bias_pct": m["bias_pct"], "test_rmse": m["rmse"]}
+                              "test_r2": m["r2"], "test_bias_pct": m["bias_pct"], "test_rmse": m["rmse"],
+                              "test_mae": mae, "step_2012": step}
         print(f"  {country} {name}: match={out['rules'][name]['train_match_rate']:.3f} b0={b0:.3f} b1={b1:.3f} "
               f"FRP50={out['rules'][name]['frp50_mw']} kappa={kappa:.3f} R2={m['r2']:.3f} bias={m['bias_pct']:+.1f}%",
               flush=True)
@@ -90,7 +99,7 @@ def run(country: str, pub: dict) -> dict:
     rng = np.random.default_rng(29)
     lab = np.column_stack([labels[n] for n in RULES])
     groups = {"all_matched": lab.all(1), "all_unmatched": ~lab.any(1),
-              "only_wider_rules_match": (labels["published"] == 0) & ((labels["kring2"] == 1) | (labels["pm1day"] == 1)),
+              "only_wider_rules_match": (labels["published"] == 0) & ((labels.get("kring2", 0) == 1) | (labels.get("pm1day", 0) == 1)),
               "published_matches_same_cell_does_not": (labels["published"] == 1) & (labels["same_cell"] == 0)}
     for g, mask in groups.items():
         idx = np.flatnonzero(mask & tr_mask)
