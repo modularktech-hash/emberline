@@ -48,15 +48,18 @@ jobs:
         continue-on-error: true
         run: python scripts/build_tle.py
 
+      # Paused: this step rewrites month_to_date.json without the harmonized (bridged) fields that
+      # scripts/build_bridge.py adds, and the bridge needs the NOAA-20 archive, which this job does
+      # not have. The published file stays as it is until the bridge runs here too.
       - name: Month to date (FIRMS area API)
-        if: env.FIRMS_MAP_KEY != ''
+        if: false
         continue-on-error: true
         # Responses are cached under data/mtd_cache/ during the run; a chunk that still fails after
         # retries marks its country "incomplete" (listed in the file) instead of stopping the run.
         run: python scripts/build_month_to_date.py
 
       - name: Month to date per grid cell (from the cached responses, no new requests)
-        if: env.FIRMS_MAP_KEY != ''
+        if: false
         continue-on-error: true
         run: python scripts/build_month_to_date_cells.py
 
