@@ -1,6 +1,6 @@
 "use client";
 
-import { fmtPct, fmtR2, fmtRatio } from "@/lib/format";
+import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow, Stat } from "@/components/Figure";
 
@@ -186,6 +186,7 @@ export function ComparePage() {
                       <Stat size="sm" label="Busiest year" value={String(best?.year ?? "—")} note={<span className="tabular">{fmt(best?.value)}</span>} />
                       <Stat size="sm" label="Held-out R²" value={row ? fmtR2(row.r2_model) : "—"} note={<span>bias {row ? fmtPct(row.bias_pct) : "—"}{mode === "raw" ? " · showing raw, uncorrected" : ""}</span>} />
                     </div>
+                    <p className="tabular mt-3 text-xs text-[var(--text-secondary)]">≈ {row?.harm_per_10k_km2_yr != null ? fmtNum(row.harm_per_10k_km2_yr, 1) : "—"} harmonized detections per 10,000 km² per year (2003–2025 mean; approximate area from Natural Earth 1:110m{row?.land_area_km2 != null ? `, ${fmt(row.land_area_km2)} km²` : ", no outline for this country"})</p>
                     <div className="mt-5"><MonthYearCalendar cal={data[k]} from={2003} to={2025} max={view.maxCell} /></div>
                   </section>
                 </Reveal>

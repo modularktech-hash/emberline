@@ -16,10 +16,11 @@ import { STATUS_LABEL, coverageReason } from "@/lib/coverage";
 import { DatasetCard } from "@/components/DatasetCard";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
-type Key = keyof Pick<CountryRow, "country" | "harm_mean_2003_2025" | "harm_2025" | "raw_2025" | "step_raw" | "step_harm" | "r2_model" | "bias_pct" | "frp_p50" | "onset_trend_harm">;
+type Key = keyof Pick<CountryRow, "country" | "harm_mean_2003_2025" | "harm_per_10k_km2_yr" | "harm_2025" | "raw_2025" | "step_raw" | "step_harm" | "r2_model" | "bias_pct" | "frp_p50" | "onset_trend_harm">;
 const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint: string }> = [
   { key: "country", label: "Country", f: (r) => prettyName(r.country), hint: "FIRMS country name" },
   { key: "harm_mean_2003_2025", label: "Mean / yr (harm.)", f: (r) => fmt(r.harm_mean_2003_2025), hint: "Aqua-equivalent detections, 2003–2025 mean" },
+  { key: "harm_per_10k_km2_yr", label: "≈ per 10k km²/yr", f: (r) => (r.harm_per_10k_km2_yr == null ? "—" : fmtNum(r.harm_per_10k_km2_yr, 1)), hint: "Approximate: harmonized 2003–2025 mean per 10,000 km² of the Natural Earth 1:110m outline (geodesic area); — = no outline" },
   { key: "harm_2025", label: "2025 (harm.)", f: (r) => fmt(r.harm_2025), hint: "Aqua-equivalent detections in 2025" },
   { key: "raw_2025", label: "2025 (raw)", f: (r) => fmt(r.raw_2025), hint: "Raw VIIRS detections in 2025" },
   { key: "step_raw", label: "2012 step raw", f: (r) => fmtRatio(r.step_raw), hint: "Mean 2012–14 / 2009–11, raw splice" },

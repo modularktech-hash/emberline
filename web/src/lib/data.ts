@@ -51,6 +51,8 @@ export interface DriftFile { fit_version: string; countries: Record<string, Drif
 
 export interface CountryRow {
   country: string; detections_filtered: number; raw_2025: number; harm_2025: number; harm_mean_2003_2025: number;
+  /** G6c (scripts/build_density.py): approximate; null when the country has no Natural Earth 1:110m outline. */
+  land_area_km2?: number | null; harm_per_10k_km2_yr?: number | null;
   peak_year: number | null; step_raw: number; step_aqua: number; step_harm: number; r2_model: number; r2_raw: number;
   bias_pct: number; frp_p50: number; fit_source: string; onset_trend_raw: number | null; onset_trend_harm: number | null;
   season_resolution?: "daily" | "monthly";

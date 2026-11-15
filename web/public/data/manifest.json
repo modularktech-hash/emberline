@@ -12,7 +12,7 @@
     "calendar_harmonized_countries.csv": "1686e0e43558085f560d49a5f49c0ba37fec1c8bc377b4307e3b8f1bb354a6db",
     "calendar_harmonized_global.parquet": "62b545bd7170fee0399576493a556848bd27338091af9d2a6200e9672f8e2d63",
     "calendar_raw_global.parquet": "8123debe2f6dbc3d853ae2bf266081fb8ca68f7e64e459670185d7da2335fb0e",
-    "countries.json": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
+    "countries.json": "952862da06361ecc6b60dc3c843dc62e4bf9dfaf938e254475cc2d52636988eb",
     "coverage_status.json": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
     "dataset.json": "19cb0edfbddcd53d0876b31b224c765ba57195d6f7784ea2a29266e63fd503ea",
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
@@ -419,8 +419,8 @@
    "dataset": "world",
    "purpose": "One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)",
    "source": "derived from the world calendars and params_global.json",
-   "bytes": 307339,
-   "sha256": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
+   "bytes": 316978,
+   "sha256": "952862da06361ecc6b60dc3c843dc62e4bf9dfaf938e254475cc2d52636988eb",
    "format": "json",
    "top_level_keys": [
     "fit_version",
@@ -429,7 +429,9 @@
     "test_years",
     "pooled_rule",
     "countries",
-    "not_fitted"
+    "not_fitted",
+    "land_area_note",
+    "density_note"
    ],
    "rows": 171,
    "row_unit": "country",
