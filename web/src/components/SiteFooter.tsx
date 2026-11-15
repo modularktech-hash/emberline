@@ -9,6 +9,7 @@ import { fmtUtc, parseUtc } from "@/lib/format";
 import { NAV } from "@/lib/nav";
 import { getParams } from "@/lib/queries";
 import { getMonthToDate } from "@/components/MonthToDate";
+import { whenNearOrIdle } from "@/lib/whenNear";
 
 type Item = { href: string; label: string; ext?: boolean };
 const GH = "https://github.com/modularktech-hash/emberline";
@@ -43,24 +44,24 @@ function Links({ items }: { items: Item[] }) {
   );
 }
 
-/** Fit version, last data update and live-feed time, each read from its data file once the footer is near. */
+/** Fit version, last data update and live-feed time, each read from its data file once the footer is near or the page has gone idle. */
 function StatusLine() {
   const ref = useRef<HTMLParagraphElement>(null);
-  const [s, setS] = useState<{ fit?: string; data?: string; live?: string }>({});
+  // undefined: still loading; null: the file could not be read.
+  const [s, setS] = useState<{ fit?: string | null; data?: string | null; live?: string | null }>({});
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
-      getParams().then((p) => setS((v) => ({ ...v, fit: p.fit_version }))).catch(() => {});
-      getLiveSummary().then((l) => setS((v) => ({ ...v, live: fmtUtc(parseUtc(l.fetched_utc)) }))).catch(() => {});
-      getMonthToDate().then((m) => { if (m) setS((v) => ({ ...v, data: fmtUtc(parseUtc(m.generated_utc)) })); });
-    }, { rootMargin: "300px" });
-    io.observe(el);
-    return () => io.disconnect();
+    let on = true;
+    const set = (k: "fit" | "data" | "live", v: string | null) => { if (on) setS((o) => ({ ...o, [k]: v })); };
+    const stop = whenNearOrIdle(el, () => {
+      getParams().then((p) => set("fit", p.fit_version)).catch(() => set("fit", null));
+      getLiveSummary().then((l) => set("live", fmtUtc(parseUtc(l.fetched_utc)))).catch(() => set("live", null));
+      getMonthToDate().then((m) => set("data", m ? fmtUtc(parseUtc(m.generated_utc)) : null)).catch(() => set("data", null));
+    });
+    return () => { on = false; stop(); };
   }, []);
-  const cell = (k: string, v?: string) => <span className="inline-flex items-center gap-2"><span>{k}</span><span className="tabular text-[var(--text-primary)]">{v ?? "not recorded"}</span></span>;
+  const cell = (k: string, v?: string | null) => <span className="inline-flex items-center gap-2"><span>{k}</span><span className="tabular text-[var(--text-primary)]">{v === undefined ? "loading" : v ?? "not recorded"}</span></span>;
   return (
     <p ref={ref} className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--text-muted)]" data-testid="status-line">
       <span className="live-dot" aria-hidden />{cell("Fit", s.fit)}{cell("Month-to-date data", s.data)}{cell("Live feed", s.live)}
