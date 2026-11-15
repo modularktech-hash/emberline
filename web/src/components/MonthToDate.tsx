@@ -11,6 +11,7 @@ import Link from "next/link";
 import { fmtInt, fmtNum } from "@/lib/format";
 import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
+import { loadJson } from "@/lib/queries";
 
 interface Side { month_to_date: number; pace_full_month: number; history_platform: string; history_years: [number, number]; history_median: number | null; history_max: number | null; percentile_of_pace: number | null; years_below_pace: number }
 export interface MonthToDateFile {
@@ -22,7 +23,10 @@ export interface MonthToDateFile {
 let cache: Promise<MonthToDateFile | null> | null = null;
 /** Resolves to null when the file is not published (404) or unreadable. */
 export function getMonthToDate(): Promise<MonthToDateFile | null> {
-  cache ??= fetch("/data/month_to_date.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  // Only requested when manifest.json lists it, so an unpublished file never shows up as a failed request.
+  cache ??= loadJson<{ files: Array<{ name: string }> }>("manifest.json")
+    .then((m) => (m.files.some((f) => f.name === "month_to_date.json") ? loadJson<MonthToDateFile>("month_to_date.json") : null))
+    .catch(() => null);
   return cache;
 }
 export function useMonthToDate() {

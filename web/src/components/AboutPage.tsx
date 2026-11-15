@@ -34,12 +34,47 @@ const SOURCES: Array<[string, string, Array<[string, string]>]> = [
 const AI_DISCLOSURE =
   "Shishir Bhat and Ridhan Teli have worked on this problem for about a year. Every scientific choice — the method, what to fit, the validation design and how to interpret the results — was made by the team. We used Claude, by Anthropic, through Claude Code to build it under our direction: during the event it wrote the code, ran the data pipeline and the fit we specified, tested the results and drafted documentation; before the event it also assisted with literature research and planning. Before the event we prepared planning and research documents, verified data schemas, the FIRMS ingest package and download scripts, and an empty app scaffold; these were imported into this repository in its first commit at the start of the event. The harmonization, the fit, the validation and the web app were built during the event, 14–15 Nov, as the git history shows. No AI-generated images, video or audio are used.";
 
+/** G5: each requirement of the official brief (docs/challenge-statement.md R1–R12) and where it is answered. */
+const BRIEF: Array<[string, string, string, string, "done" | "partial", string?]> = [
+  ["R1", "Harmonize MODIS and VIIRS into one comparable series", "/method", "Method: per-country detection model, tested on held-out years", "done", "regional fits; smaller countries borrow a pooled curve and the sparsest have no fit (counts on Method)"],
+  ["R2", "A burning activity calendar from active-fire hotspots", "/explorer", "Explorer: month × year calendar", "done"],
+  ["R3", "Number of hotspots from the early 2000s to the present", "/explorer", "Explorer: raw 2001–2025, harmonized 2003–2025", "partial", "2026 only as provisional raw counts in “This month so far”, for the countries loaded"],
+  ["R4", "Which months and years had the highest activity", "/explorer", "Explorer: calendar and busiest-year readout", "done"],
+  ["R5", "Current month against the historical median", "/seasons#this-month", "Seasons and Explorer: “This month so far”", "partial", "provisional, raw, different satellites (NOAA-20 vs Suomi-NPP; drifting MODIS), not harmonized; loaded countries only"],
+  ["R6", "Historical patterns, unusual conditions, critical periods", "/seasons", "Seasons (each month against its history), Trends (season timing)", "done"],
+  ["R7", "Select an area of interest", "/explorer", "Explorer: any fitted country or a drawn box", "done", "a box resolves to whole ~300 km grid cells (shown)"],
+  ["R8", "Select a specific date range", "/explorer", "Explorer: from/to year", "partial", "years, not arbitrary dates"],
+  ["R9", "Downloadable CSV of hotspots from a search", "/explorer", "Explorer: calendar CSV and recent-hotspot CSV (last 7 days)", "partial", "recent hotspots are 0.5° cells; full point-level history links to NASA FIRMS"],
+  ["R10", "Accessible colour ramps", "/explorer", "Calendar ramp and patterned no-data cells", "done"],
+  ["R11", "Draw the area on a map or enter latitude and longitude", "/explorer", "Explorer: draw on the map or type the four bounds", "done"],
+  ["R12", "Download analytics and visualizations", "/data", "CSV, HTML evidence brief, open Parquet and JSON files", "done"],
+];
+
 export function AboutPage() {
   const step = stepSummary();
   return (
     <div>
       <PageHead eyebrow="About · NASA Space Apps Challenge 2026" title="Built in 48 hours," italic="for people who study fire."
         lede="Emberline answers the challenge “MODIS and VIIRS hot spots”: harmonize the satellite fire record to reduce the discontinuity between the MODIS and VIIRS records, and turn it into a burning activity calendar for any fitted country or drawn area." />
+      <Reveal><section className="card mb-8 min-w-0 p-5 sm:p-6" data-testid="brief-checklist">
+        <h2 className="display text-2xl">Challenge brief → Emberline</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">Each ask in the official brief, where it is answered, and how completely.</p>
+        <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Challenge brief checklist">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-2 pr-3 font-normal">#</th><th className="px-3 font-normal">The brief asks for</th><th className="px-3 font-normal">Where</th><th className="px-3 font-normal">Status</th></tr></thead>
+            <tbody>
+              {BRIEF.map(([id, ask, href, where, status, why]) => (
+                <tr key={id} className="border-t border-[var(--hairline)] align-top">
+                  <td className="py-2.5 pr-3 font-mono text-xs text-[var(--text-muted)]">{id}</td>
+                  <td className="px-3 py-2.5 text-[var(--text-primary)]">{ask}</td>
+                  <td className="px-3 py-2.5"><Link href={href} className="link-ul">{where}</Link></td>
+                  <td className="px-3 py-2.5 text-[var(--text-secondary)]"><span className={status === "done" ? "text-[var(--ember)]" : "text-[var(--text-primary)]"}>{status}</span>{why ? <span className="block text-xs text-[var(--text-muted)]">{why}</span> : null}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section></Reveal>
       <div className="grid gap-6 lg:grid-cols-3">
         {[
           ["The problem", `From 2012 a sharper satellite sensor began detecting small fires the old one could not. Raw fire records jumped${step.median != null ? ` — by a median ${fmtRatio(step.median)} (2012–14 over 2009–11) across the ${step.n} countries with their own fit —` : ""} much of the apparent increase reflects improved detection sensitivity rather than an equivalent increase in fire activity.`],

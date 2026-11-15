@@ -325,8 +325,12 @@ function useActiveStep(root: React.RefObject<HTMLElement | null>): number {
     };
     const io = new IntersectionObserver(pick, { rootMargin: "-45% 0px -45% 0px" });
     steps.forEach((el) => io.observe(el));
+    // Backstop for jumps and late layout shifts the band can miss: one rAF-throttled re-check after scrolling.
+    let raf = 0;
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; pick(); }); };
+    window.addEventListener("scroll", onScroll, { passive: true });
     pick();
-    return () => io.disconnect();
+    return () => { io.disconnect(); window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
   }, [root]);
   return active;
 }
