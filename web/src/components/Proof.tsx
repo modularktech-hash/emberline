@@ -5,7 +5,7 @@
  * the False-Record Counter (P1) and Find the Seam (P2). Every number is read from
  * /data/proof.json, written by scripts/build_proof.py from the published files.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getProof, type BenchSeries, type ProofBenchCounts, type ProofFile, type ProofStepRow, type RecordSeries } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
@@ -40,6 +40,28 @@ function Note({ children }: { children: React.ReactNode }) {
 }
 
 /* ------------------------------------------------------------ A1: step collapse */
+/** The 171 (or 342) dots, drawn once per data/toggle change; hover only redraws the small highlight overlay. */
+const Marks = memo(function Marks({ rows, kind, dom }: { rows: ProofStepRow[]; kind: "harm" | "raw"; dom: readonly [number, number] }) {
+  const lx = (v: number) => SL + ((Math.log10(v) - dom[0]) / (dom[1] - dom[0])) * (SW - SL - SR);
+  const ly = (v: number) => SH - SB - ((Math.log10(v) - dom[0]) / (dom[1] - dom[0])) * (SH - ST - SB);
+  const color = kind === "harm" ? "var(--ember)" : RAW, op = kind === "harm" ? 0.9 : 0.22, r = 3.4;
+  return (
+    <>
+      {rows.map((c) => {
+        const cx = lx(c.aqua), cy = ly(kind === "harm" ? c.harm : c.raw);
+        return (
+          <g key={c.country} data-c={c.country}>
+            {c.fit_source === "pooled"
+              ? <rect x={cx - r} y={cy - r} width={r * 2} height={r * 2} transform={`rotate(45 ${cx} ${cy})`} fill="var(--surface-page)" stroke={color} strokeWidth="1.4" opacity={op} />
+              : <circle cx={cx} cy={cy} r={r} fill={color} opacity={op} />}
+            <circle cx={cx} cy={cy} r={9} fill="transparent"><title>{`${prettyName(c.country)}${c.fit_source === "pooled" ? " (pooled curve)" : ""}: Aqua ${fmtRatio(c.aqua)}, ${kind === "harm" ? `harmonized ${fmtRatio(c.harm)}` : `raw splice ${fmtRatio(c.raw)}`}`}</title></circle>
+          </g>
+        );
+      })}
+    </>
+  );
+});
+
 const SW = 560, SH = 420, SL = 52, SR = 14, ST = 14, SB = 44;
 
 export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean; compact?: boolean }) {
@@ -54,6 +76,7 @@ export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean
     return [Math.log10(Math.min(...vals)) - 0.05, Math.log10(Math.max(...vals)) + 0.05] as const;
   }, [sc]);
   const pick = sc && sel ? sc.countries.find((c) => c.country === sel) : undefined;
+  const pickFrom = (e: React.SyntheticEvent) => { const c = (e.target as Element).closest?.("[data-c]")?.getAttribute("data-c"); if (c && c !== sel) setSel(c); };
 
   return (
     <div ref={ref} className={compact ? "" : "card mt-8 min-w-0 p-5 sm:p-6"} data-testid="step-collapse">
@@ -71,19 +94,9 @@ export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean
         const ticks = [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32].filter((t) => Math.log10(t) >= dom[0] && Math.log10(t) <= dom[1]);
         const band = Math.log10(sc.within_factor);
         const lo = 10 ** dom[0], hi = 10 ** dom[1];
-        const mark = (c: ProofStepRow, v: number, kind: "harm" | "raw") => {
-          const cx = lx(c.aqua), cy = ly(v), on = sel === c.country;
-          const color = kind === "harm" ? "var(--ember)" : RAW;
-          const op = kind === "harm" ? (sel && !on ? 0.35 : 0.9) : on ? 0.9 : 0.22;
-          const r = on ? 5 : 3.4;
-          return (
-            <g key={`${kind}-${c.country}`} onPointerEnter={() => setSel(c.country)} onClick={() => setSel(c.country)} style={{ cursor: "pointer" }}>
-              {c.fit_source === "pooled"
-                ? <rect x={cx - r} y={cy - r} width={r * 2} height={r * 2} transform={`rotate(45 ${cx} ${cy})`} fill="var(--surface-page)" stroke={color} strokeWidth="1.4" opacity={op} />
-                : <circle cx={cx} cy={cy} r={r} fill={color} opacity={op} />}
-              <circle cx={cx} cy={cy} r={9} fill="transparent"><title>{`${prettyName(c.country)}${c.fit_source === "pooled" ? " (pooled curve)" : ""}: Aqua ${fmtRatio(c.aqua)}, ${kind === "harm" ? `harmonized ${fmtRatio(c.harm)}` : `raw splice ${fmtRatio(c.raw)}`}`}</title></circle>
-            </g>
-          );
+        const hl = (c: ProofStepRow, v: number, kind: "harm" | "raw") => {
+          const cx = lx(c.aqua), cy = ly(v), color = kind === "harm" ? "var(--ember)" : RAW;
+          return <circle key={kind} cx={cx} cy={cy} r={7} fill="none" stroke={color} strokeWidth="2" pointerEvents="none" />;
         };
         const s = sc.all;
         return (
@@ -107,9 +120,13 @@ export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean
                 ].map((p) => p.join(",")).join(" ")} />
                 <line x1={lx(lo)} y1={ly(lo)} x2={lx(hi)} y2={ly(hi)} stroke="var(--ink)" strokeWidth="1.2" strokeDasharray="5 4" />
                 <text x={SW - SR - 4} y={ly(hi) + 14} textAnchor="end" fontSize="10" fill="var(--text-muted)">1:1 · same step as Aqua</text>
-                {showRaw && sc.countries.map((c) => mark(c, c.raw, "raw"))}
-                {pick && showRaw && <line x1={lx(pick.aqua)} x2={lx(pick.aqua)} y1={ly(pick.raw)} y2={ly(pick.harm)} stroke="var(--text-muted)" strokeDasharray="2 3" />}
-                {sc.countries.map((c) => mark(c, c.harm, "harm"))}
+                <g onPointerOver={pickFrom} onClick={pickFrom} style={{ cursor: "pointer" }}>
+                  {showRaw && <Marks rows={sc.countries} kind="raw" dom={dom} />}
+                  <Marks rows={sc.countries} kind="harm" dom={dom} />
+                </g>
+                {pick && showRaw && <line x1={lx(pick.aqua)} x2={lx(pick.aqua)} y1={ly(pick.raw)} y2={ly(pick.harm)} stroke="var(--text-muted)" strokeDasharray="2 3" pointerEvents="none" />}
+                {pick && showRaw && hl(pick, pick.raw, "raw")}
+                {pick && hl(pick, pick.harm, "harm")}
                 <text x={(SW + SL) / 2} y={SH - 6} textAnchor="middle" fontSize="10.5" fill="var(--text-muted)">Aqua MODIS only (unchanged sensor): 2012–14 ÷ 2009–11</text>
                 <text transform={`translate(12 ${(SH - SB + ST) / 2}) rotate(-90)`} textAnchor="middle" fontSize="10.5" fill="var(--text-muted)">record&apos;s step, same years</text>
               </svg>

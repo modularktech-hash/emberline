@@ -8,7 +8,7 @@ import { useSyncExternalStore } from "react";
  * marquee, globe auto-rotate and fire rings). The site stays fully usable.
  *
  * Triggers (any one): `?perf=low` in the URL (sticky for the tab via
- * sessionStorage; `?perf=high` forces full effects), <= 4 logical CPUs, a
+ * sessionStorage; `?perf=high` forces full effects), a
  * slow first second of frames (median rAF delta > 24 ms), or a software WebGL
  * renderer reported by the globe (SwiftShader, llvmpipe, ...).
  */
@@ -42,7 +42,6 @@ export function detectPerf(): () => void {
   } catch { /* storage blocked: no override */ }
   if (forced === "high") { document.documentElement.dataset.perf = "high"; return () => {}; }
   if (forced === "low") { setPerfLow("forced"); return () => {}; }
-  if ((navigator.hardwareConcurrency ?? 8) <= 4) { setPerfLow("cpu"); return () => {}; }
 
   // Sample one second of frames once the page has settled after load.
   const deltas: number[] = [];
