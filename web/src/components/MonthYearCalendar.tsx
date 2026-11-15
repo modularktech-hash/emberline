@@ -187,7 +187,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
           {shownCell && h ? (
             <span>
               <span className="font-medium text-[var(--text-primary)]">{MONTHS[shownCell.month - 1]} {shownCell.year}</span>
-              {areaName && <> · {areaName}</>} · {cal.mode === "raw" ? "Raw detections (uncorrected)" : "Harmonized, Aqua-equivalent detections"} ·{" "}
+              {areaName && <> · {areaName}</>} · {cal.mode === "raw" ? "Raw detections (as recorded)" : "Harmonized (corrected) detections"} ·{" "}
               {h.value == null ? "no data" : <span className="text-[var(--ember)]">{fmt(h.value)}</span>}
               {(() => { const q = ratioOf(h.value, shownCell.month); return q == null ? null : <span> · ×{q >= 10 ? q.toFixed(0) : q.toFixed(1)} a usual {MONTHS[shownCell.month - 1]}</span>; })()}
               <span className="text-[var(--text-muted)]"> · {BASIS[h.basis]}{sel && !hover ? " · selected (click again to clear)" : ""}</span>

@@ -50,10 +50,10 @@ export function FireReport(r: ReportInput) {
       <p className="mt-2 text-lg leading-snug" style={{ color: tone }}>{verdict}.</p>
 
       <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div><dt className="text-xs text-[var(--text-muted)]">Harmonized detections</dt><dd className="dot-num tabular mt-1 text-3xl">{fmt(Math.round(v))}</dd></div>
+        <div><dt className="text-xs text-[var(--text-muted)]">Hotspots, harmonized (corrected)</dt><dd className="dot-num tabular mt-1 text-3xl">{fmt(Math.round(v))}</dd></div>
         <div><dt className="text-xs text-[var(--text-muted)]">Against a usual {mn}</dt><dd className="dot-num tabular mt-1 text-3xl" style={{ color: tone }}>{times == null ? "—" : `×${fmtNum(times, times >= 10 ? 0 : 1)}`}</dd></div>
         <div><dt className="text-xs text-[var(--text-muted)]">Rank among {n} {mn}s</dt><dd className="dot-num tabular mt-1 text-3xl">{rank}</dd></div>
-        <div><dt className="text-xs text-[var(--text-muted)]">Raw count, same month</dt><dd className="dot-num tabular mt-1 text-3xl text-[var(--c-raw)]">{rawV == null ? "—" : fmt(Math.round(rawV))}</dd></div>
+        <div><dt className="text-xs text-[var(--text-muted)]">As recorded (raw), same month</dt><dd className="dot-num tabular mt-1 text-3xl text-[var(--c-raw)]">{rawV == null ? "—" : fmt(Math.round(rawV))}</dd></div>
       </dl>
 
       <div className="mt-5 grid gap-4 text-sm leading-relaxed text-[var(--text-secondary)] md:grid-cols-2">
@@ -74,7 +74,7 @@ export function FireReport(r: ReportInput) {
         <div>
           <p className="font-medium text-[var(--text-primary)]">How far to trust it</p>
           <ul className="mt-1 space-y-1">
-            <li>Typical held-out error{r.errCountry ? ` (${r.errCountry.replace(/_/g, " ")})` : ""}: {r.err ? `±${fmtNum(r.err[0], 0)}% per month, median, on 2019–2021, years the fit never saw` : "not recorded"}.{r.pooled && " Borrowed (pooled) curve: less reliable."} <InfoDot k="typicalError" align="start" /></li>
+            <li>Typical error on years the model never saw{r.errCountry ? ` (${r.errCountry.replace(/_/g, " ")})` : ""}: {r.err ? `±${fmtNum(r.err[0], 0)}% per month (median, 2019–2021)` : "not recorded"}.{r.pooled && " Borrowed (pooled) curve: less reliable."} <InfoDot k="typicalError" align="start" /></li>
             <li>Detected active fire, not burned area. Historical context, not a forecast.</li>
             <li><Link href="/method" className="link-ul text-[var(--text-primary)]">How the correction was tested</Link> · <Link href="/method#proof" className="link-ul text-[var(--text-primary)]">the proof</Link></li>
           </ul>
