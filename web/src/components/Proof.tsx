@@ -7,7 +7,7 @@
  */
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { getProof, type BenchSeries, type ProofBenchCounts, type ProofBenchRow, type ProofFile, type ProofStepRow, type RecordSeries } from "@/lib/data";
+import { getProof, type HeadlineMethod, type BenchSeries, type ProofBenchCounts, type ProofBenchRow, type ProofFile, type ProofStepRow, type RecordSeries } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { prettyName } from "@/lib/names";
@@ -166,6 +166,124 @@ export function StepCollapse({ lazy = false, compact = false }: { lazy?: boolean
   );
 }
 
+/* ------------------------------------------------------------ headline comparison */
+const HEAD: Array<{ k: HeadlineMethod; label: string; note: string }> = [
+  { k: "raw_viirs", label: "Raw VIIRS", note: "no correction" },
+  { k: "ratio", label: "Single ratio", note: "VIIRS count × one training-years Aqua/VIIRS ratio" },
+  { k: "threshold", label: "FRP cut-off", note: "VIIRS detections above one MW cut-off" },
+  { k: "model", label: "Emberline", note: "per-country detection curve × κ" },
+];
+
+/**
+ * One comparison on held-out 2019–2021, the same countries and cell-months for every
+ * method (proof.json headline, from scripts/build_heldout_errors.py and build_proof.py).
+ */
+export function HeadlineTable({ compact = false, lazy = false }: { compact?: boolean; lazy?: boolean }) {
+  const { ref, near } = useNear<HTMLDivElement>(lazy);
+  const { data, error } = useProof(near);
+  const h = data?.headline;
+  const sc = data?.step_collapse.all;
+  const best = h ? Math.max(...HEAD.map((m) => h.methods[m.k].best_mae)) : 0;
+  return (
+    <div ref={ref} id={compact ? undefined : "headline"} className={compact ? "min-w-0" : "card mt-8 min-w-0 scroll-mt-24 p-5 sm:p-6"} data-testid={compact ? "headline-compact" : "headline-table"}>
+      {!compact && <Eyebrow>Proof · one test, four methods</Eyebrow>}
+      <h2 className={`display flex items-center gap-2.5 ${compact ? "text-xl" : "mt-2 text-2xl"}`}>Four corrections, the same held-out test <InfoDot k="benchmark" align="start" /></h2>
+      {error && <p className="mt-4 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>}
+      {!h ? (!error && <div className="mt-4 h-56 dot-skel" />) : (
+        <>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
+            Each method puts VIIRS counts on the Aqua MODIS scale. All are scored on the same {fmtNum(h.n_countries)} countries ({h.n_own} own fit, {h.n_pooled} pooled) and the same{" "}
+            {fmtNum(h.n_cell_months)} held-out cell-months, {h.test_years[0]}–{h.test_years[1]}, against what Aqua actually recorded. Fitted on 2012–2018; nothing tuned on the test years. Medians are over countries.
+          </p>
+          <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Held-out comparison of four methods">
+            <table className={`tabular w-full ${compact ? "min-w-[560px]" : "min-w-[760px]"} text-sm`}>
+              <thead><tr className="text-left text-xs text-[var(--text-muted)]">
+                <th className="py-2 pr-3 font-normal">Method</th>
+                <th className="px-3 font-normal">Median R²</th>
+                <th className="px-3 font-normal" title="Mean |observed − predicted| per cell-month, Aqua detections">Median MAE</th>
+                <th className="px-3 font-normal" title="(predicted − observed) ÷ observed, held-out total">Median bias</th>
+                {!compact && <th className="px-3 font-normal" title="Median over months of |predicted − observed| ÷ observed for the whole-country monthly total">Typical monthly error</th>}
+                <th className="px-3 font-normal">Lowest MAE in</th>
+                <th className="px-3 font-normal" title={`2012 step within ×${h.within_factor} of Aqua alone`}>2012 step removed</th>
+              </tr></thead>
+              <tbody>
+                {HEAD.map((m) => { const v = h.methods[m.k]; const em = m.k === "model"; return (
+                  <tr key={m.k} className={`border-t border-[var(--hairline)] align-top ${em ? "bg-[var(--ember-soft)]" : ""}`}>
+                    <td className="py-2.5 pl-2 pr-3"><span className={em ? "font-medium text-[var(--text-primary)]" : "text-[var(--text-primary)]"}>{m.label}</span>{!compact && <span className="block text-xs text-[var(--text-muted)]">{m.note}</span>}</td>
+                    <td className="px-3 py-2.5">{fmtR2(v.median_r2)}</td>
+                    <td className="px-3 py-2.5">{fmtNum(v.median_mae, 2)}</td>
+                    <td className="px-3 py-2.5">{fmtPct(v.median_bias_pct, 1)}</td>
+                    {!compact && <td className="px-3 py-2.5">±{fmtNum(v.median_country_month_ape_pct, 0)}%</td>}
+                    <td className={`px-3 py-2.5 ${v.best_mae === best ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}`}>{v.best_mae} of {h.n_countries}</td>
+                    <td className="px-3 py-2.5 text-[var(--text-secondary)]">{v.step_within_1_25} of {h.n_countries}</td>
+                  </tr>); })}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 max-w-3xl rounded-2xl border border-[var(--ember)] p-4 text-sm leading-relaxed text-[var(--text-secondary)]" data-testid="headline-honest">
+            <p className="font-medium text-[var(--text-primary)]">Read it honestly</p>
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              <li>The single ratio has the higher median R²: <span className="tabular text-[var(--text-primary)]">{fmtR2(h.methods.ratio.median_r2)}</span> against <span className="tabular text-[var(--text-primary)]">{fmtR2(h.methods.model.median_r2)}</span> for Emberline.</li>
+              <li>Emberline has a lower error (MAE) than the ratio in <span className="tabular text-[var(--text-primary)]">{h.model_lower_mae_than_ratio} of {h.n_countries}</span> countries, and the lowest MAE of all four in {h.methods.model.best_mae}.{" "}
+                The FRP cut-off is lowest in {h.methods.threshold.best_mae}: it under-counts (median bias {fmtPct(h.methods.threshold.median_bias_pct, 0)}), which MAE punishes little where most cell-months are near zero.</li>
+              <li>Both Emberline and the ratio remove the 2012 jump that appears when MODIS and VIIRS are naively joined: step within ×{h.within_factor} of the unchanged Aqua sensor in {h.methods.model.step_within_1_25} and {h.methods.ratio.step_within_1_25} of {h.n_countries} countries.{sc && <> The naive splice manages {sc.within_1_25_raw} of {sc.n}.</>}</li>
+            </ul>
+            <p className="mt-2 text-xs">
+              Blind checks: <Link className="link-ul" href="/method#step-collapse">step collapse</Link> · <Link className="link-ul" href="/method#proof">False-Record Counter</Link> · <Link className="link-ul" href="/method#find-the-seam">Find the Seam</Link>
+              {compact && <> · <Link className="link-ul" href="/method#headline">full table on the Method page →</Link></>}
+            </p>
+          </div>
+          {!compact && <Note>{h.definition} Typical monthly error: {data.limits.definition.split(". ").slice(2).join(". ")} Source: proof.json (scripts/build_proof.py, scripts/build_heldout_errors.py).</Note>}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ what it cannot do */
+export function CannotDo() {
+  const { data, error } = useProof();
+  const L = data?.limits;
+  return (
+    <section id="cannot" className="card mt-6 min-w-0 scroll-mt-24 p-5 sm:p-6" data-testid="cannot-do">
+      <Eyebrow>Limits · stated plainly</Eyebrow>
+      <h2 className="display mt-2 text-2xl">What the correction cannot do</h2>
+      {error && <p className="mt-4 text-sm text-[var(--text-secondary)]">Could not load proof.json: {error.message}</p>}
+      {!L ? (!error && <div className="mt-4 h-56 dot-skel" />) : (
+        <ul className="mt-3 max-w-3xl list-disc space-y-2.5 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
+          <li><span className="text-[var(--text-primary)]">It is an estimate, not an observation.</span> From 2012 a harmonized count is our estimate of what Aqua MODIS would have recorded, computed from VIIRS detections. It is not an actual MODIS observation.</li>
+          <li><span className="text-[var(--text-primary)]">It has an error, and we show it.</span> Held-out 2019–2021, a country&apos;s harmonized monthly total was typically ±{fmtNum(data.headline.methods.model.median_country_month_ape_pct, 0)}% from what Aqua recorded (median over countries of each country&apos;s median monthly error).
+            The Explorer shows each country&apos;s own figure next to its harmonized series. <InfoDot k="typicalError" align="start" /></li>
+          <li><span className="text-[var(--text-primary)]">Few fires, bigger error.</span> Countries ranked by held-out Aqua detections, in three equal groups:
+            <span className="mt-2 block overflow-x-auto" tabIndex={0} role="region" aria-label="Held-out error by fire-count tercile">
+              <table className="tabular w-full min-w-[480px] text-xs">
+                <thead><tr className="text-left text-[var(--text-muted)]"><th className="py-1 pr-3 font-normal">Group</th><th className="px-2 font-normal">Held-out Aqua detections</th><th className="px-2 font-normal">Typical monthly error</th><th className="px-2 font-normal">Median |bias|</th><th className="px-2 font-normal">Median R²</th><th className="px-2 font-normal">R² below 0</th></tr></thead>
+                <tbody>
+                  {[...L.terciles.map((t, i) => [["Fewest fires", "Middle", "Most fires"][i], t] as const), ["Own fit", L.own] as const, ["Pooled fit", L.pooled] as const].map(([label, t]) => (
+                    <tr key={label} className="border-t border-[var(--hairline)]">
+                      <td className="py-1.5 pr-3 text-[var(--text-primary)]">{label} <span className="text-[var(--text-muted)]">({t.n})</span></td>
+                      <td className="px-2">{fmtNum(t.heldout_aqua_min)}–{fmtNum(t.heldout_aqua_max)}</td>
+                      <td className="px-2">±{fmtNum(t.median_country_month_ape_pct, 0)}%</td>
+                      <td className="px-2">{fmtNum(t.median_abs_bias_pct, 0)}%</td>
+                      <td className="px-2">{fmtR2(t.median_r2)}</td>
+                      <td className="px-2">{t.r2_below_zero} of {t.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </span>
+            In the third of countries with the fewest fires the typical monthly error is ±{fmtNum(L.terciles[0].median_country_month_ape_pct, 0)}%, against ±{fmtNum(L.terciles[2].median_country_month_ape_pct, 0)}% where fires are many.</li>
+          <li><span className="text-[var(--text-primary)]">Pooled fits are less reliable.</span> The {L.pooled.n} countries on the shared (pooled) curve have a typical monthly error of ±{fmtNum(L.pooled.median_country_month_ape_pct, 0)}% and median held-out R² {fmtR2(L.pooled.median_r2)}, against ±{fmtNum(L.own.median_country_month_ape_pct, 0)}% and {fmtR2(L.own.median_r2)} for the {L.own.n} own-fit countries. They are also the low-fire countries, so the two effects overlap. Every pooled country is marked wherever it is shown. <InfoDot k="pooled" align="start" /></li>
+          <li><span className="text-[var(--text-primary)]">Some countries are not corrected at all.</span> {data.headline.n_countries} countries are harmonized: {data.headline.n_own} with their own fit, {data.headline.n_pooled} with a pooled fit; {data.headline.n_unfitted} are shown raw (too few detections to fit), always flagged uncorrected.</li>
+          <li><span className="text-[var(--text-primary)]">Vegetation fires in the archive, everything in the live data.</span> The 2001–2025 archive keeps daytime vegetation fires only (no volcanoes, gas flares or other static sources). The 2026 near-real-time feeds have no fire-type filter, so they can include those sources and false alarms.</li>
+          <li><span className="text-[var(--text-primary)]">No forecasting.</span> The calendar describes the past and the present. It does not predict individual fires or next season.</li>
+        </ul>
+      )}
+      {L && <Note>{L.definition} Source: proof.json limits (scripts/build_proof.py from heldout_errors.json).</Note>}
+    </section>
+  );
+}
+
 /* ------------------------------------------------------------ A2: benchmark */
 const SERIES: Array<{ k: BenchSeries; label: string; note: string }> = [
   { k: "model", label: "Emberline (FRP logistic)", note: "per-country detection curve × κ" },
@@ -230,7 +348,7 @@ export function Benchmark() {
         <ul className="mt-1 list-disc pl-5">
           <li>On held-out R², a single country-wide ratio does slightly better: median R² <span className="tabular text-[var(--text-primary)]">{fmtR2(b.all.median_r2.ratio)}</span> for the ratio against <span className="tabular text-[var(--text-primary)]">{fmtR2(b.all.median_r2.model)}</span> for our model. The model has the higher R² in only <span className="tabular text-[var(--text-primary)]">{b.all.beats_ratio_r2} of {b.all.n_with_ratio}</span> countries.</li>
           <li>On mean absolute error the model is better in <span className="tabular text-[var(--text-primary)]">{b.all.beats_ratio_mae} of {b.all.n_with_ratio}</span> countries (median MAE {fmtNum(b.all.median_mae.model, 2)} against {fmtNum(b.all.median_mae.ratio, 2)}).</li>
-          <li>Both are far better than raw VIIRS (model better in {b.all.beats_raw_r2} of {b.all.n}) and than a single FRP cut-off (model better in {b.all.beats_threshold_r2} of {b.all.n}). The model removes the 2012 step (step collapse above); the ratio&apos;s step is not scored here.</li>
+          <li>Both are far better than raw VIIRS (model better in {b.all.beats_raw_r2} of {b.all.n}) and than a single FRP cut-off (model better in {b.all.beats_threshold_r2} of {b.all.n}). Both the model and the ratio remove the 2012 step; see the comparison at the top of this page.</li>
         </ul>
         <BenchmarkLoss rows={b.countries} />
       </div>
@@ -305,7 +423,7 @@ function RecordCounter({ p }: { p: ProofFile }) {
       <h3 className="display flex items-center gap-2.5 text-xl">False-Record Counter <InfoDot k="falseRecord" align="start" /></h3>
       <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         For {r.n_countries} own-fit countries, each calendar month of each year 2012–2021 is <em>flagged as a record</em> when its count is higher than every
-        same-month count in 2003–2011. A sensor switch that sees more small fires makes most later months look like records; a consistent record should
+        same-month count in 2003–2011. Naively joining MODIS onto VIIRS, a sensor that sees more small fires, makes most later months look like records; a consistent record should
         flag about as often as the unchanged sensor does.
       </p>
       <div className="mt-4 space-y-3" role="list">
@@ -319,7 +437,7 @@ function RecordCounter({ p }: { p: ProofFile }) {
             </div>
           </div>); })}
       </div>
-      <p className="mt-2 text-xs text-[var(--text-muted)]">Thin mark: the {pct(r.chance_reference.share, 0)} order-statistics reference ({r.chance_reference.definition}). Trends and real extreme years move every series away from it.</p>
+      <p className="mt-2 text-xs text-[var(--text-muted)]">Thin mark: the {pct(r.chance_reference.share, 0)} reference. A record month beats the 2003–2011 maximum of that calendar month (9 baseline years): {r.chance_reference.definition}. Trends and real extreme years move every series away from it.</p>
       <div className="mt-5 rounded-2xl border border-[var(--hairline)] p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Segmented label="Example country" value={mode} onChange={setMode} options={[{ value: "all", label: `All ${r.n_countries} countries (median)` }, { value: "other", label: "One country" }]} />
@@ -343,7 +461,7 @@ function FindTheSeam({ p }: { p: ProofFile }) {
   const max = Math.max(...raw, ...harm, 1);
   const W = 560, H = 190, L = 8, B = 22, bw = (W - 2 * L) / s.candidates.length;
   return (
-    <div className="mt-10" data-testid="find-the-seam">
+    <div id="find-the-seam" className="mt-10 scroll-mt-24" data-testid="find-the-seam">
       <h3 className="display flex items-center gap-2.5 text-xl">Find the Seam: a blind test <InfoDot k="seam" align="start" /></h3>
       <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
         Without being told where the sensor changed, look at each own-fit country&apos;s yearly series and find the year with the biggest jump between the

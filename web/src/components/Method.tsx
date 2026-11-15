@@ -16,7 +16,7 @@ import { CI_NOT_ESTIMATED, coefCiEstimated } from "@/lib/fitFlags";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 import { MethodNotes, ValidationPlot } from "@/components/ValidationPlot";
-import { Benchmark, ProofSection, StepCollapse } from "@/components/Proof";
+import { Benchmark, CannotDo, HeadlineTable, ProofSection, StepCollapse } from "@/components/Proof";
 
 const W = 640, H = 260, L = 40, R = 14, T = 14, B = 34;
 // Okabe–Ito based: every pair stays apart under deuteranopia, protanopia and tritanopia (scripts/check_color_access.py).
@@ -91,10 +91,11 @@ export function Method() {
     <div>
       <PageHead compact eyebrow="Proof · method and validation" info="heldOut" title="How do we know the repair" italic="is real?"
         lede="Three steps, tested on years the model never saw, checked against a sensor that never changed, and honest about where it is weakest. Countries with enough data get their own fitted curve; smaller ones borrow a shared (pooled) curve, counted and marked below. These are regional results, not a global correction." />
-      <StepCollapse />
+      <HeadlineTable />
+      <div id="step-collapse" className="scroll-mt-24"><StepCollapse /></div>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {[
-          ["01 · Match", "On the same day and place (within ~3.5 km), did the old sensor, Aqua MODIS, also see the fire that VIIRS saw? Both pass overhead in the early afternoon."],
+          ["01 · Match", "Each VIIRS detection gets a yes/no label: “seen by Aqua” if Aqua MODIS detected fire on the same UTC date in the same small grid cell (H3 resolution 7) or one of its 6 neighbours, about 3.5 km. Both satellites pass at about 13:30 local time in 2012–2021, so they look at nearly the same moment."],
           ["02 · Learn", "From 2012–2018 we learn, per country, the chance that MODIS sees a fire, given how much energy it radiates. Big fires: almost always. Small ones: rarely."],
           ["03 · Rebuild", "Every VIIRS detection is weighted by that chance. The total is the count a MODIS-class sensor would have made, comparable back to 2003."],
         ].map(([t, d]) => (
@@ -189,8 +190,18 @@ export function Method() {
             )}
           </section></Reveal>
 
+          <Reveal><section className="card mt-6 min-w-0 p-5 sm:p-6" data-testid="matching">
+            <h2 className="display text-2xl">How the matching works, in plain words</h2>
+            <ul className="mt-3 max-w-3xl list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
+              <li><span className="text-[var(--text-primary)]">A label, not a pairing.</span> Every Suomi-NPP VIIRS detection is labelled &ldquo;seen by Aqua&rdquo; (yes) or not (no). Yes means Aqua MODIS detected fire on the same UTC date in the same H3 resolution-7 cell or one of its 6 neighbours (about 3.5 km). It is not a one-to-one pairing: an Aqua detection is never used up, so several VIIRS pixels of one fire can all be labelled seen by it, and no VIIRS pixel is matched twice. κ later converts from VIIRS pixels to MODIS detections.</li>
+              <li><span className="text-[var(--text-primary)]">Same time of day.</span> In {p.train_years[0]}–2021 both Aqua and Suomi-NPP cross at about 13:30 local solar time, daytime passes only, which limits the difference in when each sensor looks. That stops in 2022, when Aqua starts to drift (see below), which is why the fit uses 2012–2018 and tests on 2019–2021.</li>
+              <li><span className="text-[var(--text-primary)]">Known limitation: dense fire areas.</span> Where many fires burn close together, a VIIRS detection can be labelled &ldquo;seen&rdquo; because Aqua saw a neighbouring fire, not this one. That pushes the fitted chance of detection up. The per-country κ, fitted so the training-years total equals Aqua&apos;s, absorbs part of this, not all of it.</li>
+            </ul>
+          </section></Reveal>
+
           <Benchmark />
           <ProofSection />
+          <CannotDo />
 
           <Reveal><MethodNotes /></Reveal>
 
@@ -294,10 +305,10 @@ export function Method() {
             <div className="card min-w-0 p-5 sm:p-6">
               <h2 className="display text-2xl">Limits</h2>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-[var(--text-secondary)]">
-                <li>Fitted per country, standing in for region. No land-cover split yet. Countries with too few training matches borrow a pooled curve (marked); {failed.length} are too sparse to fit at all.</li>
-                <li>Matching is by day and ~3.5 km proximity, not exact pixel footprints.</li>
+                <li>Fitted per country, standing in for region. No land-cover split yet. {names.length} countries harmonized: {summary.own} with their own fit, {summary.pooled} with a pooled fit (marked); {failed.length} shown raw (too few detections to fit).</li>
+                <li>Matching is by UTC day and ~3.5 km proximity, not exact pixel footprints; in dense fire areas a neighbouring fire can make a VIIRS detection count as seen (see the matching section).</li>
                 <li>Scores are per small cell and month, which is noisy where fires are few and small. {summary.below0} of the {names.length} fitted countries score below 0 on held-out R² (worse than guessing the average); sort the table above by R² to see them. Treat those countries&apos; corrected records with caution.</li>
-                <li>Daytime vegetation fires only; volcanoes, gas flares and offshore sources are excluded.</li>
+                <li>Daytime vegetation fires only; volcanoes, gas flares and offshore sources are excluded from the archive. The 2026 near-real-time data has no such type filter.</li>
                 <li>Claims are regional. We do not claim a corrected global total.</li>
               </ul>
             </div>

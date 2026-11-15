@@ -52,6 +52,9 @@ FILES = {
     "transfer_validation.json": dict(
         dataset="world", fit="self", source="derived from params_global.json and the FIRMS archive (scripts/transfer_validation.py)",
         purpose="E28 analysis: leave-one-country-out held-out (2019-2021) scores of the pooled curve vs own fits; not a published fit"),
+    "heldout_errors.json": dict(
+        dataset="world", fit="self", source="derived from params_global.json, validation_points.json and the FIRMS archive (scripts/build_heldout_errors.py)",
+        purpose="Published fit re-evaluated on held-out 2019-2021: every method on the same cell-months, country-month error, per-method 2012 step"),
     "proof.json": dict(
         dataset="world", fit="self", source="derived from params_global.json, validation_points.json, countries.json and the world calendars (scripts/build_proof.py)",
         purpose="Computed numbers for the Method Proof section: 2012 step collapse, held-out benchmark counts, record-month shares, seam-year placebo"),

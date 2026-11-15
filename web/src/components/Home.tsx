@@ -21,7 +21,7 @@ import { Eyebrow } from "@/components/Figure";
 import { MonthUnusualPanel } from "@/components/MonthToDate";
 import { MonthYearCalendar } from "@/components/MonthYearCalendar";
 import { PaperCutout } from "@/components/PaperCutout";
-import { StepCollapse } from "@/components/Proof";
+import { HeadlineTable, StepCollapse } from "@/components/Proof";
 import { CountUp, DotDigits, DotSkeleton, Expand, Failed, InfoDot, Pill, Reveal, SectionHead, StatTile, Tile } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getLiveSummary, getProof, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { annualTotals, median } from "@/lib/ember";
@@ -141,12 +141,24 @@ function Hero({ d }: { d: HomeData }) {
           <span className="block text-[var(--red)] sm:whitespace-nowrap"><Words text="One steady line." delay={0.22} /></span>
         </h1>
         <p className="mx-auto mt-7 max-w-[34rem] text-[18px] leading-relaxed text-[var(--text-secondary)]">
-          Switching satellites in 2012 broke the fire record. We repaired it, country by country, so you can see whether your fire season is <span className="accent text-[1.15em] text-[var(--text-primary)]">really unusual.</span>
+          Naively joining the MODIS and VIIRS fire records makes 2012 look like a jump in fire. We remove that step, country by country, so you can see whether your fire season is <span className="accent text-[1.15em] text-[var(--text-primary)]">really unusual.</span>
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Pill href="/explorer" tone="red">Open the calendar</Pill>
           <Pill href="/globe" tone="line">Live globe →</Pill>
         </div>
+        <nav aria-label="The evidence" className="mx-auto mt-7 grid max-w-3xl gap-3 text-left sm:grid-cols-3" data-testid="hero-evidence">
+          {[
+            ["#repair", "Before and after", "The naively joined raw record against the harmonized one, Canada 2003–2025."],
+            ["/method", "The method", "How each VIIRS detection becomes an Aqua-MODIS-equivalent count."],
+            ["/method#headline", "The validation", "Four corrections scored on the same held-out years, 2019–2021."],
+          ].map(([href, t, d2]) => (
+            <Link key={href} href={href} className="tile group block p-4">
+              <p className="text-[14px] font-medium">{t} <span aria-hidden className="inline-block text-[var(--red)] transition-transform group-hover:translate-x-1">{href.startsWith("#") ? "↓" : "→"}</span></p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--text-secondary)]">{d2}</p>
+            </Link>
+          ))}
+        </nav>
         <p className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
           <a href="#story" className="no-ul hover:text-[var(--text-primary)]">The story ↓</a><a href="#proof" className="no-ul hover:text-[var(--text-primary)]">The proof ↓</a><a href="#area" className="no-ul hover:text-[var(--text-primary)]">Your area ↓</a><a href="#tools" className="no-ul hover:text-[var(--text-primary)]">The tools ↓</a>
         </p>
@@ -381,7 +393,7 @@ function OrbitChapter() {
     ["01 · From orbit", "Five satellites circle Earth fourteen times a day.", "Terra and Aqua carry MODIS; Suomi-NPP, NOAA-20 and NOAA-21 carry VIIRS. Each crosses a given place at about the same local time every day."],
     ["02 · Heat", "They don't see flames. They see heat.", "A fire's radiated power, in megawatts, shows up in the infrared. Big fires shine; small ones barely register."],
     ["03 · 2000", "MODIS sees the world in 1 km squares.", "A small crop burn inside a square is too faint to cross the threshold. For twelve years, it simply isn't in the record."],
-    ["04 · 2012", "VIIRS sees in 375 m squares. Seven times sharper.", "Suddenly the small fires appear. The record jumps — not because there is more fire, but because there is more seeing."],
+    ["04 · 2012", "VIIRS sees in 375 m squares. Seven times sharper.", "Suddenly the small fires appear. Join the two records and the count jumps — not because there is more fire, but because there is more seeing."],
   ];
   const fires = useMemo(() => Array.from({ length: 42 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 61) % 100, big: i % 7 === 0 })), []);
   return (
@@ -447,7 +459,7 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
     <section ref={ref} className="relative mt-10" style={{ height: "260vh" }}>
       <div className="sticky top-20 flex min-h-[86vh] flex-col justify-center">
         <Eyebrow info="step">05 · The jump · Canada, detections per year</Eyebrow>
-        <h2 className="display mt-3 t-d2">The record says fire <span className="italic">exploded.</span></h2>
+        <h2 className="display mt-3 t-d2">A naive join says fire <span className="italic">exploded.</span></h2>
         <div className="window relative mt-8 p-4 sm:p-6">
           <svg viewBox="0 0 640 300" className="w-full">
             <defs><linearGradient id="hg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--c-harm)" stopOpacity="0.22" /><stop offset="1" stopColor="var(--c-harm)" stopOpacity="0" /></linearGradient></defs>
@@ -460,7 +472,7 @@ function JumpChapter({ row }: { row: CountryRow | undefined }) {
           </svg>
           <motion.div style={{ opacity: cap1 }} className="card absolute right-6 top-6 max-w-[16rem] p-4">
             <p className="dot-num text-5xl text-[var(--c-raw)]">{fmtRatio(row?.step_raw)}</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Yearly detections, 2012–14 against 2009–11, in the raw record.</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Yearly detections, 2012–14 against 2009–11, with MODIS and VIIRS naively joined.</p>
           </motion.div>
           <motion.div style={{ opacity: cap2 }} className="card absolute right-6 top-6 max-w-[17rem] p-4">
             <p className="dot-num text-5xl text-[var(--c-harm)]">{fmtRatio(row?.step_harm)}</p>
@@ -495,7 +507,7 @@ function Proof({ d }: { d: HomeData }) {
   const { ref, near } = useNear<HTMLElement>();
   const { data: pf } = useParquet(() => (near ? getProof() : new Promise<Awaited<ReturnType<typeof getProof>>>(() => {})), near ? "home-proof" : "home-proof-wait");
   const pct = (v: number) => `${fmtNum(v * 100, 1)}%`;
-  const s = pf?.step_collapse.all, r = pf?.records, seam = pf?.seam, b = pf?.benchmark.all;
+  const s = pf?.step_collapse.all, r = pf?.records, seam = pf?.seam;
   const acc = accuracySummary(d.params ?? undefined);
   return (
     <section id="proof" ref={ref} className="scroll-mt-24 py-[var(--sec-lg)]">
@@ -505,18 +517,11 @@ function Proof({ d }: { d: HomeData }) {
         <Reveal><StatTile tone="ink" size="lg" label="Step collapse" info="stepCollapse" value={s ? `${s.within_1_25_harm}/${s.n}` : pf === undefined ? undefined : undefined}
           note={s && pf ? <>countries whose 2012 step now lands within ×{pf.step_collapse.within_factor} of an unchanged sensor. In the raw splice: <span className="dot-num">{s.within_1_25_raw}/{s.n}</span>.</> : "Loading proof.json"} className="h-full" /></Reveal>
         <Reveal delay={0.06}><StatTile size="lg" label="False-Record Counter" info="falseRecord" value={r ? pct(r.series.harmonized.share) : undefined}
-          note={r ? <>of months after 2012 look like an all-time record, down from <span className="dot-num">{pct(r.series.raw_splice.share)}</span> in the raw splice. Chance level: {fmtNum(r.chance_reference.share * 100, 0)}%.</> : "Loading proof.json"} className="h-full" /></Reveal>
+          note={r ? <>of months in 2012–2021 beat the 2003–2011 maximum of their calendar month, down from <span className="dot-num">{pct(r.series.raw_splice.share)}</span> when MODIS and VIIRS are naively joined. No-change reference {fmtNum(r.chance_reference.share * 100, 0)}%: with 9 baseline years, a year like them has a 1 in 10 chance of being the largest of 10.</> : "Loading proof.json"} className="h-full" /></Reveal>
         <Reveal delay={0.12}><StatTile size="lg" label="Find the Seam" info="seam" value={seam ? `${seam.harm_2012}/${seam.n_countries}` : undefined}
           note={seam ? <>countries where 2012 is still the biggest jump, down from <span className="dot-num">{seam.raw_2012}/{seam.n_countries}</span>. By chance alone: {fmtNum(seam.chance_2012, 1)}.</> : "Loading proof.json"} className="h-full" /></Reveal>
       </div>
-      {b && (
-        <Reveal>
-          <p className="mt-6 max-w-[70ch] border-l-[length:var(--stroke)] border-[var(--text-primary)] pl-4 text-[15px] leading-relaxed text-[var(--text-secondary)]" data-testid="honest-benchmark">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--text-primary)]">The honest benchmark · </span>
-            On held-out years the model is far better than raw VIIRS and roughly level with one country-wide ratio: median R² {fmtR2(b.median_r2.model)} against {fmtR2(b.median_r2.ratio)}. It beats that ratio in {b.beats_ratio_r2} of {b.n} countries on R² and in {b.beats_ratio_mae} of {b.n} on mean absolute error. Regional results, not a global claim.
-          </p>
-        </Reveal>
-      )}
+      <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><HeadlineTable lazy compact /></Tile></Reveal>
       <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><StepCollapse lazy compact /></Tile></Reveal>
       <Reveal>
         <Expand className="mt-8" label="Held-out scores: tested on years the model never saw">
@@ -537,6 +542,49 @@ function Proof({ d }: { d: HomeData }) {
         </Expand>
       </Reveal>
       <Reveal><div className="mt-6"><Pill href="/method#proof" tone="ink">All the proof, country by country →</Pill></div></Reveal>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------- worked example */
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function WorkedExample() {
+  const { ref, near } = useNear<HTMLElement>();
+  const { data: pf } = useParquet(() => (near ? getProof() : new Promise<Awaited<ReturnType<typeof getProof>>>(() => {})), near ? "home-proof" : "home-proof-wait");
+  const w = pf?.worked_example, u = w?.unusual;
+  const err = w ? pf?.limits.per_country[w.main_country] : undefined;
+  const href = w ? `/explorer?box=${w.bbox.join(",")}&mode=harmonized` : "/explorer";
+  const mo = u ? MONTH_NAMES[u.month - 1] : "";
+  const steps: Array<[string, React.ReactNode]> = w && u ? [
+    ["Select an area", <>A box over {w.label}: {fmtInt(w.n_cells)} grid cells of about 45 km, {fmtInt(w.n_cells_with_data)} with detections, all in {w.countries.map(prettyName).join(", ")} ({w.main_country_fit_source === "pooled" ? "pooled fit" : "own fit"}).</>],
+    ["Find its most unusual month", <>In the harmonized record, {w.years[0]}–{w.years[1]}: <span className="text-[var(--text-primary)]">{mo} {u.year}</span>, {fmtInt(u.value)} detections, rank {u.rank} of {u.n_years} {mo}s.</>],
+    ["Compare it with history", <>Median {mo}: {fmtInt(u.median)}. Range {fmtInt(u.min)}–{fmtInt(u.max)}; the next-highest {mo} had {fmtInt(u.next_highest)}.</>],
+    ["Read the result", <>{mo} {u.year} had about {u.times_median != null ? `${fmtNum(u.times_median, 0)} times` : "far more than"} a typical {mo}&apos;s fire detections here, and {fmtNum(u.value / u.next_highest, 1)} times the next-highest {mo} in {u.n_years} years.
+      {err?.[0] != null && <> {prettyName(w.main_country)}&apos;s typical monthly error is ±{fmtNum(err[0], 0)}% (held-out 2019–2021), far smaller than that gap.</>}
+      {" "}The raw record shows {fmtInt(w.raw_same_month)} that month, but raw VIIRS counts cannot be compared with MODIS months before 2012.</>],
+    ["Download it", <>In the Explorer, <span className="text-[var(--text-primary)]">Calendar CSV</span> saves the monthly series with its unit, fit version and a link that rebuilds the view.</>],
+  ] : [];
+  return (
+    <section id="example" ref={ref} className="scroll-mt-24 py-[var(--sec-md)]" data-testid="worked-example">
+      <Reveal><SectionHead eyebrow="Worked example · for a land manager or emergency planner" title={<>How unusual was <span className="italic">that month?</span></>}
+        lede="Five steps with real numbers. This is historical context: it describes the record, it does not predict fires." /></Reveal>
+      {!w ? <DotSkeleton h={260} label="Loading the worked example" /> : (
+        <Reveal>
+          <ol className="mt-8 grid gap-4 md:grid-cols-5">
+            {steps.map(([t, body], i) => (
+              <li key={t}><Tile className="h-full p-5">
+                <Eyebrow info={false}><span className="eyebrow-n">{String(i + 1).padStart(2, "0")}</span> · {t}</Eyebrow>
+                <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-secondary)]">{body}</p>
+              </Tile></li>
+            ))}
+          </ol>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Pill href={href} tone="red">Open this area in the Explorer →</Pill>
+            <p className="text-[12px] text-[var(--text-muted)]">Most unusual month: the highest rank among the same calendar month in every year, ties broken by the gap to its median. <InfoDot k="unusualMonth" align="start" /></p>
+          </div>
+        </Reveal>
+      )}
     </section>
   );
 }
@@ -574,7 +622,7 @@ function YourArea({ d }: { d: HomeData }) {
         </div>
       </Reveal>
       {error && <div className="mt-6"><Failed error={error} retry={retry} what="the calendar" /></div>}
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Reveal>
           <Tile className="min-w-0 p-5 sm:p-6">
             <Eyebrow info={false}>{`${prettyName(country)} · ${hasHarm || !data ? "harmonized" : "raw, uncorrected"} detections per month · ${lo}–${LAST}`}</Eyebrow>
@@ -641,7 +689,7 @@ export function Home() {
 
       <section id="story" className="scroll-mt-24 pt-[var(--sec-lg)]">
         <div className="grid items-end gap-8 md:grid-cols-[1.6fr_1fr]">
-          <Reveal><SectionHead eyebrow="The story" title={<>How a satellite change <span className="italic">broke the record.</span></>} lede="Four short steps, then the jump itself, then the repair. Scroll through, or skip to the proof." /></Reveal>
+          <Reveal><SectionHead eyebrow="The story" title={<>How joining two satellite records <span className="italic">creates a jump.</span></>} lede="Four short steps, then the jump itself, then the repair. Scroll through, or skip to the proof." /></Reveal>
           <PaperCutout className="mx-auto hidden w-full max-w-[20rem] md:block" />
         </div>
       </section>
@@ -650,6 +698,7 @@ export function Home() {
       <DriftChapter drift={d.drift ?? undefined} />
 
       <Proof d={d} />
+      <WorkedExample />
       <YourArea d={d} />
 
       <div ref={journeyRef} className="py-[var(--sec-sm)]">{journeyNear ? <DataJourney compact /> : <DotSkeleton h={220} label="Loading the data journey" />}</div>

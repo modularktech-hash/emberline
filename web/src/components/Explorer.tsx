@@ -31,6 +31,9 @@ import { ScopePanel } from "@/components/ScopePanel";
 import { ViewExports } from "@/components/ViewExports";
 import { buildBrief } from "@/lib/brief";
 import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/uncertainty";
+import { getProof } from "@/lib/data";
+import { mostUnusualMonth } from "@/lib/unusual";
+import { InfoDot } from "@/components/ui";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
 
@@ -133,6 +136,12 @@ export function Explorer() {
   const cov = area.kind === "country" ? coverage?.countries[area.name] : undefined;
   const covLabel = cov && unfitted ? STATUS_LABEL[cov.status] : null;
   const unc = useUncertainty();
+  const proof = useParquet(() => getProof(), "proof");
+  // Held-out (2019–2021) error of the country whose fit this view uses: the country itself, or the fitted country with most detections in a drawn area.
+  const errCountry = area.kind === "country" ? (fit ? area.name : null) : data?.cells?.countries.find((c) => c.fitted)?.country ?? null;
+  const errRow = errCountry && proof.data?.fit_version === data?.params.fit_version ? proof.data?.limits.per_country[errCountry] : undefined;
+  const errPooled = errCountry ? data?.params.countries[errCountry]?.fit_source === "pooled" : false;
+  const unusual = useMemo(() => (mode === "harmonized" && cal && cal.keys.length ? mostUnusualMonth(cal.rows, [FIRST, 2025]) : null), [mode, cal]);
   const busiestYear = view ? [...(mode === "raw" ? view.raw : view.harm)].filter((r) => r.value !== null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]?.year ?? null : null;
   // E27: coefficient-only intervals for harmonized country totals (busiest year, selected year/month).
   const uncRows = mode === "harmonized" && area.kind === "country" && data && busiestYear != null ? [
@@ -333,6 +342,27 @@ export function Explorer() {
                   </p>
                 );
               })()}
+              {mode === "harmonized" && (unusual || errCountry) && (
+                <div data-testid="heldout-context" className="mt-3 rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {unusual && (
+                    <p data-testid="unusual-month">
+                      <span className="font-medium text-[var(--text-primary)]">Most unusual month, {FIRST}–2025:</span>{" "}
+                      <span className="tabular text-[var(--text-primary)]">{MONTHS[unusual.month - 1]} {unusual.year}</span>, {fmt(unusual.value)} harmonized detections,
+                      {" "}rank {unusual.rank} of {unusual.nYears} years for that month. Median {MONTHS[unusual.month - 1]}: <span className="tabular">{fmt(unusual.median)}</span>; range <span className="tabular">{fmt(unusual.min)}–{fmt(unusual.max)}</span>{unusual.rank === 1 && <>; next highest <span className="tabular">{fmt(unusual.nextHighest)}</span></>}.
+                      {" "}Historical context, not a forecast. <InfoDot k="unusualMonth" align="start" />
+                    </p>
+                  )}
+                  {errCountry && (
+                    <p data-testid="typical-error" className={unusual ? "mt-1" : ""}>
+                      <span className="font-medium text-[var(--text-primary)]">Typical error {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
+                      {errRow?.[0] != null && <> per month (80% of months within ±{fmtNum(errRow[1], 0)}%)</>}: held-out 2019–2021 error of {prettyName(errCountry)}&apos;s harmonized monthly total against what Aqua recorded{area.kind !== "country" && ", the fitted country with most detections in this area; not computed for the drawn area itself"}.
+                      {errPooled && <span className="text-[var(--ember)]"> Pooled fit: less reliable than an own fit.</span>}
+                      {errRow && errRow[2] === 0 && " Few fires here, so errors are larger."}
+                      {" "}<InfoDot k="typicalError" align="start" />
+                    </p>
+                  )}
+                </div>
+              )}
               {uncRows && (
                 <div data-testid="unc-note" className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
                   <p className="font-medium text-[var(--text-primary)]">95% coefficient interval, harmonized country total</p>

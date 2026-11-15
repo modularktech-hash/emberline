@@ -16,6 +16,12 @@ Sections:
                  vs FRP threshold vs raw VIIRS, per country and counted.
   records        "False-Record Counter": share of country-months 2012-2021 above
                  the 2003-2011 maximum of the same calendar month.
+  headline       one comparison on held-out 2019-2021, the same country-years for
+                 every method (heldout_errors.json): median R2, MAE, bias, the
+                 number of countries where each method is best, and how many
+                 have their 2012 step within x1.25 of Aqua alone.
+  limits         what the correction cannot do, computed: held-out error by
+                 fire-count tercile and own-fit vs pooled.
   seam           "Find the Seam": year of the largest |log step| between
                  consecutive 3-year means, candidate years 2006-2019.
 
@@ -139,6 +145,159 @@ def benchmark(params: dict, vp: dict) -> dict:
     }
 
 
+METHODS = ("raw_viirs", "ratio", "threshold", "model")
+
+
+def headline(params: dict, he: dict) -> dict:
+    cs = he["countries"]
+    names = sorted(cs)
+    assert set(names) == set(params["countries"]), "heldout_errors.json and params_global.json disagree"
+
+    def med(vals):
+        vals = [v for v in vals if v is not None]
+        return r(median(vals)) if vals else None
+
+    def best(metric: str, lower: bool) -> dict:
+        out = {m: 0 for m in METHODS}
+        for c in names:
+            vals = {m: cs[c]["cell_month"][m][metric] for m in METHODS}
+            vals = {m: v for m, v in vals.items() if v is not None}
+            if vals:
+                out[(min if lower else max)(vals, key=vals.get)] += 1
+        return out
+
+    lim = math.log(WITHIN)
+    step_n = {m: sum(1 for c in names if cs[c]["step_2012"] and cs[c]["step_2012"][m] > 0
+                     and abs(math.log(cs[c]["step_2012"][m] / cs[c]["step_2012"]["aqua"])) <= lim) for m in METHODS}
+    rows = {m: {
+        "median_r2": med(cs[c]["cell_month"][m]["r2"] for c in names),
+        "median_mae": med(cs[c]["cell_month"][m]["mae"] for c in names),
+        "median_bias_pct": med(cs[c]["cell_month"][m]["bias_pct"] for c in names),
+        "median_abs_bias_pct": med(abs(cs[c]["cell_month"][m]["bias_pct"]) for c in names if cs[c]["cell_month"][m]["bias_pct"] is not None),
+        "median_country_month_ape_pct": med(cs[c]["country_month"][m]["median_ape_pct"] for c in names),
+        "step_within_1_25": step_n[m],
+    } for m in METHODS}
+    b_mae, b_r2 = best("mae", True), best("r2", False)
+    for m in METHODS:
+        rows[m]["best_mae"], rows[m]["best_r2"] = b_mae[m], b_r2[m]
+    lower_mae_than_ratio = sum(cs[c]["cell_month"]["model"]["mae"] < cs[c]["cell_month"]["ratio"]["mae"] for c in names)
+    return {
+        "definition": "Held-out 2019-2021 (fit on 2012-2018, nothing tuned on the test years). Every method is scored on the same "
+                      "H3 res-5 cell x month table for the same countries and years (scripts/build_heldout_errors.py). Medians are over "
+                      "countries. best_* = the method with the lowest MAE (highest R2) in that country. step_within_1_25 = countries whose "
+                      "2012 step (mean 2012-2014 / mean Aqua 2009-2011) is within x1.25 of the step of Aqua alone, the unchanged sensor.",
+        "test_years": he["test_years"],
+        "n_countries": len(names),
+        "n_own": sum(params["countries"][c]["fit_source"] == "own" for c in names),
+        "n_pooled": sum(params["countries"][c]["fit_source"] == "pooled" for c in names),
+        "n_unfitted": len(params["failed"]),
+        "n_cell_months": sum(cs[c]["cell_month"]["model"]["n_cell_months"] for c in names),
+        "within_factor": WITHIN,
+        "model_lower_mae_than_ratio": lower_mae_than_ratio,
+        "methods": rows,
+    }
+
+
+def limits(params: dict, he: dict) -> dict:
+    cs = he["countries"]
+    names = sorted(cs, key=lambda c: cs[c]["country_month"]["obs_total"])
+    k = len(names)
+    cuts = [names[: k // 3], names[k // 3: 2 * k // 3], names[2 * k // 3:]]
+
+    def stats(sub: list[str]) -> dict:
+        ape = [cs[c]["country_month"]["model"]["median_ape_pct"] for c in sub]
+        ape = [v for v in ape if v is not None]
+        r2 = [cs[c]["cell_month"]["model"]["r2"] for c in sub if cs[c]["cell_month"]["model"]["r2"] is not None]
+        bias = [abs(cs[c]["cell_month"]["model"]["bias_pct"]) for c in sub if cs[c]["cell_month"]["model"]["bias_pct"] is not None]
+        tot = [cs[c]["country_month"]["obs_total"] for c in sub]
+        return {"n": len(sub), "heldout_aqua_min": r(min(tot), 0), "heldout_aqua_max": r(max(tot), 0),
+                "median_country_month_ape_pct": r(median(ape), 1) if ape else None,
+                "median_abs_bias_pct": r(median(bias), 1) if bias else None,
+                "median_r2": r(median(r2)) if r2 else None, "r2_below_zero": sum(v < 0 for v in r2)}
+
+    own = [c for c in cs if params["countries"][c]["fit_source"] == "own"]
+    pooled = [c for c in cs if params["countries"][c]["fit_source"] == "pooled"]
+    return {
+        "definition": "Model only, held-out 2019-2021. Countries ranked by their held-out Aqua MODIS total (2019-2021 daytime vegetation "
+                      "detections) and split into three equal-count groups. country_month_ape = |predicted - observed| / observed for a "
+                      "whole-country monthly total, median over months with observed > 0, then median over countries.",
+        "terciles": [stats(x) for x in cuts],
+        "per_country_fields": ["median_ape_pct", "p80_ape_pct", "tercile (0 = fewest fires)", "heldout_aqua_total"],
+        "per_country": {c: [r(cs[c]["country_month"]["model"]["median_ape_pct"], 1), r(cs[c]["country_month"]["model"]["p80_ape_pct"], 1),
+                            next(i for i, g in enumerate(cuts) if c in g), r(cs[c]["country_month"]["obs_total"], 0)] for c in sorted(cs)},
+        "own": stats(own),
+        "pooled": stats(pooled),
+    }
+
+
+EXAMPLE_BOX = (141.0, -37.5, 153.7, -28.2)  # west, south, east, north: a box over New South Wales, Australia
+EXAMPLE_YEARS = (2003, 2025)  # whole years of the harmonized record (Aqua's first full year onwards)
+
+
+def _densify(ring: list[tuple[float, float]], step: float = 1.0) -> list[tuple[float, float]]:
+    """Same as web/src/lib/aoi.ts densify: points along each edge at most `step` degrees apart."""
+    out = []
+    for i, (x0, y0) in enumerate(ring):
+        x1, y1 = ring[(i + 1) % len(ring)]
+        n = max(1, math.ceil(max(abs(x1 - x0), abs(y1 - y0)) / step))
+        out += [(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n) for k in range(n)]
+    return out
+
+
+def unusual_month(series: dict[tuple[int, int], float], years: tuple[int, int]) -> dict:
+    """The month whose value has the highest percentile within its own calendar month over `years`
+    (share of those years with a strictly lower value); ties broken by the excess over that calendar
+    month's median. Same rule as web/src/lib/unusual.ts."""
+    best = None
+    for (y, m), v in series.items():
+        if not years[0] <= y <= years[1]:
+            continue
+        same = [series.get((yy, m), 0.0) for yy in range(years[0], years[1] + 1)]
+        med = median(same)
+        key = (sum(x < v for x in same) / len(same), v - med)
+        if best is None or key > best[0]:
+            others = sorted(x for yy, x in zip(range(years[0], years[1] + 1), same) if yy != y)
+            best = (key, {"year": y, "month": m, "value": r(v, 1), "median": r(med, 1), "min": r(min(same), 1), "max": r(max(same), 1),
+                          "next_highest": r(others[-1], 1), "rank": 1 + sum(x > v for x in same), "n_years": len(same),
+                          "times_median": r(v / med, 1) if med else None})
+    return best[1]
+
+
+def worked_example(params: dict) -> dict:
+    import h3
+    w, s_, e, n = EXAMPLE_BOX
+    ring = [(w, s_), (e, s_), (e, n), (w, n)]
+    cells = sorted(h3.polygon_to_cells(h3.LatLngPoly([(y, x) for x, y in _densify(ring)]), 4))
+    files = sorted({h3.cell_to_parent(c, 1) for c in cells})
+    df = pl.concat([pl.read_parquet(DATA / "area" / f"{f}.parquet") for f in files if (DATA / "area" / f"{f}.parquet").exists()],
+                   how="vertical_relaxed").filter(pl.col("cell").is_in(cells))
+    harm = df.filter(pl.col("n_harm").is_not_null()).group_by("year", "month").agg(pl.col("n_harm").sum())
+    series = {(y, m): float(v) for y, m, v in harm.iter_rows()}
+    raw = df.with_columns(pl.when(pl.col("year") >= 2012).then(pl.col("n_viirs")).otherwise(pl.col("n_modis")).alias("raw")) \
+            .group_by("year", "month").agg(pl.col("raw").sum())
+    raw_s = {(y, m): float(v) for y, m, v in raw.iter_rows()}
+    u = unusual_month(series, EXAMPLE_YEARS)
+    by_country = df.group_by("country").agg(pl.col("n_viirs").sum()).sort("n_viirs", descending=True)
+    main = by_country["country"][0]
+    return {
+        "definition": "A drawn box (H3 res-4 cells whose centre is inside it, as the Explorer selects them) summed from "
+                      "web/public/data/area/*.parquet. Most unusual month: highest percentile within its own calendar month over "
+                      f"{EXAMPLE_YEARS[0]}-{EXAMPLE_YEARS[1]} (share of years with a lower value), ties broken by the excess over that "
+                      "month's median. Historical context, not a prediction.",
+        "label": "New South Wales, Australia (it also clips the edges of Victoria, Queensland and South Australia)",
+        "bbox": list(EXAMPLE_BOX),
+        "years": list(EXAMPLE_YEARS),
+        "n_cells": len(cells),
+        "n_cells_with_data": df["cell"].n_unique(),
+        "countries": by_country["country"].to_list(),
+        "uncorrected_rows": int(df["n_harm"].is_null().sum()),
+        "main_country": main,
+        "main_country_fit_source": params["countries"][main]["fit_source"],
+        "unusual": u,
+        "raw_same_month": r(raw_s.get((u["year"], u["month"]), 0.0), 0),
+    }
+
+
 def monthly(own: list[str]) -> dict[str, pl.DataFrame]:
     raw = pl.read_parquet(DATA / "calendar_raw_global.parquet").filter((pl.col("scope") == "country") & pl.col("key").is_in(own))
     harm = pl.read_parquet(DATA / "calendar_harmonized_global.parquet").filter((pl.col("scope") == "country") & pl.col("key").is_in(own))
@@ -233,10 +392,15 @@ def main() -> None:
     params = json.loads((DATA / "params_global.json").read_text())
     vp = json.loads((DATA / "validation_points.json").read_text())
     countries = json.loads((DATA / "countries.json").read_text())
+    he = json.loads((DATA / "heldout_errors.json").read_text())
+    assert he["fit_version"] == params["fit_version"], "heldout_errors.json is from another fit"
     own = sorted(c for c, p in params["countries"].items() if p.get("fit_source") == "own")
     proof = {
         "fit_version": params["fit_version"],
         "generated_by": "scripts/build_proof.py",
+        "headline": headline(params, he),
+        "limits": limits(params, he),
+        "worked_example": worked_example(params),
         "step_collapse": step_collapse(params),
         "benchmark": benchmark(params, vp),
         "records": records(own),
@@ -245,6 +409,9 @@ def main() -> None:
     OUT.write_text(json.dumps(proof, separators=(",", ":")))
     sc, bm, rc, sm = proof["step_collapse"]["all"], proof["benchmark"]["all"], proof["records"], proof["seam"]
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size:,} bytes)")
+    print("headline:", json.dumps(proof["headline"]["methods"]))
+    print("limits:", json.dumps({k: v for k, v in proof["limits"].items() if k != "per_country"}))
+    print("worked example:", json.dumps(proof["worked_example"]))
     print(f"step collapse n={sc['n']}: median factor raw x{sc['median_factor_raw']} harm x{sc['median_factor_harm']}; "
           f"within x1.25 raw {sc['within_1_25_raw']} harm {sc['within_1_25_harm']}")
     print(f"benchmark n={bm['n']}: beats ratio R2 {bm['beats_ratio_r2']}, MAE {bm['beats_ratio_mae']}, RMSE {bm['beats_ratio_rmse']}; "

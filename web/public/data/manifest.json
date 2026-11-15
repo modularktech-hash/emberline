@@ -17,11 +17,12 @@
     "dataset.json": "19cb0edfbddcd53d0876b31b224c765ba57195d6f7784ea2a29266e63fd503ea",
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
     "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
+    "heldout_errors.json": "865a86f7a2ff8458bc9902a68498431bd8249d721d0b9423ac9d214fe8274081",
     "month_to_date.json": "b022e0873493f9f22f7ba77b931e0699a1188e2c152ce9ed307845e4f8adeedf",
     "month_to_date_cells.json": "eef71e0ffb62c17cd4069c32327a8d853e84072c30b73d681f558f2cdcdcab37",
     "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
     "pipeline.json": "4ee6758268a7e11525375293757ff59bcdfe71c1af7a66b912ebf3108c62ad5a",
-    "proof.json": "57a9a6d55b9d15b6853c22eafdfcd3579cfbb10f374bfe7fac2e9ab72295717f",
+    "proof.json": "af0a2f53da6b7a15e1bf09ef7c16f700a1a86abad2da6df44ecb43f554a1b4b8",
     "season.json": "9af597fdb3151de5eb376f22f3e9f31df23a36bd9d051b189ac74f1343085db8",
     "transfer_validation.json": "95d71aa3e02dad76bbc56a32247f1bd2d020bc48a4b1a578980f37d03d5c6058",
     "validation_points.json": "a8dbfaaecdcac14b45eed5cbb93f62dafe864ea693adc1270c24458b3905b6ab"
@@ -629,6 +630,32 @@
    "fit_version": "v1-20261114T1240"
   },
   {
+   "name": "heldout_errors.json",
+   "dataset": "world",
+   "purpose": "Published fit re-evaluated on held-out 2019-2021: every method on the same cell-months, country-month error, per-method 2012 step",
+   "source": "derived from params_global.json, validation_points.json and the FIRMS archive (scripts/build_heldout_errors.py)",
+   "bytes": 133402,
+   "sha256": "865a86f7a2ff8458bc9902a68498431bd8249d721d0b9423ac9d214fe8274081",
+   "format": "json",
+   "top_level_keys": [
+    "fit_version",
+    "generated_by",
+    "test_years",
+    "definition",
+    "countries"
+   ],
+   "rows": 171,
+   "row_unit": "country",
+   "scope_kind": "country",
+   "time_span": {
+    "test_years": [
+     2019,
+     2021
+    ]
+   },
+   "fit_version": "v1-20261114T1240"
+  },
+  {
    "name": "live.json",
    "dataset": "live",
    "purpose": "Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, not the Suomi-NPP record, not comparable with the historical calendars",
@@ -807,12 +834,15 @@
    "dataset": "world",
    "purpose": "Computed numbers for the Method Proof section: 2012 step collapse, held-out benchmark counts, record-month shares, seam-year placebo",
    "source": "derived from params_global.json, validation_points.json, countries.json and the world calendars (scripts/build_proof.py)",
-   "bytes": 83979,
-   "sha256": "57a9a6d55b9d15b6853c22eafdfcd3579cfbb10f374bfe7fac2e9ab72295717f",
+   "bytes": 93207,
+   "sha256": "af0a2f53da6b7a15e1bf09ef7c16f700a1a86abad2da6df44ecb43f554a1b4b8",
    "format": "json",
    "top_level_keys": [
     "fit_version",
     "generated_by",
+    "headline",
+    "limits",
+    "worked_example",
     "step_collapse",
     "benchmark",
     "records",

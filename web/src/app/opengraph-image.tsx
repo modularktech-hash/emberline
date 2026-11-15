@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Emberline: switching satellites in 2012 broke the fire record. We repaired it.";
+export const alt = "Emberline: joining the MODIS and VIIRS fire records makes 2012 look like a jump in fire. We remove that step.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -18,9 +18,9 @@ export default function Image() {
           <div style={{ fontSize: 28, letterSpacing: 10, textTransform: "uppercase", fontWeight: 600 }}>Emberline</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", fontWeight: 700, fontSize: 68, letterSpacing: -2, lineHeight: 1.06 }}>
-          <div>Switching satellites in 2012</div>
-          <div>broke the fire record.</div>
-          <div style={{ color: "#6a6a66" }}>We repaired it.</div>
+          <div>Joining two satellite records</div>
+          <div>makes 2012 look like a fire jump.</div>
+          <div style={{ color: "#6a6a66" }}>We remove that step.</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", gap: 10 }}>{dots.map((i) => <div key={i} style={{ width: 10, height: 10, borderRadius: 10, background: i === 9 ? "#d71921" : i < 9 ? "#c8c8c4" : "#0b0b0b" }} />)}</div>

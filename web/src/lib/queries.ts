@@ -864,7 +864,7 @@ async function sourceFromParquet(scope: CalendarScope, requested: string[], mode
  * Monthly calendar summed across `keys`.
  *
  * raw        -- what a naive user sees: MODIS counts before VIIRS exists,
- *               VIIRS counts after. The splice is the fake step change.
+ *               VIIRS counts after. The splice is where the artificial step appears.
  * harmonized -- n_harmonized for every month in the harmonized record's
  *               coverage; observed Aqua before the splice, Aqua-equivalent
  *               predicted from VIIRS after.

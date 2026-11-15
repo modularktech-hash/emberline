@@ -14,8 +14,8 @@ sensor generations. Suomi-NPP VIIRS (375 m, record from 2012) detects small fire
 that MODIS (1 km) misses, so a naive hotspot count jumps in 2012. Much of that jump
 reflects improved detection sensitivity rather than an equivalent increase in fire
 activity. Emberline fits, country by country, how VIIRS detections map onto what Aqua MODIS
-would have recorded (130 countries with their own curve; 41 sparser countries borrow a pooled
-curve), and rebuilds a historical record in one unit, Aqua-MODIS-equivalent daytime
+would have recorded (171 countries harmonized: 130 with their own fit, 41 with a pooled fit;
+66 shown raw, too few detections to fit), and rebuilds a historical record in one unit, Aqua-MODIS-equivalent daytime
 vegetation-fire detections. That reduces, but does not remove, the discontinuity between the
 sensor records, and how well it does so varies by country (see the Method page).
 
@@ -41,9 +41,9 @@ reference observations, per H3 resolution-5 cell (~250 km²) and month. 2022–2
 
 - **237** FIRMS countries and territories processed; **267,159,561** filtered daytime
   vegetation-fire detections (MODIS + VIIRS, 2001–2025).
-- **171** countries fitted: **130** with their own curve, **41** on a pooled curve
-  (fewer than 5,000 training VIIRS detections of their own). **66** have no published fit and
-  are shown raw, flagged uncorrected: 23 insufficient training observations, 17 insufficient
+- **171** countries harmonized: **130** with their own fit, **41** with a pooled fit (one shared
+  curve, for countries with fewer than 5,000 training VIIRS detections of their own); **66** shown
+  raw (too few detections to fit), flagged uncorrected: 23 insufficient training observations, 17 insufficient
   reference observations, 18 insufficient held-out variation, 8 no observations
   (`web/public/data/coverage_status.json`).
 - Median held-out R² across the 130 own-fit countries: **0.64**. The model beats raw VIIRS
@@ -55,6 +55,14 @@ reference observations, per H3 resolution-5 cell (~250 km²) and month. 2022–2
   model, **0.59** for the ratio) and lower mean absolute error in **141 of 171**
   (`web/public/data/proof.json`, `docs/results.md`). Most of the gain over raw VIIRS comes from getting the
   overall scale right, which the simple ratio also does.
+- One comparison on the same held-out 2019–2021 cell-months for all four methods
+  (`proof.json` `headline`, `scripts/build_heldout_errors.py`): median MAE **0.79** Emberline,
+  **0.81** ratio, **0.82** FRP cut-off, **4.21** raw VIIRS; lowest MAE in **90**, **15**, **66** and
+  **0** countries. The 2012 step lands within ×1.25 of Aqua alone in **146** countries for
+  Emberline and **161** for the ratio: the simple ratio removes the step too.
+- Typical held-out monthly error of a country's harmonized total: **±31%** (median over
+  countries); **±48%** in the third of countries with the fewest fires, **±22%** in the third with
+  the most; **±54%** for pooled-fit countries against **±26%** for own-fit ones.
 - Canada, the demo example: the raw record steps up **×6.60** from 2009–11 to 2012–14.
   Aqua alone shows **×1.43** over the same years; the harmonized record shows **×1.68**.
   Held-out R² **0.78** (raw VIIRS −31.9), bias −13.5%.

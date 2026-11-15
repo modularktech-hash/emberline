@@ -84,9 +84,10 @@ with their own version.
 
 ## Known limits
 
-- Fitted per country, standing in for region; no land-cover split. 41 of 171
-  fitted countries use the pooled curve; the rest of the 237 FIRMS countries
-  have no fit (reasons in `coverage_status.json`).
+- Fitted per country, standing in for region; no land-cover split. 171
+  countries harmonized: 130 with their own fit, 41 with a pooled fit (one
+  shared curve); 66 shown raw (too few detections to fit; reasons in
+  `coverage_status.json`).
 - Held-out R² is below 0 for some countries (counts on `/method`); a single
   country-wide ratio is about as good as the model by median held-out R².
 - Matching is by day and ~3.5 km proximity, not pixel footprints.

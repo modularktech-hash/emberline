@@ -72,14 +72,14 @@ function StatusLine() {
  * Footer: the interactive wordmark, the harmonized record chart, the site in six columns
  * (collapsible on phones), a status line read from the data, and the credits.
  */
-export function SiteFooter({ counts = null }: { counts?: { own: number; borrowed: number } | null }) {
+export function SiteFooter({ counts = null }: { counts?: { own: number; borrowed: number; raw: number } | null }) {
   return (
     <footer className="relative mt-[var(--sec-lg)] border-t-[length:var(--stroke)] border-[var(--hairline)] bg-[var(--surface)]">
       <div className="mx-auto max-w-6xl px-5 pb-8 pt-10 sm:px-8 sm:pt-14">
         <DotWordmark />
         <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
           <p className="max-w-xl text-[15px] leading-relaxed text-[var(--text-secondary)]">
-            Switching satellites in 2012 broke the fire record. Emberline repairs it{counts ? `: ${counts.own} countries with their own fitted curve, ${counts.borrowed} on a borrowed curve` : ""}. Archive 2001–2025; harmonized record 2003–2025; the live layer is a different platform and is never corrected.
+            Naively joining the MODIS and VIIRS fire records makes 2012 look like a jump in fire. Emberline removes that step{counts ? `: ${counts.own + counts.borrowed} countries harmonized, ${counts.own} with their own fit and ${counts.borrowed} with a pooled fit; ${counts.raw} shown raw (too few detections to fit)` : ""}. Archive 2001–2025; harmonized record 2003–2025; the live layer is a different platform and is never corrected.
           </p>
           <a href="#top" className="foot-top glass-thin group inline-flex items-center gap-3 px-5 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em]">
             Back to top <span aria-hidden className="foot-top-arrow inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--on-ink)]">↑</span>

@@ -106,7 +106,7 @@ export function ComparePage() {
           {" "}Years with no data are left as gaps, never treated as zero. A region whose reference mean is zero cannot be indexed and is not drawn. &quot;Common period&quot; restricts both lines (and both means) to the years where both regions have data. The two calendars below share one colour scale.
         </p>
       </div>
-      <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} fitted countries, each corrected with its own fit (or the pooled curve where marked).` : ""} Countries without a fit (reasons on the Data page) have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
+      <p className="mt-2 px-1 text-xs text-[var(--text-muted)]">{names.length ? `${names.length} countries harmonized, with their own fit or a pooled fit (marked).` : ""} Countries without a fit (reasons on the Data page) have no harmonized record; their raw record is in the Explorer.{mode === "raw" && " Showing the raw record: uncorrected, with the 2012 sensor step."}</p>
       {paramsError && <div className="mt-6"><Failed error={paramsError} retry={paramsRetry} what="the fit" /></div>}
       {tableError && !paramsError && <p className="mt-4 text-sm text-[var(--text-secondary)]">Country summaries (countries.json) unavailable: {tableError.message} <button type="button" onClick={tableRetry} className="underline underline-offset-2">Retry</button></p>}
       {error && <div className="mt-6"><Failed error={error} retry={retry} what="the calendars" /></div>}
