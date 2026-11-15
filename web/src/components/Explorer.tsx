@@ -245,7 +245,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
-        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. Harmonized record 2003–2025; 2026 so far as provisional raw counts." />
+        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. A detection is one active-fire hotspot seen by a satellite. Harmonized record 2003–2025; 2026 so far as provisional raw counts." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
@@ -298,7 +298,7 @@ export function Explorer() {
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
                 className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
-                {m === "raw" ? "Raw record" : "Harmonized"}
+                {m === "raw" ? "Raw (as recorded)" : "Harmonized (corrected)"}
               </button>
             ))}
           </div>
@@ -391,7 +391,7 @@ export function Explorer() {
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <Eyebrow>Burning activity calendar · {place} · detections per month</Eyebrow>
                 <p className={`rounded-full px-3 py-1 text-xs font-medium ${mode === "raw" ? "bg-[var(--surface-2)] text-[var(--text-primary)]" : "bg-[var(--ember-soft)] text-[var(--text-primary)]"}`}>
-                  {mode === "raw" ? "Raw detections · uncorrected · MODIS to 2011, VIIRS from 2012" : `Harmonized · ${cal.unit} · fit ${data.params.fit_version}`}
+                  {mode === "raw" ? "Raw: hotspots as each satellite recorded them, not corrected · MODIS to 2011, VIIRS from 2012" : `Harmonized: corrected to one scale across the 2012 satellite change · ${cal.unit} · fit ${data.params.fit_version}`}
                   <span className="text-[var(--text-muted)]"> · {view.label}</span>
                 </p>
               </div>
@@ -423,7 +423,7 @@ export function Explorer() {
                   )}
                   {errCountry && (
                     <p data-testid="typical-error" className={unusual ? "mt-1" : ""}>
-                      <span className="font-medium text-[var(--text-primary)]">Typical held-out error: {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
+                      <span className="font-medium text-[var(--text-primary)]">Typical error on years the model never saw: {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
                       {errRow?.[0] != null && <> (median monthly miss, 2019–2021; not a confidence interval). 1 month in 5 missed by more than ±{fmtNum(errRow[1], 0)}%</>}. Held-out error of {prettyName(errCountry)}&apos;s harmonized monthly total against what Aqua recorded{area.kind !== "country" && ", the fitted country with most detections in this area; not computed for the drawn area itself"}.
                       {errPooled && <span className="text-[var(--ember)]"> Pooled fit: less reliable than an own fit.</span>}
                       {errRow && errRow[2] === 0 && " Few fires here, so errors are larger."}
@@ -434,7 +434,7 @@ export function Explorer() {
               )}
               {uncRows && (
                 <div data-testid="unc-note" className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
-                  <p className="font-medium text-[var(--text-primary)]">95% coefficient interval, harmonized country total</p>
+                  <p className="font-medium text-[var(--text-primary)]">Range from re-fitting the model (95% coefficient interval), harmonized country total</p>
                   <ul className="tabular mt-1">
                     {uncRows.map((r) => <li key={r.label}>{r.label}: <span className="text-[var(--text-primary)]">{fmtUnc(r.u)}</span></li>)}
                   </ul>
@@ -475,7 +475,7 @@ export function Explorer() {
                 </div>
                 {fit && (
                   <div>
-                    <Eyebrow>This country&apos;s held-out R²</Eyebrow>
+                    <Eyebrow>How well the correction tracks Aqua here</Eyebrow>
                     <p className="display tabular mt-2 text-3xl"><CountUp to={fit.validation_test.model.r2} decimals={Math.abs(fit.validation_test.model.r2) >= 1 ? 1 : 2} /> <span className="stat-unit text-[var(--text-secondary)]">R²</span></p>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                       Against observed Aqua, {data.params.test_years[0]}–{data.params.test_years[1]}, years the model never saw.
@@ -580,9 +580,9 @@ function Coverage() {
   const failed = Object.keys(p.failed ?? {}).length;
   return (
     <p data-testid="coverage-summary" className="-mt-4 mb-5 max-w-3xl text-sm text-[var(--text-secondary)]">
-      Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
-      <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
-      <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected). Reasons under Provenance.
+      Corrected for <span className="tabular text-[var(--text-primary)]">{fits.length}</span> countries: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> with their own fit,{" "}
+      <span className="tabular text-[var(--text-primary)]">{pooled}</span> borrowing a shared (pooled) one.{" "}
+      <span className="tabular text-[var(--text-primary)]">{failed}</span> have no fit and are shown raw only, uncorrected. Reasons under Provenance.
       {ds?.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );
