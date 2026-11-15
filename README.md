@@ -58,9 +58,12 @@ comparison, the method and its validation, calculators for every coefficient, op
 data files, and a separate live layer of recent raw detections.
 
 Source archive 2001–2025; the harmonized record is 2003–2025 (Aqua launched in
-May 2002, so 2001–2002 have no Aqua reference). 2026 appears only as provisional, raw
-month-to-date counts in the "This month so far" card (when its file is loaded), compared
-raw against raw history of the same calendar month, never on the harmonized scale. The live
+May 2002, so 2001–2002 have no Aqua reference). **2026 to the latest day** is on the
+harmonized scale for countries whose NOAA-20 bridge passed its held-out test (50 passed; the 2026 row is published for those listed in `calendar_2026.json`)
+(2022–2023, median monthly miss 7.25%): NOAA-20 VIIRS from the FIRMS API (standard
+processing, then near-real-time) goes through the same fit and the country's bridge ratio,
+and shows as a provisional 2026 row under the calendar (`calendar_2026.json`,
+`scripts/build_2026.py`). Other countries show 2026 only as raw month-to-date counts. The live
 globe covers the last 24 h and 7 days of NOAA-20/21 VIIRS plus MODIS near-real-time data:
 raw, uncorrected, and not the Suomi-NPP platform the history is built from. Terra/Aqua orbital drift since 2022 is measured
 and shown, not corrected: the 2022–2025 values use the frozen-orbit (2012–2018) fit unchanged.

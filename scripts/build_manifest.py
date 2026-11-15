@@ -64,6 +64,9 @@ FILES = {
     "month_to_date.json": dict(
         dataset="world", fit="params_global.json", source="NASA FIRMS near-real-time area API (MODIS_NRT, VIIRS_NOAA20_NRT) and calendar_raw_global.parquet (scripts/build_month_to_date.py); harmonized fields from scripts/build_bridge.py",
         purpose="Provisional month-to-date counts per country against the history of the same calendar month: raw for every country; harmonized (NOAA-20 bridged to Suomi-NPP, then the published fit) for countries whose bridge passed held-out validation"),
+    "calendar_2026.json": dict(
+        dataset="world", fit="params_global.json", source="NASA FIRMS area API, NOAA-20 VIIRS standard processing then near-real-time (scripts/build_2026.py), through the published fit and the bridge ratio in bridge.json",
+        purpose="2026 so far on the harmonized scale, monthly, for countries whose NOAA-20 bridge passed held-out validation; provisional"),
     "bridge.json": dict(
         dataset="world", fit="self", source="NASA FIRMS NOAA-20 VIIRS archive (viirs-jpss1) 2018-2023 and the harmonized Suomi-NPP calendar (scripts/build_bridge.py)",
         purpose="NOAA-20 to Suomi-NPP bridge per country: training ratio 2018-2021, held-out 2022-2023 error of the bridged and unbridged chain, pass flag and typical error"),
