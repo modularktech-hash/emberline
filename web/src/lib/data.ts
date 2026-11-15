@@ -157,3 +157,31 @@ export function fireYearMonthTicks(startMonth: number, refYear = 2001): Array<{ 
     return { day: Math.round((Date.UTC(y, m, 1) - origin) / 86_400_000) + 1, label: MONTH_SHORT[m] };
   });
 }
+
+/** proof.json (scripts/build_proof.py): the computed numbers behind the Method "Proof" section. */
+export interface ProofStepRow { country: string; fit_source: "own" | "pooled"; aqua: number; raw: number; harm: number }
+export interface ProofStepSummary { n: number; median_abs_log_raw_over_aqua: number; median_abs_log_harm_over_aqua: number; median_factor_raw: number; median_factor_harm: number; within_1_25_raw: number; within_1_25_harm: number; raw_above_aqua: number }
+export interface ProofMetric { r2: number | null; rmse: number | null; bias_pct: number | null; mae?: number | null }
+export interface ProofBenchRow { country: string; fit_source: "own" | "pooled"; n_cell_months: number; model: ProofMetric; ratio: ProofMetric | null; threshold: ProofMetric; raw_viirs: ProofMetric }
+export type BenchSeries = "model" | "ratio" | "threshold" | "raw_viirs";
+export interface ProofBenchCounts {
+  n: number; n_with_ratio: number;
+  beats_ratio_r2: number; beats_ratio_mae: number; beats_ratio_rmse: number;
+  beats_threshold_r2: number; beats_threshold_rmse: number; beats_raw_r2: number; beats_raw_rmse: number;
+  median_r2: Record<BenchSeries, number | null>; median_rmse: Record<BenchSeries, number | null>; median_mae: Record<"model" | "ratio", number | null>;
+  model_r2_below_zero: number;
+}
+export type RecordSeries = "raw_splice" | "modis" | "harmonized";
+export interface ProofFile {
+  fit_version: string;
+  step_collapse: { definition: string; within_factor: number; all: ProofStepSummary; own: ProofStepSummary; pooled: ProofStepSummary; countries: ProofStepRow[] };
+  benchmark: { definition: string; ratio_definition: string; all: ProofBenchCounts; own: ProofBenchCounts; pooled: ProofBenchCounts; countries: ProofBenchRow[] };
+  records: {
+    definition: string; n_countries: number; per_country_of: number;
+    chance_reference: { share: number; definition: string };
+    series: Record<RecordSeries, { flagged: number; of: number; share: number }>;
+    examples: string[]; countries: Record<string, Partial<Record<RecordSeries, number>>>;
+  };
+  seam: { definition: string; candidates: number[]; n_countries: number; skipped: string[]; raw_2012: number; harm_2012: number; chance_2012: number; countries: Record<string, { raw: number | null; harm: number | null }> };
+}
+export const getProof = () => worldOnly<ProofFile>("proof.json");
