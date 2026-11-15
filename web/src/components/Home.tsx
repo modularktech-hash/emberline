@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { CountUp, Reveal } from "@/components/ui";
-import { getCountryTable, getDrift, getLive, getSeason, getTle, type CountryRow, type DriftFile } from "@/lib/data";
+import { getCountryTable, getDrift, getLive, getLiveSummary, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
 import { getParams } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { ALL } from "@/lib/nav";
@@ -50,20 +50,36 @@ function Words({ text, delay = 0 }: { text: string; delay?: number }) {
   );
 }
 
-function useHomeData() {
-  return useParquet(async () => {
-    const [live, tle, table, drift, season, params] = await Promise.all([getLive(), getTle(), getCountryTable(), getDrift(), getSeason(), getParams()]);
-    return { live, tle, table, drift, season, params };
-  }, "home");
+/**
+ * The home page's data, each file on its own so a tile fills as soon as its
+ * file arrives: undefined while loading, null if it could not be loaded.
+ * The tiles read small slices (live totals, Chile's season trend, the fit
+ * without its Method-only fields); the full live feed is only for the globe.
+ */
+function useFile<T>(run: () => Promise<T>, key: string): T | null | undefined {
+  const q = useParquet(run, key);
+  return q.loading ? undefined : q.data;
 }
+function useHomeData() {
+  const sum = useFile(getLiveSummary, "home-live-summary");
+  const live = useFile(getLive, "home-live");
+  const tle = useFile(getTle, "home-tle");
+  const table = useFile(getCountryTable, "home-table");
+  const drift = useFile(getDrift, "home-drift");
+  const season = useFile(getSeasonHome, "home-season");
+  const params = useFile(getParams, "home-params");
+  return useMemo(() => ({ sum, live, tle, table, drift, season, params }), [sum, live, tle, table, drift, season, params]);
+}
+type HomeData = ReturnType<typeof useHomeData>;
 
 /* ------------------------------------------------------------------ hero */
-function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
+function Hero({ d }: { d: HomeData }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const live24 = d ? Object.values(d.live.windows["24h"].totals).reduce((a, b) => a + b, 0) : 0;
+  const sum = d.sum;
+  const live24 = sum ? Object.values(sum.windows["24h"].totals).reduce((a, b) => a + b, 0) : 0;
 
   return (
     <section ref={ref} className="relative pb-10 pt-14 sm:pt-24">
@@ -71,7 +87,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}
           className="glass-thin mx-auto inline-flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-secondary)]">
           <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--ember)] opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--ember)]" /></span>
-          {d ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> near-real-time, raw detections in the 24 h to <span className="tabular">{fmtUtc(parseUtc(d.live.fetched_utc))}</span></span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
+          {sum ? <span><span className="tabular font-medium text-[var(--text-primary)]">{fmtInt(live24)}</span> near-real-time, raw detections in the 24 h to <span className="tabular">{fmtUtc(parseUtc(sum.fetched_utc))}</span></span> : "NASA FIRMS · MODIS + VIIRS · archive 2001–2025"}
         </motion.div>
         <h1 className="display t-hero mt-8">
           <span className="block"><Words text="23 years of fire." delay={0.1} /></span>
@@ -92,7 +108,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4, duration: 1 }}
         className="relative mx-auto mt-6 max-w-[760px] cursor-grab active:cursor-grabbing">
         <div aria-hidden className="pointer-events-none absolute inset-[4%] rounded-full bg-[radial-gradient(circle,rgba(255,140,80,0.26),transparent_66%)]" />
-        <FireGlobe live={d?.live ?? null} tle={d?.tle.satellites ?? null} interactive allowZoom={false} showOrbits height={600} speed={60} maxPoints={5000} />
+        <FireGlobe live={d.live ?? null} tle={d.tle?.satellites ?? null} interactive allowZoom={false} showOrbits height={600} speed={60} maxPoints={5000} />
         <p className="pointer-events-none mt-1 text-center text-xs tracking-wide text-[var(--text-muted)]">Drag to spin · hover a fire for details</p>
       </motion.div>
 
@@ -109,7 +125,7 @@ function Hero({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
           </Link>
         ))}
       </nav>
-      {d && <Ticker names={[...[...d.table.countries].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24).map((c) => prettyName(c.country)), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]}
+      {d.table && <Ticker names={[...[...d.table.countries].sort((a, b) => b.harm_mean_2003_2025 - a.harm_mean_2003_2025).slice(0, 24).map((c) => prettyName(c.country)), "Terra", "Aqua", "Suomi-NPP", "NOAA-20", "NOAA-21"]}
         label={`The ${Math.min(24, d.table.countries.length)} fitted countries with the most fire, and the satellites`} />}
     </section>
   );
@@ -144,24 +160,24 @@ const FEED: Record<string, { name: string; sensor: string; color: string }> = {
 };
 const dayLabel = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
-function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
+function Widgets({ d }: { d: HomeData }) {
   const now = useToday();
   const tile = "h-full rounded-[30px] p-5 sm:p-6";
   const dark = "bg-[#141414] text-[#f3efe6] shadow-[0_24px_44px_-26px_rgba(0,0,0,0.6)]";
-  const w = d?.live.windows["24h"];
+  const w = d.sum?.windows["24h"];
   const feeds = w ? Object.entries(w.totals) : [];
   const live24 = feeds.length ? feeds.reduce((a, [, v]) => a + v, 0) : null;
-  const fetched = parseUtc(d?.live.fetched_utc);
+  const fetched = parseUtc(d.sum?.fetched_utc);
   const age = fmtAge(fetched, now);
   const dates = w?.dates ?? [];
-  const countries = d?.table.countries ?? [];
-  const notFitted = d?.table.not_fitted ?? [];
+  const countries = d.table?.countries ?? [];
+  const notFitted = d.table?.not_fitted ?? [];
   const detections = countries.length ? countries.reduce((a, c) => a + c.detections_filtered, 0) + notFitted.reduce((a, c) => a + c.detections_filtered, 0) : null;
   const withRecord = countries.length + notFitted.filter((c) => c.has_raw_calendar && c.detections_filtered > 0).length;
   const years = countries.flatMap((c) => c.annual.map((a) => a.year));
-  const acc = accuracySummary(d?.params);
-  const sats = d?.tle.satellites ?? [];
-  const p = d?.params;
+  const acc = accuracySummary(d.params ?? undefined);
+  const sats = d.tle?.satellites ?? [];
+  const p = d.params ?? undefined;
   return (
     <section aria-labelledby="glance" className="mx-auto mt-16 max-w-5xl">
       <Reveal>
@@ -184,7 +200,7 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
               <span className="mt-1 h-2 w-2 shrink-0 animate-pulse rounded-full bg-[var(--ember)]" aria-hidden />
             </div>
             <div className="mt-5">
-              {live24 != null ? <DotText text={fmtInt(live24)} dot={9} gap={3} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <p className="display text-4xl text-white/70">{d ? NA : "loading"}</p>}
+              {live24 != null ? <DotText text={fmtInt(live24)} dot={9} gap={3} lit="#f3efe6" dim="rgba(255,255,255,0.06)" /> : <p className="display text-4xl text-white/70">{d.sum === undefined ? "loading" : NA}</p>}
             </div>
             <p className="mt-3 text-[15px] leading-snug">
               <span className="font-medium">active-fire detections</span> <span className="text-white/70">— each one a satellite pixel flagged as burning, seen from orbit in the 24 hours before the snapshot.</span>
@@ -228,7 +244,7 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
 
         <Reveal>
           <div className={`glass ${tile}`}>
-            <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d ? NA : "loading"}
+            <Stat dot label="The record" value={detections != null ? dotCompact(detections) : d.table === undefined ? "loading" : NA}
               unit="detections"
               note={<>Daytime vegetation-fire detections, raw, {years.length ? span(Math.min(...years), Math.max(...years)) : "loading"}, in {withRecord || "loading"} FIRMS countries and territories; {countries.length || "loading"} of them have enough data to fit. Exact total {fmtInt(detections)}.</>}
               source={<>Source: NASA FIRMS archive (MODIS C6.1, VIIRS Suomi-NPP) · countries.json</>} />
@@ -236,19 +252,19 @@ function Widgets({ d }: { d: ReturnType<typeof useHomeData>["data"] }) {
         </Reveal>
         <Reveal delay={0.05}>
           <div className={`${tile} bg-[var(--ember)] text-white shadow-[0_24px_44px_-26px_rgba(217,67,26,0.8)]`}>
-            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d ? NA : "loading"} unit="R²"
+            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d.params === undefined ? "loading" : NA} unit="R²"
               note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against Aqua reference observations in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
               source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
           </div>
         </Reveal>
         <Reveal delay={0.1}>
           <Link href="/satellites" className={`${tile} ${dark} group flex flex-col transition-transform hover:-translate-y-1`}>
-            <Stat dot tone="dark" label="The fleet" value={sats.length ? String(sats.length) : d ? NA : "loading"} unit="satellites"
+            <Stat dot tone="dark" label="The fleet" value={sats.length ? String(sats.length) : d.tle === undefined ? "loading" : NA} unit="satellites"
               note={<>
                 In the harmonized record: {sats.filter((s) => s.name !== "NOAA-20" && s.name !== "NOAA-21").map((s) => `${s.name} (${s.instrument})`).join(", ")}.
                 {" "}Live layer only: {sats.filter((s) => s.name === "NOAA-20" || s.name === "NOAA-21").map((s) => s.name).join(", ")} (VIIRS).
               </>}
-              source={d ? <>Orbits: public TLEs, {fmtUtc(parseUtc(d.tle.fetched))}</> : null} />
+              source={d.tle ? <>Orbits: public TLEs, {fmtUtc(parseUtc(d.tle.fetched))}</> : null} />
             <span className="mt-auto pt-4 text-sm text-white/70 transition-transform group-hover:translate-x-1">See every satellite →</span>
           </Link>
         </Reveal>
@@ -392,21 +408,21 @@ function DriftChapter({ drift }: { drift: DriftFile | undefined }) {
 
 /* ---------------------------------------------------------------- page */
 export function Home() {
-  const { data: d } = useHomeData();
-  const canada = d?.table.countries.find((c) => c.country === "Canada");
-  const chile = d?.season.countries.Chile?.trend_days_per_decade;
+  const d = useHomeData();
+  const canada = d.table?.countries.find((c) => c.country === "Canada");
+  const chile = d.season?.countries.Chile?.trend_days_per_decade;
   return (
     <div>
       <Hero d={d} />
       <OrbitChapter />
       <JumpChapter row={canada} />
-      <DriftChapter drift={d?.drift} />
+      <DriftChapter drift={d.drift ?? undefined} />
 
       <section className="mt-8 py-12">
         <Reveal><Eyebrow>07 · How we know</Eyebrow></Reveal>
         <Reveal delay={0.05}><h2 className="display mt-3 max-w-3xl t-d2">Tested on years the model <span className="italic text-[var(--ember)]">never saw.</span></h2></Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(d?.table.countries ?? []).filter((c) => ORIGINAL_FOUR.includes(c.country)).map((c, i) => (
+          {(d.table?.countries ?? []).filter((c) => ORIGINAL_FOUR.includes(c.country)).map((c, i) => (
             <Reveal key={c.country} delay={i * 0.07}>
               <div className="card p-5">
                 <Eyebrow>{prettyName(c.country)}</Eyebrow>
@@ -419,7 +435,7 @@ export function Home() {
             </Reveal>
           ))}
         </div>
-        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d?.params); return a ? <>Across all {a.fitted} fitted countries, each fitted separately, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d?.params.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
+        <Reveal><p className="mt-6 text-sm text-[var(--text-secondary)]">The four countries the method was built on. {(() => { const a = accuracySummary(d.params ?? undefined); return a ? <>Across all {a.fitted} fitted countries, each fitted separately, the median held-out R² of the {a.own} own-fit countries is {fmtR2(a.medianR2)}; the model beats raw VIIRS in {a.beats} of {a.fitted}. </> : null; })()}Fitted {d.params ? span(d.params.train_years[0], d.params.train_years[1]) : "2012–2018"}, scored {d.params ? span(d.params.test_years[0], d.params.test_years[1]) : "2019–2021"} per ~250 km² cell and month. Fit {d.params?.fit_version}. <Link href="/method" className="link-ul">Every country, method and proof →</Link></p></Reveal>
       </section>
 
       <section className="py-16">

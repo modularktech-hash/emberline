@@ -1,7 +1,9 @@
 /**
  * Loaders for the JSON tables in web/public/data/. Each file is fetched once
  * per session. Parquet stays behind queries.ts; these are small summaries.
+ * Every request goes through queries.loadJson (versioned URL, early-request pickup).
  */
+import { loadJson } from "./queries";
 
 export interface LiveWindow {
   totals: Record<string, number>;
@@ -55,14 +57,15 @@ const cache = new Map<string, Promise<unknown>>();
 function load<T>(name: string): Promise<T> {
   let p = cache.get(name) as Promise<T> | undefined;
   if (!p) {
-    p = fetch(`/data/${name}`).then((r) => {
-      if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
-      return r.json() as Promise<T>;
-    });
+    p = loadJson<T>(name);
     p.catch(() => cache.delete(name));
     cache.set(name, p);
   }
   return p;
+}
+/** A slice (web/scripts/build-slices.mjs), or what `fallback` derives from the source file if the slice cannot be loaded. */
+function slice<T>(name: string, fallback: () => Promise<T>): Promise<T> {
+  return load<T>(`slices/${name}`).catch(fallback);
 }
 
 export const getLive = () => load<Live>("live.json");
@@ -70,6 +73,18 @@ export const getTle = () => load<TleFile>("tle.json");
 export const getSeason = () => load<SeasonFile>("season.json");
 export const getDrift = () => load<DriftFile>("drift.json");
 export const getCountryTable = () => load<CountriesFile>("countries.json");
+
+/** live.json without the per-cell lists (totals, dates, fetch time): a few hundred bytes. */
+export type LiveSummary = Omit<Live, "windows"> & { windows: Record<"24h" | "7d", Omit<LiveWindow, "cells">> };
+export const getLiveSummary = () => slice<LiveSummary>("live_summary.json", getLive);
+/** season.json with Chile only (the country the home page quotes). */
+export const getSeasonHome = () => slice<SeasonFile>("season_home.json", getSeason);
+/** season.json without the per-year rows: every country's trends, resolution and fire-year start. */
+export type SeasonTrendsFile = Omit<SeasonFile, "countries"> & { countries: Record<string, Omit<SeasonCountry, "years">> };
+export const getSeasonTrends = () => slice<SeasonTrendsFile>("season_trends.json", getSeason);
+/** One country's entry of season.json (its per-year rows included). */
+export const getSeasonCountry = (country: string) =>
+  slice<SeasonCountry | undefined>(`season/${encodeURIComponent(country)}.json`, () => getSeason().then((s) => s.countries[country]));
 
 /** Fire-year day (1 = first day of the quietest month) to a short date label. */
 export function fireDayLabel(day: number | null | undefined, startMonth: number): string {

@@ -2,10 +2,10 @@
 
 import { fmtClock, fmtNum, fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { Eyebrow } from "@/components/Figure";
-import { getParams } from "@/lib/queries";
+import { getParams, getParamsFull } from "@/lib/queries";
 import { useParquet } from "@/lib/useParquet";
 import { fmt } from "@/lib/ember";
-import { PageHead, Reveal } from "@/components/ui";
+import { Loading, PageHead, Reveal } from "@/components/ui";
 import { useMemo, useState } from "react";
 import { median } from "@/lib/ember";
 import { fitTag, prettyName } from "@/lib/names";
@@ -36,7 +36,10 @@ const FitBadge = ({ c }: { c: CountryFit }) =>
   c.fit_source === "pooled" ? <span title="Too few training matches for its own curve: uses the pooled curve of the own-fit countries" className="ml-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ember)]">pooled</span> : null;
 
 export function Method() {
-  const { data: p, error, loading } = useParquet(() => getParams(), "params");
+  // The small fit file draws everything but the drift table, which waits for the full one (it alone reads the per-year drift fields).
+  const { data: core, error, loading } = useParquet(() => getParams(), "params");
+  const { data: full, error: fullError } = useParquet(() => getParamsFull(), "params-full");
+  const p = full ?? core;
   const names = useMemo(() => (p ? Object.keys(p.countries) : []), [p]);
   const [pick, setPick] = useState("Canada");
   const origin = typeof window === "undefined" ? "https://<this-site>" : window.location.origin;
@@ -62,7 +65,7 @@ export function Method() {
   const drift = useTable<string, DriftCol>(names, (n) => n, (n, k) => {
     if (k === "name") return prettyName(n);
     if (k === "fit") return fitKey(n);
-    return C(n).drift_era[Number(k.slice(1))]?.obs_over_pred;
+    return full?.countries[n]?.drift_era[Number(k.slice(1))]?.obs_over_pred;
   }, { k: "name", dir: 1 });
 
   const summary = useMemo(() => {
@@ -77,7 +80,7 @@ export function Method() {
   const failed = Object.keys(p?.failed ?? {}).sort((a, b) => prettyName(a).localeCompare(prettyName(b)));
   const tags = Object.fromEntries(names.map((n) => [n, fitTag(p, n)]));
   const sel = p && C(pick) ? pick : names[0];
-  const driftYears = p && names.length ? C(names[0]).drift_era.map((d) => d.year) : [];
+  const driftYears = full && names.length && full.countries[names[0]] ? full.countries[names[0]].drift_era.map((d) => d.year) : [];
   const th = "sticky top-0 z-10 bg-[var(--surface-page)] px-3 py-2.5 font-normal first:pl-0";
 
   return (
@@ -254,7 +257,8 @@ export function Method() {
               and Aqua&apos;s mean local solar time over fire detections. Emberline&apos;s record from 2012 is built from Suomi-NPP,
               which has not drifted, so it is not exposed to this. In {p.train_years[0]}–2021 the ratio simply scatters year to year; read the drift years against that.
             </p>
-            <div className="mt-4"><TableSearch q={drift.q} setQ={drift.setQ} shown={drift.shown.length} total={names.length} /></div>
+            {!full && <div className="mt-4">{fullError ? <p className="text-sm text-[var(--text-secondary)]">Could not load the drift table: {fullError.message}</p> : <Loading h={240} />}</div>}
+            {full && <><div className="mt-4"><TableSearch q={drift.q} setQ={drift.setQ} shown={drift.shown.length} total={names.length} /></div>
             <ScrollBox>
               <table className="tabular w-full min-w-[720px] text-sm">
                 <thead><tr className="text-left text-xs text-[var(--text-muted)]">
@@ -263,7 +267,7 @@ export function Method() {
                   <th className={th}>2012–21 range</th>
                 </tr></thead>
                 <tbody>
-                  {drift.shown.map((n) => { const c = C(n); const f = c.frozen_era_obs_over_pred.map((d) => d.obs_over_pred).filter(Number.isFinite); return (
+                  {drift.shown.filter((n) => full.countries[n]).map((n) => { const c = full.countries[n]; const f = c.frozen_era_obs_over_pred.map((d) => d.obs_over_pred).filter(Number.isFinite); return (
                     <tr key={n} className="border-t border-[var(--hairline)]">
                       <td className="py-2.5 pr-3">{prettyName(n)}<FitBadge c={c} /></td>
                       {c.drift_era.map((d) => <td key={d.year} className="px-3">{fmtRatio(d.obs_over_pred)} <span className="text-xs text-[var(--text-muted)]">{fmtClock(d.aqua_lst)}</span></td>)}
@@ -271,7 +275,7 @@ export function Method() {
                     </tr>); })}
                 </tbody>
               </table>
-            </ScrollBox>
+            </ScrollBox></>}
           </section></Reveal>
 
           <Reveal><section className="mt-6 grid gap-6 md:grid-cols-2">

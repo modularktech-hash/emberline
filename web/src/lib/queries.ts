@@ -1,12 +1,4 @@
-import {
-  asyncBufferFromUrl,
-  cachedAsyncBuffer,
-  parquetMetadataAsync,
-  parquetReadObjects,
-  type AsyncBuffer,
-  type FileMetaData,
-} from "hyparquet";
-import { compressors } from "hyparquet-compressors";
+import type { AsyncBuffer, FileMetaData } from "hyparquet";
 // Type-only imports, relative, so this module also runs under plain Node
 // (web/scripts/verify-queries.ts) without the "@/" path alias.
 import type {
@@ -17,6 +9,7 @@ import type {
   CellDayRow,
   CoverageStatusFile,
   Params,
+  ParamsFull,
   Sensor,
   Series,
 } from "./types";
@@ -37,7 +30,27 @@ import type {
  *   contiguous map area are not a contiguous range.
  *
  * All parquet files are ZSTD-compressed, hence hyparquet-compressors.
+ *
+ * Slices. web/scripts/build-slices.mjs cuts the published files into small
+ * JSON files under data/slices/ (one country's calendar, the fit without its
+ * Method-only fields, ...). They hold the same values as their sources. The
+ * country views read those (a few KB) and never open a Parquet file; drawn
+ * areas still read the world Parquet files by range. If a slice cannot be
+ * loaded the reader falls back to the source file.
+ *
+ * hyparquet (and its decompressors, ~100 KB of JS) is imported on first use,
+ * so pages that only read JSON never download it.
  */
+
+/** hyparquet + decompressors, loaded once, on the first Parquet read. */
+let parquetLib: Promise<{ hp: typeof import("hyparquet"); compressors: typeof import("hyparquet-compressors").compressors }> | null = null;
+function parquet() {
+  if (!parquetLib) {
+    parquetLib = Promise.all([import("hyparquet"), import("hyparquet-compressors")]).then(([hp, c]) => ({ hp, compressors: c.compressors }));
+    parquetLib.catch(() => { parquetLib = null; });
+  }
+  return parquetLib;
+}
 
 /* ------------------------------------------------------------------ */
 /* File access                                                        */
@@ -53,11 +66,30 @@ let dataBaseUrl = "/data";
 export function setDataBaseUrl(url: string): void {
   dataBaseUrl = url.replace(/\/+$/, "");
   files.clear();
+  rawOpen = null;
+  harmOpen = null;
   rawTable = null;
   harmonizedTable = null;
   paramsPromise = null;
+  paramsFullPromise = null;
+  calIndexPromise = null;
+  countrySlices.clear();
   coveragePromise = null;
   cellDayParentsPromise = null;
+}
+
+/**
+ * One version tag for everything under /data, set at build time by
+ * next.config.ts from a hash of the data directory. Requests carry it as
+ * `?v=`, and those responses are served as immutable (next.config.ts), so a
+ * returning visitor re-downloads nothing until the data actually changes.
+ * Unset under plain Node (scripts), where URLs stay bare.
+ */
+const DATA_V = process.env.NEXT_PUBLIC_DATA_V ?? "";
+
+/** URL of a file under the data directory (e.g. "live.json", "slices/calendar/Chile.json"). */
+export function dataUrl(name: string): string {
+  return `${dataBaseUrl}/${name}${DATA_V ? `?v=${DATA_V}` : ""}`;
 }
 
 /**
@@ -100,7 +132,7 @@ export const TAIL_BYTES = 40960;
 
 /**
  * A download already started by the page's inline prefetch script
- * (components/DataPreload.tsx), if any. Each is consumed once.
+ * (components/DataPreload.tsx) or by prefetchData(), if any. Each is consumed once.
  */
 function takePrefetched<T>(url: string): Promise<T> | null {
   if (typeof window === "undefined") return null;
@@ -113,7 +145,6 @@ function takePrefetched<T>(url: string): Promise<T> | null {
 /** What the tail request returned: the file's size and its last bytes, or the whole file. */
 interface Tail { total: number; start: number; bytes: ArrayBuffer }
 
-/** Shared with DataPreload.tsx (same request, same parsing), so either can start it. */
 async function fetchTail(url: string): Promise<Tail> {
   const r = await fetch(url, { headers: { Range: `bytes=-${TAIL_BYTES}` } });
   if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
@@ -163,16 +194,17 @@ function openParquet(name: string): Promise<OpenFile> {
   let entry = files.get(name);
   if (!entry) {
     entry = (async () => {
-      const url = `${dataBaseUrl}/${name}`;
+      const url = dataUrl(name);
+      const { hp: { asyncBufferFromUrl, cachedAsyncBuffer, parquetMetadataAsync } } = await parquet();
       if (WHOLE_FILES.has(name)) {
-        const file = await (takePrefetched<ArrayBuffer>(url) ?? fetch(url).then((r) => {
+        const file = await fetch(url).then((r) => {
           if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
           return r.arrayBuffer();
-        }));
+        });
         return { file, metadata: await parquetMetadataAsync(file) };
       }
       if (name.includes("_global")) {
-        const tail = await (takePrefetched<Tail>(`${url}#tail`) ?? fetchTail(url));
+        const tail = await fetchTail(url);
         const file = rangeBuffer(url, tail);
         // Footer read from the tail already fetched (a larger footer costs one more range read).
         return { file, metadata: await parquetMetadataAsync(file, { initialFetchSize: tail.total - tail.start }) };
@@ -197,17 +229,67 @@ function num(value: unknown): number {
 
 const ym = (year: number, month: number) => year * 12 + (month - 1);
 
+/* ------------------------------------------------------------------ */
+/* JSON files and early requests                                       */
+/* ------------------------------------------------------------------ */
+
+async function fetchJson<T>(name: string): Promise<T> {
+  const url = dataUrl(name);
+  const early = takePrefetched<T>(url);
+  if (early) {
+    try { return await early; } catch { /* the early request failed: fetch again below */ }
+  }
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);
+  return (await response.json()) as T;
+}
+
+/** Fetch one JSON file under the data directory (uncached here; lib/data.ts keeps its own cache). */
+export function loadJson<T>(name: string): Promise<T> {
+  return fetchJson<T>(name);
+}
+
+/** The slice files a country view reads first: the calendar index, the fit, and each country's calendar. */
+function countryViewFiles(countries: string[]): string[] {
+  return ["slices/calendar_index.json", "slices/params_core.json", ...countries.map((c) => `slices/calendar/${c}.json`)];
+}
+
 /**
- * What the inline script in components/DataPreload.tsx starts on a real page
- * load, in parallel with the JS bundle: `tail` URLs get the ranged tail request
- * (see fetchTail), `json` URLs a plain fetch.
+ * URLs the inline script in components/DataPreload.tsx fetches on a real page
+ * load, in parallel with the JS bundle: the small JSON slices a country view
+ * needs (a few KB each, plus the ~58 KB fit). `extra` names further files.
  */
-export function dataPreloads(): { tail: string[]; json: string[]; tailBytes: number } {
-  return {
-    tail: ["/data/calendar_raw_global.parquet", "/data/calendar_harmonized_global.parquet"],
-    json: ["/data/params_global.json"],
-    tailBytes: TAIL_BYTES,
-  };
+export function dataPreloads(countries: string[], extra: string[] = []): string[] {
+  return [...countryViewFiles(countries), ...extra].map(dataUrl);
+}
+
+/**
+ * Start downloading data files now (e.g. when a nav link is hovered), so the
+ * page that needs them finds them already in flight. Each file is requested at
+ * most once per page load; the loaders pick the responses up by URL.
+ */
+const prefetched = new Set<string>();
+export function prefetchData(names: string[]): void {
+  if (typeof window === "undefined") return;
+  const w = window as unknown as { __emberlinePrefetch?: Record<string, Promise<unknown>> };
+  const store = (w.__emberlinePrefetch ??= {});
+  for (const name of names) {
+    const url = dataUrl(name);
+    if (prefetched.has(url) || url in store) continue;
+    prefetched.add(url);
+    const p = fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
+      return r.json();
+    });
+    p.catch(() => { delete store[url]; prefetched.delete(url); });
+    store[url] = p;
+  }
+}
+
+/** Warm the files a country view of `countries` needs (hover on a nav link, picker open). */
+export function prefetchCountryView(countries: string[]): void {
+  if (paramsPromise && calIndexPromise) prefetchData(countries.filter((c) => !countrySlices.has(c)).map((c) => `slices/calendar/${c}.json`));
+  else prefetchData(countryViewFiles(countries.filter((c) => !countrySlices.has(c))));
 }
 
 /* ------------------------------------------------------------------ */
@@ -215,28 +297,21 @@ export function dataPreloads(): { tail: string[]; json: string[]; tailBytes: num
 /* ------------------------------------------------------------------ */
 
 let paramsPromise: Promise<Params> | null = null;
-
-async function fetchJson<T>(name: string): Promise<T> {
-  const url = `${dataBaseUrl}/${name}`;
-  const early = takePrefetched<T>(url);
-  if (early) return early;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);
-  return (await response.json()) as T;
-}
+let paramsFullPromise: Promise<ParamsFull> | null = null;
 
 /**
- * The published fit: params_global.json (every fitted country), or
- * params.json (four countries) if the world file cannot be loaded.
- * `dataset` records which one it is.
+ * The published fit with every field: params_global.json (every fitted
+ * country), or params.json (four countries) if the world file cannot be
+ * loaded. `dataset` records which one it is. Only the Method page's drift
+ * table needs this; everything else reads getParams().
  */
-export function getParams(): Promise<Params> {
-  if (!paramsPromise) {
-    paramsPromise = (async () => {
+export function getParamsFull(): Promise<ParamsFull> {
+  if (!paramsFullPromise) {
+    paramsFullPromise = (async () => {
       let lastError: unknown;
       for (const name of FILESETS.params) {
         try {
-          const p = await fetchJson<Params>(name);
+          const p = await fetchJson<ParamsFull>(name);
           return { ...p, failed: p.failed ?? {}, dataset: setOf(name) };
         } catch (e) {
           lastError = e;
@@ -244,6 +319,25 @@ export function getParams(): Promise<Params> {
       }
       throw lastError instanceof Error ? lastError : new Error("params: not available");
     })();
+    paramsFullPromise.catch(() => {
+      paramsFullPromise = null;
+    });
+  }
+  return paramsFullPromise;
+}
+
+/**
+ * The published fit as the pages use it: slices/params_core.json, which is
+ * params_global.json minus three per-country fields only the Method page
+ * reads (same values otherwise, ~58 KB instead of ~141 KB compressed). Falls
+ * back to the full file. If the full file is already loaded it is returned.
+ */
+export function getParams(): Promise<Params> {
+  if (paramsFullPromise) return paramsFullPromise.catch(() => { paramsPromise = null; return getParams(); });
+  if (!paramsPromise) {
+    paramsPromise = fetchJson<Params>("slices/params_core.json")
+      .then((p): Params => ({ ...p, failed: p.failed ?? {}, dataset: "world" }))
+      .catch(() => getParamsFull());
     paramsPromise.catch(() => {
       paramsPromise = null;
     });
@@ -338,7 +432,7 @@ function mayHold(g: GroupInfo, scope: CalendarScope, keys: string[] | null): boo
   return keys.some((k) => k >= g.keyMin! && k <= g.keyMax!);
 }
 
-async function openTable<V>(kind: "raw" | "harmonized"): Promise<Table<V>> {
+async function openTableNow<V>(kind: "raw" | "harmonized"): Promise<Table<V>> {
   let lastError: unknown;
   for (const name of FILESETS[kind]) {
     try {
@@ -392,10 +486,10 @@ async function ensureRows<V>(t: Table<V>, scope: CalendarScope, keys: string[] |
       }
       for (const [s0, e0] of spans) file.prefetch(s0, e0);
     }
-    const p = parquetReadObjects({
+    const p = parquet().then(({ hp, compressors }) => hp.parquetReadObjects({
       file, metadata: t.open.metadata, compressors, columns,
       rowStart: first.rowStart, rowEnd: last.rowEnd,
-    }).then((rows) => {
+    })).then((rows) => {
       for (const r of rows) add(t.index, r);
     });
     p.catch(() => run.forEach((i) => t.loaded.delete(i))); // retry on the next query
@@ -428,6 +522,24 @@ interface HarmonizedTable extends Table<number> {
 
 let rawTable: Promise<RawTable> | null = null;
 let harmonizedTable: Promise<HarmonizedTable> | null = null;
+/** The opened files (footer read, no rows yet), shared by the country and drawn-area paths. */
+let rawOpen: Promise<Table<string>> | null = null;
+let harmOpen: Promise<Table<number>> | null = null;
+
+function openRaw(): Promise<Table<string>> {
+  if (!rawOpen) {
+    rawOpen = openTableNow<string>("raw");
+    rawOpen.catch(() => { rawOpen = null; });
+  }
+  return rawOpen;
+}
+function openHarmonized(): Promise<Table<number>> {
+  if (!harmOpen) {
+    harmOpen = openTableNow<number>("harmonized");
+    harmOpen.catch(() => { harmOpen = null; });
+  }
+  return harmOpen;
+}
 
 const RAW_COLUMNS = ["scope", "key", "year", "month", "sensor", "n_detections"];
 const HARM_COLUMNS = ["scope", "key", "year", "month", "n_harmonized"];
@@ -441,7 +553,7 @@ const addHarm = (index: HarmonizedTable["index"], r: Record<string, unknown>) =>
 function loadRaw(): Promise<RawTable> {
   if (!rawTable) {
     rawTable = (async () => {
-      const t = await openTable<string>("raw");
+      const t = await openRaw();
       await ensureRows(t, "country", null, RAW_COLUMNS, addRaw);
       let firstYear = Infinity, lastYear = -Infinity, viirsFirstYear = Infinity;
       for (const cells of t.index.get("country")?.values() ?? []) {
@@ -466,7 +578,7 @@ function loadRaw(): Promise<RawTable> {
 function loadHarmonized(): Promise<HarmonizedTable> {
   if (!harmonizedTable) {
     harmonizedTable = (async () => {
-      const t = await openTable<number>("harmonized");
+      const t = await openHarmonized();
       await ensureRows(t, "country", null, HARM_COLUMNS, addHarm);
       let firstYm = Infinity, lastYm = -Infinity;
       for (const cells of t.index.get("country")?.values() ?? []) {
@@ -485,19 +597,73 @@ function loadHarmonized(): Promise<HarmonizedTable> {
   return harmonizedTable;
 }
 
+/* ------------------------------------------------------------------ */
+/* Country calendar slices                                             */
+/* ------------------------------------------------------------------ */
+
+/** slices/calendar_index.json: what the world calendars hold, without opening them. */
+interface CalIndex {
+  countries: string[];
+  harmonized: string[];
+  first_year: number;
+  last_year: number;
+  viirs_first_year: number;
+  first_ym: number;
+  last_ym: number;
+}
+/** slices/calendar/<Country>.json: flat [ym, value, ym, value, ...] lists per sensor (raw) and for the harmonized series. */
+interface CountrySliceFile { r: Record<string, number[]>; h: number[] | null }
+interface CountrySlice { raw: Map<string, number>; harm: Map<number, number> | null }
+
+let calIndexPromise: Promise<CalIndex | null> | null = null;
+const countrySlices = new Map<string, Promise<CountrySlice>>();
+
+/** The calendar index, or null when the slices are not available (then every reader uses the Parquet files). */
+function calIndex(): Promise<CalIndex | null> {
+  if (!calIndexPromise) {
+    calIndexPromise = fetchJson<CalIndex>("slices/calendar_index.json")
+      .then((i) => (Array.isArray(i.countries) && Array.isArray(i.harmonized) && Number.isFinite(i.first_year) ? i : null))
+      .catch(() => null);
+  }
+  return calIndexPromise;
+}
+
+function countrySlice(key: string): Promise<CountrySlice> {
+  let p = countrySlices.get(key);
+  if (!p) {
+    p = fetchJson<CountrySliceFile>(`slices/calendar/${encodeURIComponent(key)}.json`).then((f) => {
+      const raw = new Map<string, number>();
+      for (const [sensor, list] of Object.entries(f.r)) for (let i = 0; i < list.length; i += 2) raw.set(`${sensor}|${list[i]}`, list[i + 1]);
+      let harm: Map<number, number> | null = null;
+      if (f.h) {
+        harm = new Map();
+        for (let i = 0; i < f.h.length; i += 2) harm.set(f.h[i], f.h[i + 1]);
+      }
+      return { raw, harm };
+    });
+    p.catch(() => countrySlices.delete(key));
+    countrySlices.set(key, p);
+  }
+  return p;
+}
+
 /** Which file set the calendars came from ("world", or the four-country fallback). */
 export async function calendarDataset(): Promise<DataSet> {
-  return (await loadRaw()).dataset;
+  return (await calIndex()) ? "world" : (await loadRaw()).dataset;
 }
 
 /** Country keys (FIRMS spellings, underscores) with a raw calendar, sorted. Includes countries without a fit. */
 export async function listCountries(): Promise<string[]> {
+  const idx = await calIndex();
+  if (idx) return [...idx.countries].sort();
   const raw = await loadRaw();
   return [...(raw.index.get("country")?.keys() ?? [])].sort();
 }
 
 /** Country keys with a harmonized (fitted) calendar, sorted. */
 export async function listHarmonizedCountries(): Promise<string[]> {
+  const idx = await calIndex();
+  if (idx) return [...idx.harmonized].sort();
   const harm = await loadHarmonized();
   return [...(harm.index.get("country")?.keys() ?? [])].sort();
 }
@@ -509,7 +675,7 @@ export async function listHarmonizedCountries(): Promise<string[]> {
  * it when the whole list is really needed.
  */
 export async function listParentCells(): Promise<string[]> {
-  const raw = await loadRaw();
+  const raw = await openRaw();
   await ensureRows(raw, "h3_parent", null, RAW_COLUMNS, addRaw);
   return [...(raw.index.get("h3_parent")?.keys() ?? [])].sort();
 }
@@ -522,6 +688,74 @@ export interface CalendarQuery {
 
 const RAW_UNIT =
   "detections (MODIS Terra+Aqua before the VIIRS start year, Suomi-NPP VIIRS from it) — raw, uncorrected";
+
+/** Everything getCalendar needs, whichever files it came from. */
+interface CalendarSource {
+  rawKeys: Map<string, Map<string, number>>;
+  /** undefined in raw mode (the harmonized series is not read). */
+  harmKeys: Map<string, Map<number, number>> | undefined;
+  firstYear: number;
+  lastYear: number;
+  viirsFirstYear: number;
+  /** Inclusive month coverage of the harmonized record; null in raw mode. */
+  harmYm: [number, number] | null;
+  dataset: DataSet;
+}
+
+/** Country rows from the slices: one small file per requested country. Null when the slices are unavailable. */
+async function sourceFromSlices(requested: string[], mode: Series): Promise<CalendarSource | null> {
+  const idx = await calIndex();
+  if (!idx) return null;
+  const inRaw = new Set(idx.countries), inHarm = new Set(idx.harmonized);
+  const want = requested.filter((k) => inRaw.has(k) || inHarm.has(k));
+  const slices = await Promise.all(want.map(countrySlice));
+  const rawKeys = new Map<string, Map<string, number>>();
+  const harmKeys = new Map<string, Map<number, number>>();
+  want.forEach((k, i) => {
+    if (inRaw.has(k)) rawKeys.set(k, slices[i].raw);
+    const h = slices[i].harm;
+    if (inHarm.has(k) && h) harmKeys.set(k, h);
+  });
+  return {
+    rawKeys, harmKeys: mode === "harmonized" ? harmKeys : undefined,
+    firstYear: idx.first_year, lastYear: idx.last_year, viirsFirstYear: idx.viirs_first_year,
+    harmYm: mode === "harmonized" ? [idx.first_ym, idx.last_ym] : null, dataset: "world",
+  };
+}
+
+/** Rows read from the Parquet calendars: drawn areas (H3 parents), and countries when the slices are unavailable. */
+async function sourceFromParquet(scope: CalendarScope, requested: string[], mode: Series): Promise<CalendarSource> {
+  // The year coverage comes from the slice index when there is one, so a drawn
+  // area reads only its own H3 row groups; otherwise from the country rows.
+  const idx = scope === "country" ? null : await calIndex();
+  if (idx) {
+    const [raw, harm] = await Promise.all([openRaw(), mode === "harmonized" ? openHarmonized() : null]);
+    if (raw.dataset === "world" && (!harm || harm.dataset === "world")) {
+      await Promise.all([
+        ensureRows(raw, scope, requested, RAW_COLUMNS, addRaw),
+        harm ? ensureRows(harm, scope, requested, HARM_COLUMNS, addHarm) : null,
+      ]);
+      return {
+        rawKeys: raw.index.get(scope) ?? new Map(), harmKeys: harm ? harm.index.get(scope) ?? new Map() : undefined,
+        firstYear: idx.first_year, lastYear: idx.last_year, viirsFirstYear: idx.viirs_first_year,
+        harmYm: harm ? [idx.first_ym, idx.last_ym] : null, dataset: "world",
+      };
+    }
+  }
+  // Both tables load in parallel.
+  const [raw, harm] = await Promise.all([loadRaw(), mode === "harmonized" ? loadHarmonized() : null]);
+  if (scope !== "country") {
+    await Promise.all([
+      ensureRows(raw, scope, requested, RAW_COLUMNS, addRaw),
+      harm ? ensureRows(harm, scope, requested, HARM_COLUMNS, addHarm) : null,
+    ]);
+  }
+  return {
+    rawKeys: raw.index.get(scope) ?? new Map(), harmKeys: harm ? harm.index.get(scope) ?? new Map() : undefined,
+    firstYear: raw.firstYear, lastYear: raw.lastYear, viirsFirstYear: raw.viirsFirstYear,
+    harmYm: harm ? [harm.firstYm, harm.lastYm] : null, dataset: raw.dataset,
+  };
+}
 
 /**
  * Monthly calendar summed across `keys`.
@@ -540,21 +774,19 @@ const RAW_UNIT =
  * fit, or a cell with none of the detections the fit uses) is listed in
  * `uncorrectedKeys` and contributes nothing to the harmonized series: it is
  * never counted as zero and never passed off as corrected.
+ *
+ * Countries are read from their slice files (same rows as the world Parquet
+ * calendars, a few KB each); drawn areas, and countries if the slices cannot
+ * be loaded, from the Parquet files.
  */
 export async function getCalendar(query: CalendarQuery): Promise<CalendarResult> {
   const { scope, mode } = query;
   const requested = [...new Set(query.keys)];
-  // Both tables load in parallel.
-  const [raw, harm] = await Promise.all([loadRaw(), mode === "harmonized" ? loadHarmonized() : null]);
-  if (scope !== "country") {
-    await Promise.all([
-      ensureRows(raw, scope, requested, RAW_COLUMNS, addRaw),
-      harm ? ensureRows(harm, scope, requested, HARM_COLUMNS, addHarm) : null,
-    ]);
-  }
+  const src =
+    (scope === "country" ? await sourceFromSlices(requested, mode).catch(() => null) : null) ??
+    (await sourceFromParquet(scope, requested, mode));
 
-  const rawKeys = raw.index.get(scope) ?? new Map<string, Map<string, number>>();
-  const harmKeys = harm?.index.get(scope);
+  const { rawKeys, harmKeys } = src;
   const inRaw = requested.filter((k) => rawKeys.has(k));
   const known = mode === "raw" ? inRaw : requested.filter((k) => harmKeys?.has(k));
   const uncorrectedKeys = mode === "raw" ? [] : inRaw.filter((k) => !harmKeys?.has(k));
@@ -565,8 +797,8 @@ export async function getCalendar(query: CalendarQuery): Promise<CalendarResult>
   const rows: CalendarRow[] = [];
   const missing: Array<{ year: number; month: number }> = [];
 
-  for (let year = raw.firstYear; year <= raw.lastYear; year += 1) {
-    const viirsEra = year >= raw.viirsFirstYear;
+  for (let year = src.firstYear; year <= src.lastYear; year += 1) {
+    const viirsEra = year >= src.viirsFirstYear;
     for (let month = 1; month <= 12; month += 1) {
       const t = ym(year, month);
       let value: number | null = null;
@@ -582,7 +814,7 @@ export async function getCalendar(query: CalendarQuery): Promise<CalendarResult>
         }
       } else {
         basis = viirsEra ? "predicted_from_viirs" : "observed_aqua";
-        if (harm && known.length > 0 && t >= harm.firstYm && t <= harm.lastYm) {
+        if (src.harmYm && known.length > 0 && t >= src.harmYm[0] && t <= src.harmYm[1]) {
           value = 0;
           for (const key of known) value += harmKeys?.get(key)?.get(t) ?? 0;
         }
@@ -602,10 +834,10 @@ export async function getCalendar(query: CalendarQuery): Promise<CalendarResult>
     keys: known,
     unknownKeys,
     uncorrectedKeys,
-    years: [raw.firstYear, raw.lastYear],
+    years: [src.firstYear, src.lastYear],
     rows,
     missing,
-    dataset: raw.dataset,
+    dataset: src.dataset,
   };
 }
 
@@ -627,7 +859,8 @@ export function listCellDayParents(): Promise<string[]> {
   if (!cellDayParentsPromise) {
     cellDayParentsPromise = (async () => {
       const { file, metadata } = await openParquet(CELL_DAY);
-      const rows = await parquetReadObjects({
+      const { hp, compressors } = await parquet();
+      const rows = await hp.parquetReadObjects({
         file,
         metadata,
         compressors,
@@ -659,7 +892,8 @@ export async function getCellDay(query: CellDayQuery): Promise<CellDayRow[]> {
   const parents = [...new Set(query.parents)];
   if (parents.length === 0) return [];
   const { file, metadata } = await openParquet(CELL_DAY);
-  const rows = await parquetReadObjects({
+  const { hp, compressors } = await parquet();
+  const rows = await hp.parquetReadObjects({
     file,
     metadata,
     compressors,

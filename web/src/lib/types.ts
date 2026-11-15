@@ -84,10 +84,14 @@ export interface CountryFit {
   threshold_baseline_mw: number;
   train_match_rate: number;
   n_train_viirs_detections: number;
-  validation_train: ValidationSet;
   validation_test: ValidationSet;
   validation_test_ci95: { r2: Ci95; bias_pct: Ci95 };
   null_control: NullControl;
+}
+
+/** A country's fit with the fields only the Method page reads (params_global.json has them; slices/params_core.json does not). */
+export interface CountryFitFull extends CountryFit {
+  validation_train: ValidationSet;
   drift_era: DriftEraYear[];
   frozen_era_obs_over_pred: FrozenEraYear[];
 }
@@ -106,6 +110,11 @@ export interface Params {
   pooled_rule?: string;
   /** Set by queries.ts: which file this came from. */
   dataset?: "world" | "four";
+}
+
+/** params_global.json / params.json as published, every field (queries.getParamsFull). */
+export interface ParamsFull extends Params {
+  countries: Record<string, CountryFitFull>;
 }
 
 /* ------------------------------------------------------------------ */

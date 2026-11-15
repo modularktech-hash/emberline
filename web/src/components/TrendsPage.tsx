@@ -5,10 +5,10 @@ import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow } from "@/components/Figure";
 import { DotStat } from "@/components/DotMatrix";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CountryPicker } from "@/components/CountryPicker";
 import { Failed, Loading, PageHead, Reveal, Segmented } from "@/components/ui";
-import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason } from "@/lib/data";
+import { fireDayLabel, fireYearMonthTicks, getCountryTable, getSeason, getSeasonCountry, getSeasonTrends, type SeasonFile } from "@/lib/data";
 import { useParquet } from "@/lib/useParquet";
 import { prettyName } from "@/lib/names";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
@@ -28,7 +28,7 @@ const fmt = (v: number | null | undefined) => fmtSigned(v);
 
 export function TrendsPage() {
   const { data, error, loading } = useParquet(async () => {
-    const [season, table] = await Promise.all([getSeason(), getCountryTable().catch(() => null)]);
+    const [season, table] = await Promise.all([getSeasonTrends(), getCountryTable().catch(() => null)]);
     return { ...season, pooled: new Set((table?.countries ?? []).filter((r) => r.fit_source === "pooled").map((r) => r.country)) };
   }, "season+table");
   const names = data ? Object.keys(data.countries).sort() : [];
@@ -36,6 +36,18 @@ export function TrendsPage() {
   const [metric, setMetric] = useState<Metric>("onset");
   const { ref: chartRef, fs, narrow } = useChartScale(760);
   const c = data?.countries[country];
+  // First paint reads small slices: every country's trends (above) and the selected country's yearly rows.
+  // The full season file then loads in the background, so switching country stays instant.
+  const { data: one } = useParquet(() => getSeasonCountry(country), `season-${country}`);
+  const [full, setFull] = useState<SeasonFile | null>(null);
+  const ready = !!data;
+  useEffect(() => {
+    if (!ready) return;
+    let live = true;
+    getSeason().then((f) => { if (live) setFull(f); }).catch(() => {});
+    return () => { live = false; };
+  }, [ready]);
+  const yearRows = full?.countries[country]?.years ?? one?.years;
   const monthly = c?.resolution === "monthly";
   const nDaily = names.filter((n) => data?.countries[n].resolution !== "monthly").length;
   const mvd = data?.monthly_vs_daily;
@@ -52,7 +64,7 @@ export function TrendsPage() {
   }, { k: "name", dir: 1 });
 
   const W = 760, H = 380, L = 54, R = 18, T = 18, B = 30;
-  const years = c?.years.filter((y) => y.harm_onset != null) ?? [];
+  const years = (c && yearRows)?.filter((y) => y.harm_onset != null) ?? [];
   const yx = (yr: number) => T + ((yr - 2003) / 22) * (H - T - B);
   const dx = (d: number) => L + (d / 366) * (W - L - R);
   const months = fireYearMonthTicks(c?.fire_year_start_month ?? 1);;

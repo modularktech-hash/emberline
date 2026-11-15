@@ -4,5 +4,5 @@ import { LabPage } from "@/components/LabPage";
 export const metadata = { title: "Lab · Emberline" };
 
 export default function Page() {
-  return <><DataPreload /><LabPage /></>;
+  return <><DataPreload countries={["Australia"]} files={["countries.json"]} /><LabPage /></>;
 }
