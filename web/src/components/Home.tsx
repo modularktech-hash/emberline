@@ -223,7 +223,7 @@ function Widgets({ d }: { d: HomeData }) {
         </Reveal>
         <Reveal delay={0.05}>
           <div className={`${tile} !border-transparent !bg-[var(--red)] text-white`}>
-            <Stat dot tone="ember" label="Held-out R² · median country" value={acc ? fmtR2(acc.medianR2) : d.params === undefined ? "loading" : "not recorded"} unit="R²"
+            <Stat dot tone="ember" label="Fit on test years · median country R²" value={acc ? fmtR2(acc.medianR2) : d.params === undefined ? "loading" : "not recorded"} unit="R²"
               note={acc && p ? <>Median held-out R² over the {acc.own} countries with their own fit: the corrected record against Aqua reference observations in {span(p.test_years[0], p.test_years[1])}, years left out of the fit. 1 is perfect. Best single country: {prettyName(acc.best)}, {fmtR2(acc.bestR2)} (raw VIIRS there: {fmtR2(acc.bestRaw)}). The model beats raw VIIRS in {acc.beats} of {acc.fitted} fitted countries.</> : null}
               source={p ? <>Fit {p.fit_version} · trained {span(p.train_years[0], p.train_years[1])}</> : null} />
           </div>
@@ -438,7 +438,7 @@ function Proof({ d }: { d: HomeData }) {
       <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><HeadlineTable lazy compact /></Tile></Reveal>
       <Reveal><Tile className="mt-8 min-w-0 p-5 sm:p-7"><StepCollapse lazy compact /></Tile></Reveal>
       <Reveal>
-        <Expand className="mt-8" label="Held-out scores: tested on years the model never saw">
+        <Expand className="mt-8" label="Scores on years kept back for testing">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {(d.table?.countries ?? []).filter((c) => ORIGINAL_FOUR.includes(c.country)).map((c) => (
               <Tile key={c.country} tone="alt" className="p-5">

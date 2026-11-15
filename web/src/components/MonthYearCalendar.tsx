@@ -74,7 +74,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
   const regionRef = useRef<HTMLDivElement>(null);
   const clampY = (y: number) => Math.min(to, Math.max(from, y));
   const active: CellRef = cursor && cursor.year >= from && cursor.year <= to ? cursor : sel && sel.year >= from && sel.year <= to ? sel : { year: from, month: 1 };
-  const unit = cal.mode === "raw" ? "raw detections (uncorrected)" : "harmonized Aqua-equivalent detections";
+  const unit = cal.mode === "raw" ? "raw detections (uncorrected)" : "harmonized detections, on the old satellite's scale";
   const cellName = (y: number, m: number) => {
     const row = at(y, m);
     return `${MONTHS[m - 1]} ${y}: ${row?.value == null ? "no data" : `${fmt(row.value)} ${unit}`}${row ? `, basis ${BASIS[row.basis] ?? row.basis}` : ""}${inRange && !inRange({ year: y, month: m }) ? ", outside the selected date range" : ""}`;

@@ -12,7 +12,7 @@ import { CountryPicker } from "@/components/CountryPicker";
 import { CoverageNote, CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL } from "@/lib/coverage";
 import { FitQualityCard } from "@/components/FitQuality";
-import { qualityCsvHeader } from "@/lib/quality";
+import { evalPeriod, qualityCsvHeader } from "@/lib/quality";
 import { MonthYearCalendar, type CellRef } from "@/components/MonthYearCalendar";
 import { BOX_FIELDS, bboxCrossesAntimeridian, cellsExtent, geomBbox, normalizeDrawnBbox, validateBoxInput, validateRing, type Bbox, type BoxField, type Ring } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
@@ -267,8 +267,8 @@ export function Explorer() {
           </div>
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Area">
             <CountryPicker value={area.kind === "country" ? area.name : ""} display={area.kind !== "country" ? "Custom area" : undefined} options={data?.countries ?? ["Canada"]} tags={data?.tags} onChange={(c) => { lastCountry.current = c; setArea({ kind: "country", name: c }); }} />
-            {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">pooled fit</span>}
-            {fit && fit.fit_source !== "pooled" && flags.length === 0 && <span className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">own fit · R² {fmtR2(fit.validation_test.model.r2)}</span>}
+            {fit?.fit_source === "pooled" && <span title="Too few training matches for its own curve: this country uses the pooled curve of the own-fit countries" className="self-center rounded-full bg-[var(--ember-soft)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">shared correction</span>}
+            {fit && fit.fit_source !== "pooled" && flags.length === 0 && <span title={`Own fit; held-out R² ${fmtR2(fit.validation_test.model.r2)} (${evalPeriod(data!.params)}); no suspicious-result flags`} className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">own correction · passed checks</span>}
             {flags.length > 0 && <span title={`Flagged as suspicious (docs/results.md): ${flags.join("; ")}`} className="self-center rounded-full border border-[var(--ember)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--ember)]">check this fit</span>}
             {unfitted && <span title={covLabel ? `No fit: ${covLabel}` : undefined} className="self-center rounded-full bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-[var(--text-secondary)]">raw only · uncorrected{covLabel && ` · ${covLabel}`}</span>}
           </div>

@@ -26,8 +26,8 @@ const COLS: Array<{ key: Key; label: string; f: (r: CountryRow) => string; hint:
   { key: "raw_2025", label: "2025 (raw)", f: (r) => fmt(r.raw_2025), hint: "Raw VIIRS detections in 2025" },
   { key: "step_raw", label: "2012 step raw", f: (r) => fmtRatio(r.step_raw), hint: "Mean 2012–14 / 2009–11, raw splice" },
   { key: "step_harm", label: "2012 step harm.", f: (r) => fmtRatio(r.step_harm), hint: "Same ratio, harmonized" },
-  { key: "r2_model", label: "Held-out R²", f: (r) => fmtR2(r.r2_model), hint: "vs observed Aqua, 2019–2021, cell × month" },
-  { key: "bias_pct", label: "Bias", f: (r) => fmtPct(r.bias_pct), hint: "Held-out total bias" },
+  { key: "r2_model", label: "R² on test years", f: (r) => fmtR2(r.r2_model), hint: "Held-out R²: tracking, 1 = perfect; vs observed Aqua, 2019–2021, cell × month" },
+  { key: "bias_pct", label: "Bias (over/under)", f: (r) => fmtPct(r.bias_pct), hint: "Held-out total bias: over (+) or under (−) the observed total" },
   { key: "frp_p50", label: "FRP @ 50%", f: (r) => `${fmtNum(r.frp_p50, 1)} MW`, hint: "FRP at which Aqua detects half the fires VIIRS sees" },
   { key: "onset_trend_harm", label: "Onset trend", f: (r) => (r.onset_trend_harm == null ? "—" : `${fmtSigned(r.onset_trend_harm)} d/dec`), hint: "Harmonized season onset, days per decade — descriptive least-squares trend; 95% interval assumes independent years" },
 ];

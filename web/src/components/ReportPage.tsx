@@ -232,7 +232,7 @@ export function ReportPage() {
             <Tile className="min-w-0 p-5">
               <Eyebrow info={false}>{sel.y}, month by month · raw and harmonized</Eyebrow>
               <div className="mt-3" dangerouslySetInnerHTML={{ __html: pairBarsSvg(yearChart, `${sel.y} detections per month, raw and harmonized, one scale`, PAGE_COLORS) }} />
-              <p className="mt-2 text-xs text-[var(--text-muted)]">{sel.y >= 2012 ? "From 2012 raw is VIIRS; harmonized is its Aqua-MODIS-equivalent estimate." : "Before 2012 raw is MODIS Terra + Aqua; harmonized is observed Aqua alone."}</p>
+              <p className="mt-2 text-xs text-[var(--text-muted)]">{sel.y >= 2012 ? "From 2012 raw is VIIRS; harmonized is its estimate on the old satellite's scale (Aqua MODIS)." : "Before 2012 raw is MODIS Terra + Aqua; harmonized is observed Aqua alone."}</p>
             </Tile>
           </div>
 

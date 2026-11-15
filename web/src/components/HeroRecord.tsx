@@ -123,7 +123,7 @@ function RecordWidget() {
       <p className="mt-3 text-[12.5px] leading-snug text-[#f4f4f2]/65">
         {mode === "raw"
           ? <>Joined naively (MODIS to 2011, VIIRS from 2012), {name}&apos;s fire count jumps {fmtRatio(c.step_raw)} in 2012. The sensor changed, not the fire.</>
-          : <>Harmonized to one unit (Aqua-MODIS-equivalent), the 2012 step is {fmtRatio(c.step_harm)}. Blue rings mark the raw splice.</>}
+          : <>Harmonized to one unit (the old satellite&apos;s scale), the 2012 step is {fmtRatio(c.step_harm)}. Blue rings mark the raw splice.</>}
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2" role="group" aria-label="Country">
@@ -255,7 +255,7 @@ export function NothingHero({ live24 }: { live24: number | null | undefined }) {
       <nav aria-label="The evidence" className="mt-12 grid gap-3 sm:gap-4 md:grid-cols-3" data-testid="hero-evidence">
         {[
           ["#repair", "Before and after", "The naively joined raw record against the harmonized one, Canada 2003–2025."],
-          ["/method", "The method", "How each VIIRS detection becomes an Aqua-MODIS-equivalent count."],
+          ["/method", "The method", "How each new-satellite detection is put on the old satellite's scale."],
           ["/method#headline", "The validation", "Four corrections scored on the same held-out years, 2019–2021."],
         ].map(([href, t, d2], i) => (
           <Link key={href} href={href} className="tile group flex items-start gap-4 p-5 no-ul sm:p-6">
