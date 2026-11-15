@@ -61,7 +61,7 @@ export function DataPage() {
   const coverage = coverageState.data;
   const { data: params } = useParquet(() => getParams(), "params");
   const [lang, setLang] = useState<"py" | "pd" | "sql" | "r" | "js">("py");
-  const origin = typeof window === "undefined" ? "https://emberline-tan.vercel.app" : window.location.origin;
+  const origin = typeof window === "undefined" ? "https://emberline-ten.vercel.app" : window.location.origin;
 
   const tbl = useTable<CountryRow, Key>(data?.countries ?? [], (r) => r.country, (r, k) => (k === "country" ? prettyName(r.country) : r[k]), { k: "harm_mean_2003_2025", dir: -1 });
   const rows = tbl.shown;
