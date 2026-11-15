@@ -27,6 +27,8 @@ export interface BriefInput {
   dataset: string;
   url: string;
   generated: string; // ISO time
+  /** Plain-language findings (lib/findings.ts), shown first. */
+  findings?: string[];
 }
 
 /** Hex values of the light --seq-0..7 ramp in styles/tokens.css, copied because the brief must stand alone. */
@@ -118,6 +120,7 @@ table{border-collapse:collapse;width:100%}th{text-align:left;font-weight:500;col
 </style></head><body>
 <h1>Evidence brief: ${esc(b.place)}</h1>
 <p class="note">Emberline burning activity calendar · ${b.from}–${b.to} · generated ${esc(b.generated)}</p>
+${b.findings && b.findings.length ? `<h2>Findings</h2><ul>${b.findings.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}
 <h2>Basis</h2><p>${basis}</p>
 <h2>Calendar: detections per month</h2>${calendarSvg(b)}
 <h2>Summary</h2>${kv([

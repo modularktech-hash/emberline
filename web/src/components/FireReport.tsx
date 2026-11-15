@@ -5,6 +5,7 @@ import { InfoDot } from "@/components/ui";
 import { MONTHS, fmt } from "@/lib/ember";
 import { fmtNum } from "@/lib/format";
 import type { CalendarRow } from "@/lib/types";
+import { reportFacts } from "@/lib/findings";
 
 const FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -22,7 +23,6 @@ export interface ReportInput {
   picked: boolean;
 }
 
-const median = (v: number[]) => { const s = [...v].sort((a, b) => a - b), m = s.length; return m ? (m % 2 ? s[(m - 1) / 2] : (s[m / 2 - 1] + s[m / 2]) / 2) : null; };
 
 /**
  * Fire report: one month of one area, judged against the same month in every other year of the
@@ -30,26 +30,12 @@ const median = (v: number[]) => { const s = [...v].sort((a, b) => a - b), m = s.
  * the browser from the calendar on screen; nothing here is precomputed or typed in.
  */
 export function FireReport(r: ReportInput) {
-  const same = r.harm.filter((x) => x.month === r.month && x.value != null && x.year >= 2003 && x.year <= 2025);
-  const me = same.find((x) => x.year === r.year);
-  if (!me || me.value == null || same.length < 5) return null;
-  const v = me.value;
-  const others = same.filter((x) => x.year !== r.year).map((x) => x.value as number);
-  const med = median(others);
-  const rank = 1 + others.filter((o) => o > v).length;
-  const n = same.length;
-  const times = med && med > 0 ? v / med : null;
-  const pct = Math.round((100 * others.filter((o) => o < v).length) / others.length);
-  const rawV = r.raw.find((x) => x.year === r.year && x.month === r.month)?.value ?? null;
-  const top = [...others].sort((a, b) => b - a)[0];
+  const f = reportFacts(r.harm, r.raw, r.year, r.month);
+  if (!f) return null;
+  const { value: v, median: med, rank, n, times, raw: rawV, top, verdict } = f;
+  const others = { length: f.nOthers };
   const mn = FULL[r.month - 1];
-
-  const verdict = rank === 1 ? `The highest ${mn} in ${n} years`
-    : rank <= 3 ? `Among the three highest ${mn}s in ${n} years`
-    : pct >= 75 ? `Above a usual ${mn}`
-    : pct <= 25 ? `Below a usual ${mn}`
-    : `A usual ${mn}`;
-  const tone = rank <= 3 || pct >= 90 ? "var(--red)" : "var(--text-primary)";
+  const tone = f.notable ? "var(--red)" : "var(--text-primary)";
   // Is the difference bigger than the model's typical miss? Only then is it a clear signal.
   const clear = r.err && med != null && med > 0 ? Math.abs(v / med - 1) * 100 > r.err[1] : null;
 
@@ -79,7 +65,7 @@ export function FireReport(r: ReportInput) {
           {clear != null && (
             <p className="mt-2">
               {clear
-                ? <>The difference from a usual {mn} is larger than the model&apos;s 1-in-5 held-out miss (±{fmtNum(r.err![1], 0)}%), so the model's typical error alone does not explain it.</>
+                ? <>The difference from a usual {mn} is larger than the model&apos;s 1-in-5 held-out miss (±{fmtNum(r.err![1], 0)}%), so the model&apos;s typical error alone does not explain it.</>
                 : <>The difference from a usual {mn} is within the model&apos;s 1-in-5 held-out miss (±{fmtNum(r.err![1], 0)}%), so treat it as within normal range.</>}
             </p>
           )}
