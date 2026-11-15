@@ -55,6 +55,15 @@ FILES = {
     "proof.json": dict(
         dataset="world", fit="self", source="derived from params_global.json, validation_points.json, countries.json and the world calendars (scripts/build_proof.py)",
         purpose="Computed numbers for the Method Proof section: 2012 step collapse, held-out benchmark counts, record-month shares, seam-year placebo"),
+    "month_to_date.json": dict(
+        dataset="world", fit=None, source="NASA FIRMS near-real-time area API (MODIS_NRT, VIIRS_NOAA20_NRT) and calendar_raw_global.parquet (scripts/build_month_to_date.py)",
+        purpose="Provisional, raw month-to-date counts per country against the raw history of the same calendar month; not harmonized"),
+    "dataset.json": dict(
+        dataset="world", fit="self", source="derived from params_global.json, coverage_status.json and the world calendars (scripts/build_dataset_card.py)",
+        purpose="Dataset card: coverage, scale, unit, licence and citation of the published record"),
+    "calendar_harmonized_countries.csv": dict(
+        dataset="world", fit="params_global.json", source="country rows of calendar_harmonized_global.parquet (scripts/build_dataset_card.py)",
+        purpose="CSV export: harmonized monthly Aqua-MODIS-equivalent counts per fitted country (country, year, month, n_harmonized)"),
     "countries.json": dict(
         dataset="world", fit="self", source="derived from the world calendars and params_global.json",
         purpose="One summary row per fitted country (totals, 2012 step ratios, held-out R2, season trends)"),
@@ -219,7 +228,7 @@ def build_datasets(files: list[dict]) -> dict:
             problems.append(f"fit versions differ: {versions}")
         if info["params"]:
             fitted = set(json.loads((WEB / info["params"]).read_text())["countries"])
-            harm = next(f["name"] for f in members if f["name"].startswith("calendar_harmonized"))
+            harm = next(f["name"] for f in members if f["name"].startswith("calendar_harmonized") and f["name"].endswith(".parquet"))
             keys = set(pl.read_parquet(WEB / harm, columns=["scope", "key"])
                        .filter(pl.col("scope") == "country")["key"].unique().to_list())
             if keys != fitted:
@@ -234,10 +243,13 @@ def build_datasets(files: list[dict]) -> dict:
     return out
 
 
+OPTIONAL = {"month_to_date.json"}  # needs a FIRMS MAP_KEY run (scripts/build_month_to_date.py)
+
+
 def main() -> int:
     present = sorted(p.name for p in WEB.iterdir() if p.is_file() and p.name != OUT.name and not p.name.startswith("."))
     unknown = sorted(set(present) - set(FILES))
-    missing = sorted(set(FILES) - set(present))
+    missing = sorted(set(FILES) - set(present) - OPTIONAL)
     if unknown or missing:
         print(f"manifest: describe every published file. unknown={unknown} missing={missing}", file=sys.stderr)
         return 1
@@ -250,7 +262,13 @@ def main() -> int:
         path = WEB / name
         e = {"name": name, "dataset": meta["dataset"], "purpose": meta["purpose"], "source": meta["source"],
              "bytes": path.stat().st_size, "sha256": sha256(path)}
-        e |= parquet_entry(path) if name.endswith(".parquet") else json_entry(path)
+        if name.endswith(".parquet"):
+            e |= parquet_entry(path)
+        elif name.endswith(".csv"):
+            lines = [l for l in path.read_text().splitlines() if not l.startswith("#")]
+            e |= {"format": "csv", "columns": lines[0].split(","), "rows": len(lines) - 1, "comment_prefix": "#"}
+        else:
+            e |= json_entry(path)
         if meta["fit"] == "self":
             e["fit_version"] = json.loads(path.read_text())["fit_version"]
         elif meta["fit"]:

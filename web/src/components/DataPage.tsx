@@ -13,6 +13,7 @@ import { prettyName } from "@/lib/names";
 import { CountryPicker } from "@/components/CountryPicker";
 import { CoverageSummaryText, useCoverageState, CoverageError } from "@/components/CoverageNote";
 import { STATUS_LABEL, coverageReason } from "@/lib/coverage";
+import { DatasetCard } from "@/components/DatasetCard";
 import { ScrollBox, SortTh, TableSearch, useTable } from "@/components/TableTools";
 
 type Key = keyof Pick<CountryRow, "country" | "harm_mean_2003_2025" | "harm_2025" | "raw_2025" | "step_raw" | "step_harm" | "r2_model" | "bias_pct" | "frp_p50" | "onset_trend_harm">;
@@ -38,6 +39,9 @@ const FILES = [
   ["validation_points.json", "Up to 300 sampled held-out 2019–2021 cell-month points (observed Aqua vs model) per fitted country, with metrics for a one-ratio baseline scored on the same held-out table"],
   ["countries.json", "This summary table, with yearly raw and harmonized totals"],
   ["season.json", "Season onset (10%), midpoint (50%) and end (90%) per country and year, raw and harmonized; daily or monthly resolution per country"],
+  ["calendar_harmonized_countries.csv", "CSV export: harmonized monthly counts per fitted country (country, year, month, n_harmonized)"],
+  ["dataset.json", "Dataset card: coverage, scale, unit, licence and citation (computed from the files)"],
+  ["proof.json", "Numbers behind the Method proof section: 2012 step collapse, held-out benchmark, record months, seam test"],
   ["drift.json", "Mean local solar overpass time per satellite per year (countries with point detections)"],
   ["calendar_harmonized.parquet", "The first four countries (Australia, Canada, Chile, Portugal): fallback copy"],
   ["calendar_raw.parquet", "The first four countries: raw fallback copy"],
@@ -54,7 +58,7 @@ export function DataPage() {
   const coverageState = useCoverageState();
   const coverage = coverageState.data;
   const { data: params } = useParquet(() => getParams(), "params");
-  const [lang, setLang] = useState<"py" | "js" | "sql">("py");
+  const [lang, setLang] = useState<"py" | "pd" | "sql" | "r" | "js">("py");
   const origin = typeof window === "undefined" ? "https://emberline-tan.vercel.app" : window.location.origin;
 
   const tbl = useTable<CountryRow, Key>(data?.countries ?? [], (r) => r.country, (r, k) => (k === "country" ? prettyName(r.country) : r[k]), { k: "harm_mean_2003_2025", dir: -1 });
@@ -64,7 +68,9 @@ export function DataPage() {
 
   const snippet = {
     py: `import polars as pl\nurl = "${origin}/data/calendar_harmonized_global.parquet"\ncal = pl.read_parquet(url)\nprint(cal.filter((pl.col("scope") == "country") & (pl.col("key") == "Canada")))`,
-    js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized_global.parquet" });\nconst rows = await parquetReadObjects({ file });\nconsole.log(rows.filter(r => r.scope === "country" && r.key === "Canada"));`,
+    js: `import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";\nimport { compressors } from "hyparquet-compressors"; // the files are ZSTD-compressed\nconst file = await asyncBufferFromUrl({ url: "${origin}/data/calendar_harmonized_global.parquet" });\nconst rows = await parquetReadObjects({ file, compressors });\nconsole.log(rows.filter(r => r.scope === "country" && r.key === "Canada"));`,
+    pd: `import pandas as pd  # needs pyarrow\ncsv = pd.read_csv("${origin}/data/calendar_harmonized_countries.csv", comment="#")\nprint(csv[csv.country == "Canada"].groupby("year").n_harmonized.sum())`,
+    r: `library(arrow)  # R; reads the CSV export, or download the Parquet first\ncal <- read_csv_arrow("${origin}/data/calendar_harmonized_countries.csv", skip = 3)\nsubset(cal, country == "Canada")`,
     sql: `-- DuckDB\nSELECT year, SUM(n_harmonized) AS detections\nFROM '${origin}/data/calendar_harmonized_global.parquet'\nWHERE scope = 'country' AND key = 'Canada'\nGROUP BY year ORDER BY year;`,
   }[lang];
 
@@ -72,6 +78,7 @@ export function DataPage() {
     <div>
       <PageHead compact eyebrow="Science · data" title="Every table." italic="Every download."
         lede="All of Emberline's data is plain files on this site — no account, no API key, no server. Browse it here, download it, or query it straight from your own code." />
+      <DatasetCard />
       {error && <Failed error={error} retry={retry} what="the country table (countries.json)" />}
       <CoverageError state={coverageState} className="mt-3" />
       {loading && <Loading h={360} />}
@@ -211,7 +218,7 @@ export function DataPage() {
               <section className="card h-full min-w-0 p-5 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="display text-3xl">Query it yourself</h2>
-                  <Segmented label="lang" value={lang} onChange={setLang} options={[{ value: "py", label: "Python" }, { value: "js", label: "JavaScript" }, { value: "sql", label: "DuckDB" }]} />
+                  <Segmented label="lang" value={lang} onChange={setLang} options={[{ value: "py", label: "Polars" }, { value: "pd", label: "pandas" }, { value: "sql", label: "DuckDB" }, { value: "r", label: "R" }, { value: "js", label: "JS" }]} />
                 </div>
                 <pre tabIndex={0} role="region" aria-label="Code example" className="mt-4 max-w-full overflow-x-auto rounded-xl bg-[var(--ink)] p-4 font-mono text-xs leading-relaxed text-[#efe9d9]"><code>{snippet}</code></pre>
                 <button type="button" onClick={() => navigator.clipboard?.writeText(snippet)} className="mt-3 glass rounded-full px-3 py-1 text-xs">Copy</button>

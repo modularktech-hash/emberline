@@ -1,0 +1,54 @@
+{
+ "name": "Emberline harmonized fire record, fit v1-20261114T1240",
+ "fit_version": "v1-20261114T1240",
+ "generated_by": "scripts/build_dataset_card.py",
+ "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+ "countries_with_raw_record": 232,
+ "countries_in_archive_list": 237,
+ "countries_fitted": 171,
+ "countries_own_fit": 130,
+ "countries_pooled_fit": 41,
+ "raw_years": [
+  2001,
+  2025
+ ],
+ "harmonized_years": [
+  2003,
+  2025
+ ],
+ "harmonized_years_note": "rows exist from 2002 (Aqua from July 2002); the comparable record is 2003 onward",
+ "train_years": [
+  2012,
+  2018
+ ],
+ "test_years": [
+  2019,
+  2021
+ ],
+ "filtered_detections": 267159561,
+ "filtered_detections_by_sensor": {
+  "MODIS": {
+   "detections": 90953088,
+   "years": [
+    2001,
+    2025
+   ]
+  },
+  "VIIRS": {
+   "detections": 176206473,
+   "years": [
+    2012,
+    2025
+   ]
+  }
+ },
+ "filtered_detections_definition": "sum of n_detections over country rows of calendar_raw_global.parquet: daytime vegetation fires (type 0), confidence nominal or high, FRP > 0",
+ "country_sensor_years_with_detections": 7702,
+ "harmonized_country_month_rows": 43631,
+ "csv_export": "calendar_harmonized_countries.csv",
+ "licence": {
+  "code": "MIT (LICENSE)",
+  "data": "derived from NASA FIRMS; credit NASA FIRMS / LANCE"
+ },
+ "cite": "Team Modulark (2026). Emberline harmonized fire record (fit v1-20261114T1240). https://github.com/modularktech-hash/emberline. Data derived from NASA FIRMS (LANCE)."
+}

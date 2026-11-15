@@ -9,10 +9,12 @@
    "fit_version": "v1-20261114T1240",
    "params_file": "params_global.json",
    "files": {
+    "calendar_harmonized_countries.csv": "1686e0e43558085f560d49a5f49c0ba37fec1c8bc377b4307e3b8f1bb354a6db",
     "calendar_harmonized_global.parquet": "62b545bd7170fee0399576493a556848bd27338091af9d2a6200e9672f8e2d63",
     "calendar_raw_global.parquet": "8123debe2f6dbc3d853ae2bf266081fb8ca68f7e64e459670185d7da2335fb0e",
     "countries.json": "a1bd4cd81fda75abb22eeacca1eac4a22282fab7eab51ac806eafd33b5c0303d",
     "coverage_status.json": "6d19633422c97b80bd1ee31ef853f3d3e21a37d86a5a455d2c1a7b4c179e6773",
+    "dataset.json": "19cb0edfbddcd53d0876b31b224c765ba57195d6f7784ea2a29266e63fd503ea",
     "drift.json": "3c8c9765c9fe43e67324fdb889a34cf718dce015431dc6a32469550a55211ca5",
     "harmonized_uncertainty.json": "e5ec2f6947b86d96260457e3e50ae2f4043b0340f762ce7da28e1a07f7f805ce",
     "params_global.json": "c7beacd44760db43ff0108ceb02803bd1b6fa4efb3e148f0917d47691e304c18",
@@ -111,6 +113,25 @@
    "scope_note": "Country rows and h3_parent rows count the same detections twice. Sum within one scope only: filter scope == 'country' for national totals or scope == 'h3_parent' for areas.",
    "fit_version": "v1-20261114T0630",
    "fit_version_from": "params.json"
+  },
+  {
+   "name": "calendar_harmonized_countries.csv",
+   "dataset": "world",
+   "purpose": "CSV export: harmonized monthly Aqua-MODIS-equivalent counts per fitted country (country, year, month, n_harmonized)",
+   "source": "country rows of calendar_harmonized_global.parquet (scripts/build_dataset_card.py)",
+   "bytes": 1019941,
+   "sha256": "1686e0e43558085f560d49a5f49c0ba37fec1c8bc377b4307e3b8f1bb354a6db",
+   "format": "csv",
+   "columns": [
+    "country",
+    "year",
+    "month",
+    "n_harmonized"
+   ],
+   "rows": 43631,
+   "comment_prefix": "#",
+   "fit_version": "v1-20261114T1240",
+   "fit_version_from": "params_global.json"
   },
   {
    "name": "calendar_harmonized_global.parquet",
@@ -477,6 +498,51 @@
    "row_unit": "country",
    "scope_kind": "country",
    "fit_version": null
+  },
+  {
+   "name": "dataset.json",
+   "dataset": "world",
+   "purpose": "Dataset card: coverage, scale, unit, licence and citation of the published record",
+   "source": "derived from params_global.json, coverage_status.json and the world calendars (scripts/build_dataset_card.py)",
+   "bytes": 1481,
+   "sha256": "19cb0edfbddcd53d0876b31b224c765ba57195d6f7784ea2a29266e63fd503ea",
+   "format": "json",
+   "top_level_keys": [
+    "name",
+    "fit_version",
+    "generated_by",
+    "unit",
+    "countries_with_raw_record",
+    "countries_in_archive_list",
+    "countries_fitted",
+    "countries_own_fit",
+    "countries_pooled_fit",
+    "raw_years",
+    "harmonized_years",
+    "harmonized_years_note",
+    "train_years",
+    "test_years",
+    "filtered_detections",
+    "filtered_detections_by_sensor",
+    "filtered_detections_definition",
+    "country_sensor_years_with_detections",
+    "harmonized_country_month_rows",
+    "csv_export",
+    "licence",
+    "cite"
+   ],
+   "time_span": {
+    "train_years": [
+     2012,
+     2018
+    ],
+    "test_years": [
+     2019,
+     2021
+    ]
+   },
+   "unit": "Aqua-MODIS-equivalent daytime vegetation-fire detections",
+   "fit_version": "v1-20261114T1240"
   },
   {
    "name": "drift.json",
