@@ -51,10 +51,12 @@ export function GlobePage() {
   const [played, setPlayed] = useState(false);
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    setNow(Date.now());
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPaused(true);
+    const first = window.setTimeout(() => {
+      setNow(Date.now());
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPaused(true);
+    }, 0);
     const t = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(t);
+    return () => { window.clearTimeout(first); window.clearInterval(t); };
   }, []);
   const [picked, setPicked] = useState<Cell | null>(null);
   const [satState, setSatState] = useState<SatState[]>([]);

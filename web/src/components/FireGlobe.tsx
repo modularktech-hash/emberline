@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { GlobeMethods } from "react-globe.gl";
 import * as THREE from "three";
 import { degreesLat, degreesLong, eciToGeodetic, gstime, propagate, twoline2satrec, type SatRec } from "satellite.js";
@@ -109,6 +109,8 @@ class GlobeBoundary extends Component<{ fallback: ReactNode; children: ReactNode
  * policy (the classes still exist, getContext returns null), and three.js then logs errors.
  */
 let webglOk: boolean | null = null;
+const noopSubscribe = () => () => {};
+
 export function webglAvailable() {
   if (typeof window === "undefined") return false;
   if (webglOk != null) return webglOk;
@@ -124,8 +126,8 @@ export function webglAvailable() {
 export default function FireGlobe(props: Props) {
   const height = props.height ?? 560;
   const [lost, setLost] = useState(false);
-  const [canGl, setCanGl] = useState<boolean | null>(null);
-  useEffect(() => { setCanGl(webglAvailable()); }, []);
+  // Client-only probe (null on the server render, so the poster shows first); cached after the first call.
+  const canGl = useSyncExternalStore(noopSubscribe, webglAvailable, () => null);
   if (canGl == null) return <GlobePoster height={height} />;
   const fallback = <GlobePoster height={height} note="The 3D globe needs WebGL, which this browser has turned off. Everything else on the page works." />;
   if (lost || !canGl) return fallback;
