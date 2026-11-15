@@ -1,5 +1,7 @@
 "use client";
 
+import { MonthToDateCard } from "@/components/MonthToDate";
+
 import { fmtPct, fmtR2, fmtRatio } from "@/lib/format";
 import { useChartScale } from "@/lib/useChartScale";
 import { Eyebrow } from "@/components/Figure";
@@ -180,6 +182,7 @@ export function Seasons() {
           </div>
         )}
       </div></Reveal>
+      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} />
     <Reveal>
         <section className="card mt-10 grid items-center gap-8 p-5 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
           <div>

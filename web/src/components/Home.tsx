@@ -11,6 +11,7 @@ function useScrollOrFinal(p: MotionValue<number>, final: number): MotionValue<nu
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { StepCollapse } from "@/components/Proof";
+import { MonthUnusualPanel } from "@/components/MonthToDate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CountUp, Reveal } from "@/components/ui";
 import { getCountryTable, getDrift, getLive, getLiveSummary, getSeasonHome, getTle, type CountryRow, type DriftFile } from "@/lib/data";
@@ -109,7 +110,7 @@ function Hero({ d }: { d: HomeData }) {
         </h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }}
           className="mx-auto mt-7 max-w-md text-[17px] leading-relaxed text-[var(--text-secondary)]">
-          Two generations of NASA satellites, harmonized country by country to reduce the discontinuity between sensor records. Source archive from 2001; harmonized record 2003–2025.
+          Two generations of NASA satellites, harmonized country by country to reduce the discontinuity between sensor records. Source archive from 2001; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link href="/explorer" className="pill-dark px-6 py-3 text-[15px] font-medium">Open the calendar</Link>
@@ -465,6 +466,7 @@ export function Home() {
   return (
     <div>
       <Hero d={d} />
+      <MonthUnusualPanel />
       {homeError && <div className="mx-auto mb-8 max-w-3xl"><Failed error={homeError} retry={homeRetry} what="the summary figures" /></div>}
       <OrbitChapter />
       <JumpChapter row={canada} />

@@ -15,6 +15,7 @@ import { qualityCsvHeader } from "@/lib/quality";
 import { MonthYearCalendar, type CellRef } from "@/components/MonthYearCalendar";
 import { BOX_FIELDS, bboxCrossesAntimeridian, bboxToParents, cellsExtent, normalizeDrawnBbox, validateBoxInput, type Bbox, type BoxField } from "@/lib/aoi";
 import { DotStat } from "@/components/DotMatrix";
+import { MonthToDateCard } from "@/components/MonthToDate";
 import { HotspotDownload } from "@/components/HotspotDownload";
 import { MONTHS, annualTotals, downloadCsv, fmt, stepRatio } from "@/lib/ember";
 import { fitFlags } from "@/lib/fitFlags";
@@ -181,7 +182,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explorer · burning activity calendar" title="Every fitted country. Every month." italic="2003–2025."
-        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025." />
+        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
@@ -369,6 +370,7 @@ export function Explorer() {
         )}
         </div>
       </section></Reveal>
+      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} />
       <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "box", bbox: area.bbox }} />
 
       <Reveal>
