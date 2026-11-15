@@ -51,7 +51,7 @@ def fetch(base: str, source: str, box, d0: date, d1: date) -> str | None:
     if tag.exists():
         return tag.read_text()
     url = f"{base}/api/hotspots?source={source}&bbox={w},{s},{e},{n}&start={d0}&end={d1}"
-    for attempt in range(8):
+    for attempt in range(30):
         r = subprocess.run(["curl", "-sS", "-D", "-", "-m", "280", url], capture_output=True, text=True)
         out = r.stdout
         head, _, body = out.partition("\n\n")
@@ -63,7 +63,7 @@ def fetch(base: str, source: str, box, d0: date, d1: date) -> str | None:
             CACHE.mkdir(parents=True, exist_ok=True)
             tag.write_text(body)
             return body
-        time.sleep(min(60, 5 + attempt * 8))
+        time.sleep(min(60, 10 + attempt * 10))
     return None
 
 
@@ -150,7 +150,7 @@ def main() -> int:
         return c, months
 
     t0 = time.time()
-    with ThreadPoolExecutor(max_workers=4) as ex:
+    with ThreadPoolExecutor(max_workers=1) as ex:
         for i, (c, months) in enumerate(ex.map(one, [c for c in order if c not in countries]), 1):
             if months is not None:
                 countries[c] = months
