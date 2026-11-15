@@ -13,7 +13,7 @@ const BASE = process.argv[2];
   const now = () => p.evaluate(() => performance.now());
   const out = {};
   // 1. Raw -> Harmonized toggle: click to next two frames
-  for (const name of ['Harmonized', 'Raw record']) {
+  for (const name of ['Harmonized (corrected)', 'Raw (as recorded)']) {
     const t0 = await now();
     const dt = await p.evaluate((name) => new Promise((res) => { const btn = [...document.querySelectorAll('[aria-label="Series"] button')].find((x) => x.textContent.trim() === name); const t = performance.now(); btn.click(); requestAnimationFrame(() => requestAnimationFrame(() => res(performance.now() - t))); }), name);
     await p.waitForTimeout(1200);

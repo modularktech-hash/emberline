@@ -19,6 +19,16 @@ export type CellRef = { year: number; month: number };
  * detail strip keeps showing the selection (controlled by `selected` /
  * `onSelect` when given, so it survives a raw/harmonized switch).
  */
+/** Diverging, colour-blind-safe steps for the anomaly view: blue below a usual month, neutral near it, orange to red above. */
+const ANOM_STEPS = [
+  { below: 0.5, color: "#2f6db0", label: "under ×0.5" },
+  { below: 0.8, color: "#9dc0e6", label: "×0.5–0.8" },
+  { below: 1.25, color: "#dcdcd6", label: "usual" },
+  { below: 2, color: "#f5b97a", label: "×1.25–2" },
+  { below: 4, color: "#e2702a", label: "×2–4" },
+  { below: Infinity, color: "#b3261e", label: "over ×4" },
+];
+
 export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, areaName, inRange }: {
   cal: CalendarResult; from: number; to: number; max: number;
   selected?: CellRef | null; onSelect?: (c: CellRef | null) => void; areaName?: string;
@@ -35,6 +45,15 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
   const at = (y: number, m: number) => cal.rows.find((r) => r.year === y && r.month === m);
   const h = shownCell ? at(shownCell.year, shownCell.month) : null;
   const breaks = rampBreaks(max);
+  // Anomaly view: each month against the median of the same calendar month over every year in the record.
+  const [anom, setAnom] = useState(false);
+  const usual = MONTHS.map((_, mi) => {
+    const v = cal.rows.filter((r) => r.month === mi + 1 && r.value != null).map((r) => r.value as number).sort((a, b) => a - b);
+    const n = v.length;
+    return n ? (n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2) : null;
+  });
+  const ratioOf = (value: number | null | undefined, m: number) => { const u = usual[m - 1]; return value == null || u == null || u <= 0 ? null : value / u; };
+  const anomIdx = (ratio: number) => ANOM_STEPS.findIndex((st) => ratio < st.below);
   // Roving tabindex (E22): the grid is one Tab stop; arrows move by month (left/right) and
   // year (up/down), Home/End jump within a year, Ctrl+Home/End to the corners, Enter/Space
   // select, Escape returns focus to the scroll region so a further Tab leaves.
@@ -83,7 +102,13 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
   };
   return (
     <div>
-      <div className="mb-2 flex justify-end">
+      <div className="mb-2 flex flex-wrap justify-end gap-2">
+        <div className="flex rounded-full border border-[var(--hairline)] p-0.5 text-xs" role="group" aria-label="Colour the calendar by">
+          {([[false, "Detections"], [true, "Against a usual month"]] as const).map(([v, label]) => (
+            <button key={label} type="button" data-testid={v ? "anomaly-on" : "anomaly-off"} aria-pressed={anom === v} onClick={() => setAnom(v)}
+              className={`rounded-full px-3 py-1 ${anom === v ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>{label}</button>
+          ))}
+        </div>
         <button type="button" onClick={() => setAsTable((v) => !v)} aria-pressed={asTable}
           className="rounded-full border border-[var(--hairline)] px-3 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
           {asTable ? "Show as calendar" : "Show as table"}
@@ -121,6 +146,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
             {MONTHS.map((_, mi) => {
               const row = at(y, mi + 1);
               const idx = rampIndex(row?.value ?? null, max);
+              const ratio = anom ? ratioOf(row?.value, mi + 1) : null;
               return (
                 <div role="gridcell" key={mi} className="contents" aria-selected={!!sel && sel.year === y && sel.month === mi + 1}>
                 <button
@@ -134,7 +160,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
                   aria-label={cellName(y, mi + 1)}
                   className={`h-[28px] rounded-[4px] outline-none ring-[var(--text-primary)] hover:ring-1 focus-visible:ring-2 sm:h-[22px] ${scrub != null && y !== scrub ? "opacity-35" : ""} ${sel && sel.year === y && sel.month === mi + 1 ? "ring-2 ring-[var(--ink)]" : ""}`}
                   style={{
-                    background: idx === null ? "repeating-linear-gradient(135deg, transparent 0 3px, var(--hairline) 3px 4px)" : RAMP[idx],
+                    background: idx === null || (anom && ratio === null) ? "repeating-linear-gradient(135deg, transparent 0 3px, var(--hairline) 3px 4px)" : anom ? ANOM_STEPS[anomIdx(ratio as number)].color : RAMP[idx],
                     opacity: inRange && !inRange({ year: y, month: mi + 1 }) ? 0.18 : undefined,
                     transition: `background-color 600ms cubic-bezier(0.22,1,0.36,1) ${yi * 14}ms`,
                     ["--ci" as string]: yi + mi,
@@ -161,14 +187,23 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
           {shownCell && h ? (
             <span>
               <span className="font-medium text-[var(--text-primary)]">{MONTHS[shownCell.month - 1]} {shownCell.year}</span>
-              {areaName && <> · {areaName}</>} · {cal.mode === "raw" ? "Raw detections (uncorrected)" : "Harmonized, Aqua-equivalent detections"} ·{" "}
+              {areaName && <> · {areaName}</>} · {cal.mode === "raw" ? "Raw detections (as recorded)" : "Harmonized (corrected) detections"} ·{" "}
               {h.value == null ? "no data" : <span className="text-[var(--ember)]">{fmt(h.value)}</span>}
+              {(() => { const q = ratioOf(h.value, shownCell.month); return q == null ? null : <span> · ×{q >= 10 ? q.toFixed(0) : q.toFixed(1)} a usual {MONTHS[shownCell.month - 1]}</span>; })()}
               <span className="text-[var(--text-muted)]"> · {BASIS[h.basis]}{sel && !hover ? " · selected (click again to clear)" : ""}</span>
             </span>
           ) : (
             <span className="text-[var(--text-muted)]">Hover, tap or focus a month for its count; click or press Enter to keep it.</span>
           )}
         </div>
+        {anom ? (
+          <div className="flex flex-wrap items-center gap-2" aria-label="Colour scale: each month against the median of the same month, blue below, orange above">
+            {ANOM_STEPS.map((st) => (
+              <span key={st.label} className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]"><span className="h-3 w-5 rounded-[3px]" style={{ background: st.color }} />{st.label}</span>
+            ))}
+            <span className="ml-1 hidden text-[10px] text-[var(--text-muted)] sm:inline">× the median of that month, all years shown</span>
+          </div>
+        ) : (
         <div className="flex items-center gap-2" aria-label={`Colour scale: ${RAMP_NAME}`}>
           <span className="tabular text-[10px] text-[var(--text-muted)]">0</span>
           {RAMP.map((c, i) => (
@@ -177,6 +212,7 @@ export function MonthYearCalendar({ cal, from, to, max, selected, onSelect, area
           <span className="tabular text-[10px] text-[var(--text-muted)]">{fmtCompact(max)}</span>
           <span className="ml-2 hidden text-[10px] text-[var(--text-muted)] sm:inline">{RAMP_NAME}, √ scale</span>
         </div>
+        )}
       </div>
     </div>
   );

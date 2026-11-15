@@ -35,8 +35,19 @@ import { UNC_LABEL, UNC_NOT_TOTAL, fmtUnc, uncFor, useUncertainty } from "@/lib/
 import { getProof } from "@/lib/data";
 import { mostUnusualMonth } from "@/lib/unusual";
 import { InfoDot } from "@/components/ui";
+import { CriticalPeriods } from "@/components/CriticalPeriods";
+import { FireReport } from "@/components/FireReport";
+import { findingLines } from "@/lib/findings";
 
 const AoiMap = dynamic(() => import("@/components/AoiMap").then((m) => m.AoiMap), { ssr: false });
+
+/** One-click areas of interest (west, south, east, north). */
+const PRESETS: Array<[string, Bbox]> = [
+  ["Amazon basin", [-66, -12, -52, -2]],
+  ["Sierra Nevada, California", [-122, 36, -118, 40.5]],
+  ["Pantanal", [-59, -21, -55, -16]],
+  ["Central Africa savanna", [15, -12, 30, -4]],
+];
 
 const FIRST = 2003; // Aqua's first full year; the harmonized unit is Aqua-equivalent.
 
@@ -54,7 +65,7 @@ export function Explorer() {
   const lastCountry = useRef("Canada");
   // Typed-bounds validation: per-field messages plus one summary read out by screen readers.
   const [boxErr, setBoxErr] = useState<{ fields: Partial<Record<BoxField, string>>; message: string } | null>(null);
-  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to, fm: fromM === 1 ? null : fromM, tm: toM === 12 ? null : toM });
+  const viewQuery = () => ({ ...areaToQuery(area), mode, from: from === FIRST ? null : from, to: to === 2025 ? null : to, fm: fromM === 1 ? null : fromM, tm: toM === 12 ? null : toM, sel: selCell ? `${selCell.year}-${selCell.month}` : null });
   useUrlState((q) => {
     const a = areaFromQuery(q);
     if (a?.ok) {
@@ -62,12 +73,14 @@ export function Explorer() {
       if (a.area.kind === "country") lastCountry.current = a.area.name; else if (a.fields) setBox(a.fields);
     } else if (a && !a.ok) { setBox(a.fields); setBoxErr({ fields: a.fieldErrors, message: a.message }); }
     else { setArea({ kind: "country", name: "Canada" }); }
+    const sm = /^(\d{4})-(\d{1,2})$/.exec(q.get("sel") ?? "");
+    setSelCell(sm && Number(sm[1]) >= FIRST && Number(sm[1]) <= 2025 && Number(sm[2]) >= 1 && Number(sm[2]) <= 12 ? { year: Number(sm[1]), month: Number(sm[2]) } : null);
     const m = q.get("mode");
     setMode(m === "harmonized" ? "harmonized" : "raw");
     const f = intParam(q, "from", FIRST, 2025) ?? FIRST, t = intParam(q, "to", FIRST, 2025) ?? 2025;
     const fm = intParam(q, "fm", 1, 12) ?? 1, tm = intParam(q, "tm", 1, 12) ?? 12;
     if (f * 12 + fm <= t * 12 + tm) { setFrom(f); setTo(t); setFromM(fm); setToM(tm); } else { setFrom(FIRST); setTo(2025); setFromM(1); setToM(12); }
-  }, () => viewQuery(), [areaKey(area), mode, from, to, fromM, toM]);
+  }, () => viewQuery(), [areaKey(area), mode, from, to, fromM, toM, selCell?.year, selCell?.month]);
   const { data, error, loading, retry } = useAreaData(area);
   const ds = useDataset();
   const coverageState = useCoverageState();
@@ -143,6 +156,28 @@ export function Explorer() {
   const errRow = errCountry && proof.data?.fit_version === data?.params.fit_version ? proof.data?.limits.per_country[errCountry] : undefined;
   const errPooled = errCountry ? data?.params.countries[errCountry]?.fit_source === "pooled" : false;
   const unusual = useMemo(() => (mode === "harmonized" && cal && cal.keys.length ? mostUnusualMonth(cal.rows, [FIRST, 2025]) : null), [mode, cal]);
+  const harmUnusual = useMemo(() => (data && data.harmonized.keys.length ? mostUnusualMonth(data.harmonized.rows, [FIRST, 2025]) : null), [data]);
+  const reportCell = selCell ?? (harmUnusual ? { year: harmUnusual.year, month: harmUnusual.month } : null);
+  const ex = proof.data?.worked_example;
+  // The worked example keeps its name instead of showing as bare coordinates.
+  const sameBox = (bb: Bbox) => area.kind === "box" && area.bbox.every((v, i) => Math.abs(v - bb[i]) < 1e-6);
+  const place = ex && sameBox(ex.bbox) ? "New South Wales, Australia (example box)" : PRESETS.find(([, bb]) => sameBox(bb))?.[0].concat(" (box)") ?? areaLabel(area);
+  const openExample = () => {
+    if (!ex) return;
+    const [w, so, e, n] = ex.bbox;
+    setBox([w, so, e, n].map((v) => v.toFixed(2)));
+    setBoxErr(null);
+    setArea(makeArea({ kind: "box", bbox: ex.bbox }));
+    setMode("harmonized");
+    setSelCell({ year: ex.unusual.year, month: ex.unusual.month });
+  };
+  const openPreset = (bbox: Bbox) => { setBox(bbox.map((v) => v.toFixed(2))); setBoxErr(null); setArea(makeArea({ kind: "box", bbox })); setMode("harmonized"); setSelCell(null); };
+  const [cited, setCited] = useState(false);
+  const copyCitation = () => {
+    if (!data || !view) return;
+    const text = `Emberline (2026). Harmonized MODIS–VIIRS burning activity calendar, fit ${data.params.fit_version}. Area: ${place}. Period: ${view.label}. Series: ${mode === "raw" ? "raw (uncorrected)" : "harmonized, Aqua-MODIS-equivalent detections"}. Source data: NASA FIRMS, MODIS Collection 6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP). ${reproducingUrl(viewQuery())}`;
+    navigator.clipboard?.writeText(text).then(() => { setCited(true); setTimeout(() => setCited(false), 2000); }, () => {});
+  };
   const busiestYear = view ? [...(mode === "raw" ? view.raw : view.harm)].filter((r) => r.value !== null).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]?.year ?? null : null;
   // E27: coefficient-only intervals for harmonized country totals (busiest year, selected year/month).
   const uncRows = mode === "harmonized" && area.kind === "country" && data && busiestYear != null ? [
@@ -190,12 +225,13 @@ export function Explorer() {
   const exportBrief = () => {
     if (!data || !cal || !view) return;
     const html = buildBrief({
-      place: areaLabel(area), areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
+      place: place, areaKind: area.kind, from: view.lo, to: view.hi, mode, unit: cal.unit,
       rows: cal.rows.filter((r) => r.year >= view.lo && r.year <= view.hi).map((r) => (view.inRange(r) ? r : { ...r, value: null })), max: view.max,
       annual: mode === "raw" ? view.raw : view.harm, params: data.params, fit,
       noFitReason: unfitted ? covLabel : null, unc: uncRows, scope,
       dataset: ds?.dataset === "world" ? "world files (calendar_*_global.parquet, params_global.json)" : "four-country fallback (calendar_raw.parquet, calendar_harmonized.parquet, params.json)",
       url: reproducingUrl(viewQuery()), generated: new Date().toISOString(),
+      findings: data.harmonized.keys.length ? findingLines({ harm: data.harmonized.rows, raw: data.raw.rows, cell: reportCell, from: view.lo, to: view.hi, err: errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null }) : [],
     });
     const href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     const a = document.createElement("a");
@@ -210,7 +246,7 @@ export function Explorer() {
   return (
     <div>
       <PageHead compact eyebrow="Explore · calendar" info="calendar" title="How much burned here," italic="month by month?"
-        lede="Pick a country or draw a box, switch between the raw record (uncorrected) and the harmonized one, and download what you see. Archive 2001–2025; harmonized record 2003–2025; 2026 so far only as provisional raw counts in the “This month so far” card (when loaded). Live layer: the last 24 h and 7 days." />
+        lede="A burning activity calendar for your area of interest. Pick an area and a date range to see its critical periods, the years with the highest burning activity and how this month compares with the historical median. A detection is one active-fire hotspot seen by a satellite. Harmonized record 2003–2025; 2026 so far as provisional raw counts." />
       <Coverage />
 
       <Reveal><section id="explorer" className="window scroll-mt-24">
@@ -263,7 +299,7 @@ export function Explorer() {
             {(["raw", "harmonized"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
                 className={`min-h-[36px] rounded-full px-4 text-sm font-medium transition-colors ${mode === m ? "bg-[var(--ink)] text-[var(--on-ink)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}>
-                {m === "raw" ? "Raw record" : "Harmonized"}
+                {m === "raw" ? "Raw (as recorded)" : "Harmonized (corrected)"}
               </button>
             ))}
           </div>
@@ -272,11 +308,43 @@ export function Explorer() {
           <button type="button" onClick={exportCsv} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Calendar CSV
           </button>
+          <button type="button" data-testid="copy-citation" onClick={copyCitation} disabled={!view} className="glass-thin min-h-[40px] px-4 text-sm font-medium disabled:opacity-40" aria-live="polite">
+            {cited ? "Citation copied" : "Copy citation"}
+          </button>
           <button type="button" onClick={exportBrief} disabled={!view || notProcessed || rawOnly} className="pill-dark min-h-[40px] px-4 text-sm font-medium disabled:opacity-40">
             Download brief
           </button>
         </div>
 
+        <div className="mt-5 grid gap-3 sm:grid-cols-3" data-testid="how-to">
+          {[
+            ["1", "Pick your area", "A country above, a quick area below, or draw your own on the map."],
+            ["2", "Read the verdict", "The fire report says how unusual a month was. Click any month in the calendar to change it."],
+            ["3", "Take it with you", "Download the brief, the calendar or the hotspots, or copy a link to this exact view."],
+          ].map(([n, t, d]) => (
+            <div key={n} className="flex gap-3 rounded-2xl bg-[var(--surface-alt)] p-3.5">
+              <span className="dot-num text-2xl leading-none text-[var(--red)]">{n}</span>
+              <p className="text-[13px] leading-snug text-[var(--text-secondary)]"><span className="block font-medium text-[var(--text-primary)]">{t}</span>{d}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+          Quick areas:{" "}
+          {ex && <><button type="button" data-testid="nsw-example" onClick={openExample} className="link-ul font-medium text-[var(--text-primary)]">New South Wales, {MONTHS[ex.unusual.month - 1]} {ex.unusual.year} (worked example)</button> · </>}
+          {PRESETS.map(([name, bb], i) => (
+            <span key={name}>{i > 0 && " · "}<button type="button" data-testid={`preset-${i}`} onClick={() => openPreset(bb)} className="link-ul text-[var(--text-primary)]">{name}</button></span>
+          ))}
+        </p>
+        <nav aria-label="On this page" className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+          <span>Jump to</span>
+          {[["#report", "Verdict"], ["#calendar", "Calendar"], ["#critical", "Critical periods"], ["#this-month", "This month vs median"], ["#hotspots", "Hotspot CSV"], ["#area", "Draw an area"]].map(([h, t]) => (
+            <a key={h} href={h} className="link-ul text-[var(--text-primary)]">{t}</a>
+          ))}
+        </nav>
+        {data && reportCell && data.harmonized.keys.length > 0 && !notProcessed && (
+          <div id="report" className="scroll-mt-24"><FireReport place={place} year={reportCell.year} month={reportCell.month} harm={data.harmonized.rows} raw={data.raw.rows}
+            err={errRow?.[0] != null && errRow[1] != null ? [errRow[0], errRow[1]] : null} errCountry={errCountry} pooled={!!errPooled} fitVersion={data.params.fit_version} picked={!!selCell} /></div>
+        )}
         {error && <div className="mt-8"><Failed error={error} retry={retry} what="the calendars for this area" /></div>}
         <CoverageError state={coverageState} className="mt-4" />
         {unfitted && area.kind === "country" && <CoverageNote country={area.name} coverage={coverage} className="mt-6" />}
@@ -321,11 +389,11 @@ export function Explorer() {
         {scope && <ScopePanel scope={scope} mode={mode} />}
         {data && cal && view && !notProcessed && !rawOnly && (
           <div className="fade-in">
-            <div className="mt-6">
+            <div id="calendar" className="mt-6 scroll-mt-24">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <Eyebrow>Burning activity calendar · {areaLabel(area)} · detections per month</Eyebrow>
+                <Eyebrow>Burning activity calendar · {place} · detections per month</Eyebrow>
                 <p className={`rounded-full px-3 py-1 text-xs font-medium ${mode === "raw" ? "bg-[var(--surface-2)] text-[var(--text-primary)]" : "bg-[var(--ember-soft)] text-[var(--text-primary)]"}`}>
-                  {mode === "raw" ? "Raw detections · uncorrected · MODIS to 2011, VIIRS from 2012" : `Harmonized · ${cal.unit} · fit ${data.params.fit_version}`}
+                  {mode === "raw" ? "Raw: hotspots as each satellite recorded them, not corrected · MODIS to 2011, VIIRS from 2012" : `Harmonized: corrected to one scale across the 2012 satellite change · ${cal.unit} · fit ${data.params.fit_version}`}
                   <span className="text-[var(--text-muted)]"> · {view.label}</span>
                 </p>
               </div>
@@ -344,6 +412,7 @@ export function Explorer() {
                   </p>
                 );
               })()}
+              <div id="critical" className="scroll-mt-24"><CriticalPeriods rows={cal.rows} from={view.lo} to={view.hi} place={place} mode={mode} /></div>
               {mode === "harmonized" && (unusual || errCountry) && (
                 <div data-testid="heldout-context" className="mt-3 rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
                   {unusual && (
@@ -356,7 +425,7 @@ export function Explorer() {
                   )}
                   {errCountry && (
                     <p data-testid="typical-error" className={unusual ? "mt-1" : ""}>
-                      <span className="font-medium text-[var(--text-primary)]">Typical held-out error: {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
+                      <span className="font-medium text-[var(--text-primary)]">Typical error on years the model never saw: {errRow?.[0] != null ? `±${fmtNum(errRow[0], 0)}%` : "not recorded"}</span>
                       {errRow?.[0] != null && <> (median monthly miss, 2019–2021; not a confidence interval). 1 month in 5 missed by more than ±{fmtNum(errRow[1], 0)}%</>}. Held-out error of {prettyName(errCountry)}&apos;s harmonized monthly total against what Aqua recorded{area.kind !== "country" && ", the fitted country with most detections in this area; not computed for the drawn area itself"}.
                       {errPooled && <span className="text-[var(--ember)]"> Pooled fit: less reliable than an own fit.</span>}
                       {errRow && errRow[2] === 0 && " Few fires here, so errors are larger."}
@@ -367,7 +436,7 @@ export function Explorer() {
               )}
               {uncRows && (
                 <div data-testid="unc-note" className="mt-3 rounded-xl bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]">
-                  <p className="font-medium text-[var(--text-primary)]">95% coefficient interval, harmonized country total</p>
+                  <p className="font-medium text-[var(--text-primary)]">Range from re-fitting the model (95% coefficient interval), harmonized country total</p>
                   <ul className="tabular mt-1">
                     {uncRows.map((r) => <li key={r.label}>{r.label}: <span className="text-[var(--text-primary)]">{fmtUnc(r.u)}</span></li>)}
                   </ul>
@@ -408,7 +477,7 @@ export function Explorer() {
                 </div>
                 {fit && (
                   <div>
-                    <Eyebrow>This country&apos;s held-out R²</Eyebrow>
+                    <Eyebrow>How well the correction tracks Aqua here</Eyebrow>
                     <p className="display tabular mt-2 text-3xl"><CountUp to={fit.validation_test.model.r2} decimals={Math.abs(fit.validation_test.model.r2) >= 1 ? 1 : 2} /> <span className="stat-unit text-[var(--text-secondary)]">R²</span></p>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                       Against observed Aqua, {data.params.test_years[0]}–{data.params.test_years[1]}, years the model never saw.
@@ -430,6 +499,8 @@ export function Explorer() {
           </div>
         )}
         {fit && data && !notProcessed && <FitQualityCard fit={fit} params={data.params} className="mt-8" />}
+        <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
+        <div id="hotspots" className="scroll-mt-24"><HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} /></div>
         {data && (
           <details className="mt-6 rounded-2xl border border-[var(--hairline)] px-4 py-3 text-xs text-[var(--text-secondary)]">
             <summary className="cursor-pointer font-medium text-[var(--text-primary)]">Provenance</summary>
@@ -444,8 +515,6 @@ export function Explorer() {
         )}
         </div>
       </section></Reveal>
-      <MonthToDateCard country={area.kind === "country" ? area.name : undefined} area={mtdArea} range={[view?.lo ?? from, view?.hi ?? to]} />
-      <HotspotDownload area={area.kind === "country" ? { kind: "country", name: area.name } : { kind: "geom", geom: geomOf(area) }} />
 
       <Reveal>
       <section id="area" className="mt-10 grid scroll-mt-24 gap-6 lg:grid-cols-[1fr_20rem]">
@@ -513,9 +582,9 @@ function Coverage() {
   const failed = Object.keys(p.failed ?? {}).length;
   return (
     <p data-testid="coverage-summary" className="-mt-4 mb-5 max-w-3xl text-sm text-[var(--text-secondary)]">
-      Coverage: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> countries with their own fit,{" "}
-      <span className="tabular text-[var(--text-primary)]">{pooled}</span> on the pooled fit,{" "}
-      <span className="tabular text-[var(--text-primary)]">{failed}</span> without a fit (raw record only where one exists, uncorrected). Reasons under Provenance.
+      Corrected for <span className="tabular text-[var(--text-primary)]">{fits.length}</span> countries: <span className="tabular text-[var(--text-primary)]">{fits.length - pooled}</span> with their own fit,{" "}
+      <span className="tabular text-[var(--text-primary)]">{pooled}</span> borrowing a shared (pooled) one.{" "}
+      <span className="tabular text-[var(--text-primary)]">{failed}</span> have no fit and are shown raw only, uncorrected. Reasons under Provenance.
       {ds?.dataset === "four" && " The world files could not be loaded: showing the four-country fallback."}
     </p>
   );

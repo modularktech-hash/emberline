@@ -7,6 +7,39 @@ Live: **https://emberline-tan.vercel.app/**
 Built for the **NASA Space Apps Challenge 2026**, challenge *MODIS and VIIRS hot spots*.
 Not affiliated with or endorsed by NASA. No NASA logos or insignia are used.
 
+## The problem in one comparison
+
+In 2012 the fire satellites changed, and the counts jumped. The fires did not.
+Canada, mean yearly detections in 2012–14 divided by 2009–11:
+
+| Record | Step across 2012 |
+|---|---|
+| Raw, MODIS joined to VIIRS (what a naive download shows) | **×6.60** |
+| Aqua MODIS alone, a sensor that did not change | **×1.43** |
+| Emberline, harmonized | **×1.68** |
+
+The same test for every fitted country, and where the correction is weakest, is on the
+[Method page](https://emberline-tan.vercel.app/method).
+
+## Use it in three steps
+
+1. **Pick an area of interest.** A country, a one-click area (New South Wales worked
+   example, Amazon basin, Sierra Nevada, Pantanal, Central Africa savanna), a box or polygon
+   drawn on the map, or typed latitude and longitude. Then a date range, month to month.
+2. **Read the burning activity calendar.** Years down, months across, raw or harmonized,
+   coloured by detections or against a usual month (blue below the median of that month,
+   orange to red above; colour-blind-safe). Click any month for its **fire report**: a
+   verdict ("the highest December in 23 years"), how many times a usual month, its rank, the
+   raw count beside it, that country's held-out error, and the years most like it with what
+   came next. Below it: the **critical periods** (fire season, peak month, years with the
+   highest burning activity, quietest window) and **this month against the historical median**.
+3. **Take it with you.** Calendar CSV, a CSV of the hotspots in the area (recent cells, or
+   individual detections for chosen dates), chart exports, an evidence brief that opens with
+   the findings, a citation, and a link that reproduces the exact view.
+
+Everything is a description of the satellite record. Nothing is a forecast, and a detection
+is an active-fire hotspot, not burned area.
+
 ## What it is
 
 Satellites have mapped active fires since 2000, but the record is split across two
@@ -80,6 +113,21 @@ the model is the best choice in every country.
 
 Full method: `/method` on the site, `docs/science.md`, `scripts/fit_harmonization.py`.
 
+### Design choices
+
+- **Counts through a detection curve, not summed fire power.** Fire radiative power is the
+  input to the curve (step 2), because it is what decides whether MODIS sees a fire. Summed
+  FRP is not used as the unit: the two sensors do not report the same power for the same
+  fire, and the challenge asks for a calendar of hotspots.
+- **Per-country curves, benchmarked against a single ratio.** A regional MODIS/VIIRS ratio
+  from the overlap years is the simplest correction; it is fitted and scored on the same
+  held-out data, and the results above say where it wins.
+- **Static heat sources.** The historical record keeps vegetation fires only (FIRMS `type`
+  0), which leaves out volcanoes, gas flares and other static sources. Near-real-time files
+  carry no type, so the live layer and the current month say that they include them.
+- **Raw is always one click away.** Every harmonized view has its raw counterpart, and
+  countries without a fit are shown raw and labelled uncorrected.
+
 ## Run it
 
 ```bash
@@ -119,8 +167,10 @@ The fixture covers ingestion and table building only; the harmonization fit need
 
 ## Data, libraries and papers
 
-- NASA FIRMS: MODIS Collection 6.1 (Terra, Aqua) and VIIRS 375 m (Suomi-NPP) country
-  archives, 2001–2025; NOAA-20/21 VIIRS and MODIS near-real-time feeds (live layer only).
+- NASA FIRMS (Fire Information for Resource Management System): MODIS Collection 6.1 on
+  Terra and Aqua, and VIIRS 375 m on Suomi-NPP, country archives 2001–2025 (the historical
+  record); VIIRS on NOAA-20 and NOAA-21 and MODIS near-real-time feeds (live layer and
+  current month only).
   https://firms.modaps.eosdis.nasa.gov/
 - Orbital elements: CelesTrak TLEs via tle.ivanstanojevic.me.
 - Natural Earth 1:110m country outlines; OpenFreeMap / OpenMapTiles basemap, © OpenStreetMap contributors.
