@@ -59,8 +59,11 @@ FILES = {
         dataset="world", fit="self", source="derived from params_global.json, validation_points.json, countries.json and the world calendars (scripts/build_proof.py)",
         purpose="Computed numbers for the Method Proof section: 2012 step collapse, held-out benchmark counts, record-month shares, seam-year placebo"),
     "month_to_date.json": dict(
-        dataset="world", fit=None, source="NASA FIRMS near-real-time area API (MODIS_NRT, VIIRS_NOAA20_NRT) and calendar_raw_global.parquet (scripts/build_month_to_date.py)",
-        purpose="Provisional, raw month-to-date counts per country against the raw history of the same calendar month; not harmonized"),
+        dataset="world", fit="params_global.json", source="NASA FIRMS near-real-time area API (MODIS_NRT, VIIRS_NOAA20_NRT) and calendar_raw_global.parquet (scripts/build_month_to_date.py); harmonized fields from scripts/build_bridge.py",
+        purpose="Provisional month-to-date counts per country against the history of the same calendar month: raw for every country; harmonized (NOAA-20 bridged to Suomi-NPP, then the published fit) for countries whose bridge passed held-out validation"),
+    "bridge.json": dict(
+        dataset="world", fit="self", source="NASA FIRMS NOAA-20 VIIRS archive (viirs-jpss1) 2018-2023 and the harmonized Suomi-NPP calendar (scripts/build_bridge.py)",
+        purpose="NOAA-20 to Suomi-NPP bridge per country: training ratio 2018-2021, held-out 2022-2023 error of the bridged and unbridged chain, pass flag and typical error"),
     "month_to_date_cells.json": dict(
         dataset="world", fit=None, source="the FIRMS responses cached by build_month_to_date.py, counted per H3 res-4 cell (scripts/build_month_to_date_cells.py)",
         purpose="Provisional, raw month-to-date counts per grid cell, so a drawn area can be compared with its own history; not harmonized"),
@@ -255,7 +258,7 @@ def build_datasets(files: list[dict]) -> dict:
     return out
 
 
-OPTIONAL = {"month_to_date.json", "month_to_date_cells.json"}  # needs a FIRMS MAP_KEY run (scripts/build_month_to_date.py)
+OPTIONAL = {"month_to_date.json", "month_to_date_cells.json", "bridge.json"}  # needs a FIRMS MAP_KEY run (scripts/build_month_to_date.py)
 
 
 def main() -> int:
