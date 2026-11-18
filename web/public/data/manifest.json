@@ -54,9 +54,9 @@
    "params_file": null,
    "files": {
     "current_month.json": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
-    "eonet.json": "f18d05156169db334a53e7e799bb8904a202592e2318b578fb23ccce193cc17e",
-    "live.json": "afeb90cdaee8837b7887a15f7456296c1610c14040d56ad17c50d8005d98c3ec",
-    "tle.json": "8199010ee2e1ea7386aa6300b873fe97ce2d96198a88e4653d3f1567cff2f8dc"
+    "eonet.json": "b9334648aa675ef340f06431bfca5cb40192cd1f2cd345deca9c53e6e54635ac",
+    "live.json": "ee8f6d0c55eeaffa59c491449feeece6b683cb801966b2164fa106e30599be18",
+    "tle.json": "8d9c34aeadc2164aeaae2514b6d6f619151f35f6d7810b91ef0b0bfa0a453d3c"
    },
    "consistent": true,
    "problems": []
@@ -663,7 +663,7 @@
    "purpose": "Open NASA EONET wildfire events (curated; a different source from the FIRMS detections), latest point per event",
    "source": "NASA EONET API v3, category wildfires, status open (scripts/build_eonet.py)",
    "bytes": 1710762,
-   "sha256": "f18d05156169db334a53e7e799bb8904a202592e2318b578fb23ccce193cc17e",
+   "sha256": "b9334648aa675ef340f06431bfca5cb40192cd1f2cd345deca9c53e6e54635ac",
    "format": "json",
    "top_level_keys": [
     "fetched_utc",
@@ -674,7 +674,7 @@
     "date_range",
     "events"
    ],
-   "fetched_utc": "2026-11-17T13:22Z",
+   "fetched_utc": "2026-11-18T13:00Z",
    "fit_version": null
   },
   {
@@ -752,8 +752,8 @@
    "dataset": "live",
    "purpose": "Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, not the Suomi-NPP record, not comparable with the historical calendars",
    "source": "NASA FIRMS near-real-time: VIIRS 375 m NOAA-20 and NOAA-21, MODIS Terra/Aqua (raw, uncorrected)",
-   "bytes": 1074554,
-   "sha256": "afeb90cdaee8837b7887a15f7456296c1610c14040d56ad17c50d8005d98c3ec",
+   "bytes": 1057567,
+   "sha256": "ee8f6d0c55eeaffa59c491449feeece6b683cb801966b2164fa106e30599be18",
    "format": "json",
    "top_level_keys": [
     "fetched_utc",
@@ -762,7 +762,7 @@
     "field_definitions",
     "hottest_cells_rank_by"
    ],
-   "fetched_utc": "2026-11-17T13:22Z",
+   "fetched_utc": "2026-11-18T13:00Z",
    "fit_version": null
   },
   {
@@ -987,14 +987,14 @@
    "purpose": "Orbital elements for the satellite view",
    "source": "CelesTrak public two-line elements via tle.ivanstanojevic.me",
    "bytes": 1809,
-   "sha256": "8199010ee2e1ea7386aa6300b873fe97ce2d96198a88e4653d3f1567cff2f8dc",
+   "sha256": "8d9c34aeadc2164aeaae2514b6d6f619151f35f6d7810b91ef0b0bfa0a453d3c",
    "format": "json",
    "top_level_keys": [
     "source",
     "fetched",
     "satellites"
    ],
-   "fetched_utc": "2026-11-17T13:22Z",
+   "fetched_utc": "2026-11-18T13:00Z",
    "fit_version": null
   },
   {
