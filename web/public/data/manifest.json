@@ -54,8 +54,8 @@
    "params_file": null,
    "files": {
     "current_month.json": "ad0cb4320e1f0e8c2d0d9648ce15b771d4a3f62e3ec90155c462744c4e5f3e62",
-    "eonet.json": "87cb879b0a0485d44050b0adeb4bbb62e9d513935e36aa784ecc58f4830f07cf",
-    "live.json": "b9c0d1ec6e838d71832b63bd1713ff9fb81a63823d0f6a0cdc043e598483479d",
+    "eonet.json": "a4543953c54668fed678bc58717bb0001c60b63dd5e3363a73678f6133ca5453",
+    "live.json": "6bfb76e95a76b8a770ee645b617d116ded7ef526bfc52ffdfb41aa9541112e75",
     "tle.json": "244c7ff15107139c61a898827e95ec033cb7da89a42f5a173c7d0c8166771fea"
    },
    "consistent": true,
@@ -662,8 +662,8 @@
    "dataset": "live",
    "purpose": "Open NASA EONET wildfire events (curated; a different source from the FIRMS detections), latest point per event",
    "source": "NASA EONET API v3, category wildfires, status open (scripts/build_eonet.py)",
-   "bytes": 1712812,
-   "sha256": "87cb879b0a0485d44050b0adeb4bbb62e9d513935e36aa784ecc58f4830f07cf",
+   "bytes": 1713830,
+   "sha256": "a4543953c54668fed678bc58717bb0001c60b63dd5e3363a73678f6133ca5453",
    "format": "json",
    "top_level_keys": [
     "fetched_utc",
@@ -674,7 +674,7 @@
     "date_range",
     "events"
    ],
-   "fetched_utc": "2026-11-23T14:35Z",
+   "fetched_utc": "2026-11-24T14:51Z",
    "fit_version": null
   },
   {
@@ -752,8 +752,8 @@
    "dataset": "live",
    "purpose": "Recent raw detections binned to a 0.5 degree grid for the globe; not harmonized, not the Suomi-NPP record, not comparable with the historical calendars",
    "source": "NASA FIRMS near-real-time: VIIRS 375 m NOAA-20 and NOAA-21, MODIS Terra/Aqua (raw, uncorrected)",
-   "bytes": 1034809,
-   "sha256": "b9c0d1ec6e838d71832b63bd1713ff9fb81a63823d0f6a0cdc043e598483479d",
+   "bytes": 1059514,
+   "sha256": "6bfb76e95a76b8a770ee645b617d116ded7ef526bfc52ffdfb41aa9541112e75",
    "format": "json",
    "top_level_keys": [
     "fetched_utc",
@@ -762,7 +762,7 @@
     "field_definitions",
     "hottest_cells_rank_by"
    ],
-   "fetched_utc": "2026-11-23T14:35Z",
+   "fetched_utc": "2026-11-24T14:51Z",
    "fit_version": null
   },
   {
